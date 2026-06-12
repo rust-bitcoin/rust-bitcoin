@@ -58,7 +58,8 @@ impl Signature {
             Ok(Self { signature, sighash_type: TapSighashType::Default })
         } else if let Ok(signature) = <[u8; 65]>::try_from(sl) {
             let (sighash_type, signature) = signature.split_last();
-            let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
+            let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)
+                .map_err(SigFromSliceError::SighashType)?;
             // per BIP-341: if the sig is 65 bytes long, return Fail if sig[64] = 0x00
             // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#taproot-key-path-spending-signature-validation
             if sighash_type == TapSighashType::Default {
@@ -449,8 +450,6 @@ pub mod error {
     pub enum SigFromSliceError {
         /// Invalid signature hash type.
         SighashType(InvalidSighashTypeError),
-        /// A secp256k1 error.
-        Secp256k1(secp256k1::Error),
         /// Invalid Taproot signature size
         InvalidSignatureSize(usize),
     }
@@ -463,7 +462,6 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::SighashType(ref e) => write_err!(f, "sighash"; e),
-                Self::Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
                 Self::InvalidSignatureSize(sz) =>
                     write!(f, "invalid Taproot signature size: {}", sz),
             }
@@ -474,19 +472,10 @@ pub mod error {
     impl std::error::Error for SigFromSliceError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::Secp256k1(ref e) => Some(e),
                 Self::SighashType(ref e) => Some(e),
                 Self::InvalidSignatureSize(_) => None,
             }
         }
-    }
-
-    impl From<secp256k1::Error> for SigFromSliceError {
-        fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
-    }
-
-    impl From<InvalidSighashTypeError> for SigFromSliceError {
-        fn from(err: InvalidSighashTypeError) -> Self { Self::SighashType(err) }
     }
 
     /// Error encountered while parsing a Taproot signature from a string.

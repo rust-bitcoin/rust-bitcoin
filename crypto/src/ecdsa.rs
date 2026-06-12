@@ -32,7 +32,7 @@ use crate::sighash::EcdsaSighashType;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
-pub use self::error::DecodeError;
+pub use self::error::{DecodeError, InvalidDerError};
 #[cfg(feature = "hex")]
 #[doc(no_inline)]
 pub use self::error::ParseSignatureError;
@@ -60,13 +60,13 @@ impl Signature {
     /// # Errors
     ///
     /// * [`DecodeError::EmptySignature`] if the slice is empty.
-    /// * [`DecodeError::Secp256k1`] if the slice cannot be decoded to an ECDSA signature.
+    /// * [`DecodeError::InvalidDer`] if the slice is not a valid DER encoding for an ECDSA signature.
     pub fn from_slice(sl: &[u8]) -> Result<Self, DecodeError> {
         let (sighash_type, sig) = sl.split_last().ok_or(DecodeError::EmptySignature)?;
         let sighash_type = EcdsaSighashType::from_standard(u32::from(*sighash_type))
             .map_err(DecodeError::SighashType)?;
-        let signature =
-            secp256k1::ecdsa::Signature::from_der(sig).map_err(DecodeError::Secp256k1)?;
+        let signature = secp256k1::ecdsa::Signature::from_der(sig)
+            .map_err(|_| DecodeError::InvalidDer(InvalidDerError))?;
         Ok(Self { signature, sighash_type })
     }
 
@@ -285,8 +285,8 @@ pub mod error {
         SighashType(NonStandardSighashTypeError),
         /// Signature was empty.
         EmptySignature,
-        /// A secp256k1 error.
-        Secp256k1(secp256k1::Error),
+        /// Bad DER encoding for ECDSA signature.
+        InvalidDer(InvalidDerError),
     }
 
     impl From<Infallible> for DecodeError {
@@ -298,7 +298,7 @@ pub mod error {
             match self {
                 Self::SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
                 Self::EmptySignature => write!(f, "empty ECDSA signature"),
-                Self::Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
+                Self::InvalidDer(ref e) => write_err!(f, "bad DER encoding for ECDSA signature"; e),
             }
         }
     }
@@ -307,10 +307,31 @@ pub mod error {
     impl std::error::Error for DecodeError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::Secp256k1(ref e) => Some(e),
+                Self::InvalidDer(ref e) => Some(e),
                 Self::SighashType(ref e) => Some(e),
                 Self::EmptySignature => None,
             }
+        }
+    }
+
+    /// The DER encoding of an ECDSA signature is not valid.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct InvalidDerError;
+
+    impl From<Infallible> for InvalidDerError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for InvalidDerError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "invalid DER encoding") }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidDerError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
         }
     }
 

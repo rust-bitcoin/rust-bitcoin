@@ -28,6 +28,7 @@ use network::NetworkKind;
 #[cfg(feature = "std")]
 pub use secp256k1::rand;
 
+use self::error::FromSecretBytesErrorInner;
 use crate::ecdsa;
 #[cfg(feature = "hex")]
 use crate::hex::{self, DecodeFixedLengthBytesError};
@@ -36,8 +37,9 @@ use crate::hex::{self, DecodeFixedLengthBytesError};
 pub use secp256k1::{constants, Parity};
 #[doc(no_inline)]
 pub use self::error::{
-    FromSliceError, InvalidAddressVersionError, InvalidBase58PayloadLengthError, ParseKeypairError,
-    ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError, UncompressedPublicKeyError,
+    FromSecretBytesError, FromSliceError, InvalidAddressVersionError,
+    InvalidBase58PayloadLengthError, InvalidPublicKeyError, ParseKeypairError,
+    ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError, UncompressedPublicKeyError, VerifyError,
 };
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
@@ -764,7 +766,7 @@ impl LegacyPublicKey {
     ///
     /// * [`FromSliceError::InvalidLength`] if the slice has an invalid number of bytes.
     /// * [`FromSliceError::InvalidKeyPrefix`] if the key prefix is invalid.
-    /// * [`FromSliceError::Secp256k1`] if the provided bytes do not form a valid public key.
+    /// * [`FromSliceError::InvalidPublicKey`] if the provided bytes do not form a valid public key.
     #[inline]
     pub fn from_slice(data: &[u8]) -> Result<Self, FromSliceError> {
         let compressed = match data.len() {
@@ -783,7 +785,8 @@ impl LegacyPublicKey {
             (_, byte) => return Err(FromSliceError::InvalidKeyPrefix(byte)),
         }
 
-        let secp_key = secp256k1::PublicKey::from_slice(data).map_err(FromSliceError::Secp256k1)?;
+        let secp_key = secp256k1::PublicKey::from_slice(data)
+            .map_err(|_| FromSliceError::InvalidPublicKey(InvalidPublicKeyError))?;
         Ok(match compressed {
             true => Self::from_secp(secp_key),
             false => Self::from_secp_uncompressed(secp_key),
@@ -802,8 +805,7 @@ impl LegacyPublicKey {
     ///
     /// # Errors
     ///
-    /// [`secp256k1::Error::InvalidSignature`] if the signature is not valid for the given
-    /// [`Message`].
+    /// [`VerifyError`] if the signature is not valid for the given message and key.
     ///
     /// [`Message`]: secp256k1::Message
     #[inline]
@@ -811,8 +813,8 @@ impl LegacyPublicKey {
         &self,
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
-    ) -> Result<(), secp256k1::Error> {
-        secp256k1::ecdsa::verify(&sig.signature, msg, &self.to_inner())
+    ) -> Result<(), VerifyError> {
+        secp256k1::ecdsa::verify(&sig.signature, msg, &self.to_inner()).map_err(|_| VerifyError)
     }
 }
 
@@ -932,7 +934,8 @@ impl FullPublicKey {
     ///
     /// # Errors
     ///
-    /// See [`secp256k1::PublicKey::from_slice`].
+    /// [`secp256k1::Error::InvalidPublicKey`] if the slice is not 33 bytes long or if the
+    /// slice is not a valid compressed public key.
     #[deprecated(
         since = "0.1.0",
         note = "use `from_bytes` instead; if you only have a slice, use `<&[u8; 33]>::try_from` first"
@@ -940,17 +943,19 @@ impl FullPublicKey {
     #[inline]
     pub fn from_slice(data: &[u8]) -> Result<Self, secp256k1::Error> {
         let bytes_arr = data.try_into().map_err(|_| secp256k1::Error::InvalidPublicKey)?;
-        Self::from_bytes(bytes_arr)
+        Self::from_bytes(bytes_arr).map_err(|_| secp256k1::Error::InvalidPublicKey)
     }
 
     /// Deserializes a public key from compressed pubkey bytes.
     ///
     /// # Errors
     ///
-    /// See [`secp256k1::PublicKey::from_byte_array_compressed`].
+    /// [`InvalidPublicKeyError`] if the slice is not a valid compressed public key.
     #[inline]
-    pub fn from_bytes(data: [u8; 33]) -> Result<Self, secp256k1::Error> {
-        secp256k1::PublicKey::from_byte_array_compressed(data).map(Self::from_secp)
+    pub fn from_bytes(data: [u8; 33]) -> Result<Self, InvalidPublicKeyError> {
+        secp256k1::PublicKey::from_byte_array_compressed(data)
+            .map(Self::from_secp)
+            .map_err(|_| InvalidPublicKeyError)
     }
 
     /// Computes the public key as supposed to be used with this secret.
@@ -973,8 +978,8 @@ impl FullPublicKey {
         &self,
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
-    ) -> Result<(), secp256k1::Error> {
-        secp256k1::ecdsa::verify(&sig.signature, msg, &self.to_inner())
+    ) -> Result<(), VerifyError> {
+        secp256k1::ecdsa::verify(&sig.signature, msg, &self.to_inner()).map_err(|_| VerifyError)
     }
 }
 
@@ -985,7 +990,7 @@ impl FromStr for FullPublicKey {
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::from_bytes(hex::decode_to_array::<33>(s).map_err(ParseFullPublicKeyError::Hex)?)
-            .map_err(ParseFullPublicKeyError::Secp256k1)
+            .map_err(ParseFullPublicKeyError::InvalidPublicKey)
     }
 }
 
@@ -1085,18 +1090,18 @@ impl PrivateKey {
     /// Errors when the secret key is invalid: when it is all-zeros or would exceed
     /// the curve order when interpreted as a big-endian unsigned integer.
     #[inline]
-    pub fn from_secret_bytes(data: &[u8; 32]) -> Result<Self, secp256k1::Error> {
-        Ok(Self::from_secp(secp256k1::SecretKey::from_secret_bytes(*data)?))
+    pub fn from_secret_bytes(data: &[u8; 32]) -> Result<Self, FromSecretBytesError> {
+        secp256k1::SecretKey::from_secret_bytes(*data)
+            .map(Self::from_secp)
+            .map_err(|_| FromSecretBytesError(FromSecretBytesErrorInner::InvalidSecretKey))
     }
 
     /// Deserializes a private key from a slice.
     ///
     /// # Errors
     ///
-    /// [`secp256k1::Error::InvalidSecretKey`] if the slice is not 32 bytes long.
-    /// See [`from_secret_bytes`] for other errors.
-    ///
-    /// [`from_secret_bytes`]: PrivateKey::from_secret_bytes
+    /// [`secp256k1::Error::InvalidSecretKey`] if the slice is not 32 bytes long or is
+    /// not a valid secret key.
     #[deprecated(since = "0.1.0", note = "use from_secret_bytes instead")]
     #[inline]
     pub fn from_slice(
@@ -1104,7 +1109,7 @@ impl PrivateKey {
         _network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
         let array = data.try_into().map_err(|_| secp256k1::Error::InvalidSecretKey)?;
-        Self::from_secret_bytes(array)
+        Self::from_secret_bytes(array).map_err(|_| secp256k1::Error::InvalidSecretKey)
     }
 
     /// Returns a new private key with the negated secret value.
@@ -1197,7 +1202,7 @@ impl WifKey {
     /// * [`FromWifError::InvalidWifCompressionFlag`] if the compression flag is not 1 for a 34 byte
     ///   data string.
     /// * [`FromWifError::InvalidAddressVersion`] if the network version byte is not main or testnet.
-    /// * [`FromWifError::Secp256k1`] if the bytes are not representative of a valid private key.
+    /// * [`FromWifError::FromSecretBytes`] if the decoded bytes do not parse as a [`PrivateKey`].
     #[cfg(feature = "alloc")]
     pub fn from_wif(wif: &str) -> Result<Self, FromWifError> {
         let data = base58::decode_check(wif).map_err(FromWifError::Base58)?;
@@ -1229,8 +1234,11 @@ impl WifKey {
             }
         };
 
-        let sec_key =
-            secp256k1::SecretKey::from_secret_bytes(*key).map_err(FromWifError::Secp256k1)?;
+        let sec_key = secp256k1::SecretKey::from_secret_bytes(*key).map_err(|_| {
+            FromWifError::FromSecretBytes(FromSecretBytesError(
+                FromSecretBytesErrorInner::InvalidSecretKey,
+            ))
+        })?;
         let priv_key = match compressed {
             true => PrivateKey::from_secp(sec_key),
             false => PrivateKey::from_secp_uncompressed(sec_key),
@@ -1568,14 +1576,14 @@ pub mod error {
 
     use internals::write_err;
 
-    /// Error returned while generating key from slice.
+    /// Error returned while constructing a public key from slice.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum FromSliceError {
         /// Invalid key prefix error.
         InvalidKeyPrefix(u8),
-        /// A secp256k1 error.
-        Secp256k1(secp256k1::Error),
+        /// Invalid pubkey bytes error.
+        InvalidPublicKey(InvalidPublicKeyError),
         /// Invalid Length of the slice.
         InvalidLength(usize),
     }
@@ -1589,7 +1597,7 @@ pub mod error {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::Secp256k1(e) => write_err!(f, "secp256k1"; e),
+                Self::InvalidPublicKey(ref e) => write_err!(f, "invalid pubkey error"; e),
                 Self::InvalidKeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
                 Self::InvalidLength(got) =>
                     write!(f, "slice length should be 33 or 65 bytes, got: {}", got),
@@ -1602,7 +1610,7 @@ pub mod error {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::Secp256k1(ref e) => Some(e),
+                Self::InvalidPublicKey(ref e) => Some(e),
                 Self::InvalidKeyPrefix(_) | Self::InvalidLength(_) => None,
             }
         }
@@ -1619,8 +1627,10 @@ pub mod error {
         InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Base58 decoded data contained an invalid address version byte.
         InvalidAddressVersion(InvalidAddressVersionError),
-        /// A secp256k1 error.
-        Secp256k1(secp256k1::Error),
+        /// Error when decoding the decoded key bytes to a [`PrivateKey`].
+        ///
+        /// [`PrivateKey`]: super::PrivateKey
+        FromSecretBytes(FromSecretBytesError),
         /// Invalid WIF compression flag.
         InvalidWifCompressionFlag(InvalidWifCompressionFlagError),
     }
@@ -1641,7 +1651,7 @@ pub mod error {
                     write_err!(f, "decoded base58 data was an invalid length"; e),
                 Self::InvalidAddressVersion(ref e) =>
                     write_err!(f, "decoded base58 data contained an invalid address version byte"; e),
-                Self::Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
+                Self::FromSecretBytes(ref e) => write_err!(f, "private key validation failed"; e),
                 Self::InvalidWifCompressionFlag(ref e) =>
                     write_err!(f, "invalid WIF compression flag"; e),
             }
@@ -1657,7 +1667,7 @@ pub mod error {
                 Self::Base58(ref e) => Some(e),
                 Self::InvalidBase58PayloadLength(ref e) => Some(e),
                 Self::InvalidAddressVersion(ref e) => Some(e),
-                Self::Secp256k1(ref e) => Some(e),
+                Self::FromSecretBytes(ref e) => Some(e),
                 Self::InvalidWifCompressionFlag(ref e) => Some(e),
             }
         }
@@ -1737,8 +1747,8 @@ pub mod error {
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[cfg(feature = "hex")]
     pub enum ParseFullPublicKeyError {
-        /// secp256k1 Error.
-        Secp256k1(secp256k1::Error),
+        /// Invalid pubkey bytes error.
+        InvalidPublicKey(InvalidPublicKeyError),
         /// hex to array conversion error.
         Hex(hex::DecodeFixedLengthBytesError),
     }
@@ -1754,7 +1764,7 @@ pub mod error {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
+                Self::InvalidPublicKey(e) => write_err!(f, "invalid pubkey error"; e),
                 Self::Hex(e) => write_err!(f, "invalid hex"; e),
             }
         }
@@ -1766,7 +1776,7 @@ pub mod error {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::Secp256k1(e) => Some(e),
+                Self::InvalidPublicKey(e) => Some(e),
                 Self::Hex(e) => Some(e),
             }
         }
@@ -1979,6 +1989,91 @@ pub mod error {
                 Self::ResultKeyInvalid => None,
                 Self::ParityError => None,
             }
+        }
+    }
+
+    /// The bytes do not represent a valid secp256k1 public key.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct InvalidPublicKeyError;
+
+    impl From<Infallible> for InvalidPublicKeyError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for InvalidPublicKeyError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "invalid public key") }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidPublicKeyError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
+        }
+    }
+
+    /// Error that can occur when parsing a [`PrivateKey`] from a byte array.
+    ///
+    /// [`PrivateKey`]: super::PrivateKey
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct FromSecretBytesError(pub(super) FromSecretBytesErrorInner);
+
+    impl From<Infallible> for FromSecretBytesError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for FromSecretBytesError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self.0 {
+                FromSecretBytesErrorInner::InvalidSecretKey => write!(f, "invalid secret key"),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for FromSecretBytesError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self.0 {
+                FromSecretBytesErrorInner::InvalidSecretKey => None,
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub(super) enum FromSecretBytesErrorInner {
+        /// The bytes represent an invalid secp256k1 secret key.
+        InvalidSecretKey,
+    }
+
+    /// Signature verification failed for the given message and key.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct VerifyError;
+
+    impl From<Infallible> for VerifyError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for VerifyError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "signature verification failed")
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for VerifyError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
         }
     }
 }
@@ -2260,9 +2355,7 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
-            ParsePublicKeyError::Encoding(FromSliceError::Secp256k1(
-                secp256k1::Error::InvalidPublicKey
-            ))
+            ParsePublicKeyError::Encoding(FromSliceError::InvalidPublicKey(InvalidPublicKeyError))
         );
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd169";
@@ -2271,9 +2364,7 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
-            ParsePublicKeyError::Encoding(FromSliceError::Secp256k1(
-                secp256k1::Error::InvalidPublicKey
-            ))
+            ParsePublicKeyError::Encoding(FromSliceError::InvalidPublicKey(InvalidPublicKeyError))
         );
 
         let s = "062e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
