@@ -1608,8 +1608,6 @@ mod tests {
     #[cfg(feature = "std")]
     use std::error::Error as _;
 
-    #[cfg(feature = "hex")]
-    use encoding::FromHexError;
     use encoding::{Decode as _, Decoder as _};
     #[cfg(feature = "hex")]
     use hex::hex;
@@ -1753,21 +1751,31 @@ mod tests {
 
     #[test]
     #[cfg(feature = "hex")]
+    #[cfg(feature = "std")]
     fn transaction_from_hex_str_error() {
         // OddLength error
         let odd = "abc"; // 3 chars, odd length
         let err = Transaction::from_str(odd).unwrap_err();
-        assert!(matches!(err, FromHexError::OddLength(..)));
+        assert!(matches!(
+            err.source().unwrap().downcast_ref::<hex::OddLengthStringError>().unwrap(),
+            hex::OddLengthStringError { .. },
+        ));
 
         // InvalidChar error
         let invalid = "zz";
         let err = Transaction::from_str(invalid).unwrap_err();
-        assert!(matches!(err, FromHexError::InvalidChar(..)));
+        assert!(matches!(
+            err.source().unwrap().downcast_ref::<hex::InvalidCharError>().unwrap(),
+            hex::InvalidCharError { .. },
+        ));
 
         // Decode error
         let bad = "deadbeef00"; // arbitrary even-length hex that will fail decoding
         let err = Transaction::from_str(bad).unwrap_err();
-        assert!(matches!(err, FromHexError::Decode(..)));
+        assert!(matches!(
+            err.source().unwrap().source().unwrap().downcast_ref::<TransactionDecoderError>().unwrap(),
+            TransactionDecoderError { .. },
+        ));
     }
 
     #[test]

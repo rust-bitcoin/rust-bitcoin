@@ -7,7 +7,7 @@ use std::io::{Cursor, Read};
 
 use bitcoin_consensus_encoding as encoding;
 #[cfg(feature = "hex")]
-use bitcoin_consensus_encoding::{decode_from_hex, FromHexError};
+use bitcoin_consensus_encoding::decode_from_hex;
 #[cfg(feature = "alloc")]
 use encoding::check_decode;
 use encoding::{
@@ -317,17 +317,36 @@ fn decode_from_hex_larger_than_internal_buffer() {
 
 #[test]
 #[cfg(feature = "hex")]
+#[cfg(feature = "std")]
+#[rustfmt::skip] // matches! statements become tall stacks from fmt
 fn decode_from_hex_error() {
+    use std::error::Error as _;
+
     let result: Result<TestArray, _> = decode_from_hex("0102030");
-    assert!(matches!(result, Err(FromHexError::OddLength(_))));
+    assert!(matches!(
+        result.unwrap_err().source().unwrap().downcast_ref().unwrap(),
+        hex::OddLengthStringError { .. },
+    ));
     let result: Result<TestArray, _> = decode_from_hex("0102GG04");
-    assert!(matches!(result, Err(FromHexError::InvalidChar(_))));
+    assert!(matches!(
+        result.unwrap_err().source().unwrap().downcast_ref().unwrap(),
+        hex::InvalidCharError { .. },
+    ));
     let result: Result<TestArray, _> = decode_from_hex("0102");
-    assert!(matches!(result, Err(FromHexError::Decode(DecodeError::Parse(_)))));
+    assert!(matches!(
+        result.unwrap_err().source().unwrap().downcast_ref::<DecodeError<UnexpectedEofError>>().unwrap(),
+        DecodeError::Parse(_),
+    ));
     let result: Result<TestArray, _> = decode_from_hex("");
-    assert!(matches!(result, Err(FromHexError::Decode(DecodeError::Parse(_)))));
+    assert!(matches!(
+        result.unwrap_err().source().unwrap().downcast_ref::<DecodeError<UnexpectedEofError>>().unwrap(),
+        DecodeError::Parse(_),
+    ));
     let result: Result<TestArray, _> = decode_from_hex("0102030405060708");
-    assert!(matches!(result, Err(FromHexError::Decode(DecodeError::Unconsumed(_)))));
+    assert!(matches!(
+        result.unwrap_err().source().unwrap().downcast_ref::<DecodeError<UnexpectedEofError>>().unwrap(),
+        DecodeError::Unconsumed(_),
+    ));
 }
 
 #[test]

@@ -328,7 +328,11 @@ impl std::error::Error for UnexpectedEofError {
 /// An error that can occur when decoding from a hex string.
 #[cfg(feature = "hex")]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum FromHexError<ParseErr> {
+pub struct FromHexError<ParseErr>(pub(crate) FromHexErrorInner<ParseErr>);
+
+#[cfg(feature = "hex")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum FromHexErrorInner<ParseErr> {
     /// The hex string had an odd number of characters.
     OddLength(hex::OddLengthStringError),
     /// A character in the hex string was not a valid hex digit.
@@ -345,10 +349,10 @@ impl<ParseErr> From<Infallible> for FromHexError<ParseErr> {
 #[cfg(feature = "hex")]
 impl<ParseErr: fmt::Display> fmt::Display for FromHexError<ParseErr> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::OddLength(ref e) => write_err!(f, "odd length string"; e),
-            Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
-            Self::Decode(ref e) => write_err!(f, "decode error"; e),
+        match self.0 {
+            FromHexErrorInner::OddLength(ref e) => write_err!(f, "odd length string"; e),
+            FromHexErrorInner::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
+            FromHexErrorInner::Decode(ref e) => write_err!(f, "decode error"; e),
         }
     }
 }
@@ -360,10 +364,10 @@ where
     ParseErr: std::error::Error + 'static,
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            Self::OddLength(ref e) => Some(e),
-            Self::InvalidChar(ref e) => Some(e),
-            Self::Decode(ref e) => Some(e),
+        match self.0 {
+            FromHexErrorInner::OddLength(ref e) => Some(e),
+            FromHexErrorInner::InvalidChar(ref e) => Some(e),
+            FromHexErrorInner::Decode(ref e) => Some(e),
         }
     }
 }

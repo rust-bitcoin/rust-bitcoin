@@ -5,7 +5,7 @@
 pub mod decoders;
 
 #[cfg(feature = "hex")]
-use crate::FromHexError;
+use crate::error::{FromHexError, FromHexErrorInner};
 #[cfg(feature = "std")]
 use crate::ReadError;
 use crate::{DecodeError, UnconsumedError};
@@ -136,22 +136,23 @@ impl DecoderStatus {
 ///
 /// # Errors
 ///
-/// - [`FromHexError::OddLength`] if the string has an odd number of characters.
-/// - [`FromHexError::InvalidChar`] if any character is not a valid hex digit.
-/// - [`FromHexError::Decode`] if decoding the type fails, including if bytes remain unconsumed
-///   after the decoder completes.
+/// [`FromHexError`] if the string has an odd number of characters, any character is not a
+/// valid hex digit, or if decoding the type fails, including if bytes remain unconsumed
+/// after the decoder completes.
 #[cfg(feature = "hex")]
 pub fn decode_from_hex<T: Decode>(
     hex: &str,
 ) -> Result<T, FromHexError<<T::Decoder as Decoder>::Error>> {
-    let iter = hex::HexSliceToBytesIter::new(hex).map_err(FromHexError::OddLength)?;
+    let iter = hex::HexSliceToBytesIter::new(hex)
+        .map_err(FromHexErrorInner::OddLength)
+        .map_err(FromHexError)?;
 
     let mut decoder = T::decoder();
     let mut buffer = [0u8; 4096];
     let mut index = 0;
 
     for item in iter {
-        let byte = item.map_err(FromHexError::InvalidChar)?;
+        let byte = item.map_err(FromHexErrorInner::InvalidChar).map_err(FromHexError)?;
 
         if index == buffer.len() {
             let mut to_flush = buffer.as_slice();
@@ -160,10 +161,12 @@ pub fn decode_from_hex<T: Decode>(
             while !to_flush.is_empty() {
                 if decoder
                     .push_bytes(&mut to_flush)
-                    .map_err(|e| FromHexError::Decode(DecodeError::Parse(e)))?
+                    .map_err(|e| FromHexError(FromHexErrorInner::Decode(DecodeError::Parse(e))))?
                     .is_ready()
                 {
-                    return Err(FromHexError::Decode(DecodeError::Unconsumed(UnconsumedError())));
+                    return Err(FromHexError(FromHexErrorInner::Decode(DecodeError::Unconsumed(
+                        UnconsumedError(),
+                    ))));
                 }
             }
             index = 0;
@@ -176,7 +179,7 @@ pub fn decode_from_hex<T: Decode>(
     while !to_flush.is_empty() {
         if decoder
             .push_bytes(&mut to_flush)
-            .map_err(|e| FromHexError::Decode(DecodeError::Parse(e)))?
+            .map_err(|e| FromHexError(FromHexErrorInner::Decode(DecodeError::Parse(e))))?
             .is_ready()
         {
             break;
@@ -184,9 +187,9 @@ pub fn decode_from_hex<T: Decode>(
     }
 
     if to_flush.is_empty() {
-        decoder.end().map_err(|e| FromHexError::Decode(DecodeError::Parse(e)))
+        decoder.end().map_err(|e| FromHexError(FromHexErrorInner::Decode(DecodeError::Parse(e))))
     } else {
-        Err(FromHexError::Decode(DecodeError::Unconsumed(UnconsumedError())))
+        Err(FromHexError(FromHexErrorInner::Decode(DecodeError::Unconsumed(UnconsumedError()))))
     }
 }
 
