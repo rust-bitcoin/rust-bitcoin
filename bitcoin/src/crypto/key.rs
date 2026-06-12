@@ -7,8 +7,6 @@
 
 use crate::internal_macros::define_extension_trait;
 use crate::script::{self, WitnessScriptBuf};
-#[cfg(feature = "secp-recovery")]
-use crate::sign_message::MessageSignature;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity};
@@ -68,35 +66,10 @@ define_extension_trait! {
     }
 }
 
-#[cfg(feature = "secp-recovery")]
-define_extension_trait! {
-    /// Extension functionality for the [`PrivateKey`] type.
-    pub trait PrivateKeyExt impl for PrivateKey {
-        /// ECDSA signs a [`Message`] with this private key.
-        ///
-        /// This produces an ECDSA signature with a recovery ID for pubkey recovery.
-        /// See [`RecoverableSignature::sign_ecdsa_recoverable`] for details.
-        ///
-        /// [`Message`]: secp256k1::Message
-        /// [`RecoverableSignature::sign_ecdsa_recoverable`]: secp256k1::ecdsa::RecoverableSignature::sign_ecdsa_recoverable
-        #[inline]
-        fn raw_ecdsa_sign_recoverable(
-            &self,
-            msg: impl Into<secp256k1::Message>,
-        ) -> MessageSignature {
-            MessageSignature::new(
-                secp256k1::ecdsa::RecoverableSignature::sign_ecdsa_recoverable(msg, self.as_inner()),
-                self.compressed(),
-            )
-        }
-    }
-}
-
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::FullPublicKey {}
     impl Sealed for super::LegacyPublicKey {}
-    impl Sealed for super::PrivateKey {}
 }
 
 #[cfg(test)]

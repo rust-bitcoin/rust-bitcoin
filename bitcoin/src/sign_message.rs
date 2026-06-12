@@ -9,8 +9,6 @@ use encoding::CompactSizeEncoder;
 use hashes::{sha256d, HashEngine};
 
 #[cfg(feature = "secp-recovery")]
-use crate::key::PrivateKeyExt as _;
-#[cfg(feature = "secp-recovery")]
 use crate::PrivateKey;
 
 #[rustfmt::skip]
@@ -179,7 +177,13 @@ pub fn signed_msg_hash(msg: impl AsRef<[u8]>) -> sha256d::Hash {
 pub fn sign(msg: impl AsRef<[u8]>, privkey: &PrivateKey) -> MessageSignature {
     let msg_hash = signed_msg_hash(msg);
     let msg_to_sign = secp256k1::Message::from_digest(msg_hash.to_byte_array());
-    privkey.raw_ecdsa_sign_recoverable(msg_to_sign)
+
+    let secp_key = secp256k1::SecretKey::from_secret_bytes(privkey.to_secret_bytes())
+        .expect("to_secret_bytes yields underlying valid secp bytes");
+    MessageSignature::new(
+        secp256k1::ecdsa::RecoverableSignature::sign_ecdsa_recoverable(msg_to_sign, &secp_key),
+        privkey.compressed(),
+    )
 }
 
 /// Error types for message signing.
@@ -267,7 +271,12 @@ mod tests {
         let msg_hash = super::signed_msg_hash(message);
         let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
         let privkey = PrivateKey::generate();
-        let signature = privkey.raw_ecdsa_sign_recoverable(msg);
+        let secp_key = secp256k1::SecretKey::from_secret_bytes(privkey.to_secret_bytes())
+            .expect("to_secret_bytes yields underlying valid secp bytes");
+        let signature = MessageSignature::new(
+            secp256k1::ecdsa::RecoverableSignature::sign_ecdsa_recoverable(msg, &secp_key),
+            privkey.compressed(),
+        );
 
         assert_eq!(signature.to_string(), super::sign(message, &privkey).to_string());
         assert_eq!(signature.to_base64(), signature.to_string());

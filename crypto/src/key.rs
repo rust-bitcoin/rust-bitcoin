@@ -206,7 +206,7 @@ mod private_key {
 
         /// Returns a reference to the inner secp256k1 secret key.
         #[inline]
-        pub fn as_inner(&self) -> &secp256k1::SecretKey { &self.inner }
+        pub(super) fn as_inner(&self) -> &secp256k1::SecretKey { &self.inner }
 
         /// Returns whether this private key should be serialized as compressed.
         #[inline]
