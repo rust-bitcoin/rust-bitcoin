@@ -99,43 +99,6 @@ pub enum TestnetVersion {
     V4,
 }
 
-#[cfg(feature = "serde")]
-impl Serialize for Network {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.as_display_str())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for Network {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct NetworkVisitor;
-
-        impl Visitor<'_> for NetworkVisitor {
-            type Value = Network;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a valid network identifier")
-            }
-
-            fn visit_str<E>(self, value: &str) -> Result<Network, E>
-            where
-                E: serde::de::Error,
-            {
-                Network::from_str(value).map_err(E::custom)
-            }
-        }
-
-        deserializer.deserialize_str(NetworkVisitor)
-    }
-}
-
 impl Network {
     /// Converts to the equivalent Bitcoin Core `-chain` argument string.
     ///
@@ -191,6 +154,65 @@ impl Network {
 impl fmt::Display for Network {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", self.as_display_str())
+    }
+}
+
+impl FromStr for Network {
+    type Err = ParseNetworkError;
+
+    /// Parses a network identifier string into a `Network`.
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bitcoin" => Ok(Self::Bitcoin),
+            // For user-side compatibility, testnet3 is retained as testnet
+            "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
+            "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
+            "signet" => Ok(Self::Signet),
+            "regtest" => Ok(Self::Regtest),
+            _ => Err(ParseNetworkError(InputString::from(s))),
+        }
+    }
+}
+
+impl AsRef<Self> for Network {
+    fn as_ref(&self) -> &Self { self }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for Network {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.as_display_str())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Network {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct NetworkVisitor;
+
+        impl Visitor<'_> for NetworkVisitor {
+            type Value = Network;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a valid network identifier")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Network, E>
+            where
+                E: serde::de::Error,
+            {
+                Network::from_str(value).map_err(E::custom)
+            }
+        }
+
+        deserializer.deserialize_str(NetworkVisitor)
     }
 }
 
@@ -259,28 +281,6 @@ pub mod as_core_arg {
     }
 }
 
-impl FromStr for Network {
-    type Err = ParseNetworkError;
-
-    /// Parses a network identifier string into a `Network`.
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "bitcoin" => Ok(Self::Bitcoin),
-            // For user-side compatibility, testnet3 is retained as testnet
-            "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
-            "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
-            "signet" => Ok(Self::Signet),
-            "regtest" => Ok(Self::Regtest),
-            _ => Err(ParseNetworkError(InputString::from(s))),
-        }
-    }
-}
-
-impl AsRef<Self> for Network {
-    fn as_ref(&self) -> &Self { self }
-}
-
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for NetworkKind {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -293,6 +293,7 @@ impl<'a> Arbitrary<'a> for NetworkKind {
 
 /// Error types for the network.
 pub mod error {
+    use core::convert::Infallible;
     use core::fmt;
 
     use internals::error::InputString;
@@ -301,6 +302,10 @@ pub mod error {
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct ParseNetworkError(pub(super) InputString);
+
+    impl From<Infallible> for ParseNetworkError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
 
     impl fmt::Display for ParseNetworkError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
