@@ -470,10 +470,6 @@ pub mod error {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl From<Infallible> for PrefixedHexErrorInner {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
     impl fmt::Display for PrefixedHexError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             use PrefixedHexErrorInner as E;
@@ -511,10 +507,6 @@ pub mod error {
     }
 
     impl From<Infallible> for UnprefixedHexError {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    impl From<Infallible> for UnprefixedHexErrorInner {
         fn from(never: Infallible) -> Self { match never {} }
     }
 

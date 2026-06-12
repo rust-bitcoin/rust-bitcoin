@@ -51,10 +51,6 @@ impl From<Infallible> for Error {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
-impl From<Infallible> for ErrorInner {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ErrorInner::{Decode, IncorrectChecksum, TooShort};
@@ -169,10 +165,6 @@ impl InvalidCharacterError {
 }
 
 impl From<Infallible> for InvalidCharacterError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<Infallible> for InvalidCharacterErrorInner {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
