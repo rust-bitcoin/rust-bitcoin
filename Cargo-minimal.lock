@@ -183,6 +183,7 @@ version = "0.0.0"
 dependencies = [
  "arbitrary",
  "base58ck 0.4.0",
+ "bincode",
  "bitcoin-crypto",
  "bitcoin-internals 0.5.0",
  "bitcoin-network-kind",

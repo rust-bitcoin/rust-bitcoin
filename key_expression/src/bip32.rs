@@ -1508,8 +1508,6 @@ mod tests {
     use alloc::string::ToString;
 
     use hex::hex;
-    #[cfg(feature = "serde")]
-    use internals::serde_round_trip;
 
     use super::*;
 
@@ -1944,6 +1942,20 @@ mod tests {
             _ => panic!("Expected NonZeroParentFingerprintForMasterKey error, got {:?}", result),
         }
     }
+
+    /// Does round trip test to/from serde value.
+    #[cfg(feature = "serde")]
+    macro_rules! serde_round_trip (
+        ($var:expr) => ({
+            let encoded = serde_json::to_value(&$var).expect("serde_json failed to encode");
+            let decoded = serde_json::from_value(encoded).expect("serde_json failed to decode");
+            assert_eq!($var, decoded);
+
+            let encoded = bincode::serialize(&$var).expect("bincode failed to encode");
+            let decoded = bincode::deserialize(&encoded).expect("bincode failed to decode");
+            assert_eq!($var, decoded);
+        })
+    );
 
     #[test]
     #[cfg(feature = "serde")]

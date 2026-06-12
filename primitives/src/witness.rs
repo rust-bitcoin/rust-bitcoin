@@ -18,7 +18,6 @@ use encoding::{
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
 use internals::slice::SliceExt;
-use internals::wrap_debug::WrapDebug;
 
 #[cfg(feature = "hex")]
 use crate::hex_codec::HexPrimitive;
@@ -708,7 +707,7 @@ impl serde::Serialize for Witness {
         // Note that the `Iter` strips the varints out when iterating.
         for elem in self {
             if human_readable {
-                seq.serialize_element(&internals::serde::SerializeBytesAsHex(elem))?;
+                seq.serialize_element(&SerializeBytesAsHex(elem))?;
             } else {
                 seq.serialize_element(&elem)?;
             }
@@ -908,6 +907,29 @@ fn decode_unchecked(slice: &mut &[u8]) -> u64 {
             *slice = &slice[1..];
             u64::from(n)
         }
+    }
+}
+
+/// A wrapper for a function that implements `Debug`.
+struct WrapDebug<F: Fn(&mut fmt::Formatter) -> fmt::Result>(pub F);
+
+impl<F: Fn(&mut fmt::Formatter) -> fmt::Result> fmt::Debug for WrapDebug<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { (self.0)(f) }
+}
+
+/// Serializes a byte slice using the `hex` crate.
+#[cfg(feature = "serde")]
+struct SerializeBytesAsHex<'a>(pub &'a [u8]);
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for SerializeBytesAsHex<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use hex::DisplayHex;
+
+        serializer.collect_str(&format_args!("{:x}", self.0.as_hex()))
     }
 }
 
