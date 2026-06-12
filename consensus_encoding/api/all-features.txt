@@ -236,54 +236,6 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::Decode
 pub unsafe fn bitcoin_consensus_encoding::error::Decoder6Error<A, B, C, D, E, F>::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::Decoder6Error<A, B, C, D, E, F>
 pub fn bitcoin_consensus_encoding::error::Decoder6Error<A, B, C, D, E, F>::from(t: T) -> T
-pub enum bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-pub bitcoin_consensus_encoding::error::FromHexError::Decode(bitcoin_consensus_encoding::error::DecodeError<ParseErr>)
-pub bitcoin_consensus_encoding::error::FromHexError::InvalidChar(hex_conservative::error::InvalidCharError)
-pub bitcoin_consensus_encoding::error::FromHexError::OddLength(hex_conservative::error::OddLengthStringError)
-impl<ParseErr: core::clone::Clone> core::clone::Clone for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::clone(&self) -> bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-impl<ParseErr: core::cmp::Eq> core::cmp::Eq for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-impl<ParseErr: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::eq(&self, other: &bitcoin_consensus_encoding::error::FromHexError<ParseErr>) -> bool
-impl<ParseErr: core::fmt::Debug> core::fmt::Debug for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<ParseErr: core::fmt::Display> core::fmt::Display for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-impl<ParseErr> core::convert::From<core::convert::Infallible> for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::from(never: core::convert::Infallible) -> Self
-impl<ParseErr> core::error::Error for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::error::Error + 'static
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl<ParseErr> core::marker::StructuralPartialEq for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-impl<ParseErr> core::marker::Freeze for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::Freeze
-impl<ParseErr> core::marker::Send for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::Send
-impl<ParseErr> core::marker::Sync for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::Sync
-impl<ParseErr> core::marker::Unpin for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::Unpin
-impl<ParseErr> core::marker::UnsafeUnpin for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::UnsafeUnpin
-impl<ParseErr> core::panic::unwind_safe::RefUnwindSafe for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::panic::unwind_safe::RefUnwindSafe
-impl<ParseErr> core::panic::unwind_safe::UnwindSafe for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::panic::unwind_safe::UnwindSafe
-impl<T, U> core::convert::Into<U> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where U: core::convert::From<T>
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where U: core::convert::Into<T>
-pub type bitcoin_consensus_encoding::error::FromHexError<ParseErr>::Error = core::convert::Infallible
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where U: core::convert::TryFrom<T>
-pub type bitcoin_consensus_encoding::error::FromHexError<ParseErr>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: core::clone::Clone
-pub type bitcoin_consensus_encoding::error::FromHexError<ParseErr>::Owned = T
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::clone_into(&self, target: &mut T)
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: 'static + ?core::marker::Sized
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: ?core::marker::Sized
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: ?core::marker::Sized
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: core::clone::Clone
-pub unsafe fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
-pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::from(t: T) -> T
 pub enum bitcoin_consensus_encoding::error::ReadError<D>
 pub bitcoin_consensus_encoding::error::ReadError::Decode(D)
 pub bitcoin_consensus_encoding::error::ReadError::Io(std::io::error::Error)
@@ -409,6 +361,51 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::Compac
 pub unsafe fn bitcoin_consensus_encoding::error::CompactSizeDecoderError::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::CompactSizeDecoderError
 pub fn bitcoin_consensus_encoding::error::CompactSizeDecoderError::from(t: T) -> T
+pub struct bitcoin_consensus_encoding::error::FromHexError<ParseErr>(_)
+impl<ParseErr: core::clone::Clone> core::clone::Clone for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::clone(&self) -> bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+impl<ParseErr: core::cmp::Eq> core::cmp::Eq for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+impl<ParseErr: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::eq(&self, other: &bitcoin_consensus_encoding::error::FromHexError<ParseErr>) -> bool
+impl<ParseErr: core::fmt::Debug> core::fmt::Debug for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<ParseErr: core::fmt::Display> core::fmt::Display for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+impl<ParseErr> core::convert::From<core::convert::Infallible> for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::from(never: core::convert::Infallible) -> Self
+impl<ParseErr> core::error::Error for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::error::Error + 'static
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl<ParseErr> core::marker::StructuralPartialEq for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+impl<ParseErr> core::marker::Freeze for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::Freeze
+impl<ParseErr> core::marker::Send for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::Send
+impl<ParseErr> core::marker::Sync for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::Sync
+impl<ParseErr> core::marker::Unpin for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::Unpin
+impl<ParseErr> core::marker::UnsafeUnpin for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::marker::UnsafeUnpin
+impl<ParseErr> core::panic::unwind_safe::RefUnwindSafe for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::panic::unwind_safe::RefUnwindSafe
+impl<ParseErr> core::panic::unwind_safe::UnwindSafe for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where ParseErr: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where U: core::convert::From<T>
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where U: core::convert::Into<T>
+pub type bitcoin_consensus_encoding::error::FromHexError<ParseErr>::Error = core::convert::Infallible
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where U: core::convert::TryFrom<T>
+pub type bitcoin_consensus_encoding::error::FromHexError<ParseErr>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: core::clone::Clone
+pub type bitcoin_consensus_encoding::error::FromHexError<ParseErr>::Owned = T
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::clone_into(&self, target: &mut T)
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: 'static + ?core::marker::Sized
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: ?core::marker::Sized
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: ?core::marker::Sized
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::FromHexError<ParseErr> where T: core::clone::Clone
+pub unsafe fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::FromHexError<ParseErr>
+pub fn bitcoin_consensus_encoding::error::FromHexError<ParseErr>::from(t: T) -> T
 pub struct bitcoin_consensus_encoding::error::LengthPrefixExceedsMaxError
 impl core::clone::Clone for bitcoin_consensus_encoding::error::LengthPrefixExceedsMaxError
 pub fn bitcoin_consensus_encoding::error::LengthPrefixExceedsMaxError::clone(&self) -> bitcoin_consensus_encoding::error::LengthPrefixExceedsMaxError
@@ -710,10 +707,6 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::EncoderStatus
 pub unsafe fn bitcoin_consensus_encoding::EncoderStatus::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::EncoderStatus
 pub fn bitcoin_consensus_encoding::EncoderStatus::from(t: T) -> T
-pub enum bitcoin_consensus_encoding::FromHexError<ParseErr>
-pub bitcoin_consensus_encoding::FromHexError::Decode(bitcoin_consensus_encoding::error::DecodeError<ParseErr>)
-pub bitcoin_consensus_encoding::FromHexError::InvalidChar(hex_conservative::error::InvalidCharError)
-pub bitcoin_consensus_encoding::FromHexError::OddLength(hex_conservative::error::OddLengthStringError)
 pub enum bitcoin_consensus_encoding::ReadError<D>
 pub bitcoin_consensus_encoding::ReadError::Decode(D)
 pub bitcoin_consensus_encoding::ReadError::Io(std::io::error::Error)
@@ -1450,6 +1443,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::EncoderByteIt
 pub unsafe fn bitcoin_consensus_encoding::EncoderByteIter<T>::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::EncoderByteIter<T>
 pub fn bitcoin_consensus_encoding::EncoderByteIter<T>::from(t: T) -> T
+pub struct bitcoin_consensus_encoding::FromHexError<ParseErr>(_)
 pub struct bitcoin_consensus_encoding::LengthPrefixExceedsMaxError
 pub struct bitcoin_consensus_encoding::SliceEncoder<'e, T: bitcoin_consensus_encoding::Encode>
 impl<'e, T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::SliceEncoder<'e, T>
