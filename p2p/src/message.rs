@@ -2662,9 +2662,10 @@ mod test {
             0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2
         ]);
-        let preimage = V1NetworkMessage::new(Magic::BITCOIN, NetworkMessage::GetAddr);
         assert!(msg.is_ok());
         let msg: V1NetworkMessage = msg.unwrap();
+
+        let preimage = V1NetworkMessage::new(Magic::BITCOIN, NetworkMessage::GetAddr);
         assert_eq!(preimage.magic, msg.magic);
         assert_eq!(preimage.payload, msg.payload);
     }
@@ -2675,10 +2676,10 @@ mod test {
             0x00, // Full command encoding flag
             0x67, 0x65, 0x74, 0x61, 0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
         ]);
-
-        let preimage = V2NetworkMessage::new(NetworkMessage::GetAddr);
         assert!(msg.is_ok());
         let msg: V2NetworkMessage = msg.unwrap();
+
+        let preimage = V2NetworkMessage::new(NetworkMessage::GetAddr);
         assert_eq!(preimage, msg);
     }
 
