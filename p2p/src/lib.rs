@@ -15,6 +15,7 @@ mod network_ext;
 #[cfg(feature = "std")]
 pub mod address;
 pub mod bip152;
+pub mod bip434;
 pub mod error;
 pub mod merkle_tree;
 #[cfg(feature = "std")]
