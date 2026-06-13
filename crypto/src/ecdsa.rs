@@ -51,6 +51,7 @@ pub struct Signature {
 
 impl Signature {
     /// Constructs a new ECDSA Bitcoin signature for [`EcdsaSighashType::All`].
+    #[inline]
     pub fn sighash_all(signature: secp256k1::ecdsa::Signature) -> Self {
         Self { signature, sighash_type: EcdsaSighashType::All }
     }
@@ -73,6 +74,7 @@ impl Signature {
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format).
     ///
     /// This does **not** perform extra heap allocation.
+    #[inline]
     pub fn serialize(&self) -> SerializedSignature {
         let mut buf = [0u8; MAX_SIG_LEN];
         let signature = self.signature.serialize_der();
@@ -98,6 +100,7 @@ impl Signature {
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Signature {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::LowerHex::fmt(&self.signature.serialize_der().as_hex(), f)?;
         fmt::LowerHex::fmt(&[self.sighash_type as u8].as_hex(), f)
@@ -109,6 +112,7 @@ impl fmt::Display for Signature {
 impl FromStr for Signature {
     type Err = ParseSignatureError;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = hex::decode_to_vec(s).map_err(ParseSignatureError::Hex)?;
         Self::from_slice(&bytes).map_err(ParseSignatureError::Decode)
@@ -218,20 +222,24 @@ impl PartialEq<SerializedSignature> for [u8] {
 }
 
 impl PartialOrd for SerializedSignature {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> { Some(self.cmp(other)) }
 }
 
 impl Ord for SerializedSignature {
+    #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
 }
 
 impl PartialOrd<[u8]> for SerializedSignature {
+    #[inline]
     fn partial_cmp(&self, other: &[u8]) -> Option<core::cmp::Ordering> {
         (**self).partial_cmp(other)
     }
 }
 
 impl PartialOrd<SerializedSignature> for [u8] {
+    #[inline]
     fn partial_cmp(&self, other: &SerializedSignature) -> Option<core::cmp::Ordering> {
         self.partial_cmp(&**other)
     }
@@ -240,6 +248,7 @@ impl PartialOrd<SerializedSignature> for [u8] {
 impl Eq for SerializedSignature {}
 
 impl core::hash::Hash for SerializedSignature {
+    #[inline]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state) }
 }
 
@@ -290,10 +299,12 @@ pub mod error {
     }
 
     impl From<Infallible> for DecodeError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for DecodeError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
@@ -305,6 +316,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for DecodeError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::InvalidDer(ref e) => Some(e),
@@ -320,15 +332,18 @@ pub mod error {
     pub struct InvalidDerError;
 
     impl From<Infallible> for InvalidDerError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for InvalidDerError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "invalid DER encoding") }
     }
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidDerError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self {} = self;
             None
@@ -348,11 +363,13 @@ pub mod error {
 
     #[cfg(feature = "hex")]
     impl From<Infallible> for ParseSignatureError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "hex")]
     impl fmt::Display for ParseSignatureError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
@@ -364,6 +381,7 @@ pub mod error {
     #[cfg(feature = "hex")]
     #[cfg(feature = "std")]
     impl std::error::Error for ParseSignatureError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::Hex(ref e) => Some(e),
