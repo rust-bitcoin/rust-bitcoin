@@ -1,3 +1,21 @@
+# 0.32.100 - 2025-05-26
+
+**YANKED** 
+
+Turns out this was more costly to downstream users than we imagined.
+See discussion on [#6126](https://github.com/rust-bitcoin/rust-bitcoin/pull/6126) for context.
+
+**Bump the MSRV to Rust 1.74.0**
+
+Note the version number jump. We jumped to `v0.32.100` when doing the MSRV bump so as to
+leave room for a bunch of secuity releases up to this number if needed.
+
+- Our primary users (BDK and LDK) are at 1.85 already well ahead of `1.74`.
+- We would like to deliver the new sans-IO `consensus_encoding` crate in a point release.
+- The would like to later support ergonomic conversion to other 1.0 types (from `bitcoin-units`, and
+  and `bitcoin-primitives`) without forcing the whole ecosystem to upgrade.
+- Opens the door to the possibility of doing releases and then using the semver trick.
+
 # 0.32.10 - 2026-04-23
 
 
