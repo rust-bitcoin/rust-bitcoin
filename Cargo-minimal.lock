@@ -26,7 +26,7 @@ dependencies = [
 
 [[package]]
 name = "base58ck"
-version = "0.1.100"
+version = "0.1.1"
 dependencies = [
  "bitcoin_hashes 0.14.0",
  "hex-conservative",
@@ -56,7 +56,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin"
-version = "0.32.100"
+version = "0.32.10"
 dependencies = [
  "arbitrary",
  "base58ck 0.1.0",
@@ -101,7 +101,7 @@ checksum = "17e5b76b88667412087beea1882980ad843b660490bbf6cce0a6cfc999c5b989"
 
 [[package]]
 name = "bitcoin-io"
-version = "0.1.100"
+version = "0.1.4"
 
 [[package]]
 name = "bitcoin-private"
@@ -122,7 +122,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-units"
-version = "0.1.100"
+version = "0.1.4"
 dependencies = [
  "arbitrary",
  "serde",
@@ -152,7 +152,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.14.100"
+version = "0.14.2"
 dependencies = [
  "bitcoin-io 0.1.1",
  "hex-conservative",
