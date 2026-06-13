@@ -78,7 +78,7 @@ impl FeeRate {
     pub const fn to_sat_per_vb_floor(self) -> u64 { self.0 / (1000 / 4) }
 
     /// Converts to sat/vB rounding up.
-    pub const fn to_sat_per_vb_ceil(self) -> u64 { self.0.div_ceil(1000 / 4) }
+    pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.0 + (1000 / 4 - 1)) / (1000 / 4) }
 
     /// Checked multiplication.
     ///
@@ -136,7 +136,7 @@ impl Mul<FeeRate> for Weight {
     type Output = Amount;
 
     fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu()).div_ceil(1000))
+        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
     }
 }
 
