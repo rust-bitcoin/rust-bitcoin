@@ -7,6 +7,8 @@
 //!
 
 use core::cmp;
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
@@ -20,6 +22,8 @@ use crate::consensus::Params;
 use crate::error::{
     ContainsPrefixError, MissingPrefixError, ParseIntError, PrefixedHexError, UnprefixedHexError,
 };
+#[cfg(feature = "encoding")]
+use crate::internal_macros::write_err;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -471,6 +475,68 @@ impl LowerHex for CompactTarget {
 impl UpperHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { UpperHex::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for CompactTarget {
+    type Encoder<'e> = CompactTargetEncoder<'e>;
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        CompactTargetEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_consensus().to_le_bytes(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for CompactTarget {
+    type Decoder = CompactTargetDecoder;
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`CompactTarget`] type.
+    #[derive(Debug, Clone)]
+    pub struct CompactTargetEncoder<'e>(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`CompactTarget`] type.
+    #[derive(Debug, Clone)]
+    pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
+
+    /// Constructs a new [`CompactTarget`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<CompactTarget, CompactTargetDecoderError> {
+        let value = result.map_err(CompactTargetDecoderError)?;
+        let n = u32::from_le_bytes(value);
+        Ok(CompactTarget::from_consensus(n))
+    }
+}
+
+/// An error consensus decoding a `CompactTarget`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompactTargetDecoderError(pub(super) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for CompactTargetDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for CompactTargetDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "compact target decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for CompactTargetDecoderError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// Big-endian 256 bit integer type.
