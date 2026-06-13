@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+* Remove all deprecated code.
+
 ## [0.4.0] - 2026-05-27
 
 * Add format traits for `Target` and `Work` [#5626](https://github.com/rust-bitcoin/rust-bitcoin/pull/5626)

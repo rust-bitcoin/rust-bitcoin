@@ -5,17 +5,17 @@
 //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
 //! We refer to the documentation on the types for more information.
 
-pub mod error;
-mod result;
-#[cfg(feature = "serde")]
-pub mod serde;
-
 mod signed;
+mod result;
 #[cfg(test)]
 mod tests;
 mod unsigned;
 #[cfg(kani)]
 mod verification;
+
+pub mod error;
+#[cfg(feature = "serde")]
+pub mod serde;
 
 use core::cmp::Ordering;
 use core::convert::Infallible;

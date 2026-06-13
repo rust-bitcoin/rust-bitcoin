@@ -55,6 +55,7 @@ mod encapsulate {
     impl SignedAmount {
         /// The maximum value of an amount.
         pub const MAX: Self = Self(21_000_000 * 100_000_000);
+
         /// The minimum value of an amount.
         pub const MIN: Self = Self(-21_000_000 * 100_000_000);
 
@@ -103,12 +104,16 @@ use internals::const_casts;
 impl SignedAmount {
     /// The zero amount.
     pub const ZERO: Self = Self::from_sat_i32(0);
+
     /// Exactly one satoshi.
     pub const ONE_SAT: Self = Self::from_sat_i32(1);
+
     /// Exactly one bitcoin.
     pub const ONE_BTC: Self = Self::from_btc_i16(1);
+
     /// Exactly fifty bitcoin.
     pub const FIFTY_BTC: Self = Self::from_btc_i16(50);
+
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = Self::MAX;
 
@@ -422,16 +427,6 @@ impl SignedAmount {
     /// this [`SignedAmount`] is zero or positive.
     #[inline]
     pub fn is_negative(self) -> bool { self.to_sat().is_negative() }
-
-    /// Returns the absolute value of this [`SignedAmount`].
-    ///
-    /// Consider using `unsigned_abs` which is often more practical.
-    ///
-    /// Returns [`None`] if overflow occurred. (`self == i64::MIN`)
-    #[must_use]
-    #[deprecated(since = "1.0.0-rc.0", note = "Never returns none, use `abs()` instead")]
-    #[allow(clippy::unnecessary_wraps)] // To match stdlib function definition.
-    pub const fn checked_abs(self) -> Option<Self> { Some(self.abs()) }
 
     /// Checked addition.
     ///

@@ -23,7 +23,7 @@ mod encapsulate {
     ///
     /// NOTE: `FeeRate` explicitly does not have any format/display trait implementations, as it
     /// doesn't have a standard unit for measure. Users are expected to format it on their own by
-    /// extracting values in desired units with `from_sat_per*` functions.
+    /// extracting values in desired units with `to_sat_per*` functions.
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     pub struct FeeRate(u64);
 
@@ -63,14 +63,14 @@ impl FeeRate {
     /// The fee rate used to compute dust amount.
     pub const DUST: Self = Self::from_sat_per_vb(3);
 
-    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
+    /// Constructs a new [`FeeRate`] from satoshis per 1,000 weight units.
     #[inline]
     pub const fn from_sat_per_kwu(sat_kwu: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_kwu)) * 4_000;
         Self::from_sat_per_mvb(fee_rate)
     }
 
-    /// Constructs a new [`FeeRate`] from amount per 1000 weight units.
+    /// Constructs a new [`FeeRate`] from amount per 1,000 weight units.
     #[inline]
     pub const fn from_per_kwu(rate: Amount) -> NumOpResult<Self> {
         // No `map()` in const context.
@@ -104,7 +104,7 @@ impl FeeRate {
         Self::from_sat_per_mvb(fee_rate)
     }
 
-    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
+    /// Constructs a new [`FeeRate`] from amount per kilo virtual bytes (1,000 vbytes).
     #[inline]
     pub const fn from_per_kvb(rate: Amount) -> NumOpResult<Self> {
         // No `map()` in const context.
@@ -207,23 +207,6 @@ impl FeeRate {
             NumOpResult::Error(_) => Amount::MAX,
         }
     }
-
-    /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
-    /// if an overflow occurred.
-    ///
-    /// This is equivalent to `Self::mul_by_weight(weight).ok()`.
-    #[must_use]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `to_fee()` instead")]
-    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.mul_by_weight(weight).ok() }
-
-    /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
-    /// if `vb` cannot be represented as [`Weight`].
-    ///
-    /// This is equivalent to converting `vb` to [`Weight`] using [`Weight::from_vb`] and then calling
-    /// [`Self::to_fee`].
-    #[must_use]
-    #[deprecated(since = "1.0.0-rc.0", note = "use Weight::from_vb and then `to_fee()` instead")]
-    pub fn fee_vb(self, vb: u64) -> Option<Amount> { Weight::from_vb(vb).map(|w| self.to_fee(w)) }
 
     /// Checked weight multiplication.
     ///

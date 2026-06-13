@@ -134,6 +134,7 @@ pub struct Target(U256);
 impl Target {
     /// When parsing nBits, Bitcoin Core converts a negative target threshold into a target of zero.
     pub const ZERO: Self = Self(U256::ZERO);
+
     /// The maximum possible target.
     ///
     /// This value is used to calculate difficulty, which is defined as how difficult the current
@@ -251,12 +252,6 @@ impl CompactTarget {
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
     #[inline]
     pub const fn to_consensus(self) -> u32 { self.0 }
-
-    /// Gets the hex representation of this [`CompactTarget`].
-    #[cfg(feature = "alloc")]
-    #[inline]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
     /// Constructs a new `CompactTarget` from a prefixed hex string.
     ///
@@ -548,8 +543,6 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "encoding")]
     use alloc::string::ToString;
-    #[cfg(feature = "std")]
-    use std::error::Error as _;
 
     #[cfg(feature = "encoding")]
     use encoding::Decoder as _;
@@ -1537,16 +1530,19 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    #[allow(deprecated)]
     fn compact_target_to_hex() {
         let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
-        assert_eq!(compact_target.to_hex(), "1d00ffff");
+        let got = alloc::format!("{:x}", compact_target);
+        assert_eq!(got, "1d00ffff");
     }
 
     #[test]
     #[cfg(feature = "encoding")]
     #[cfg(feature = "alloc")]
     fn compact_target_decoder_error_display_and_source() {
+        #[cfg(feature = "std")]
+        use std::error::Error as _;
+
         let mut slice = [0u8; 3].as_slice();
         let mut decoder = CompactTargetDecoder::new();
 

@@ -23,25 +23,20 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
-// Exclude lints we don't think are valuable.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 // Extra restriction lints.
 #![warn(clippy::indexing_slicing)] // Avoid implicit panics from indexing/slicing.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
-
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(feature = "encoding")]
-pub extern crate encoding;
-
-#[cfg(feature = "serde")]
-pub extern crate serde;
-
 #[cfg(feature = "arbitrary")]
 pub extern crate arbitrary;
+#[cfg(feature = "encoding")]
+pub extern crate encoding;
+#[cfg(feature = "serde")]
+pub extern crate serde;
 
 #[doc(hidden)]
 pub mod _export {
@@ -78,10 +73,6 @@ pub use self::{
     time::BlockTime,
     weight::Weight
 };
-
-#[deprecated(since = "1.0.0-rc.0", note = "use `BlockHeightInterval` instead")]
-#[doc(hidden)]
-pub type BlockInterval = BlockHeightInterval;
 
 // decoder_newtype! macro
 #[cfg(feature = "encoding")]
