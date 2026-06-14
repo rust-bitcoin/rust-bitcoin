@@ -53,10 +53,10 @@ pub fn bitcoin_hashes::hash160::Hash::from_str(s: &str) -> core::result::Result<
 impl schemars::JsonSchema for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::hash160::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::hash160::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::hash160::Hash
+pub fn bitcoin_hashes::hash160::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::hash160::Hash
+pub fn bitcoin_hashes::hash160::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::hash160::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::hash160::Hash
 pub type bitcoin_hashes::hash160::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::hash160::Hash::index(&self, index: I) -> &Self::Output
@@ -93,11 +93,11 @@ impl<T> core::convert::From<T> for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::hash160::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::hash160::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::hash160::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::hash160::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub mod bitcoin_hashes::hmac
 #[repr(transparent)] pub struct bitcoin_hashes::hmac::Hmac<T: bitcoin_hashes::Hash>(_)
-impl<'de, T: bitcoin_hashes::Hash + serde_core::de::Deserialize<'de>> serde_core::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::hmac::Hmac<T>, <D as serde_core::de::Deserializer>::Error>
+impl<'de, T: bitcoin_hashes::Hash + serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
+pub fn bitcoin_hashes::hmac::Hmac<T>::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::hmac::Hmac<T>, <D as serde::de::Deserializer>::Error>
 impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -105,8 +105,8 @@ impl<T: bitcoin_hashes::Hash + schemars::JsonSchema> schemars::JsonSchema for bi
 pub fn bitcoin_hashes::hmac::Hmac<T>::is_referenceable() -> bool
 pub fn bitcoin_hashes::hmac::Hmac<T>::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::hmac::Hmac<T>::schema_name() -> alloc::string::String
-impl<T: bitcoin_hashes::Hash + serde_core::ser::Serialize> serde_core::ser::Serialize for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<T: bitcoin_hashes::Hash + serde::ser::Serialize> serde::ser::Serialize for bitcoin_hashes::hmac::Hmac<T>
+pub fn bitcoin_hashes::hmac::Hmac<T>::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 impl<T: bitcoin_hashes::Hash> bitcoin_hashes::Hash for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Bytes = <T as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin_hashes::hmac::Hmac<T>::Engine = bitcoin_hashes::hmac::HmacEngine<T>
@@ -181,7 +181,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::hmac::Hmac<T> where T: core::clone::Clone
 pub fn bitcoin_hashes::hmac::Hmac<T>::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::hmac::Hmac<T> where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::hmac::Hmac<T> where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::hmac::HmacEngine<T: bitcoin_hashes::Hash>
 impl<T: bitcoin_hashes::Hash> bitcoin_hashes::hmac::HmacEngine<T>
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::from_inner_engines(iengine: <T as bitcoin_hashes::Hash>::Engine, oengine: <T as bitcoin_hashes::Hash>::Engine) -> bitcoin_hashes::hmac::HmacEngine<T>
@@ -309,10 +309,10 @@ pub fn bitcoin_hashes::ripemd160::Hash::from_str(s: &str) -> core::result::Resul
 impl schemars::JsonSchema for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::ripemd160::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::ripemd160::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::ripemd160::Hash
+pub fn bitcoin_hashes::ripemd160::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::ripemd160::Hash
+pub fn bitcoin_hashes::ripemd160::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::ripemd160::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::ripemd160::Hash
 pub type bitcoin_hashes::ripemd160::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::ripemd160::Hash::index(&self, index: I) -> &Self::Output
@@ -349,7 +349,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::ripemd160::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::ripemd160::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::ripemd160::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::ripemd160::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::ripemd160::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::ripemd160::HashEngine
 pub type bitcoin_hashes::ripemd160::HashEngine::MidState = [u8; 20]
@@ -402,9 +402,9 @@ pub mod bitcoin_hashes::serde_macros
 pub mod bitcoin_hashes::serde_macros::serde_details
 pub trait bitcoin_hashes::serde_macros::serde_details::SerdeHash where Self: core::marker::Sized + core::str::traits::FromStr + core::fmt::Display + core::ops::index::Index<usize, Output = u8> + core::ops::index::Index<core::ops::range::RangeFull, Output = [u8]>, <Self as core::str::traits::FromStr>::Err: core::fmt::Display
 pub const bitcoin_hashes::serde_macros::serde_details::SerdeHash::N: usize
-pub fn bitcoin_hashes::serde_macros::serde_details::SerdeHash::deserialize<'de, D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
+pub fn bitcoin_hashes::serde_macros::serde_details::SerdeHash::deserialize<'de, D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_hashes::serde_macros::serde_details::SerdeHash::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
-pub fn bitcoin_hashes::serde_macros::serde_details::SerdeHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+pub fn bitcoin_hashes::serde_macros::serde_details::SerdeHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin_hashes::sha1::Hash
 pub const bitcoin_hashes::sha1::Hash::N: usize
 pub fn bitcoin_hashes::sha1::Hash::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
@@ -479,10 +479,10 @@ pub fn bitcoin_hashes::sha1::Hash::from_str(s: &str) -> core::result::Result<Sel
 impl schemars::JsonSchema for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::sha1::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha1::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::sha1::Hash
+pub fn bitcoin_hashes::sha1::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha1::Hash
+pub fn bitcoin_hashes::sha1::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha1::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha1::Hash
 pub type bitcoin_hashes::sha1::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::sha1::Hash::index(&self, index: I) -> &Self::Output
@@ -519,7 +519,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::sha1::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::sha1::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::sha1::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha1::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::sha1::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha1::HashEngine
 pub type bitcoin_hashes::sha1::HashEngine::MidState = [u8; 20]
@@ -617,10 +617,10 @@ pub fn bitcoin_hashes::sha256::Hash::from_str(s: &str) -> core::result::Result<S
 impl schemars::JsonSchema for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::sha256::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::sha256::Hash
+pub fn bitcoin_hashes::sha256::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha256::Hash
+pub fn bitcoin_hashes::sha256::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha256::Hash
 pub type bitcoin_hashes::sha256::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::sha256::Hash::index(&self, index: I) -> &Self::Output
@@ -657,7 +657,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::sha256::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::sha256::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::sha256::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha256::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::sha256::HashEngine
 impl bitcoin_hashes::sha256::HashEngine
 pub fn bitcoin_hashes::sha256::HashEngine::from_midstate(midstate: bitcoin_hashes::sha256::Midstate, length: usize) -> bitcoin_hashes::sha256::HashEngine
@@ -744,10 +744,10 @@ pub fn bitcoin_hashes::sha256::Midstate::from_str(s: &str) -> core::result::Resu
 impl hex_conservative::parse::FromHex for bitcoin_hashes::sha256::Midstate
 pub type bitcoin_hashes::sha256::Midstate::Error = hex_conservative::error::HexToArrayError
 pub fn bitcoin_hashes::sha256::Midstate::from_hex(s: &str) -> core::result::Result<Self, Self::Error>
-impl serde_core::ser::Serialize for bitcoin_hashes::sha256::Midstate
-pub fn bitcoin_hashes::sha256::Midstate::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::sha256::Midstate
-pub fn bitcoin_hashes::sha256::Midstate::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256::Midstate, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::sha256::Midstate
+pub fn bitcoin_hashes::sha256::Midstate::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha256::Midstate
+pub fn bitcoin_hashes::sha256::Midstate::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256::Midstate, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha256::Midstate
 pub type bitcoin_hashes::sha256::Midstate::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::sha256::Midstate::index(&self, index: I) -> &Self::Output
@@ -784,7 +784,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha256::Midstate
 pub fn bitcoin_hashes::sha256::Midstate::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::sha256::Midstate where T: core::clone::Clone
 pub fn bitcoin_hashes::sha256::Midstate::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::sha256::Midstate where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha256::Midstate where T: for<'de> serde::de::Deserialize<'de>
 pub mod bitcoin_hashes::sha256d
 #[repr(transparent)] pub struct bitcoin_hashes::sha256d::Hash(_)
 impl bitcoin_hashes::sha256d::Hash
@@ -832,10 +832,10 @@ pub fn bitcoin_hashes::sha256d::Hash::from_str(s: &str) -> core::result::Result<
 impl schemars::JsonSchema for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::sha256d::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256d::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::sha256d::Hash
+pub fn bitcoin_hashes::sha256d::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha256d::Hash
+pub fn bitcoin_hashes::sha256d::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256d::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha256d::Hash
 pub type bitcoin_hashes::sha256d::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::sha256d::Hash::index(&self, index: I) -> &Self::Output
@@ -872,14 +872,14 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::sha256d::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::sha256d::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::sha256d::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha256d::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub mod bitcoin_hashes::sha256t
 #[repr(transparent)] pub struct bitcoin_hashes::sha256t::Hash<T: bitcoin_hashes::sha256t::Tag>(_, _)
 impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::sha256t::Hash<T>
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-impl<'de, T: bitcoin_hashes::sha256t::Tag> serde_core::de::Deserialize<'de> for bitcoin_hashes::sha256t::Hash<T>
-pub fn bitcoin_hashes::sha256t::Hash<T>::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256t::Hash<T>, <D as serde_core::de::Deserializer>::Error>
+impl<'de, T: bitcoin_hashes::sha256t::Tag> serde::de::Deserialize<'de> for bitcoin_hashes::sha256t::Hash<T>
+pub fn bitcoin_hashes::sha256t::Hash<T>::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256t::Hash<T>, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>, T: bitcoin_hashes::sha256t::Tag> core::ops::index::Index<I> for bitcoin_hashes::sha256t::Hash<T>
 pub type bitcoin_hashes::sha256t::Hash<T>::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::sha256t::Hash<T>::index(&self, index: I) -> &Self::Output
@@ -926,8 +926,8 @@ pub fn bitcoin_hashes::sha256t::Hash<T>::from_str(s: &str) -> core::result::Resu
 impl<T: bitcoin_hashes::sha256t::Tag> schemars::JsonSchema for bitcoin_hashes::sha256t::Hash<T>
 pub fn bitcoin_hashes::sha256t::Hash<T>::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::sha256t::Hash<T>::schema_name() -> alloc::string::String
-impl<T: bitcoin_hashes::sha256t::Tag> serde_core::ser::Serialize for bitcoin_hashes::sha256t::Hash<T>
-pub fn bitcoin_hashes::sha256t::Hash<T>::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<T: bitcoin_hashes::sha256t::Tag> serde::ser::Serialize for bitcoin_hashes::sha256t::Hash<T>
+pub fn bitcoin_hashes::sha256t::Hash<T>::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 impl<T> core::marker::Freeze for bitcoin_hashes::sha256t::Hash<T>
 impl<T> core::marker::Send for bitcoin_hashes::sha256t::Hash<T> where T: core::marker::Send
 impl<T> core::marker::Sync for bitcoin_hashes::sha256t::Hash<T> where T: core::marker::Sync
@@ -961,7 +961,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha256t::Hash<T>
 pub fn bitcoin_hashes::sha256t::Hash<T>::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::sha256t::Hash<T> where T: core::clone::Clone
 pub fn bitcoin_hashes::sha256t::Hash<T>::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::sha256t::Hash<T> where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha256t::Hash<T> where T: for<'de> serde::de::Deserialize<'de>
 pub trait bitcoin_hashes::sha256t::Tag
 pub fn bitcoin_hashes::sha256t::Tag::engine() -> bitcoin_hashes::sha256::HashEngine
 pub mod bitcoin_hashes::sha384
@@ -1011,10 +1011,10 @@ pub fn bitcoin_hashes::sha384::Hash::from_str(s: &str) -> core::result::Result<S
 impl schemars::JsonSchema for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::sha384::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha384::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::sha384::Hash
+pub fn bitcoin_hashes::sha384::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha384::Hash
+pub fn bitcoin_hashes::sha384::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha384::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha384::Hash
 pub type bitcoin_hashes::sha384::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::sha384::Hash::index(&self, index: I) -> &Self::Output
@@ -1051,7 +1051,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::sha384::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::sha384::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::sha384::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha384::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::sha384::HashEngine(_)
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha384::HashEngine
 pub type bitcoin_hashes::sha384::HashEngine::MidState = [u8; 64]
@@ -1141,10 +1141,10 @@ pub fn bitcoin_hashes::sha512::Hash::from_str(s: &str) -> core::result::Result<S
 impl schemars::JsonSchema for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::sha512::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha512::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::sha512::Hash
+pub fn bitcoin_hashes::sha512::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha512::Hash
+pub fn bitcoin_hashes::sha512::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha512::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha512::Hash
 pub type bitcoin_hashes::sha512::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::sha512::Hash::index(&self, index: I) -> &Self::Output
@@ -1181,7 +1181,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::sha512::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::sha512::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::sha512::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha512::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::sha512::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha512::HashEngine
 pub type bitcoin_hashes::sha512::HashEngine::MidState = [u8; 64]
@@ -1277,10 +1277,10 @@ pub fn bitcoin_hashes::sha512_256::Hash::from_str(s: &str) -> core::result::Resu
 impl schemars::JsonSchema for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::sha512_256::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha512_256::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::sha512_256::Hash
+pub fn bitcoin_hashes::sha512_256::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha512_256::Hash
+pub fn bitcoin_hashes::sha512_256::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha512_256::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha512_256::Hash
 pub type bitcoin_hashes::sha512_256::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::sha512_256::Hash::index(&self, index: I) -> &Self::Output
@@ -1317,7 +1317,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::sha512_256::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::sha512_256::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::sha512_256::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha512_256::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::sha512_256::HashEngine(_)
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha512_256::HashEngine
 pub type bitcoin_hashes::sha512_256::HashEngine::MidState = [u8; 64]
@@ -1412,10 +1412,10 @@ pub fn bitcoin_hashes::siphash24::Hash::from_str(s: &str) -> core::result::Resul
 impl schemars::JsonSchema for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema
 pub fn bitcoin_hashes::siphash24::Hash::schema_name() -> alloc::string::String
-impl serde_core::ser::Serialize for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
-impl<'de> serde_core::de::Deserialize<'de> for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::siphash24::Hash, <D as serde_core::de::Deserializer>::Error>
+impl serde::ser::Serialize for bitcoin_hashes::siphash24::Hash
+pub fn bitcoin_hashes::siphash24::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::siphash24::Hash
+pub fn bitcoin_hashes::siphash24::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::siphash24::Hash, <D as serde::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::siphash24::Hash
 pub type bitcoin_hashes::siphash24::Hash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin_hashes::siphash24::Hash::index(&self, index: I) -> &Self::Output
@@ -1452,7 +1452,7 @@ impl<T> core::convert::From<T> for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::from(t: T) -> T
 impl<T> dyn_clone::DynClone for bitcoin_hashes::siphash24::Hash where T: core::clone::Clone
 pub fn bitcoin_hashes::siphash24::Hash::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> serde_core::de::DeserializeOwned for bitcoin_hashes::siphash24::Hash where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde::de::DeserializeOwned for bitcoin_hashes::siphash24::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::siphash24::HashEngine
 impl bitcoin_hashes::siphash24::HashEngine
 pub fn bitcoin_hashes::siphash24::HashEngine::keys(&self) -> (u64, u64)

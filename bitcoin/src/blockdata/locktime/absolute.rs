@@ -7,8 +7,6 @@
 //!
 
 use core::cmp::Ordering;
-#[cfg(feature = "encoding")]
-use core::convert::Infallible;
 use core::fmt;
 use core::str::FromStr;
 
@@ -21,8 +19,6 @@ use units::parse::{self, ParseIntError};
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
-#[cfg(feature = "encoding")]
-use crate::internal_macros::write_err;
 use crate::prelude::{Box, String};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -381,69 +377,6 @@ impl Decodable for LockTime {
     fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         u32::consensus_decode(r).map(LockTime::from_consensus)
     }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Encode for LockTime {
-    type Encoder<'e> = LockTimeEncoder<'e>;
-    #[inline]
-    fn encoder(&self) -> Self::Encoder<'_> {
-        LockTimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus_u32().to_le_bytes(),
-        ))
-    }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decode for LockTime {
-    type Decoder = LockTimeDecoder;
-}
-
-#[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`LockTime`] type.
-    #[derive(Debug, Clone)]
-    pub struct LockTimeEncoder<'e>(encoding::ArrayEncoder<4>);
-}
-
-#[cfg(feature = "encoding")]
-crate::decoder_newtype! {
-    /// The decoder for the [`LockTime`] type.
-    #[derive(Debug, Clone)]
-    pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
-
-    /// Constructs a new [`LockTime`] decoder.
-    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-
-    fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<LockTime, LockTimeDecoderError> {
-        let value = result.map_err(LockTimeDecoderError)?;
-        let n = u32::from_le_bytes(value);
-        Ok(LockTime::from_consensus(n))
-    }
-}
-
-/// An error consensus decoding a [`LockTime`].
-#[cfg(feature = "encoding")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LockTimeDecoderError(pub(super) encoding::UnexpectedEofError);
-
-#[cfg(feature = "encoding")]
-impl From<Infallible> for LockTimeDecoderError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "encoding")]
-impl fmt::Display for LockTimeDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "lock time decoder error"; self.0)
-    }
-}
-
-#[cfg(feature = "std")]
-#[cfg(feature = "encoding")]
-impl std::error::Error for LockTimeDecoderError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 #[cfg(feature = "serde")]

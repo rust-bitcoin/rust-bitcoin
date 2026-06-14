@@ -1207,69 +1207,6 @@ impl core::iter::Sum for Amount {
     }
 }
 
-#[cfg(feature = "encoding")]
-impl encoding::Encode for Amount {
-    type Encoder<'e> = AmountEncoder<'e>;
-
-    #[inline]
-    fn encoder(&self) -> Self::Encoder<'_> {
-        AmountEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_sat().to_le_bytes(),
-        ))
-    }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decode for Amount {
-    type Decoder = AmountDecoder;
-}
-
-#[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Amount`] type.
-    #[derive(Debug, Clone)]
-    pub struct AmountEncoder<'e>(encoding::ArrayEncoder<8>);
-}
-
-#[cfg(feature = "encoding")]
-crate::decoder_newtype! {
-    /// The decoder for the [`Amount`] type.
-    #[derive(Debug, Clone)]
-    pub struct AmountDecoder(encoding::ArrayDecoder<8>);
-
-    /// Constructs a new [`Amount`] decoder.
-    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-
-    fn end(result: Result<[u8; 8], encoding::UnexpectedEofError>) -> Result<Amount, AmountDecoderError> {
-        let value = result.map_err(AmountDecoderError)?;
-        let a = u64::from_le_bytes(value);
-        Ok(Amount::from_sat(a))
-    }
-}
-
-/// An error consensus decoding an [`Amount`].
-#[cfg(feature = "encoding")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AmountDecoderError(pub(super) encoding::UnexpectedEofError);
-
-#[cfg(feature = "encoding")]
-impl From<Infallible> for AmountDecoderError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "encoding")]
-impl fmt::Display for AmountDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "amount decoder error"; self.0)
-    }
-}
-
-#[cfg(all(feature = "std", feature = "encoding"))]
-impl std::error::Error for AmountDecoderError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-}
-
 /// A helper/builder that displays amount with specified settings.
 ///
 /// This provides richer interface than `fmt::Formatter`:

@@ -559,68 +559,6 @@ impl TryFrom<Box<str>> for Sequence {
     fn try_from(s: Box<str>) -> Result<Self, Self::Error> { Sequence::from_str(&s) }
 }
 
-#[cfg(feature = "encoding")]
-impl encoding::Encode for Sequence {
-    type Encoder<'e> = SequenceEncoder<'e>;
-    #[inline]
-    fn encoder(&self) -> Self::Encoder<'_> {
-        SequenceEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus_u32().to_le_bytes(),
-        ))
-    }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decode for Sequence {
-    type Decoder = SequenceDecoder;
-}
-
-#[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Sequence`] type.
-    #[derive(Debug, Clone)]
-    pub struct SequenceEncoder<'e>(encoding::ArrayEncoder<4>);
-}
-
-#[cfg(feature = "encoding")]
-crate::decoder_newtype! {
-    /// The decoder for the [`Sequence`] type.
-    #[derive(Debug, Clone)]
-    pub struct SequenceDecoder(encoding::ArrayDecoder<4>);
-
-    /// Constructs a new [`Sequence`] decoder.
-    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-
-    fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<Sequence, SequenceDecoderError> {
-        let value = result.map_err(SequenceDecoderError)?;
-        let n = u32::from_le_bytes(value);
-        Ok(Sequence::from_consensus(n))
-    }
-}
-
-/// An error consensus decoding an `Sequence`.
-#[cfg(feature = "encoding")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SequenceDecoderError(pub(super) encoding::UnexpectedEofError);
-
-#[cfg(feature = "encoding")]
-impl From<Infallible> for SequenceDecoderError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "encoding")]
-impl fmt::Display for SequenceDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "sequence decoder error"; self.0)
-    }
-}
-
-#[cfg(all(feature = "std", feature = "encoding"))]
-impl std::error::Error for SequenceDecoderError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-}
-
 /// Bitcoin transaction output.
 ///
 /// Defines new coins to be created as a result of the transaction,

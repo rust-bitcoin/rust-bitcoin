@@ -25,9 +25,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(feature = "encoding")]
-pub extern crate encoding;
-
 /// A generic serialization/deserialization framework.
 #[cfg(feature = "serde")]
 pub extern crate serde;
@@ -66,7 +63,3 @@ mod prelude {
     #[cfg(feature = "std")]
     pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, rc};
 }
-
-// decoder_newtype! macro
-#[cfg(feature = "encoding")]
-include!("../include/decoder_newtype.rs");
