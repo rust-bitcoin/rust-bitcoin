@@ -2098,10 +2098,10 @@ impl<'a> Arbitrary<'a> for XOnlyPublicKey {
 mod tests {
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
-    use alloc::string::ToString;
+    use alloc::format;
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
-    use alloc::format;
+    use alloc::string::ToString;
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     use alloc::vec;
