@@ -97,7 +97,7 @@ where
         return hashes[0];
     }
 
-    for idx in 0..hashes.len().div_ceil(2) {
+    for idx in 0..((hashes.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, hashes.len() - 1);
         let mut encoder = T::engine();

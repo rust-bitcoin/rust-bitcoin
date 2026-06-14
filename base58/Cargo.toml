@@ -1,9 +1,6 @@
 [package]
 name = "base58ck"
-# We jumped to `v0.1.100` when doing the MSRV bump to Rust `1.74`
-# leaving room for a bunch of secuity releases upto this number if
-# needed.
-version = "0.1.100"
+version = "0.1.1"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -12,7 +9,7 @@ categories = ["cryptography::cryptocurrencies", "encoding"]
 keywords = ["bitcoin", "base58", "encode", "decode", "checksum"]
 readme = "README.md"
 edition = "2021"
-rust-version = "1.74.0"
+rust-version = "1.56.1"
 exclude = ["api", "tests", "contrib"]
 
 [features]
