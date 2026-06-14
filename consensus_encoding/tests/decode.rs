@@ -6,14 +6,14 @@
 use std::io::{Cursor, Read};
 
 use bitcoin_consensus_encoding as encoding;
+#[cfg(feature = "hex")]
+use bitcoin_consensus_encoding::{decode_from_hex, FromHexError};
 #[cfg(feature = "alloc")]
 use encoding::check_decode;
 use encoding::{
     check_decoder, decode_from_slice, decode_from_slice_unbounded, ArrayDecoder,
     CompactSizeDecoder, Decode, DecodeError, Decoder, Decoder2, UnexpectedEofError,
 };
-#[cfg(feature = "hex")]
-use bitcoin_consensus_encoding::{decode_from_hex, FromHexError};
 #[cfg(feature = "std")]
 use encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
 #[cfg(feature = "alloc")]
