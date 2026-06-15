@@ -104,7 +104,7 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 /// # Parameters
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
-/// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
+/// * `inner` - the inner integer type to be provided to `fn`. Must implement [`Integer`].
 /// * `fn`: the infallible conversion function to call to convert from an integer.
 ///
 /// # Errors
