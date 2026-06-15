@@ -319,15 +319,3 @@ pub macro bitcoin_internals::parse_error_type!
 pub macro bitcoin_internals::rust_version!
 pub macro bitcoin_internals::transparent_newtype!
 pub macro bitcoin_internals::write_err!
-pub trait bitcoin_internals::ToU64
-pub fn bitcoin_internals::ToU64::to_u64(self) -> u64
-impl bitcoin_internals::ToU64 for u16
-pub fn u16::to_u64(self) -> u64
-impl bitcoin_internals::ToU64 for u32
-pub fn u32::to_u64(self) -> u64
-impl bitcoin_internals::ToU64 for u64
-pub fn u64::to_u64(self) -> u64
-impl bitcoin_internals::ToU64 for u8
-pub fn u8::to_u64(self) -> u64
-impl bitcoin_internals::ToU64 for usize
-pub fn usize::to_u64(self) -> u64
