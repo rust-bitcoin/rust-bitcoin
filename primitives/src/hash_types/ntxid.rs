@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `Txid` type.
+//! The `Ntxid` type.
 
 #[cfg(feature = "hex")]
 use core::{fmt, str};

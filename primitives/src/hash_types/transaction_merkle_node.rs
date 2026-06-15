@@ -84,7 +84,7 @@ crate::decoder_newtype! {
     }
 }
 
-/// An error consensus decoding an `TxMerkleNode`.
+/// An error consensus decoding a `TxMerkleNode`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TxMerkleNodeDecoderError(encoding::UnexpectedEofError);
 

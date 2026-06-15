@@ -876,7 +876,7 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding an `Version`.
+    /// An error consensus decoding a `Version`.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
 
