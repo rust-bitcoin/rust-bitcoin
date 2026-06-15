@@ -19,7 +19,8 @@ TRAIT_IMPL_JS="$REPO_DIR/target/doc/trait.impl/bitcoin_consensus_encoding/encode
 # - InventoryPayload has no type in 0.32 bitcoin. Vec<Inventory> fails special case consideration.
 # - FeeFilter is a FeeRate newtype. FeeRate has no old Encodable/Decodable and is just a u64 le encoding in FeeFilter.
 # - SendTxRcnCl is a new type that does not have a comparison.
-EXCLUSIONS="CommandString HeadersMessage InventoryPayload FeeFilter NetworkMessage Script Validation V2NetworkMessage V1MessageHeader SendTxRcnCl"
+# - Feature is a new type that does not have a comparison.
+EXCLUSIONS="CommandString HeadersMessage InventoryPayload FeeFilter NetworkMessage Script Validation V2NetworkMessage V1MessageHeader SendTxRcnCl Feature FeatureId FeatureData"
 
 main() {
     check_required_commands

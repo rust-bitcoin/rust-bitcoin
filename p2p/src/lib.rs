@@ -77,6 +77,7 @@ pub use self::error::{
 /// may lead to you incorrectly banning other peers or other peers banning you.
 ///
 /// These are the features required for each version:
+/// 70017 - Support `feature` messages between `version` and `verack` message
 /// 70016 - Support receiving `wtxidrelay` message between `version` and `verack` message
 /// 70015 - Support receiving invalid compact blocks from a peer without banning them
 /// 70014 - Support compact block messages `sendcmpct`, `cmpctblock`, `getblocktxn` and `blocktxn`
@@ -91,6 +92,8 @@ pub use self::error::{
 pub struct ProtocolVersion(u32);
 
 impl ProtocolVersion {
+    /// Support `feature` messages between `version` and `verack` message
+    pub const FEATURE_VERSION: Self = Self(70017);
     /// Support receiving `wtxidrelay` message between `version` and `verack` message
     pub const WTXID_RELAY_VERSION: Self = Self(70016);
     /// Support receiving invalid compact blocks from a peer without banning them
