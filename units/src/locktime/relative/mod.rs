@@ -221,9 +221,6 @@ impl LockTime {
 
     /// Returns true if an output with this locktime can be spent in the next block.
     ///
-    /// If this function returns true then an output with this locktime can be spent in the next
-    /// block.
-    ///
     /// # Errors
     ///
     /// Returns an error if this lock is not lock-by-height.
@@ -243,9 +240,6 @@ impl LockTime {
     }
 
     /// Returns true if an output with this locktime can be spent in the next block.
-    ///
-    /// If this function returns true then an output with this locktime can be spent in the next
-    /// block.
     ///
     /// # Errors
     ///
