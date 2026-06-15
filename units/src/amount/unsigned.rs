@@ -258,7 +258,7 @@ impl Amount {
     #[cfg(feature = "alloc")]
     pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
 
-    /// Converts this [`Amount`] in floating-point notation in the given [`Denomination`].
+    /// Constructs an [`Amount`] from floating-point notation in the given [`Denomination`].
     ///
     /// # Errors
     ///
