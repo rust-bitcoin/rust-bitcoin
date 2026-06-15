@@ -523,7 +523,7 @@ pub mod error {
             use UnprefixedHexErrorInner as E;
 
             match self.0 {
-                E::ContainsPrefix(ref e) => write_err!(f, "hex string is contains prefix"; e),
+                E::ContainsPrefix(ref e) => write_err!(f, "hex string contains prefix"; e),
                 E::ParseInt(ref e) => write_err!(f, "hex string parse int"; e),
             }
         }
