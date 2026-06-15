@@ -157,7 +157,7 @@ impl Sequence {
     /// Constructs a new relative lock-time using time intervals where each interval is equivalent
     /// to 512 seconds.
     ///
-    /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin
+    /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
     pub fn from_512_second_intervals(intervals: u16) -> Self {
         Self(u32::from(intervals) | Self::LOCK_TYPE_MASK)
@@ -197,7 +197,7 @@ impl Sequence {
     #[inline]
     pub fn from_consensus(n: u32) -> Self { Self(n) }
 
-    /// Returns the inner 32bit integer value of Sequence.
+    /// Returns the inner 32-bit integer value of Sequence.
     #[inline]
     pub const fn to_consensus_u32(self) -> u32 { self.0 }
 
@@ -303,7 +303,7 @@ pub mod error {
     #[cfg(feature = "encoding")]
     use internals::write_err;
 
-    /// An error consensus decoding an `Sequence`.
+    /// An error consensus decoding a `Sequence`.
     #[cfg(feature = "encoding")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct SequenceDecoderError(pub(super) encoding::UnexpectedEofError);

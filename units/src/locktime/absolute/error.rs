@@ -12,7 +12,7 @@ use internals::write_err;
 use super::{Height, MedianTimePast, LOCK_TIME_THRESHOLD};
 use crate::parse_int::{ParseIntError, PrefixedHexError, UnprefixedHexError};
 
-/// An error consensus decoding an `LockTime`.
+/// An error consensus decoding a `LockTime`.
 #[cfg(feature = "encoding")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LockTimeDecoderError(pub(super) encoding::UnexpectedEofError);

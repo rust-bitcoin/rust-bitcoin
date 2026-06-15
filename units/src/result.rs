@@ -37,7 +37,7 @@ pub use self::error::NumOpError;
 /// // And another value from some other UTXO.
 /// let a2 = Amount::from_sat(765_432)?;
 /// // Just an example (typically one would calculate fee using weight and fee rate).
-/// let fee = Amount::from_sat(1_00)?;
+/// let fee = Amount::from_sat(100)?;
 /// // The amount we want to send.
 /// let spend = Amount::from_sat(1_200_000)?;
 ///

@@ -200,7 +200,7 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// If `chain_tip` as not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
     #[inline]
     pub fn is_satisfied_by(
         self,
@@ -440,7 +440,7 @@ impl NumberOfBlocks {
     ///
     /// # Errors
     ///
-    /// If `chain_tip` as not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockHeight,
@@ -568,7 +568,7 @@ impl NumberOf512Seconds {
     ///
     /// # Errors
     ///
-    /// If `chain_tip` as not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockMtp,

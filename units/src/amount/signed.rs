@@ -133,7 +133,7 @@ impl SignedAmount {
 
     /// Construct a [`SignedAmount`] value from a `u64` satoshi value.
     ///
-    /// # Errors:
+    /// # Errors
     ///
     /// Returns an [`OutOfRangeError`] if the satoshi value > [`Self::MAX_MONEY`].
     #[inline]
@@ -405,7 +405,7 @@ impl SignedAmount {
         self.abs().to_unsigned().expect("a positive signed amount is always valid")
     }
 
-    /// Returns a number representing sign of this [`SignedAmount`].
+    /// Returns a number representing the sign of this [`SignedAmount`].
     ///
     /// - `0` if the amount is zero
     /// - `1` if the amount is positive

@@ -4,7 +4,7 @@
 //!
 //! These types are thin wrappers around `u32`, no invariants implemented or implied.
 //!
-//! These are general types for abstracting over block heights, they are not designed to use with
+//! These are general types for abstracting over block heights, they are not designed for use with
 //! lock times. If you are creating lock times you should be using the
 //! [`locktime::absolute::Height`] and [`locktime::relative::NumberOfBlocks`] types.
 //!
@@ -345,7 +345,7 @@ impl BlockMtp {
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Constructs a [`BlockMtp`] by computing the median‐time‐past from the last 11 block timestamps
+    /// Constructs a [`BlockMtp`] by computing the median-time-past from the last 11 block timestamps.
     ///
     /// Because block timestamps are not monotonic, this function internally sorts them;
     /// it is therefore not important what order they appear in the array; use whatever
@@ -663,7 +663,7 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding an `BlockHeight`.
+    /// An error consensus decoding a `BlockHeight`.
     #[cfg(feature = "encoding")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct BlockHeightDecoderError(pub(super) encoding::UnexpectedEofError);

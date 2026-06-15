@@ -53,7 +53,7 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 /// ordering on locktimes. In order to compare locktimes, instead of using `<` or `>` we provide the
 /// [`LockTime::is_satisfied_by`] API.
 ///
-/// For transaction, which has a locktime field, we implement a total ordering to make
+/// For `Transaction`, which has a locktime field, we implement a total ordering to make
 /// it easy to store transactions in sorted data structures, and use the locktime's 32-bit integer
 /// consensus encoding to order it.
 ///
@@ -170,6 +170,7 @@ impl LockTime {
     /// let n_lock_time: u32 = 741521;
     /// let lock_time = absolute::LockTime::from_consensus(n_lock_time);
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
+    /// ```
     #[inline]
     #[allow(clippy::missing_panics_doc)]
     pub fn from_consensus(n: u32) -> Self {
@@ -284,7 +285,7 @@ impl LockTime {
     /// if n.is_satisfied_by(get_height(), get_time()) {
     ///     // Can create and mine a transaction that satisfies the OP_CLTV timelock constraint.
     /// }
-    /// ````
+    /// ```
     #[inline]
     pub fn is_satisfied_by(self, height: Height, mtp: MedianTimePast) -> bool {
         match self {
@@ -363,7 +364,7 @@ impl LockTime {
     /// # Warning
     ///
     /// Do not compare values return by this method. The whole point of the `LockTime` type is to
-    /// assist in doing correct comparisons. Either use `is_satisfied_by`, `is_satisfied_by_lock`,
+    /// assist in doing correct comparisons. Either use `is_satisfied_by`, `is_satisfied_by_time`,
     /// or use the pattern below:
     ///
     /// # Examples
@@ -605,7 +606,7 @@ impl MedianTimePast {
     /// The maximum MTP allowable in a locktime (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = Self(u32::MAX);
 
-    /// Constructs an [`MedianTimePast`] by computing the median-time-past from the last
+    /// Constructs a [`MedianTimePast`] by computing the median-time-past from the last
     /// 11 block timestamps.
     ///
     /// Because block timestamps are not monotonic, this function internally sorts them;
@@ -650,7 +651,7 @@ impl MedianTimePast {
     /// Constructs a new MTP directly from a `u32` value.
     ///
     /// This function, with [`MedianTimePast::to_u32`], is used to obtain a raw MTP value. It is
-    /// **not** used to convert to or from a block timestamp, which is not a MTP.
+    /// **not** used to convert to or from a block timestamp, which is not an MTP.
     ///
     /// # Errors
     ///
