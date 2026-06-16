@@ -5,3 +5,12 @@ resolver = "2"
 [workspace.metadata.rbmt.toolchains]
 nightly = "nightly-2026-03-27"
 stable = "1.91.1"
+
+# Patch secp256k1's dependency on bitcoin_hashes to use our local workspace version.
+# secp256k1 is a dependency of this workspace, but it has a dependency on the
+# bitcoin_hashes package in this workspace. This circular path is iron'd out in
+# practice, but confuses cargo during development since it treats these as two
+# different versions of the bitcoin_hashes package. This patch ensure a single
+# version is set in the lockfile for tests.
+[patch.crates-io]
+bitcoin_hashes = { path = "hashes" }

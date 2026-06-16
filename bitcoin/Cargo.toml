@@ -3,7 +3,7 @@ name = "bitcoin"
 # We jumped to `v0.32.100` when doing the MSRV bump to Rust `1.74`
 # leaving room for a bunch of secuity releases upto this number if
 # needed.
-version = "0.32.100"
+version = "0.32.101"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -13,7 +13,7 @@ categories = ["cryptography::cryptocurrencies"]
 keywords = [ "crypto", "bitcoin" ]
 readme = "../README.md"
 edition = "2021"
-rust-version = "1.74.0"
+rust-version = "1.60.0"
 exclude = ["api", "tests", "contrib"]
 
 [features]
@@ -34,14 +34,14 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-base58 = { package = "base58ck", version = "0.1.100", default-features = false }
+base58 = { package = "base58ck", path = "../base58", version = "0.1.101", default-features = false }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
-hashes = { package = "bitcoin_hashes", version = "0.14.100", default-features = false, features = ["alloc", "io"] }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.14.101", default-features = false, features = ["alloc", "io"] }
 hex = { package = "hex-conservative", version = "0.2.2", default-features = false, features = ["alloc"] }
 hex_lit = "0.1.1"
-io = { package = "bitcoin-io", version = "0.1.100", default-features = false, features = ["alloc"] }
+io = { package = "bitcoin-io", path = "../io", version = "0.1.101", default-features = false, features = ["alloc"] }
 secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes", "alloc"] }
-units = { package = "bitcoin-units", path = "../units", version = "0.1.100", default-features = false, features = ["alloc"] }
+units = { package = "bitcoin-units", path = "../units", version = "0.1.101", default-features = false, features = ["alloc"] }
 
 base64 = { version = "0.21.3", optional = true }
 encoding = { package = "bitcoin-consensus-encoding", version = "1.0", default-features = false, optional = true }
