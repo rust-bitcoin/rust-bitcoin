@@ -1115,3 +1115,40 @@ fn p2sh_p2wsh_script_sig() {
     assert_eq!(redeem_script.as_bytes()[1], 0x20); // push 32 bytes
     assert_eq!(redeem_script.len(), 34);
 }
+
+#[test]
+#[allow(clippy::iter_nth_zero, clippy::iter_skip_next)]
+fn instruction_indices_nth_extended() {
+    // Script bytes: OP_FALSE (00) | OP_PUSHBYTES_1 (01) 0x69 | OP_NOP3 (b2)
+    // Instructions begin at byte positions: 0, 1, 3.
+    let script = ScriptBuf::from_hex_no_length_prefix("000169b2").unwrap();
+
+    // basic nth() calls from a fresh iterator
+    let pos_0 = script.instruction_indices().nth(0).unwrap().unwrap();
+    assert_eq!(pos_0.1, Instruction::PushBytes(PushBytes::empty()), "nth(0) must be OP_FALSE");
+    assert_eq!(pos_0.0, 0, "nth(0) returned wrong instruction position");
+
+    let pos_1 = script.instruction_indices().nth(1).unwrap().unwrap();
+    assert_eq!(pos_1.1, Instruction::PushBytes([105].as_ref()), "nth(1) must be OP_PUSHBYTES_1");
+    assert_eq!(pos_1.0, 1, "nth(1) returned wrong instruction position");
+
+    let pos_2 = script.instruction_indices().nth(2).unwrap().unwrap();
+    assert_eq!(pos_2.1, Instruction::Op(OP_NOP3), "nth(2) must be OP_NOP3");
+    assert_eq!(pos_2.0, 3, "nth(2) returned wrong instruction position");
+
+    // out-of-bounds index
+    assert!(
+        script.instruction_indices().nth(3).is_none(),
+        "nth(3) must return None since there are only 3 instructions"
+    );
+
+    // random access via .nth()
+    let mut iter = script.instruction_indices();
+    assert_eq!(iter.nth(1).unwrap().unwrap().0, 1);
+    assert_eq!(iter.nth(0).unwrap().unwrap().0, 3);
+    assert!(iter.nth(0).is_none());
+
+    // skips 2nd, returns 3rd
+    let pos_skip = script.instruction_indices().skip(2).next().unwrap().unwrap().0;
+    assert_eq!(pos_skip, 3, "skip(2).next() returned wrong position");
+}
