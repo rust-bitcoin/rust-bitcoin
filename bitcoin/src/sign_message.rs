@@ -239,6 +239,9 @@ pub mod error {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "base64")]
+    #[cfg(feature = "secp-recovery")]
+    use alloc::string::String;
     use alloc::string::ToString;
 
     use super::*;
@@ -323,5 +326,25 @@ mod tests {
 
         let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
         assert_eq!(signature.is_signed_by_address(&p2pkh, msg_hash), Ok(false));
+    }
+
+    #[test]
+    #[cfg(feature = "base64")]
+    #[cfg(feature = "secp-recovery")]
+    fn from_base64_rejects_non_65_byte_decode() {
+        // 88-char base64 can decode to 64, 65, or 66 bytes.
+        let input: String = "A".repeat(88);
+        let result = super::MessageSignature::from_base64(&input);
+        assert!(result.is_err());
+
+        let mut input: String = "A".repeat(86);
+        input.extend(['=', '=']);
+        let result = super::MessageSignature::from_base64(&input);
+        assert!(result.is_err());
+
+        let mut input: String = "A".repeat(87);
+        input.extend(['=']);
+        let result = super::MessageSignature::from_base64(&input);
+        assert!(result.is_err());
     }
 }
