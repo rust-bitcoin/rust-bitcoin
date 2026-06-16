@@ -87,8 +87,7 @@ pub use primitives::script::{
 pub(crate) use self::borrowed::ScriptExtPriv;
 #[doc(no_inline)]
 pub use self::error::{
-    Error, FromHexError, PushBytesError, RedeemScriptSizeError, ScriptIntError,
-    WitnessScriptSizeError,
+    Error, PushBytesError, RedeemScriptSizeError, ScriptIntError, WitnessScriptSizeError,
 };
 pub(crate) use self::owned::ScriptBufExtPriv;
 
@@ -251,8 +250,7 @@ pub mod error {
     pub use super::push_bytes::ScriptIntError;
     #[doc(no_inline)]
     pub use primitives::script::error::{
-        FromHexError, PushBytesError, RedeemScriptSizeError, ScriptBufDecoderError,
-        WitnessScriptSizeError,
+        PushBytesError, RedeemScriptSizeError, ScriptBufDecoderError, WitnessScriptSizeError,
     };
 
     /// Ways that a script might fail. Not everything is split up as

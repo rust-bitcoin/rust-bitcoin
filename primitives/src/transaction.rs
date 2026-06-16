@@ -16,6 +16,9 @@ use core::{cmp, mem};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "hex")]
+#[cfg(feature = "alloc")]
+use encoding::FromHexError;
 use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{
@@ -55,7 +58,7 @@ use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, W
 #[cfg(feature = "hex")]
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
-pub use self::error::{ParseTransactionError, ParseOutPointError};
+pub use self::error::ParseOutPointError;
 #[doc(no_inline)]
 pub use self::error::{OutPointDecoderError, VersionDecoderError};
 #[cfg(feature = "alloc")]
@@ -241,11 +244,9 @@ impl cmp::Ord for Transaction {
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 impl core::str::FromStr for Transaction {
-    type Err = ParseTransactionError;
+    type Err = FromHexError<TransactionDecoderError>;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        HexPrimitive::from_str(s).map_err(ParseTransactionError)
-    }
+    fn from_str(s: &str) -> Result<Self, Self::Err> { encoding::decode_from_hex(s) }
 }
 
 #[cfg(feature = "alloc")]
@@ -1276,41 +1277,11 @@ pub mod error {
     use super::OutPoint;
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
-    use super::{parse_int, Transaction};
-    #[cfg(feature = "hex")]
-    #[cfg(feature = "alloc")]
-    use crate::hex_codec::ParsePrimitiveError;
+    use super::parse_int;
     #[cfg(feature = "alloc")]
     use crate::locktime::absolute::LockTimeDecoderError;
     #[cfg(feature = "alloc")]
     use crate::witness::WitnessDecoderError;
-
-    /// An error that occurs during parsing of a [`Transaction`] from a hex string.
-    #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct ParseTransactionError(pub(super) ParsePrimitiveError<Transaction>);
-
-    #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
-    impl From<Infallible> for ParseTransactionError {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
-    impl fmt::Display for ParseTransactionError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write_err!(f, "parse transaction error"; self.0)
-        }
-    }
-
-    #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
-    #[cfg(feature = "std")]
-    impl std::error::Error for ParseTransactionError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-    }
 
     /// An error consensus decoding a `Transaction`.
     #[cfg(feature = "alloc")]
@@ -1612,13 +1583,13 @@ mod tests {
     #[cfg(feature = "std")]
     use std::error::Error as _;
 
+    #[cfg(feature = "hex")]
+    use encoding::FromHexError;
     use encoding::{Decode as _, Decoder as _};
     #[cfg(feature = "hex")]
     use hex::hex;
 
     use super::*;
-    #[cfg(feature = "hex")]
-    use crate::hex_codec::ParsePrimitiveError;
 
     const TC_TXID_BYTES: [u8; 32] = [
         32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10,
@@ -1758,20 +1729,20 @@ mod tests {
     #[test]
     #[cfg(feature = "hex")]
     fn transaction_from_hex_str_error() {
-        // OddLengthString error
+        // OddLength error
         let odd = "abc"; // 3 chars, odd length
         let err = Transaction::from_str(odd).unwrap_err();
-        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::OddLengthString(..))));
+        assert!(matches!(err, FromHexError::OddLength(..)));
 
         // InvalidChar error
         let invalid = "zz";
         let err = Transaction::from_str(invalid).unwrap_err();
-        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::InvalidChar(..))));
+        assert!(matches!(err, FromHexError::InvalidChar(..)));
 
         // Decode error
         let bad = "deadbeef00"; // arbitrary even-length hex that will fail decoding
         let err = Transaction::from_str(bad).unwrap_err();
-        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::Decode(..))));
+        assert!(matches!(err, FromHexError::Decode(..)));
     }
 
     #[test]

@@ -36,8 +36,8 @@ pub use units::block::{
 #[doc(no_inline)]
 pub use self::error::{
     Bip34Error, BlockDecoderError, BlockHashDecoderError, BlockHeightDecoderError,
-    HeaderDecoderError, InvalidBlockError, ParseBlockError, ParseHeaderError,
-    TooBigForRelativeHeightError, ValidationError, VersionDecoderError,
+    HeaderDecoderError, InvalidBlockError, TooBigForRelativeHeightError, ValidationError,
+    VersionDecoderError,
 };
 
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
@@ -309,7 +309,7 @@ pub mod error {
     #[doc(no_inline)]
     pub use primitives::block::{
         BlockDecoderError, BlockHashDecoderError, HeaderDecoderError, InvalidBlockError,
-        ParseBlockError, ParseHeaderError, VersionDecoderError,
+        VersionDecoderError,
     };
     #[doc(no_inline)]
     pub use units::block::{BlockHeightDecoderError, TooBigForRelativeHeightError};

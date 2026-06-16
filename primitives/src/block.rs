@@ -36,13 +36,6 @@ use crate::{Transaction, Wtxid};
 pub use units::block::{BlockHeight, BlockHeightDecoder, BlockHeightEncoder, BlockHeightInterval, BlockMtp, BlockMtpInterval};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-#[cfg(feature = "hex")]
-#[cfg(feature = "alloc")]
-#[doc(no_inline)]
-pub use self::error::ParseBlockError;
-#[cfg(feature = "hex")]
-#[doc(no_inline)]
-pub use self::error::ParseHeaderError;
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::{BlockDecoderError, InvalidBlockError};
@@ -295,11 +288,9 @@ impl core::str::FromStr for Block<Unchecked>
 where
     Self: encoding::Decode,
 {
-    type Err = ParseBlockError;
+    type Err = encoding::FromHexError<BlockDecoderError>;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        HexPrimitive::from_str(s).map_err(ParseBlockError)
-    }
+    fn from_str(s: &str) -> Result<Self, Self::Err> { encoding::decode_from_hex(s) }
 }
 
 #[cfg(feature = "alloc")]
@@ -482,11 +473,9 @@ impl Header {
 
 #[cfg(feature = "hex")]
 impl core::str::FromStr for Header {
-    type Err = ParseHeaderError;
+    type Err = encoding::FromHexError<HeaderDecoderError>;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        HexPrimitive::from_str(s).map_err(ParseHeaderError)
-    }
+    fn from_str(s: &str) -> Result<Self, Self::Err> { encoding::decode_from_hex(s) }
 }
 
 #[cfg(feature = "hex")]
@@ -758,12 +747,6 @@ pub mod error {
 
     use internals::write_err;
 
-    #[cfg(feature = "alloc")]
-    use super::Block;
-    #[cfg(feature = "hex")]
-    use super::Header;
-    #[cfg(feature = "hex")]
-    use crate::hex_codec::ParsePrimitiveError;
     use crate::merkle_tree::TxMerkleNodeDecoderError;
     use crate::pow::CompactTargetDecoderError;
     use crate::time::BlockTimeDecoderError;
@@ -774,34 +757,7 @@ pub mod error {
     #[doc(inline)]
     pub use crate::hash_types::BlockHashDecoderError;
 
-    /// An error that occurs during parsing of a [`Block`] from a hex string.
-    #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct ParseBlockError(pub(super) ParsePrimitiveError<Block>);
-
-    #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
-    impl From<Infallible> for ParseBlockError {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
-    impl fmt::Display for ParseBlockError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write_err!(f, "parse block error"; self.0)
-        }
-    }
-
-    #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
-    #[cfg(feature = "std")]
-    impl std::error::Error for ParseBlockError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-    }
-
-    /// An error consensus decoding a [`Block`].
+    /// An error consensus decoding a [`Block`](super::Block).
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct BlockDecoderError(pub(super) <super::BlockInnerDecoder as encoding::Decoder>::Error);
@@ -869,29 +825,6 @@ pub mod error {
                 Self::InvalidCoinbase => None,
             }
         }
-    }
-
-    /// An error that occurs during parsing of a [`Header`] from a hex string.
-    #[cfg(feature = "hex")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct ParseHeaderError(pub(super) ParsePrimitiveError<Header>);
-
-    #[cfg(feature = "hex")]
-    impl From<Infallible> for ParseHeaderError {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    #[cfg(feature = "hex")]
-    impl fmt::Display for ParseHeaderError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write_err!(f, "parse header error"; self.0)
-        }
-    }
-
-    #[cfg(feature = "hex")]
-    #[cfg(feature = "std")]
-    impl std::error::Error for ParseHeaderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
     /// An error consensus decoding a `Header`.
