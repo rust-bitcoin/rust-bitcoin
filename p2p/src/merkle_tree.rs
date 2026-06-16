@@ -18,7 +18,6 @@ use encoding::{
     ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2,
     Encoder3, EncoderStatus, SliceEncoder, VecDecoder,
 };
-use internals::ToU64 as _;
 use primitives::block::{self, Block, Checked, Header, HeaderDecoder, HeaderEncoder};
 use primitives::merkle_tree::TxMerkleNode;
 use primitives::transaction::{Transaction, Txid};
@@ -279,7 +278,7 @@ impl PartialMerkleTree {
             return Err(MerkleBlockError::NoTransactions);
         };
         // check for excessively high numbers of transactions
-        if self.num_transactions.to_u64() > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
+        if u64::from(self.num_transactions) > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
             return Err(MerkleBlockError::TooManyTransactions);
         }
         // there can never be more hashes provided than one for every txid
