@@ -46,11 +46,10 @@ pub mod _export {
 }
 
 mod hash_types;
-#[cfg(feature = "alloc")]
-mod opcodes;
 
 pub mod block;
 pub mod merkle_tree;
+pub mod opcodes;
 #[cfg(feature = "alloc")]
 pub mod script;
 #[cfg(feature = "alloc")]

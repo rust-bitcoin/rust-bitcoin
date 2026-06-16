@@ -14,7 +14,7 @@ use super::{
 use crate::consensus::Encodable;
 use crate::key::{LegacyPublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
-use crate::opcodes::{self, Opcode};
+use crate::opcodes::{self, Opcode, OpcodeExt as _};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};

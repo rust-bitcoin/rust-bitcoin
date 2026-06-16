@@ -1272,6 +1272,131 @@ impl<T> core::clone::CloneToUninit for bitcoin_primitives::merkle_tree::WitnessM
 pub unsafe fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::from(t: T) -> T
+pub mod bitcoin_primitives::opcodes
+pub mod bitcoin_primitives::opcodes::all
+pub const bitcoin_primitives::opcodes::all::OP_0NOTEQUAL: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_1: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_10: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_11: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_12: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_13: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_14: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_15: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_16: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_1ADD: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_1NEGATE: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_1SUB: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_2: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_2DROP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_2DUP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_2OVER: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_2ROT: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_2SWAP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_3: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_3DUP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_4: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_5: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_6: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_7: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_8: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_9: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_ABS: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_ADD: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_BOOLAND: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_BOOLOR: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_CHECKMULTISIG: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_CHECKMULTISIGVERIFY: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_CHECKSIG: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_CHECKSIGADD: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_CHECKSIGVERIFY: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_CODESEPARATOR: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_DEPTH: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_DROP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_DUP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_ELSE: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_ENDIF: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_EQUAL: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_EQUALVERIFY: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_FROMALTSTACK: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_GREATERTHAN: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_GREATERTHANOREQUAL: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_HASH160: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_HASH256: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_IF: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_IFDUP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_LESSTHAN: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_LESSTHANOREQUAL: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_MAX: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_MIN: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_NEGATE: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_NIP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_NOP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_NOT: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_NOTIF: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_NUMEQUAL: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_NUMEQUALVERIFY: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_NUMNOTEQUAL: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_OVER: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_PICK: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_RETURN: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_RIPEMD160: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_ROLL: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_ROT: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_SHA1: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_SHA256: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_SIZE: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_SUB: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_SWAP: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_TOALTSTACK: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_TUCK: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_VERIFY: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::opcodes::all::OP_WITHIN: bitcoin_primitives::opcodes::Opcode
+pub struct bitcoin_primitives::opcodes::Opcode
+impl bitcoin_primitives::opcodes::Opcode
+pub const fn bitcoin_primitives::opcodes::Opcode::from_u8(b: u8) -> Self
+pub const fn bitcoin_primitives::opcodes::Opcode::to_u8(self) -> u8
+impl core::clone::Clone for bitcoin_primitives::opcodes::Opcode
+pub fn bitcoin_primitives::opcodes::Opcode::clone(&self) -> bitcoin_primitives::opcodes::Opcode
+impl core::cmp::Eq for bitcoin_primitives::opcodes::Opcode
+impl core::cmp::PartialEq for bitcoin_primitives::opcodes::Opcode
+pub fn bitcoin_primitives::opcodes::Opcode::eq(&self, other: &bitcoin_primitives::opcodes::Opcode) -> bool
+impl core::convert::From<bitcoin_primitives::opcodes::Opcode> for u8
+pub fn u8::from(op: bitcoin_primitives::opcodes::Opcode) -> Self
+impl core::convert::From<u8> for bitcoin_primitives::opcodes::Opcode
+pub fn bitcoin_primitives::opcodes::Opcode::from(b: u8) -> Self
+impl core::fmt::Debug for bitcoin_primitives::opcodes::Opcode
+pub fn bitcoin_primitives::opcodes::Opcode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for bitcoin_primitives::opcodes::Opcode
+impl core::marker::StructuralPartialEq for bitcoin_primitives::opcodes::Opcode
+impl core::marker::Freeze for bitcoin_primitives::opcodes::Opcode
+impl core::marker::Send for bitcoin_primitives::opcodes::Opcode
+impl core::marker::Sync for bitcoin_primitives::opcodes::Opcode
+impl core::marker::Unpin for bitcoin_primitives::opcodes::Opcode
+impl core::marker::UnsafeUnpin for bitcoin_primitives::opcodes::Opcode
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::opcodes::Opcode
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::opcodes::Opcode
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::opcodes::Opcode where U: core::convert::From<T>
+pub fn bitcoin_primitives::opcodes::Opcode::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::opcodes::Opcode where U: core::convert::Into<T>
+pub type bitcoin_primitives::opcodes::Opcode::Error = core::convert::Infallible
+pub fn bitcoin_primitives::opcodes::Opcode::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::opcodes::Opcode where U: core::convert::TryFrom<T>
+pub type bitcoin_primitives::opcodes::Opcode::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_primitives::opcodes::Opcode::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::opcodes::Opcode where T: core::clone::Clone
+pub type bitcoin_primitives::opcodes::Opcode::Owned = T
+pub fn bitcoin_primitives::opcodes::Opcode::clone_into(&self, target: &mut T)
+pub fn bitcoin_primitives::opcodes::Opcode::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin_primitives::opcodes::Opcode where T: 'static + ?core::marker::Sized
+pub fn bitcoin_primitives::opcodes::Opcode::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::opcodes::Opcode where T: ?core::marker::Sized
+pub fn bitcoin_primitives::opcodes::Opcode::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::opcodes::Opcode where T: ?core::marker::Sized
+pub fn bitcoin_primitives::opcodes::Opcode::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::opcodes::Opcode where T: core::clone::Clone
+pub unsafe fn bitcoin_primitives::opcodes::Opcode::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_primitives::opcodes::Opcode
+pub fn bitcoin_primitives::opcodes::Opcode::from(t: T) -> T
 pub mod bitcoin_primitives::script
 pub mod bitcoin_primitives::script::error
 pub struct bitcoin_primitives::script::error::PushBytesError
