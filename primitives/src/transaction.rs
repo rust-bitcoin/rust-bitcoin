@@ -1907,10 +1907,10 @@ mod tests {
         let outpoint = OutPoint::COINBASE_PREVOUT;
 
         let debug = "OutPoint { txid: Txid(bitcoin_hashes::sha256d::Hash(0000000000000000000000000000000000000000000000000000000000000000)), vout: 4294967295 }";
-        assert_eq!(debug, format!("{:?}", &outpoint));
+        assert_eq!(debug, format!("{:?}", outpoint));
 
         let display = "0000000000000000000000000000000000000000000000000000000000000000:4294967295";
-        assert_eq!(display, format!("{}", &outpoint));
+        assert_eq!(display, format!("{}", outpoint));
 
         let pretty_debug = "OutPoint {
     txid: Txid(
@@ -1920,16 +1920,16 @@ mod tests {
     ),
     vout: 4294967295,
 }";
-        assert_eq!(pretty_debug, format!("{:#?}", &outpoint));
+        assert_eq!(pretty_debug, format!("{:#?}", outpoint));
 
         let debug_txid = "Txid(bitcoin_hashes::sha256d::Hash(0000000000000000000000000000000000000000000000000000000000000000))";
-        assert_eq!(debug_txid, format!("{:?}", &outpoint.txid));
+        assert_eq!(debug_txid, format!("{:?}", outpoint.txid));
 
         let display_txid = "0000000000000000000000000000000000000000000000000000000000000000";
-        assert_eq!(display_txid, format!("{}", &outpoint.txid));
+        assert_eq!(display_txid, format!("{}", outpoint.txid));
 
         let pretty_txid = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        assert_eq!(pretty_txid, format!("{:#}", &outpoint.txid));
+        assert_eq!(pretty_txid, format!("{:#}", outpoint.txid));
     }
 
     #[test]
