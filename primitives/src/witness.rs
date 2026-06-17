@@ -22,6 +22,7 @@ use internals::slice::SliceExt;
 #[cfg(feature = "hex")]
 use crate::hex_codec::HexPrimitive;
 use crate::prelude::{Box, Vec};
+use crate::wrap_debug::WrapDebug;
 #[cfg(doc)]
 use crate::TxIn;
 
