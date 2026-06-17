@@ -9,10 +9,7 @@ use alloc::string::String;
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
 
-use io::{BufRead, Write};
-
 use crate::block::{BlockHash, BlockHeight, BlockHeightInterval, Header};
-use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros;
 use crate::network::Params;
 
@@ -375,20 +372,6 @@ mod sealed {
     impl Sealed for super::CompactTarget {}
     impl Sealed for super::Target {}
     impl Sealed for super::Work {}
-}
-
-impl Encodable for CompactTarget {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_consensus().consensus_encode(w)
-    }
-}
-
-impl Decodable for CompactTarget {
-    #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(Self::from_consensus)
-    }
 }
 
 /// A trait for types that can convert to and from a [`U256`]

@@ -12,6 +12,7 @@ use crate::script::owned::ScriptSigBufExt as _;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::{opcodes, Amount, FeeRate};
+use crate::prelude::Vec;
 
 // Tests should compile and pass no matter what these are.
 type Tag = primitives::script::ScriptSigTag;

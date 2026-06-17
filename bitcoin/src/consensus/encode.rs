@@ -712,10 +712,7 @@ mod tests {
     use core::mem::discriminant;
 
     use super::*;
-    use crate::block::BlockHash;
-    use crate::merkle_tree::TxMerkleNode;
     use crate::prelude::{Cow, Vec};
-    use crate::transaction::{Transaction, TxIn, TxOut};
 
     #[test]
     fn serialize_int() {
@@ -1048,17 +1045,7 @@ mod tests {
         ])
         .is_err());
 
-        // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
-        // by making sure it fails with `MissingData` and not an `OversizedVectorAllocation` Error.
-        let err = deserialize::<BlockHash>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
-        assert!(matches!(err, DeserializeError::Parse(ParseError::MissingData)));
-
         test_len_is_max_vec::<u8>();
-        test_len_is_max_vec::<BlockHash>();
-        test_len_is_max_vec::<TxMerkleNode>();
-        test_len_is_max_vec::<Transaction>();
-        test_len_is_max_vec::<TxOut>();
-        test_len_is_max_vec::<TxIn>();
         test_len_is_max_vec::<Vec<u8>>();
         test_len_is_max_vec::<u64>();
     }
@@ -1150,64 +1137,5 @@ mod tests {
                 data
             );
         }
-    }
-
-    #[test]
-    fn deserialize_tx_hex() {
-        let hex = include_str!("../../tests/data/previous_tx_0_hex"); // An arbitrary transaction.
-        assert!(deserialize_hex::<Transaction>(hex).is_ok())
-    }
-
-    #[test]
-    fn deserialize_tx_hex_too_many_bytes() {
-        use crate::consensus::DecodeError;
-
-        let mut hex = include_str!("../../tests/data/previous_tx_0_hex").to_string(); // An arbitrary transaction.
-        hex.push_str("abcdef");
-        assert!(matches!(
-            deserialize_hex::<Transaction>(&hex).unwrap_err(),
-            FromHexError::Decode(DecodeError::Unconsumed)
-        ));
-    }
-
-    #[test]
-    fn deserialize_extreme_tx() {
-        use crate::{ScriptSigBuf, Witness};
-
-        // Start with transaction from `deserialize_tx_hex`
-        let hex = include_str!("../../tests/data/previous_tx_0_hex"); // An arbitrary transaction.
-        let tx = deserialize_hex::<Transaction>(hex).unwrap();
-
-        assert_eq!(tx.inputs.len(), 1);
-        assert_eq!(tx.outputs.len(), 2);
-        assert_eq!(tx.inputs[0].witness.len(), 2);
-
-        // 1. Test with 4 million witnesses.
-        let mut tx_copy = tx.clone();
-        tx_copy.inputs[0].witness = Witness::from_slice(&vec![vec![]; 4_000_000]);
-        let roundtrip = deserialize(&serialize(&tx_copy)).unwrap();
-        assert_eq!(tx_copy, roundtrip);
-
-        // 2. Test with a single large witness. (Size of 4 megs, including length prefix)
-        let mut tx_copy = tx.clone();
-        tx_copy.inputs[0].witness = Witness::from_slice(&vec![vec![0; 4_000_000 - 9]; 1]);
-        let roundtrip = deserialize(&serialize(&tx_copy)).unwrap();
-        assert_eq!(tx_copy, roundtrip);
-
-        // 3. Combine these; with the witness stack we can exceed a total size of 4M but
-        //    only by a tiny bit. (It is not part of our API guarantee that such things
-        //    will round-trip, but we unit test them anyway to help notice changes.)
-        let mut tx_copy = tx.clone();
-        tx_copy.inputs[0].witness = Witness::from_slice(&vec![vec![0; 997]; 4_000]);
-        let roundtrip = deserialize(&serialize(&tx_copy)).unwrap();
-        assert_eq!(tx_copy, roundtrip);
-
-        // 4. Test with a large script sig. With scriptsigs there is no limit on how large
-        //    an object we can parse, which is inconsistent with witnesses. Also not an
-        //    API guarantee.
-        let mut tx_copy = tx;
-        tx_copy.inputs[0].script_sig = ScriptSigBuf::from(vec![0; 8_000_001]);
-        let roundtrip = deserialize(&serialize(&tx_copy)).unwrap();
-        assert_eq!(tx_copy, roundtrip);
     }
 }

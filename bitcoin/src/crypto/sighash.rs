@@ -22,7 +22,6 @@ use encoding::CompactSizeEncoder;
 use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use io::Write;
 
-use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut};
 use crate::script::{ScriptExt as _, ScriptHashableTag};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
@@ -936,12 +935,6 @@ impl<'a> Annex<'a> {
 
     /// Returns the Annex bytes data (including first byte `0x50`).
     pub fn as_bytes(&self) -> &[u8] { self.0 }
-}
-
-impl Encodable for Annex<'_> {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        encode::consensus_encode_with_size(self.0, w)
-    }
 }
 
 fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, outputs_len: usize) -> bool {

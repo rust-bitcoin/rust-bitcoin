@@ -4,10 +4,6 @@
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
 
-use io::{BufRead, Write};
-
-use crate::consensus::encode::{self, Error, ParseError, WriteExt};
-use crate::consensus::{Decodable, Encodable};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{FullPublicKey, SerializedXOnlyPublicKey};
 use crate::taproot::{self, ControlBlock, LeafScript, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX};
@@ -20,25 +16,6 @@ type BorrowedControlBlock<'a> = ControlBlock<&'a TaprootMerkleBranch, &'a Serial
 pub use primitives::witness::{error, Iter, Witness, WitnessDecoder, WitnessEncoder};
 #[doc(no_inline)]
 pub use primitives::witness::{UnexpectedEofError, WitnessDecoderError};
-
-impl Decodable for Witness {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        io::decode_from_read(r).map_err(|e| Error::Parse(ParseError::Witness(e)))
-    }
-}
-
-impl Encodable for Witness {
-    // `self.content` includes the varints so encoding here includes them, as expected.
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut written = w.emit_compact_size(self.len())?;
-
-        for element in self.iter() {
-            written += encode::consensus_encode_with_size(element, w)?
-        }
-
-        Ok(written)
-    }
-}
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Witness`] type.
