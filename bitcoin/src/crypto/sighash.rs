@@ -1700,9 +1700,18 @@ mod tests {
             })
         }
 
+        fn tx_deser_hex<'de, D>(deserializer: D) -> Result<Transaction, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            use serde::de::{Deserialize, Error};
+
+            let hex_str = String::deserialize(deserializer)?;
+            crate::encoding::decode_from_hex(&hex_str).map_err(D::Error::custom)
+        }
+
         use secp256k1::SecretKey;
 
-        use crate::consensus::serde as con_serde;
         use crate::crypto::key::XOnlyPublicKey;
         use crate::key::{Keypair, PrivateKey, TapTweak};
         use crate::taproot::TapNodeHash;
@@ -1719,7 +1728,7 @@ mod tests {
         #[derive(serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct KpsGiven {
-            #[serde(with = "con_serde::With::<con_serde::Hex>")]
+            #[serde(deserialize_with = "tx_deser_hex")]
             raw_unsigned_tx: Transaction,
             utxos_spent: Vec<UtxoSpent>,
         }
