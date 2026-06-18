@@ -104,7 +104,7 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 /// # Parameters
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
-/// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
+/// * `inner` - the inner integer type to be provided to `fn`. Must implement [`Integer`].
 /// * `fn`: the infallible conversion function to call to convert from an integer.
 ///
 /// # Errors
@@ -523,7 +523,7 @@ pub mod error {
             use UnprefixedHexErrorInner as E;
 
             match self.0 {
-                E::ContainsPrefix(ref e) => write_err!(f, "hex string is contains prefix"; e),
+                E::ContainsPrefix(ref e) => write_err!(f, "hex string contains prefix"; e),
                 E::ParseInt(ref e) => write_err!(f, "hex string parse int"; e),
             }
         }

@@ -37,7 +37,7 @@ pub use self::error::NumOpError;
 /// // And another value from some other UTXO.
 /// let a2 = Amount::from_sat(765_432)?;
 /// // Just an example (typically one would calculate fee using weight and fee rate).
-/// let fee = Amount::from_sat(1_00)?;
+/// let fee = Amount::from_sat(100)?;
 /// // The amount we want to send.
 /// let spend = Amount::from_sat(1_200_000)?;
 ///
@@ -148,7 +148,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
-    /// Returns the contained Some value or a provided default.
+    /// Returns the contained `Valid` value or a provided default.
     ///
     /// Arguments passed to `unwrap_or` are eagerly evaluated; if you are passing the result of a
     /// function call, it is recommended to use `unwrap_or_else`, which is lazily evaluated.
@@ -161,7 +161,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
-    /// Returns the contained `Some` value or computes it from a closure.
+    /// Returns the contained `Valid` value or computes it from a closure.
     #[inline]
     #[track_caller]
     pub fn unwrap_or_else<F>(self, f: F) -> T

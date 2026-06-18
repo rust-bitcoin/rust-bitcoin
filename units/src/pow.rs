@@ -345,7 +345,7 @@ pub mod error {
 
     use super::ParseU256Error;
 
-    /// An error consensus decoding an `CompactTarget`.
+    /// An error consensus decoding a `CompactTarget`.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[cfg(feature = "encoding")]
     pub struct CompactTargetDecoderError(pub(super) encoding::UnexpectedEofError);
