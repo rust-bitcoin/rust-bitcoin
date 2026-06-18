@@ -454,4 +454,12 @@ mod tests {
         let got = fee_rate.to_sat_per_mvb();
         assert_eq!(got, 1_234_567);
     }
+
+    #[test]
+    fn mul_by_weight_round_up() {
+        let fee_rate = FeeRate::from_sat_per_kvb(10);
+        let weight = Weight::from_wu(500);
+        let fee = fee_rate.mul_by_weight(weight).expect("expected fee amount");
+        assert_eq!(fee, Amount::from_sat(2).unwrap());
+    }
 }
