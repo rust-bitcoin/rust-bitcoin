@@ -108,5 +108,12 @@ exact_features = [
     ["std", "bitcoinconsensus", "secp-recovery", "base64", "serde"],
 ]
 
+[package.metadata.rbmt.lint]
+allowed_duplicates = [
+    "bitcoin-units",
+    "bitcoin-internals",
+    "hex-conservative",
+]
+
 [package.metadata.rbmt.prerelease]
 enabled = true

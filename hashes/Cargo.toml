@@ -58,7 +58,7 @@ exact_features = [
 
 [package.metadata.rbmt.lint]
 allowed_duplicates = [
-    "hex-conservative",
+    "bitcoin-internals",
 ]
 
 [package.metadata.rbmt.prerelease]

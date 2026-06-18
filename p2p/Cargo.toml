@@ -50,3 +50,11 @@ workspace = true
 exact_features = [
     ["std", "serde"],
 ]
+
+[package.metadata.rbmt.lint]
+allowed_duplicates = [
+    "bitcoin-units",
+    "bitcoin-internals",
+    "hex-conservative",
+]
+    
