@@ -1,7 +1,7 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
-use bitcoin::consensus::encode;
+use bitcoin::encoding;
 use bitcoin::transaction::OutPoint;
 use libfuzzer_sys::fuzz_target;
 
@@ -31,9 +31,9 @@ fn do_test(data: &[u8]) {
         }
         Err(_) => {
             // If we can't deserialize as a string, try consensus deserializing
-            let res: Result<OutPoint, _> = encode::deserialize(data);
+            let res: Result<OutPoint, _> = encoding::decode_from_slice(data);
             if let Ok(deser) = res {
-                let ser = encode::serialize(&deser);
+                let ser = encoding::encode_to_vec(&deser);
                 assert_eq!(ser, data);
                 let string = deser.to_string();
                 match string.parse::<OutPoint>() {

@@ -2,14 +2,14 @@
 #![cfg_attr(not(fuzzing), allow(unused))]
 
 use bitcoin::block::{self, Block, BlockCheckedExt as _};
-use bitcoin::consensus::{deserialize, serialize};
+use bitcoin::encoding::{decode_from_slice, encode_to_vec};
 use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
 fn main() {}
 
 fn do_test(block: Block) {
-    let serialized = serialize(&block);
+    let serialized = encode_to_vec(&block);
 
     // Manually call all compute functions with unchecked block data.
     let (header, transactions) = block.clone().into_parts();
@@ -24,7 +24,7 @@ fn do_test(block: Block) {
         block.weight();
     }
 
-    let deserialized: Result<Block, _> = deserialize(serialized.as_slice());
+    let deserialized: Result<Block, _> = decode_from_slice(serialized.as_slice());
     assert_eq!(deserialized.unwrap(), block);
 }
 

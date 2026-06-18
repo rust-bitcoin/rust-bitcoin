@@ -1,7 +1,7 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
-use bitcoin::consensus::{deserialize, serialize};
+use bitcoin::encoding::{decode_from_slice, encode_to_vec};
 use bitcoin::transaction::TransactionExt as _;
 use bitcoin::Transaction;
 use libfuzzer_sys::fuzz_target;
@@ -10,8 +10,8 @@ use libfuzzer_sys::fuzz_target;
 fn main() {}
 
 fn do_test(mut tx: Transaction) {
-    let serialized = serialize(&tx);
-    let deserialized: Result<Transaction, _> = deserialize(serialized.as_slice());
+    let serialized = encode_to_vec(&tx);
+    let deserialized: Result<Transaction, _> = decode_from_slice(serialized.as_slice());
     assert_eq!(deserialized.unwrap(), tx);
 
     let len = serialized.len();
@@ -19,7 +19,7 @@ fn do_test(mut tx: Transaction) {
     for input in &mut tx.inputs {
         input.witness = bitcoin::witness::Witness::default();
     }
-    let no_witness_len = bitcoin::consensus::encode::serialize(&tx).len();
+    let no_witness_len = encode_to_vec(&tx).len();
     // For 0-input transactions, `no_witness_len` will be incorrect because
     // we serialize as SegWit even after "stripping the witnesses". We need
     // to drop two bytes (i.e. eight weight). Similarly, calculated_weight is

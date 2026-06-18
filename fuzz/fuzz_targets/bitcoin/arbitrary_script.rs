@@ -3,7 +3,7 @@
 
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::address::Address;
-use bitcoin::consensus::serialize;
+use bitcoin::encoding::encode_to_vec;
 use bitcoin::script::{self, ScriptBuf, ScriptExt as _, ScriptPubKeyExt as _};
 use bitcoin::Network;
 use libfuzzer_sys::fuzz_target;
@@ -16,7 +16,7 @@ fn do_test(data: &[u8]) {
     let s = ScriptBuf::arbitrary(&mut u);
 
     if let Ok(script_buf) = s {
-        let serialized = serialize(&script_buf);
+        let serialized = encode_to_vec(script_buf.as_script());
         let _: Result<Vec<script::Instruction>, script::Error> =
             script_buf.instructions().collect();
 
@@ -45,7 +45,7 @@ fn do_test(data: &[u8]) {
             }
         }
         assert_eq!(builder.into_script(), script_buf);
-        assert_eq!(serialized, &serialize(&script_buf)[..]);
+        assert_eq!(serialized, &encode_to_vec(script_buf.as_script())[..]);
 
         // Check if valid address and if that address roundtrips.
         if let Ok(addr) = Address::from_script(&script_buf, Network::Bitcoin) {
