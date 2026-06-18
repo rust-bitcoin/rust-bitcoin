@@ -41,6 +41,7 @@ enabled = true
 features = [["alloc"]]
 
 [package.metadata.rbmt.test]
+msrv_overrides = { "encoding" = "1.74.0" }
 exact_features = [
     ["alloc", "serde"],
     ["std", "serde"],
