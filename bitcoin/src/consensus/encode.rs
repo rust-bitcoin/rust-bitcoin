@@ -20,12 +20,12 @@ use core::{cmp, mem, slice};
 use encoding::{CompactSizeEncoder, Encoder};
 use hashes::{sha256, sha256d, Hash};
 use hex::DisplayHex as _;
-use internals::ToU64;
 use io::{BufRead, Cursor, Read, Write};
 
 use super::IterReader;
 use crate::prelude::{rc, sync, Box, Cow, String, Vec};
 use crate::taproot::TapLeafHash;
+use crate::ToU64;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use super::{Error, FromHexError, ParseError, DeserializeError};

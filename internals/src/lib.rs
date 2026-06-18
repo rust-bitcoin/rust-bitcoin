@@ -46,31 +46,3 @@ pub mod slice;
 #[macro_use]
 pub mod serde;
 pub mod const_casts;
-
-/// A conversion trait for unsigned integer types smaller than or equal to 64-bits.
-///
-/// This trait exists because [`usize`] doesn't implement `Into<u64>`. We only support 32 and 64 bit
-/// architectures because of consensus code so we can infallibly do the conversion.
-pub trait ToU64 {
-    /// Converts unsigned integer type to a [`u64`].
-    fn to_u64(self) -> u64;
-}
-
-macro_rules! impl_to_u64 {
-    ($($ty:ident),*) => {
-        $(
-            impl ToU64 for $ty { fn to_u64(self) -> u64 { self.into() } }
-        )*
-    }
-}
-impl_to_u64!(u8, u16, u32, u64);
-
-impl ToU64 for usize {
-    fn to_u64(self) -> u64 {
-        crate::const_assert!(
-            core::mem::size_of::<usize>() <= 8;
-            "platforms that have usize larger than 64 bits are not supported"
-        );
-        self as u64
-    }
-}
