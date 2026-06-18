@@ -9,7 +9,7 @@ use crate::internal_macros::define_extension_trait;
 use crate::script::{self, WitnessScriptBuf};
 #[cfg(feature = "secp-recovery")]
 use crate::sign_message::MessageSignature;
-use crate::taproot::{TapNodeHash, TapTweakHash, TapTweakHashExt as _};
+use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity};
