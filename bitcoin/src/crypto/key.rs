@@ -9,7 +9,6 @@ use crate::internal_macros::define_extension_trait;
 use crate::script::{self, WitnessScriptBuf};
 #[cfg(feature = "secp-recovery")]
 use crate::sign_message::MessageSignature;
-use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity};
@@ -25,6 +24,8 @@ pub use crypto::key::{
     SerializedXOnlyPublicKey, TweakedKeypair, TweakedPublicKey, UntweakedKeypair,
     UntweakedPublicKey, WPubkeyHash, WifKey, XOnlyPublicKey,
 };
+#[doc(inline)]
+pub use taproot_primitives::TapTweak;
 
 #[deprecated(since = "TBD", note = "use `LegacyPublicKey` instead")]
 #[doc(hidden)]
@@ -96,91 +97,6 @@ mod sealed {
     impl Sealed for super::FullPublicKey {}
     impl Sealed for super::LegacyPublicKey {}
     impl Sealed for super::PrivateKey {}
-}
-
-/// A trait for tweaking BIP-0340 key types (x-only public keys and key pairs).
-pub trait TapTweak {
-    /// Tweaked key type with optional auxiliary information.
-    type TweakedAux;
-    /// Tweaked key type.
-    type TweakedKey;
-
-    /// Tweaks an untweaked key with corresponding public key value and optional script tree Merkle
-    /// root. For the [`Keypair`] type this also tweaks the private key in the pair.
-    ///
-    /// This is done by using the equation Q = P + H(P|c)G, where
-    ///  * Q is the tweaked public key
-    ///  * P is the internal public key
-    ///  * H is the hash function
-    ///  * c is the commitment data
-    ///  * G is the generator point
-    ///
-    /// # Returns
-    ///
-    /// The tweaked key, with the required parity.
-    fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> Self::TweakedAux;
-
-    /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`].
-    ///
-    /// This method is dangerous and can lead to loss of funds if used incorrectly.
-    /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
-    fn dangerous_assume_tweaked(self) -> Self::TweakedKey;
-}
-
-impl TapTweak for UntweakedPublicKey {
-    type TweakedAux = TweakedPublicKey;
-    type TweakedKey = TweakedPublicKey;
-
-    /// Tweaks an untweaked public key with corresponding public key value and optional script tree
-    /// Merkle root.
-    ///
-    /// This is done by using the equation Q = P + H(P|c)G, where
-    ///  * Q is the tweaked public key
-    ///  * P is the internal public key
-    ///  * H is the hash function
-    ///  * c is the commitment data
-    ///  * G is the generator point
-    ///
-    /// # Returns
-    ///
-    /// The tweaked key and its parity.
-    fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedPublicKey {
-        let tweak = TapTweakHash::from_key_and_merkle_root(*self, merkle_root).to_scalar();
-        let output_key = self.add_tweak(&tweak).expect("Tap tweak failed");
-
-        debug_assert!(self.tweak_add_check(&output_key, tweak));
-        TweakedPublicKey::dangerous_assume_tweaked(output_key)
-    }
-
-    fn dangerous_assume_tweaked(self) -> TweakedPublicKey {
-        TweakedPublicKey::dangerous_assume_tweaked(self)
-    }
-}
-
-impl TapTweak for UntweakedKeypair {
-    type TweakedAux = TweakedKeypair;
-    type TweakedKey = TweakedKeypair;
-
-    /// Applies a Taproot tweak to both keys within the keypair.
-    ///
-    /// If `merkle_root` is provided, produces a Taproot key that can be spent by any
-    /// of the script paths committed to by the root. If it is not provided, produces
-    /// a Taproot key which can [provably only be spent via
-    /// keyspend](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-23).
-    ///
-    /// # Returns
-    ///
-    /// The tweaked keypair.
-    fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
-        let pubkey = XOnlyPublicKey::from_keypair(self);
-        let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
-        let tweaked = self.as_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
-        TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
-    }
-
-    fn dangerous_assume_tweaked(self) -> TweakedKeypair {
-        TweakedKeypair::dangerous_assume_tweaked(self)
-    }
 }
 
 #[cfg(test)]
