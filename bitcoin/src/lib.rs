@@ -119,7 +119,6 @@ pub mod ext {
 pub mod address;
 pub mod bip158;
 pub mod blockdata;
-pub mod consensus;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod consensus_validation;
 // Private until we either make this a crate or flatten it - still to be decided.
