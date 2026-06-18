@@ -215,7 +215,7 @@ impl FeeRate {
     /// enough instead of falling short if rounded down.
     pub const fn mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
         let wu = weight.to_wu();
-        if let Some(fee_kwu) = self.to_sat_per_kwu_floor().checked_mul(wu) {
+        if let Some(fee_kwu) = self.to_sat_per_kwu_ceil().checked_mul(wu) {
             let fee = fee_kwu.div_ceil(1_000);
             if let Ok(fee_amount) = Amount::from_sat(fee) {
                 return NumOpResult::Valid(fee_amount);
