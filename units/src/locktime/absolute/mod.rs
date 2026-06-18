@@ -696,8 +696,9 @@ impl MedianTimePast {
     #[inline]
     pub fn is_satisfied_by(self, time: Self) -> bool {
         // The locktime check in Core during block validation uses the MTP
-        // of the previous block - which is the expected to be `time` here.
-        self <= time
+        // of the previous block - which is expected to be `time` here.
+        // This requires a strict less-than comparison (`<`) per BIP-113.
+        self < time
     }
 }
 
@@ -892,7 +893,8 @@ mod tests {
         let height = Height::from_u32(800_000).unwrap();
 
         assert!(!lock_by_time.is_satisfied_by(height, time_before));
-        assert!(lock_by_time.is_satisfied_by(height, time));
+        // Strict less-than comparison (BIP-113) means equality is not satisfied.
+        assert!(!lock_by_time.is_satisfied_by(height, time));
         assert!(lock_by_time.is_satisfied_by(height, time_after));
     }
 
@@ -1053,14 +1055,48 @@ mod tests {
     fn median_time_past_is_satisfied_by() {
         let mtp = MedianTimePast::from_u32(500_000_001).unwrap();
 
-        // lock is satisfied if transaction can go in the next block (locktime <= mtp).
+        // lock is satisfied if transaction can go in the next block (locktime < mtp).
         let locktime = MedianTimePast::from_u32(500_000_000).unwrap();
         assert!(locktime.is_satisfied_by(mtp));
+
+        // It is not satisfied if the lock time is equal to the median time past (BIP-113).
         let locktime = MedianTimePast::from_u32(500_000_001).unwrap();
-        assert!(locktime.is_satisfied_by(mtp));
+        assert!(!locktime.is_satisfied_by(mtp));
 
         // It is not satisfied if the lock time is after the median time past.
         let locktime = MedianTimePast::from_u32(500_000_002).unwrap();
         assert!(!locktime.is_satisfied_by(mtp));
+    }
+
+    #[test]
+    fn median_time_past_satisfaction_bip113_compliance() {
+        let mtp_reference = MedianTimePast::from_u32(500_000_001).unwrap();
+
+        // locktime is strictly less than MTP (T < MTP)
+        let early_locktime = MedianTimePast::from_u32(500_000_000).unwrap();
+        assert!(
+            early_locktime.is_satisfied_by(mtp_reference),
+            "Locktime strictly less than MTP ({} < {}) must be satisfied",
+            early_locktime,
+            mtp_reference
+        );
+
+        // locktime is exactly equal to MTP (T == MTP)
+        let equal_locktime = MedianTimePast::from_u32(500_000_001).unwrap();
+        assert!(
+            !equal_locktime.is_satisfied_by(mtp_reference),
+            "Locktime equal to MTP ({} == {}) must not be satisfied (BIP-113 off-by-one violation)",
+            equal_locktime,
+            mtp_reference
+        );
+
+        // locktime is strictly greater than MTP (T > MTP)
+        let future_locktime = MedianTimePast::from_u32(500_000_002).unwrap();
+        assert!(
+            !future_locktime.is_satisfied_by(mtp_reference),
+            "Locktime greater than MTP ({} > {}) must not be satisfied",
+            future_locktime,
+            mtp_reference
+        );
     }
 }
