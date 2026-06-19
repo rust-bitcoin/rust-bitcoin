@@ -78,6 +78,8 @@ extern crate std;
 
 #[cfg(feature = "hex")]
 pub extern crate hex;
+#[cfg(feature = "serde")]
+pub extern crate serde;
 
 mod compact_size;
 mod decode;
