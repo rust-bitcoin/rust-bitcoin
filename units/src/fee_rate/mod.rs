@@ -215,7 +215,7 @@ impl FeeRate {
     /// enough instead of falling short if rounded down.
     pub const fn mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
         let wu = weight.to_wu();
-        if let Some(fee_kwu) = self.to_sat_per_kwu_floor().checked_mul(wu) {
+        if let Some(fee_kwu) = self.to_sat_per_kwu_ceil().checked_mul(wu) {
             let fee = fee_kwu.div_ceil(1_000);
             if let Ok(fee_amount) = Amount::from_sat(fee) {
                 return NumOpResult::Valid(fee_amount);
@@ -453,5 +453,13 @@ mod tests {
         let fee_rate = FeeRate::from_sat_per_mvb(1_234_567);
         let got = fee_rate.to_sat_per_mvb();
         assert_eq!(got, 1_234_567);
+    }
+
+    #[test]
+    fn mul_by_weight_round_up() {
+        let fee_rate = FeeRate::from_sat_per_kvb(10);
+        let weight = Weight::from_wu(500);
+        let fee = fee_rate.mul_by_weight(weight).expect("expected fee amount");
+        assert_eq!(fee, Amount::from_sat(2).unwrap());
     }
 }
