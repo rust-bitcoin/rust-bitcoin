@@ -51,8 +51,23 @@ where
     S: Serializer,
 {
     if s.is_human_readable() {
-        // `HexPrimitive` uses `LowerHex` for `Display`.
-        s.collect_str(&crate::hex_codec::HexPrimitive(value))
+        struct ConsensusHex<'a, T>(&'a T);
+
+        impl<T: Encode> fmt::Display for ConsensusHex<'_, T> {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                let encoder = self.0.encoder();
+                let byte_iter = encoding::EncoderByteIter::new(encoder);
+                let iter = hex::BytesToHexIter::new(byte_iter, hex::Case::Lower).flatten();
+
+                for ch in iter {
+                    fmt::Display::fmt(&ch, f)?;
+                }
+
+                Ok(())
+            }
+        }
+
+        s.collect_str(&ConsensusHex(value))
     } else {
         // For non-human-readable formats, serialize as bytes.
         let bytes = encoding::encode_to_vec(value);
