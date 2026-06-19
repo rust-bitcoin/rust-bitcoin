@@ -125,19 +125,6 @@ NB: reviewers may run more complex test/CI scripts, thus, satisfying all the
 requirements above is just a preliminary, but not necessary sufficient step for
 getting the PR accepted as a valid candidate PR for the `master` branch.
 
-PR authors may also find it useful to run the following script locally in order
-to check that each of the commits within the PR satisfies the requirements
-above, before submitting the PR to review:
-```shell script
-RUSTUP_TOOLCHAIN=1.41.1 ./contrib/test.sh
-```
-Please replace the value in `RUSTUP_TOOLCHAIN=1.41.1` with the current MSRV from
-[README.md].
-
-NB: Please keep in mind that the script above replaces `Cargo.lock` file, which
-is necessary to support current MSRV, incompatible with `stable` and newer cargo
-versions.
-
 ### Peer review
 
 Anyone may participate in peer review which is expressed by comments in the pull
@@ -179,8 +166,8 @@ least two weeks with no comments, questions, or NACKs.
 We reserve the right to merge PRs with a single ACK [0], at any time, if they match
 any of the following conditions:
 
-1. PR only touches CI i.e, only changes any of the `test.sh` scripts and/or
-   stuff in `.github/workflows`.
+1. PR only touches CI i.e, only changes stuff in `.github/workflows` and/or the
+   scripts in `contrib`.
 2. Non-content changing documentation fixes i.e., grammar/typos, spelling, full
    stops, capital letters. Any change with more substance must still get two
    ACKs.
