@@ -76,6 +76,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "hex")]
+pub extern crate hex;
+
 mod compact_size;
 mod decode;
 mod encode;
