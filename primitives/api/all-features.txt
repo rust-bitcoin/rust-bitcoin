@@ -3555,15 +3555,6 @@ pub type bitcoin_primitives::script::TapScript = bitcoin_primitives::script::Scr
 pub type bitcoin_primitives::script::TapScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::TapScriptTag>
 pub type bitcoin_primitives::script::WitnessScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::script::WitnessScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>
-pub mod bitcoin_primitives::serde_as_consensus
-pub mod bitcoin_primitives::serde_as_consensus::opt
-pub fn bitcoin_primitives::serde_as_consensus::opt::deserialize<'d, T, D>(d: D) -> core::result::Result<core::option::Option<T>, <D as serde::de::Deserializer>::Error> where T: bitcoin_consensus_encoding::encode::Encode + bitcoin_consensus_encoding::decode::Decode, D: serde::de::Deserializer<'d>
-pub fn bitcoin_primitives::serde_as_consensus::opt::serialize<T, S>(t: &core::option::Option<T>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where T: bitcoin_consensus_encoding::encode::Encode + bitcoin_consensus_encoding::decode::Decode, S: serde::ser::Serializer
-pub mod bitcoin_primitives::serde_as_consensus::vec
-pub fn bitcoin_primitives::serde_as_consensus::vec::deserialize<'d, T, D>(d: D) -> core::result::Result<alloc::vec::Vec<T>, <D as serde::de::Deserializer>::Error> where T: bitcoin_consensus_encoding::encode::Encode + bitcoin_consensus_encoding::decode::Decode, D: serde::de::Deserializer<'d>
-pub fn bitcoin_primitives::serde_as_consensus::vec::serialize<T, S>(v: &[T], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where T: bitcoin_consensus_encoding::encode::Encode + bitcoin_consensus_encoding::decode::Decode, S: serde::ser::Serializer
-pub fn bitcoin_primitives::serde_as_consensus::deserialize<'d, T, D>(d: D) -> core::result::Result<T, <D as serde::de::Deserializer>::Error> where T: bitcoin_consensus_encoding::encode::Encode + bitcoin_consensus_encoding::decode::Decode, D: serde::de::Deserializer<'d>
-pub fn bitcoin_primitives::serde_as_consensus::serialize<T, S>(value: &T, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where T: bitcoin_consensus_encoding::encode::Encode + bitcoin_consensus_encoding::decode::Decode, S: serde::ser::Serializer
 pub mod bitcoin_primitives::transaction
 pub mod bitcoin_primitives::transaction::error
 #[non_exhaustive] pub enum bitcoin_primitives::transaction::error::ParseOutPointError
