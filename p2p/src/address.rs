@@ -674,7 +674,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// An error occuring when decoding a [`AddrV1Message`].
+    /// An error occurring when decoding a [`AddrV1Message`].
     ///
     /// [`AddrV1Message`]: super::AddrV1Message
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -749,7 +749,7 @@ pub mod error {
         }
     }
 
-    /// An error occuring when decoding a [`AddrV2Message`].
+    /// An error occurring when decoding a [`AddrV2Message`].
     ///
     /// [`AddrV2Message`]: super::AddrV2Message
     #[derive(Debug, Clone, PartialEq, Eq)]

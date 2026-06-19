@@ -464,7 +464,7 @@ pub mod error {
 
     use internals::write_err;
 
-    /// Errors occuring when decoding a [`FilterHash`] message.
+    /// Errors occurring when decoding a [`FilterHash`] message.
     ///
     /// [`FilterHash`]: super::FilterHash
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -487,7 +487,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Errors occuring when decoding a [`FilterHeader`] message.
+    /// Errors occurring when decoding a [`FilterHeader`] message.
     ///
     /// [`FilterHeader`]: super::FilterHeader
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -510,7 +510,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Errors occuring when decoding a [`GetCFilters`] message.
+    /// Errors occurring when decoding a [`GetCFilters`] message.
     ///
     /// [`GetCFilters`]: super::GetCFilters
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -533,7 +533,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Errors occuring when decoding a [`CFilter`] message.
+    /// Errors occurring when decoding a [`CFilter`] message.
     ///
     /// [`CFilter`]: super::CFilter
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -556,7 +556,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Errors occuring when decoding a [`GetCFHeaders`] message.
+    /// Errors occurring when decoding a [`GetCFHeaders`] message.
     ///
     /// [`GetCFHeaders`]: super::GetCFHeaders
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -579,7 +579,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Errors occuring when decoding a [`CFHeaders`] message.
+    /// Errors occurring when decoding a [`CFHeaders`] message.
     ///
     /// [`CFHeaders`]: super::CFHeaders
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -602,7 +602,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Errors occuring when decoding a [`GetCFCheckpt`] message.
+    /// Errors occurring when decoding a [`GetCFCheckpt`] message.
     ///
     /// [`GetCFCheckpt`]: super::GetCFCheckpt
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -625,7 +625,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Errors occuring when decoding a [`CFCheckpt`] message.
+    /// Errors occurring when decoding a [`CFCheckpt`] message.
     ///
     /// [`CFCheckpt`]: super::CFCheckpt
     #[derive(Debug, Clone, PartialEq, Eq)]

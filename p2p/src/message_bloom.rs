@@ -199,7 +199,7 @@ pub mod error {
 
     use internals::write_err;
 
-    /// An error occuring when decoding a [`FilterLoad`] message.
+    /// An error occurring when decoding a [`FilterLoad`] message.
     ///
     /// [`FilterLoad`]: super::FilterLoad
     #[derive(Debug, Clone, PartialEq, Eq)]

@@ -535,7 +535,7 @@ pub mod error {
 
     use internals::write_err;
 
-    /// An error occuring when decoding a [`MerkleBlock`].
+    /// An error occurring when decoding a [`MerkleBlock`].
     ///
     /// [`MerkleBlock`]: super::MerkleBlock
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -558,7 +558,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// An error occuring when decoding a [`PartialMerkleTree`].
+    /// An error occurring when decoding a [`PartialMerkleTree`].
     ///
     /// [`PartialMerkleTree`]: super::PartialMerkleTree
     #[derive(Debug, Clone, PartialEq, Eq)]

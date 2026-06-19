@@ -64,7 +64,7 @@ pub mod error {
 
     use internals::write_err;
 
-    /// Errors occuring when decoding a [`SendCmpct`] message.
+    /// Errors occurring when decoding a [`SendCmpct`] message.
     ///
     /// [`SendCmpct`]: super::SendCmpct
     #[derive(Debug, Clone, PartialEq, Eq)]
