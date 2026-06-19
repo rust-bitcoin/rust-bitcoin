@@ -6,38 +6,18 @@
 
 //! `serde` serialize and deserialize types using consensus encoding.
 //!
-//! Use with `#[serde(with = "bitcoin_primitives::serde_as_consensus")]`.
+//! Use with `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus")]`.
 //!
 //! This module works with any type `T` that implements both [`Encode`] and [`Decode`].
 //! In human-readable formats (like JSON), the value is serialized as a hex string.
 //! In non-human-readable formats (like bincode), raw bytes are used.
-//!
-//! # Examples
-//!
-//! ```
-//! use serde::{Serialize, Deserialize};
-//! use bitcoin_primitives::block::{Block, Header, Unchecked};
-//! use bitcoin_primitives::TxOut;
-//!
-//! #[derive(Serialize, Deserialize)]
-//! pub struct MyStruct {
-//!     // Serialize as hex when using human-readable formats (JSON, etc.)
-//!     #[serde(with = "bitcoin_primitives::serde_as_consensus")]
-//!     pub header: Header,
-//!     // We support options too.
-//!     #[serde(with = "bitcoin_primitives::serde_as_consensus::opt")]
-//!     pub block: Option<Block<Unchecked>>,
-//!     // And we support vectors.
-//!     #[serde(with = "bitcoin_primitives::serde_as_consensus::vec")]
-//!     pub tx_outs: Vec<TxOut>,
-//! }
-//! ```
 
 use core::fmt;
 use core::marker::PhantomData;
 
-use encoding::{Decode, Encode};
 use serde::{de, Deserializer, Serializer};
+
+use crate::{Decode, Encode};
 
 /// Serializes a type as a consensus-encoded hex string.
 ///
@@ -56,7 +36,7 @@ where
         impl<T: Encode> fmt::Display for ConsensusHex<'_, T> {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 let encoder = self.0.encoder();
-                let byte_iter = encoding::EncoderByteIter::new(encoder);
+                let byte_iter = crate::EncoderByteIter::new(encoder);
                 let iter = hex::BytesToHexIter::new(byte_iter, hex::Case::Lower).flatten();
 
                 for ch in iter {
@@ -70,7 +50,7 @@ where
         s.collect_str(&ConsensusHex(value))
     } else {
         // For non-human-readable formats, serialize as bytes.
-        let bytes = encoding::encode_to_vec(value);
+        let bytes = crate::encode_to_vec(value);
         s.serialize_bytes(&bytes)
     }
 }
@@ -92,7 +72,7 @@ where
         use serde::Deserialize;
 
         let hex_str = String::deserialize(d)?;
-        encoding::decode_from_hex(&hex_str)
+        crate::decode_from_hex(&hex_str)
             .map_err(|_| de::Error::custom("failed to decode hex string"))
     } else {
         // For non-human-readable formats, deserialize from bytes
@@ -112,7 +92,7 @@ where
             where
                 E: serde::de::Error,
             {
-                encoding::decode_from_slice(v)
+                crate::decode_from_slice(v)
                     .map_err(|_| serde::de::Error::custom("failed to decode from bytes"))
             }
 
@@ -120,7 +100,7 @@ where
             where
                 E: serde::de::Error,
             {
-                encoding::decode_from_slice(&v)
+                crate::decode_from_slice(&v)
                     .map_err(|_| serde::de::Error::custom("failed to decode from bytes"))
             }
         }
@@ -137,13 +117,14 @@ pub mod opt {
     //! This module is specifically for using `serde` to be able to serialize any object that is
     //! `Encode`/`Decode` if said object is in an `Option`.
     //!
-    //! Use with `#[serde(with = "bitcoin_primitives::serde_as_consensus::opt")]`.
+    //! Use with `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::opt")]`.
 
     use core::fmt;
     use core::marker::PhantomData;
 
-    use encoding::{Decode, Encode};
     use serde::{de, Deserializer, Serializer};
+
+    use crate::{Decode, Encode};
 
     #[allow(clippy::ref_option)] // API forced by serde.
     pub fn serialize<T, S>(t: &Option<T>, s: S) -> Result<S::Ok, S::Error>
@@ -209,14 +190,15 @@ pub mod vec {
     //! specifically for using `serde` to be able to serialize any object that is
     //! `Encode`/`Decode` if said object is in a `Vec`.
     //!
-    //! Use with `#[serde(with = "bitcoin_primitives::serde_as_consensus::vec")]`.
+    //! Use with `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::vec")]`.
 
     use alloc::vec::Vec;
     use core::fmt;
     use core::marker::PhantomData;
 
-    use encoding::{Decode, Encode};
     use serde::{de, Deserializer, Serializer};
+
+    use crate::{Decode, Encode};
 
     pub fn serialize<T, S>(v: &[T], s: S) -> Result<S::Ok, S::Error>
     where

@@ -14,7 +14,7 @@ pub struct Foo {
     /// Use `serde_as_consensus` for any type that implements `encoding::{Decodable, Encodable}`.
     ///
     /// Consensus encode then use hex or binary depending on the serializer.
-    #[serde(with = "bitcoin::serde_as_consensus")]
+    #[serde(with = "encoding::serde_as_consensus")]
     header: Header,
 
     /// `Amount` can use sats or bitcoin (`as_btc`).
