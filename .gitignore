@@ -19,3 +19,6 @@ fuzz/coverage
 
 # Local tooling
 .maintainer-tools
+
+# Nix
+result
