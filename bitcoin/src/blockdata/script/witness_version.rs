@@ -151,6 +151,57 @@ impl From<WitnessVersion> for Opcode {
     }
 }
 
+/// Serializes [`WitnessVersion`] as a `u8`.
+#[cfg(feature = "serde")]
+impl serde::Serialize for WitnessVersion {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u8(self.to_num())
+    }
+}
+
+/// Deserializes ['WitnessVersion`] as a `u8`.
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for WitnessVersion {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de;
+
+        struct Visitor;
+
+        impl de::Visitor<'_> for Visitor {
+            type Value = WitnessVersion;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a valid Bitcoin witness version (0-16)")
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                let value = u8::try_from(v)
+                    .map_err(|_| E::invalid_value(de::Unexpected::Unsigned(v), &self))?;
+                self.visit_u8(value)
+            }
+
+            fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                WitnessVersion::try_from(v)
+                    .map_err(|_| E::invalid_value(de::Unexpected::Unsigned(v as u64), &self))
+            }
+        }
+
+        deserializer.deserialize_u8(Visitor)
+    }
+}
+
 /// Error types for the segwit version number.
 pub mod error {
     use core::convert::Infallible;
@@ -270,5 +321,42 @@ pub mod error {
             let Self { invalid: _ } = self;
             None
         }
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use crate::WitnessVersion;
+
+    #[test]
+    fn test_serde_roundtrip_json() {
+        for version in [0, 1, 15, 16] {
+            let want = WitnessVersion::try_from(version).unwrap();
+
+            let serialized = serde_json::to_string(&want).unwrap();
+            let got: WitnessVersion = serde_json::from_str(&serialized).unwrap();
+
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    fn test_serde_roundtrip_bincode() {
+        for version in [0, 1, 15, 16] {
+            let want = WitnessVersion::try_from(version).unwrap();
+
+            let serialized = bincode::serialize(&want).unwrap();
+            let got: WitnessVersion = bincode::deserialize(&serialized).unwrap();
+
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    fn test_serde_invalid_version() {
+        let invalid_version = "17";
+        let result: Result<WitnessVersion, _> = serde_json::from_str(invalid_version);
+
+        assert!(result.is_err());
     }
 }
