@@ -1273,11 +1273,11 @@ pub mod error {
 
     use internals::write_err;
 
-    #[cfg(feature = "alloc")]
-    use super::OutPoint;
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     use super::parse_int;
+    #[cfg(feature = "alloc")]
+    use super::OutPoint;
     #[cfg(feature = "alloc")]
     use crate::locktime::absolute::LockTimeDecoderError;
     #[cfg(feature = "alloc")]
