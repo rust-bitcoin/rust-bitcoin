@@ -5,8 +5,8 @@
 //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
 //! We refer to the documentation on the types for more information.
 
-mod signed;
 mod result;
+mod signed;
 #[cfg(test)]
 mod tests;
 mod unsigned;
