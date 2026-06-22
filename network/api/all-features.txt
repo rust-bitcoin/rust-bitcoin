@@ -6,17 +6,18 @@ pub fn bitcoin_network_kind::as_core_arg::serialize<S>(network: &bitcoin_network
 pub mod bitcoin_network_kind::error
 #[non_exhaustive] pub struct bitcoin_network_kind::error::ParseNetworkError(_)
 impl core::clone::Clone for bitcoin_network_kind::error::ParseNetworkError
-pub fn bitcoin_network_kind::error::ParseNetworkError::clone(&self) -> bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::clone(&self) -> bitcoin_network_kind::error::ParseNetworkError [impl: impl core::clone::Clone for bitcoin_network_kind::error::ParseNetworkError]
 impl core::cmp::Eq for bitcoin_network_kind::error::ParseNetworkError
 impl core::cmp::PartialEq for bitcoin_network_kind::error::ParseNetworkError
-pub fn bitcoin_network_kind::error::ParseNetworkError::eq(&self, other: &bitcoin_network_kind::error::ParseNetworkError) -> bool
+  pub fn bitcoin_network_kind::error::ParseNetworkError::eq(&self, other: &bitcoin_network_kind::error::ParseNetworkError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_network_kind::error::ParseNetworkError]
 impl core::convert::From<core::convert::Infallible> for bitcoin_network_kind::error::ParseNetworkError
-pub fn bitcoin_network_kind::error::ParseNetworkError::from(never: core::convert::Infallible) -> Self
+  pub fn bitcoin_network_kind::error::ParseNetworkError::from(never: core::convert::Infallible) -> Self [impl: impl core::convert::From<core::convert::Infallible> for bitcoin_network_kind::error::ParseNetworkError]
 impl core::error::Error for bitcoin_network_kind::error::ParseNetworkError
-pub fn bitcoin_network_kind::error::ParseNetworkError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+  pub fn bitcoin_network_kind::error::ParseNetworkError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_network_kind::error::ParseNetworkError]
 impl core::fmt::Debug for bitcoin_network_kind::error::ParseNetworkError
-pub fn bitcoin_network_kind::error::ParseNetworkError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_network_kind::error::ParseNetworkError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_network_kind::error::ParseNetworkError]
 impl core::fmt::Display for bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_network_kind::error::ParseNetworkError]
 impl core::marker::StructuralPartialEq for bitcoin_network_kind::error::ParseNetworkError
 impl core::marker::Freeze for bitcoin_network_kind::error::ParseNetworkError
 impl core::marker::Send for bitcoin_network_kind::error::ParseNetworkError
@@ -26,29 +27,29 @@ impl core::marker::UnsafeUnpin for bitcoin_network_kind::error::ParseNetworkErro
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_network_kind::error::ParseNetworkError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_network_kind::error::ParseNetworkError
 impl<T, U> core::convert::Into<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::From<T>
-pub fn bitcoin_network_kind::error::ParseNetworkError::into(self) -> U
+  pub fn bitcoin_network_kind::error::ParseNetworkError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::Into<T>
-pub type bitcoin_network_kind::error::ParseNetworkError::Error = core::convert::Infallible
-pub fn bitcoin_network_kind::error::ParseNetworkError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_network_kind::error::ParseNetworkError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::Into<T>]
+  pub fn bitcoin_network_kind::error::ParseNetworkError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::TryFrom<T>
-pub type bitcoin_network_kind::error::ParseNetworkError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_network_kind::error::ParseNetworkError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_network_kind::error::ParseNetworkError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_network_kind::error::ParseNetworkError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::TryFrom<T>]
 impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone
-pub type bitcoin_network_kind::error::ParseNetworkError::Owned = T
-pub fn bitcoin_network_kind::error::ParseNetworkError::clone_into(&self, target: &mut T)
-pub fn bitcoin_network_kind::error::ParseNetworkError::to_owned(&self) -> T
+  pub type bitcoin_network_kind::error::ParseNetworkError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::error::ParseNetworkError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::error::ParseNetworkError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone]
 impl<T> alloc::string::ToString for bitcoin_network_kind::error::ParseNetworkError where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_network_kind::error::ParseNetworkError::to_string(&self) -> alloc::string::String
+  pub fn bitcoin_network_kind::error::ParseNetworkError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_network_kind::error::ParseNetworkError where T: core::fmt::Display + ?core::marker::Sized]
 impl<T> core::any::Any for bitcoin_network_kind::error::ParseNetworkError where T: 'static + ?core::marker::Sized
-pub fn bitcoin_network_kind::error::ParseNetworkError::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_network_kind::error::ParseNetworkError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_network_kind::error::ParseNetworkError where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::error::ParseNetworkError where T: ?core::marker::Sized
-pub fn bitcoin_network_kind::error::ParseNetworkError::borrow(&self) -> &T
+  pub fn bitcoin_network_kind::error::ParseNetworkError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::error::ParseNetworkError where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::error::ParseNetworkError where T: ?core::marker::Sized
-pub fn bitcoin_network_kind::error::ParseNetworkError::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_network_kind::error::ParseNetworkError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::error::ParseNetworkError where T: ?core::marker::Sized]
 impl<T> core::clone::CloneToUninit for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone
-pub unsafe fn bitcoin_network_kind::error::ParseNetworkError::clone_to_uninit(&self, dest: *mut u8)
+  pub unsafe fn bitcoin_network_kind::error::ParseNetworkError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_network_kind::error::ParseNetworkError
-pub fn bitcoin_network_kind::error::ParseNetworkError::from(t: T) -> T
+  pub fn bitcoin_network_kind::error::ParseNetworkError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_network_kind::error::ParseNetworkError]
 pub enum bitcoin_network_kind::Network
 pub bitcoin_network_kind::Network::Bitcoin
 pub bitcoin_network_kind::Network::Regtest
@@ -58,32 +59,33 @@ impl bitcoin_network_kind::Network
 pub fn bitcoin_network_kind::Network::from_core_arg(core_arg: &str) -> core::result::Result<Self, bitcoin_network_kind::error::ParseNetworkError>
 pub fn bitcoin_network_kind::Network::to_core_arg(self) -> &'static str
 impl core::clone::Clone for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::clone(&self) -> bitcoin_network_kind::Network
+  pub fn bitcoin_network_kind::Network::clone(&self) -> bitcoin_network_kind::Network [impl: impl core::clone::Clone for bitcoin_network_kind::Network]
 impl core::cmp::Eq for bitcoin_network_kind::Network
 impl core::cmp::Ord for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::cmp(&self, other: &bitcoin_network_kind::Network) -> core::cmp::Ordering
+  pub fn bitcoin_network_kind::Network::cmp(&self, other: &bitcoin_network_kind::Network) -> core::cmp::Ordering [impl: impl core::cmp::Ord for bitcoin_network_kind::Network]
 impl core::cmp::PartialEq for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::eq(&self, other: &bitcoin_network_kind::Network) -> bool
+  pub fn bitcoin_network_kind::Network::eq(&self, other: &bitcoin_network_kind::Network) -> bool [impl: impl core::cmp::PartialEq for bitcoin_network_kind::Network]
 impl core::cmp::PartialOrd for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::partial_cmp(&self, other: &bitcoin_network_kind::Network) -> core::option::Option<core::cmp::Ordering>
+  pub fn bitcoin_network_kind::Network::partial_cmp(&self, other: &bitcoin_network_kind::Network) -> core::option::Option<core::cmp::Ordering> [impl: impl core::cmp::PartialOrd for bitcoin_network_kind::Network]
 impl core::convert::AsRef<bitcoin_network_kind::Network> for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::as_ref(&self) -> &Self
+  pub fn bitcoin_network_kind::Network::as_ref(&self) -> &Self [impl: impl core::convert::AsRef<bitcoin_network_kind::Network> for bitcoin_network_kind::Network]
 impl core::convert::From<bitcoin_network_kind::Network> for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::from(network: bitcoin_network_kind::Network) -> Self
+  pub fn bitcoin_network_kind::NetworkKind::from(network: bitcoin_network_kind::Network) -> Self [impl: impl core::convert::From<bitcoin_network_kind::Network> for bitcoin_network_kind::NetworkKind]
 impl core::fmt::Debug for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_network_kind::Network::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_network_kind::Network]
 impl core::fmt::Display for bitcoin_network_kind::Network
+  pub fn bitcoin_network_kind::Network::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_network_kind::Network]
 impl core::hash::Hash for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+  pub fn bitcoin_network_kind::Network::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl core::hash::Hash for bitcoin_network_kind::Network]
 impl core::marker::Copy for bitcoin_network_kind::Network
 impl core::marker::StructuralPartialEq for bitcoin_network_kind::Network
 impl core::str::traits::FromStr for bitcoin_network_kind::Network
-pub type bitcoin_network_kind::Network::Err = bitcoin_network_kind::error::ParseNetworkError
-pub fn bitcoin_network_kind::Network::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+  pub type bitcoin_network_kind::Network::Err = bitcoin_network_kind::error::ParseNetworkError [impl: impl core::str::traits::FromStr for bitcoin_network_kind::Network]
+  pub fn bitcoin_network_kind::Network::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_network_kind::Network]
 impl serde::ser::Serialize for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+  pub fn bitcoin_network_kind::Network::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_network_kind::Network]
 impl<'de> serde::de::Deserialize<'de> for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+  pub fn bitcoin_network_kind::Network::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_network_kind::Network]
 impl core::marker::Freeze for bitcoin_network_kind::Network
 impl core::marker::Send for bitcoin_network_kind::Network
 impl core::marker::Sync for bitcoin_network_kind::Network
@@ -92,29 +94,29 @@ impl core::marker::UnsafeUnpin for bitcoin_network_kind::Network
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_network_kind::Network
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_network_kind::Network
 impl<T, U> core::convert::Into<U> for bitcoin_network_kind::Network where U: core::convert::From<T>
-pub fn bitcoin_network_kind::Network::into(self) -> U
+  pub fn bitcoin_network_kind::Network::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_network_kind::Network where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::Network where U: core::convert::Into<T>
-pub type bitcoin_network_kind::Network::Error = core::convert::Infallible
-pub fn bitcoin_network_kind::Network::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_network_kind::Network::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::Network where U: core::convert::Into<T>]
+  pub fn bitcoin_network_kind::Network::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::Network where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::Network where U: core::convert::TryFrom<T>
-pub type bitcoin_network_kind::Network::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_network_kind::Network::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_network_kind::Network::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::Network where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_network_kind::Network::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::Network where U: core::convert::TryFrom<T>]
 impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::Network where T: core::clone::Clone
-pub type bitcoin_network_kind::Network::Owned = T
-pub fn bitcoin_network_kind::Network::clone_into(&self, target: &mut T)
-pub fn bitcoin_network_kind::Network::to_owned(&self) -> T
+  pub type bitcoin_network_kind::Network::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::Network where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::Network::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::Network where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::Network::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::Network where T: core::clone::Clone]
 impl<T> alloc::string::ToString for bitcoin_network_kind::Network where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_network_kind::Network::to_string(&self) -> alloc::string::String
+  pub fn bitcoin_network_kind::Network::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_network_kind::Network where T: core::fmt::Display + ?core::marker::Sized]
 impl<T> core::any::Any for bitcoin_network_kind::Network where T: 'static + ?core::marker::Sized
-pub fn bitcoin_network_kind::Network::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_network_kind::Network::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_network_kind::Network where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::Network where T: ?core::marker::Sized
-pub fn bitcoin_network_kind::Network::borrow(&self) -> &T
+  pub fn bitcoin_network_kind::Network::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::Network where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::Network where T: ?core::marker::Sized
-pub fn bitcoin_network_kind::Network::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_network_kind::Network::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::Network where T: ?core::marker::Sized]
 impl<T> core::clone::CloneToUninit for bitcoin_network_kind::Network where T: core::clone::Clone
-pub unsafe fn bitcoin_network_kind::Network::clone_to_uninit(&self, dest: *mut u8)
+  pub unsafe fn bitcoin_network_kind::Network::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_network_kind::Network where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_network_kind::Network
-pub fn bitcoin_network_kind::Network::from(t: T) -> T
+  pub fn bitcoin_network_kind::Network::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_network_kind::Network]
 impl<T> serde::de::DeserializeOwned for bitcoin_network_kind::Network where T: for<'de> serde::de::Deserialize<'de>
 pub enum bitcoin_network_kind::NetworkKind
 pub bitcoin_network_kind::NetworkKind::Main
@@ -122,26 +124,28 @@ pub bitcoin_network_kind::NetworkKind::Test
 impl bitcoin_network_kind::NetworkKind
 pub const fn bitcoin_network_kind::NetworkKind::is_mainnet(self) -> bool
 impl core::clone::Clone for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::clone(&self) -> bitcoin_network_kind::NetworkKind
+  pub fn bitcoin_network_kind::NetworkKind::clone(&self) -> bitcoin_network_kind::NetworkKind [impl: impl core::clone::Clone for bitcoin_network_kind::NetworkKind]
 impl core::cmp::Eq for bitcoin_network_kind::NetworkKind
 impl core::cmp::Ord for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::cmp(&self, other: &bitcoin_network_kind::NetworkKind) -> core::cmp::Ordering
+  pub fn bitcoin_network_kind::NetworkKind::cmp(&self, other: &bitcoin_network_kind::NetworkKind) -> core::cmp::Ordering [impl: impl core::cmp::Ord for bitcoin_network_kind::NetworkKind]
 impl core::cmp::PartialEq for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::eq(&self, other: &bitcoin_network_kind::NetworkKind) -> bool
+  pub fn bitcoin_network_kind::NetworkKind::eq(&self, other: &bitcoin_network_kind::NetworkKind) -> bool [impl: impl core::cmp::PartialEq for bitcoin_network_kind::NetworkKind]
 impl core::cmp::PartialOrd for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::partial_cmp(&self, other: &bitcoin_network_kind::NetworkKind) -> core::option::Option<core::cmp::Ordering>
+  pub fn bitcoin_network_kind::NetworkKind::partial_cmp(&self, other: &bitcoin_network_kind::NetworkKind) -> core::option::Option<core::cmp::Ordering> [impl: impl core::cmp::PartialOrd for bitcoin_network_kind::NetworkKind]
+impl core::convert::From<bitcoin_network_kind::Network> for bitcoin_network_kind::NetworkKind
+  pub fn bitcoin_network_kind::NetworkKind::from(network: bitcoin_network_kind::Network) -> Self [impl: impl core::convert::From<bitcoin_network_kind::Network> for bitcoin_network_kind::NetworkKind]
 impl core::fmt::Debug for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_network_kind::NetworkKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_network_kind::NetworkKind]
 impl core::hash::Hash for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+  pub fn bitcoin_network_kind::NetworkKind::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl core::hash::Hash for bitcoin_network_kind::NetworkKind]
 impl core::marker::Copy for bitcoin_network_kind::NetworkKind
 impl core::marker::StructuralPartialEq for bitcoin_network_kind::NetworkKind
 impl serde::ser::Serialize for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+  pub fn bitcoin_network_kind::NetworkKind::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_network_kind::NetworkKind]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+  pub fn bitcoin_network_kind::NetworkKind::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_network_kind::NetworkKind]
 impl<'de> serde::de::Deserialize<'de> for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+  pub fn bitcoin_network_kind::NetworkKind::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_network_kind::NetworkKind]
 impl core::marker::Freeze for bitcoin_network_kind::NetworkKind
 impl core::marker::Send for bitcoin_network_kind::NetworkKind
 impl core::marker::Sync for bitcoin_network_kind::NetworkKind
@@ -150,44 +154,44 @@ impl core::marker::UnsafeUnpin for bitcoin_network_kind::NetworkKind
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_network_kind::NetworkKind
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_network_kind::NetworkKind
 impl<T, U> core::convert::Into<U> for bitcoin_network_kind::NetworkKind where U: core::convert::From<T>
-pub fn bitcoin_network_kind::NetworkKind::into(self) -> U
+  pub fn bitcoin_network_kind::NetworkKind::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_network_kind::NetworkKind where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::NetworkKind where U: core::convert::Into<T>
-pub type bitcoin_network_kind::NetworkKind::Error = core::convert::Infallible
-pub fn bitcoin_network_kind::NetworkKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_network_kind::NetworkKind::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::NetworkKind where U: core::convert::Into<T>]
+  pub fn bitcoin_network_kind::NetworkKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::NetworkKind where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::NetworkKind where U: core::convert::TryFrom<T>
-pub type bitcoin_network_kind::NetworkKind::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_network_kind::NetworkKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_network_kind::NetworkKind::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::NetworkKind where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_network_kind::NetworkKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::NetworkKind where U: core::convert::TryFrom<T>]
 impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::NetworkKind where T: core::clone::Clone
-pub type bitcoin_network_kind::NetworkKind::Owned = T
-pub fn bitcoin_network_kind::NetworkKind::clone_into(&self, target: &mut T)
-pub fn bitcoin_network_kind::NetworkKind::to_owned(&self) -> T
+  pub type bitcoin_network_kind::NetworkKind::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::NetworkKind where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::NetworkKind::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::NetworkKind where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::NetworkKind::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::NetworkKind where T: core::clone::Clone]
 impl<T> core::any::Any for bitcoin_network_kind::NetworkKind where T: 'static + ?core::marker::Sized
-pub fn bitcoin_network_kind::NetworkKind::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_network_kind::NetworkKind::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_network_kind::NetworkKind where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::NetworkKind where T: ?core::marker::Sized
-pub fn bitcoin_network_kind::NetworkKind::borrow(&self) -> &T
+  pub fn bitcoin_network_kind::NetworkKind::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::NetworkKind where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::NetworkKind where T: ?core::marker::Sized
-pub fn bitcoin_network_kind::NetworkKind::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_network_kind::NetworkKind::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::NetworkKind where T: ?core::marker::Sized]
 impl<T> core::clone::CloneToUninit for bitcoin_network_kind::NetworkKind where T: core::clone::Clone
-pub unsafe fn bitcoin_network_kind::NetworkKind::clone_to_uninit(&self, dest: *mut u8)
+  pub unsafe fn bitcoin_network_kind::NetworkKind::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_network_kind::NetworkKind where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_network_kind::NetworkKind
-pub fn bitcoin_network_kind::NetworkKind::from(t: T) -> T
+  pub fn bitcoin_network_kind::NetworkKind::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_network_kind::NetworkKind]
 impl<T> serde::de::DeserializeOwned for bitcoin_network_kind::NetworkKind where T: for<'de> serde::de::Deserialize<'de>
 #[non_exhaustive] pub enum bitcoin_network_kind::TestnetVersion
 pub bitcoin_network_kind::TestnetVersion::V3
 pub bitcoin_network_kind::TestnetVersion::V4
 impl core::clone::Clone for bitcoin_network_kind::TestnetVersion
-pub fn bitcoin_network_kind::TestnetVersion::clone(&self) -> bitcoin_network_kind::TestnetVersion
+  pub fn bitcoin_network_kind::TestnetVersion::clone(&self) -> bitcoin_network_kind::TestnetVersion [impl: impl core::clone::Clone for bitcoin_network_kind::TestnetVersion]
 impl core::cmp::Eq for bitcoin_network_kind::TestnetVersion
 impl core::cmp::Ord for bitcoin_network_kind::TestnetVersion
-pub fn bitcoin_network_kind::TestnetVersion::cmp(&self, other: &bitcoin_network_kind::TestnetVersion) -> core::cmp::Ordering
+  pub fn bitcoin_network_kind::TestnetVersion::cmp(&self, other: &bitcoin_network_kind::TestnetVersion) -> core::cmp::Ordering [impl: impl core::cmp::Ord for bitcoin_network_kind::TestnetVersion]
 impl core::cmp::PartialEq for bitcoin_network_kind::TestnetVersion
-pub fn bitcoin_network_kind::TestnetVersion::eq(&self, other: &bitcoin_network_kind::TestnetVersion) -> bool
+  pub fn bitcoin_network_kind::TestnetVersion::eq(&self, other: &bitcoin_network_kind::TestnetVersion) -> bool [impl: impl core::cmp::PartialEq for bitcoin_network_kind::TestnetVersion]
 impl core::cmp::PartialOrd for bitcoin_network_kind::TestnetVersion
-pub fn bitcoin_network_kind::TestnetVersion::partial_cmp(&self, other: &bitcoin_network_kind::TestnetVersion) -> core::option::Option<core::cmp::Ordering>
+  pub fn bitcoin_network_kind::TestnetVersion::partial_cmp(&self, other: &bitcoin_network_kind::TestnetVersion) -> core::option::Option<core::cmp::Ordering> [impl: impl core::cmp::PartialOrd for bitcoin_network_kind::TestnetVersion]
 impl core::fmt::Debug for bitcoin_network_kind::TestnetVersion
-pub fn bitcoin_network_kind::TestnetVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_network_kind::TestnetVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_network_kind::TestnetVersion]
 impl core::hash::Hash for bitcoin_network_kind::TestnetVersion
-pub fn bitcoin_network_kind::TestnetVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+  pub fn bitcoin_network_kind::TestnetVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl core::hash::Hash for bitcoin_network_kind::TestnetVersion]
 impl core::marker::Copy for bitcoin_network_kind::TestnetVersion
 impl core::marker::StructuralPartialEq for bitcoin_network_kind::TestnetVersion
 impl core::marker::Freeze for bitcoin_network_kind::TestnetVersion
@@ -198,25 +202,70 @@ impl core::marker::UnsafeUnpin for bitcoin_network_kind::TestnetVersion
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_network_kind::TestnetVersion
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_network_kind::TestnetVersion
 impl<T, U> core::convert::Into<U> for bitcoin_network_kind::TestnetVersion where U: core::convert::From<T>
-pub fn bitcoin_network_kind::TestnetVersion::into(self) -> U
+  pub fn bitcoin_network_kind::TestnetVersion::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_network_kind::TestnetVersion where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::TestnetVersion where U: core::convert::Into<T>
-pub type bitcoin_network_kind::TestnetVersion::Error = core::convert::Infallible
-pub fn bitcoin_network_kind::TestnetVersion::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_network_kind::TestnetVersion::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::TestnetVersion where U: core::convert::Into<T>]
+  pub fn bitcoin_network_kind::TestnetVersion::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::TestnetVersion where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::TestnetVersion where U: core::convert::TryFrom<T>
-pub type bitcoin_network_kind::TestnetVersion::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_network_kind::TestnetVersion::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_network_kind::TestnetVersion::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::TestnetVersion where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_network_kind::TestnetVersion::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::TestnetVersion where U: core::convert::TryFrom<T>]
 impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::TestnetVersion where T: core::clone::Clone
-pub type bitcoin_network_kind::TestnetVersion::Owned = T
-pub fn bitcoin_network_kind::TestnetVersion::clone_into(&self, target: &mut T)
-pub fn bitcoin_network_kind::TestnetVersion::to_owned(&self) -> T
+  pub type bitcoin_network_kind::TestnetVersion::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::TestnetVersion where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::TestnetVersion::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::TestnetVersion where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::TestnetVersion::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::TestnetVersion where T: core::clone::Clone]
 impl<T> core::any::Any for bitcoin_network_kind::TestnetVersion where T: 'static + ?core::marker::Sized
-pub fn bitcoin_network_kind::TestnetVersion::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_network_kind::TestnetVersion::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_network_kind::TestnetVersion where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::TestnetVersion where T: ?core::marker::Sized
-pub fn bitcoin_network_kind::TestnetVersion::borrow(&self) -> &T
+  pub fn bitcoin_network_kind::TestnetVersion::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::TestnetVersion where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::TestnetVersion where T: ?core::marker::Sized
-pub fn bitcoin_network_kind::TestnetVersion::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_network_kind::TestnetVersion::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::TestnetVersion where T: ?core::marker::Sized]
 impl<T> core::clone::CloneToUninit for bitcoin_network_kind::TestnetVersion where T: core::clone::Clone
-pub unsafe fn bitcoin_network_kind::TestnetVersion::clone_to_uninit(&self, dest: *mut u8)
+  pub unsafe fn bitcoin_network_kind::TestnetVersion::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_network_kind::TestnetVersion where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_network_kind::TestnetVersion
-pub fn bitcoin_network_kind::TestnetVersion::from(t: T) -> T
+  pub fn bitcoin_network_kind::TestnetVersion::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_network_kind::TestnetVersion]
 #[non_exhaustive] pub struct bitcoin_network_kind::ParseNetworkError(_)
+impl core::clone::Clone for bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::clone(&self) -> bitcoin_network_kind::error::ParseNetworkError [impl: impl core::clone::Clone for bitcoin_network_kind::error::ParseNetworkError]
+impl core::cmp::Eq for bitcoin_network_kind::error::ParseNetworkError
+impl core::cmp::PartialEq for bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::eq(&self, other: &bitcoin_network_kind::error::ParseNetworkError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_network_kind::error::ParseNetworkError]
+impl core::convert::From<core::convert::Infallible> for bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::from(never: core::convert::Infallible) -> Self [impl: impl core::convert::From<core::convert::Infallible> for bitcoin_network_kind::error::ParseNetworkError]
+impl core::error::Error for bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_network_kind::error::ParseNetworkError]
+impl core::fmt::Debug for bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_network_kind::error::ParseNetworkError]
+impl core::fmt::Display for bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_network_kind::error::ParseNetworkError]
+impl core::marker::StructuralPartialEq for bitcoin_network_kind::error::ParseNetworkError
+impl core::marker::Freeze for bitcoin_network_kind::error::ParseNetworkError
+impl core::marker::Send for bitcoin_network_kind::error::ParseNetworkError
+impl core::marker::Sync for bitcoin_network_kind::error::ParseNetworkError
+impl core::marker::Unpin for bitcoin_network_kind::error::ParseNetworkError
+impl core::marker::UnsafeUnpin for bitcoin_network_kind::error::ParseNetworkError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_network_kind::error::ParseNetworkError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_network_kind::error::ParseNetworkError
+impl<T, U> core::convert::Into<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::From<T>
+  pub fn bitcoin_network_kind::error::ParseNetworkError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::Into<T>
+  pub type bitcoin_network_kind::error::ParseNetworkError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::Into<T>]
+  pub fn bitcoin_network_kind::error::ParseNetworkError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::TryFrom<T>
+  pub type bitcoin_network_kind::error::ParseNetworkError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_network_kind::error::ParseNetworkError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_network_kind::error::ParseNetworkError where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone
+  pub type bitcoin_network_kind::error::ParseNetworkError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::error::ParseNetworkError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone]
+  pub fn bitcoin_network_kind::error::ParseNetworkError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone]
+impl<T> alloc::string::ToString for bitcoin_network_kind::error::ParseNetworkError where T: core::fmt::Display + ?core::marker::Sized
+  pub fn bitcoin_network_kind::error::ParseNetworkError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_network_kind::error::ParseNetworkError where T: core::fmt::Display + ?core::marker::Sized]
+impl<T> core::any::Any for bitcoin_network_kind::error::ParseNetworkError where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_network_kind::error::ParseNetworkError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_network_kind::error::ParseNetworkError where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::error::ParseNetworkError where T: ?core::marker::Sized
+  pub fn bitcoin_network_kind::error::ParseNetworkError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_network_kind::error::ParseNetworkError where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::error::ParseNetworkError where T: ?core::marker::Sized
+  pub fn bitcoin_network_kind::error::ParseNetworkError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_network_kind::error::ParseNetworkError where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone
+  pub unsafe fn bitcoin_network_kind::error::ParseNetworkError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_network_kind::error::ParseNetworkError where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_network_kind::error::ParseNetworkError
+  pub fn bitcoin_network_kind::error::ParseNetworkError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_network_kind::error::ParseNetworkError]
