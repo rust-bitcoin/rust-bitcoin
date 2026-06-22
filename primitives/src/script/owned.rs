@@ -55,7 +55,7 @@ impl<T> ScriptBuf<T> {
     /// # Errors
     ///
     /// * If `s` cannot be parsed into a vector.
-    /// * If the parsed bytes cannot be decoded as a valid script (incl.the length prefix).
+    /// * If the parsed bytes cannot be decoded as a valid script (incl. the length prefix).
     #[cfg(feature = "hex")]
     pub fn from_hex_prefixed(
         s: &str,
@@ -124,7 +124,7 @@ impl<T> ScriptBuf<T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity exceeds `isize::MAX bytes`.
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
     #[inline]
     pub fn reserve(&mut self, additional_len: usize) { self.1.reserve(additional_len); }
 
@@ -140,7 +140,7 @@ impl<T> ScriptBuf<T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity exceeds `isize::MAX bytes`.
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
     #[inline]
     pub fn reserve_exact(&mut self, additional_len: usize) { self.1.reserve_exact(additional_len); }
 

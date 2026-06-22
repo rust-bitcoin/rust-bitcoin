@@ -64,7 +64,7 @@ crate::decoder_newtype! {
     }
 }
 
-/// An error consensus decoding an `BlockHash`.
+/// An error consensus decoding a `BlockHash`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockHashDecoderError(encoding::UnexpectedEofError);
 

@@ -132,7 +132,7 @@ impl Witness {
     #[inline]
     pub const fn len(&self) -> usize { self.witness_elements }
 
-    /// Returns the number of bytes this witness contributes to a transactions total size.
+    /// Returns the number of bytes this witness contributes to a transaction's total size.
     ///
     /// # Panics
     ///

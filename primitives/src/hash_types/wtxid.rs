@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `Txid` type.
+//! The `Wtxid` type.
 //!
 //! In order to print and parse txids enable the "hex" feature.
 

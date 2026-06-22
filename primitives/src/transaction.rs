@@ -127,7 +127,7 @@ pub use crate::hash_types::{BlockHashDecoder, Ntxid, Txid, Wtxid};
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg(feature = "alloc")]
 pub struct Transaction {
-    /// The protocol version, is currently expected to be 1, 2 (BIP-0068) or 3 (BIP-0431).
+    /// The protocol version. This is currently expected to be 1, 2 (BIP-0068) or 3 (BIP-0431).
     pub version: Version,
     /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
     ///
@@ -658,7 +658,7 @@ impl encoding::Decoder for TransactionDecoder {
     }
 }
 
-/// The state of the transiting decoder.
+/// The state of the transaction decoder.
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone)]
 enum TransactionDecoderState {
@@ -708,8 +708,8 @@ struct Iteration(usize);
 
 /// Bitcoin transaction input.
 ///
-/// It contains the location of the previous transaction's output,
-/// that it spends and set of scripts that satisfy its spending
+/// It contains the location of the previous transaction's output
+/// that it spends, and the set of scripts that satisfy its spending
 /// conditions.
 ///
 /// # Bitcoin Core References
@@ -1498,7 +1498,7 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding an `Version`.
+    /// An error consensus decoding a `Version`.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
 

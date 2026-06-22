@@ -84,7 +84,7 @@ crate::decoder_newtype! {
     }
 }
 
-/// An error consensus decoding an `WitnessMerkleNode`.
+/// An error consensus decoding a `WitnessMerkleNode`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WitnessMerkleNodeDecoderError(encoding::UnexpectedEofError);
 

@@ -92,7 +92,7 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
             // construction vulnerable to collisions (see CVE 2012-2459).
             //
             // (It is also vulnerable to collisions because it does not distinguish
-            // between internal nodes and transactions, but this collisions of this
+            // between internal nodes and transactions, but collisions of this
             // form are probably impractical. It is likely that 64-byte transactions
             // will be forbidden in the future which will close this for good.)
             //
