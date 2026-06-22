@@ -637,7 +637,7 @@ pub mod error {
         }
     }
 
-    /// An error occuring when decoding a [`PrefilledTransaction`].
+    /// An error occurring when decoding a [`PrefilledTransaction`].
     ///
     /// [`PrefilledTransaction`]: super::PrefilledTransaction
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -694,7 +694,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Errors occuring when decoding a [`HeaderAndShortIds`] message.
+    /// Errors occurring when decoding a [`HeaderAndShortIds`] message.
     ///
     /// [`HeaderAndShortIds`]: super::HeaderAndShortIds
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -775,7 +775,7 @@ pub mod error {
         }
     }
 
-    /// An error occuring decoding a [`BlockTransactions`] message.
+    /// An error occurring when decoding a [`BlockTransactions`] message.
     ///
     /// [`BlockTransactions`]: super::BlockTransactions
     #[derive(Debug, Clone, PartialEq, Eq)]

@@ -664,7 +664,7 @@ pub mod error {
         }
     }
 
-    /// Errors occuring when decoding a [`RejectReason`].
+    /// Errors occurring when decoding a [`RejectReason`].
     ///
     /// [`RejectReason`]: super::RejectReason
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -698,7 +698,7 @@ pub mod error {
         }
     }
 
-    /// Errors occuring when decoding a [`Reject`].
+    /// Errors occurring when decoding a [`Reject`].
     ///
     /// [`Reject`]: super::Reject
     #[derive(Debug, Clone, PartialEq, Eq)]

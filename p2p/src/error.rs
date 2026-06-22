@@ -57,7 +57,7 @@ impl std::error::Error for ServiceFlagsDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
-/// Errors occuring when decoding a network [`Magic`].
+/// Errors occurring when decoding a network [`Magic`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MagicDecoderError(pub(super) <super::MagicInnerDecoder as encoding::Decoder>::Error);
 
