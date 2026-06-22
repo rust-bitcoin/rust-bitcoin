@@ -3540,7 +3540,7 @@ pub fn bitcoin_primitives::script::PushBytesErrorReport::input_len(&self) -> usi
 impl bitcoin_primitives::script::PushBytesErrorReport for core::convert::Infallible
 pub fn core::convert::Infallible::input_len(&self) -> usize
 pub trait bitcoin_primitives::script::ScriptHashableTag: bitcoin_primitives::script::sealed::Sealed
-pub trait bitcoin_primitives::script::Tag
+pub trait bitcoin_primitives::script::Tag: bitcoin_primitives::script::tag::sealed::Sealed
 pub type bitcoin_primitives::script::RedeemScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::RedeemScriptTag>
 pub type bitcoin_primitives::script::RedeemScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::RedeemScriptTag>
 pub type bitcoin_primitives::script::ScriptPubKey = bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>
