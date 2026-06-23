@@ -340,13 +340,9 @@ internal_macros::define_extension_trait! {
                     Instruction::PushBytes(_) => {
                         num_pubkeys += 1;
                     }
-                    Instruction::Op(op) => {
-                        if let Some(pushnum) = op.decode_pushnum() {
-                            if pushnum != num_pubkeys {
-                                return false;
-                            }
-                        }
-                        break;
+                    Instruction::Op(op) => match op.decode_pushnum() {
+                        Some(push_num) if push_num == num_pubkeys => break,
+                        _ => return false,
                     }
                 }
             }

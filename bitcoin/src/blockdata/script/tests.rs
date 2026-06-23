@@ -585,6 +585,13 @@ fn multisig() {
     )
     .unwrap()
     .is_multisig());
+
+    // Num pubkeys must be a pushnum opcode (OP_1..OP_16).
+    assert!(
+            !ScriptPubKeyBuf::from_hex_no_length_prefix("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f475ae")
+                .unwrap()
+                .is_multisig()
+        );
 }
 
 #[test]
