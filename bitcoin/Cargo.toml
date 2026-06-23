@@ -97,7 +97,7 @@ use_self = "warn"
 [package.metadata.rbmt.test]
 examples = [
     "bip32",
-    "bip32:-",
+    "bip32:std secp-recovery",
     "sign-tx-segwit-v0:rand std",
     "sign-tx-taproot:rand std",
     "sighash:std",
