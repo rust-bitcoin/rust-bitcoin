@@ -651,9 +651,13 @@ pub mod error {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for PartialMerkleTree {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let mut bits = Vec::<bool>::arbitrary(u)?;
+        while bits.len() % 8 != 0 {
+            bits.push(false);
+        }
         Ok(Self {
             num_transactions: u.arbitrary()?,
-            bits: Vec::<bool>::arbitrary(u)?,
+            bits,
             hashes: Vec::<TxMerkleNode>::arbitrary(u)?,
         })
     }
