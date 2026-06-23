@@ -778,7 +778,19 @@ impl<'a> Arbitrary<'a> for UserAgentVersion {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for UserAgent {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::new(u.arbitrary::<String>()?, &u.arbitrary()?))
+        let version = UserAgentVersion::arbitrary(u)?;
+
+        let mut name: String = u
+            .arbitrary::<String>()?
+            .chars()
+            .filter(|c| !matches!(c, '/' | '(' | ')' | ':'))
+            .collect();
+
+        let overhead = 3 + version.to_string().chars().count();
+        let max_name = Self::MAX_USER_AGENT_LEN - overhead;
+        name.truncate(max_name);
+
+        Ok(Self::new(name, &version))
     }
 }
 
