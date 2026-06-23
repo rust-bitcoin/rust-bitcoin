@@ -854,6 +854,16 @@ fn default_dust_value() {
 
 #[test]
 fn script_get_sigop_count() {
+    // 1 (CHECKSIG) + 20 (CHECKMULTISIG, lastOpcode = CHECKSIG)
+    assert_eq!(
+        Script::builder()
+            .push_opcode(OP_1)
+            .push_opcode(OP_CHECKSIG)
+            .push_opcode(OP_CHECKMULTISIG)
+            .into_script()
+            .count_sigops(),
+        21
+    );
     assert_eq!(
         Script::builder()
             .push_opcode(OP_DUP)

@@ -476,6 +476,7 @@ internal_macros::define_extension_trait! {
                             // p2pk, p2pkh
                             OP_CHECKSIG | OP_CHECKSIGVERIFY => {
                                 n += 1;
+                                pushnum_cache = None;
                             }
                             OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
                                 match (accurate, pushnum_cache) {
@@ -489,6 +490,7 @@ internal_macros::define_extension_trait! {
                                         n += 20;
                                     }
                                 }
+                                pushnum_cache = None;
                             }
                             _ => {
                                 pushnum_cache = opcode.decode_pushnum();
