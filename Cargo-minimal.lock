@@ -99,6 +99,9 @@ dependencies = [
 [[package]]
 name = "bitcoin-io"
 version = "0.1.101"
+dependencies = [
+ "bitcoin-consensus-encoding",
+]
 
 [[package]]
 name = "bitcoin-units"

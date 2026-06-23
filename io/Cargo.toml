@@ -18,8 +18,11 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "encoding?/std"]
+alloc = ["encoding?/alloc"]
+
+[dependencies]
+encoding = { package = "bitcoin-consensus-encoding", version = "1.0", default-features = false, optional = true }
 
 [package.metadata.docs.rs]
 all-features = true
@@ -27,3 +30,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_63)', 'cfg(rust_v_1_72)', 'cfg(rust_v_1_73)', 'cfg(rust_v_1_75)', 'cfg(rust_v_1_78)'] }
+
+[package.metadata.rbmt.test]
+msrv_overrides = { "encoding" = "1.74.0" }
