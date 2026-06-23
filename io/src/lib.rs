@@ -20,6 +20,9 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+#[cfg(feature = "encoding")]
+pub extern crate encoding;
+
 mod error;
 mod macros;
 #[cfg(feature = "std")]
@@ -31,6 +34,9 @@ pub use bridge::{FromStd, ToStd};
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::vec::Vec;
 use core::cmp;
+
+#[cfg(feature = "encoding")]
+use encoding::Decoder;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
@@ -324,6 +330,218 @@ pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> {
     FromStd::new_mut(std_io)
 }
 
+/// Encodes an object that implements [`encoding::Encode`] to a writer.
+///
+/// This is a convenience function that takes care of the boilerplate of calling
+/// [`encoding::Encode::encoder`], repeatedly calling [`Encoder::current_chunk`](encoding::Encoder::current_chunk),
+/// writing to the writer, and calling [`Encoder::advance`](encoding::Encoder::advance).
+///
+/// # Errors
+///
+/// Returns any I/O error encountered while writing to the writer.
+///
+/// # Features
+///
+/// Requires the `encoding` feature.
+#[cfg(feature = "encoding")]
+#[inline]
+pub fn encode_to_writer<T, W>(object: &T, writer: W) -> Result<()>
+where
+    T: encoding::Encode + ?Sized,
+    W: Write,
+{
+    let mut encoder = object.encoder();
+    drain_to_writer(&mut encoder, writer)
+}
+
+/// Drains the output of an [`Encoder`](encoding::Encoder) to an I/O writer.
+///
+/// See [`encode_to_writer`] for more information.
+///
+/// # Errors
+///
+/// Returns any I/O error encountered while writing to the writer.
+///
+/// # Features
+///
+/// Requires the `encoding` feature.
+#[cfg(feature = "encoding")]
+#[inline]
+pub fn drain_to_writer<T, W>(encoder: &mut T, mut writer: W) -> Result<()>
+where
+    T: encoding::Encoder + ?Sized,
+    W: Write,
+{
+    loop {
+        writer.write_all(encoder.current_chunk())?;
+        if encoder.advance().has_finished() {
+            break;
+        }
+    }
+    Ok(())
+}
+
+/// Decodes an object from a buffered reader.
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
+/// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "encoding")]
+pub fn decode_from_read<T, R>(
+    reader: R,
+) -> core::result::Result<T, encoding::ReadError<<T::Decoder as encoding::Decoder>::Error>>
+where
+    T: encoding::Decode,
+    R: BufRead,
+{
+    decode_from_read_internal(reader, T::decoder())
+}
+
+/// Decodes an object from a buffered reader using a [`Decoder`](encoding::Decoder) type.
+///
+/// Unlike [`decode_from_read`], this takes a generic [`Decoder`](encoding::Decoder) parameter, allowing use with
+/// decoders which don't have a dedicated [`Decode`](encoding::Decode) implementer.
+///
+/// # Performance
+///
+/// For unbuffered readers (like [`std::fs::File`] or [`std::net::TcpStream`]), consider wrapping
+/// your reader with [`std::io::BufReader`] in order to use this function. This avoids frequent
+/// small reads, which can significantly impact performance.
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
+/// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "encoding")]
+pub fn decode_from_read_with<D, R>(
+    reader: R,
+) -> core::result::Result<D::Output, encoding::ReadError<D::Error>>
+where
+    D: encoding::Decoder + Default,
+    R: BufRead,
+{
+    decode_from_read_internal(reader, D::default())
+}
+
+#[cfg(feature = "encoding")]
+fn decode_from_read_internal<D, R>(
+    mut reader: R,
+    mut decoder: D,
+) -> core::result::Result<D::Output, encoding::ReadError<D::Error>>
+where
+    D: encoding::Decoder + Default,
+    R: BufRead,
+{
+    loop {
+        let mut buffer = match reader.fill_buf() {
+            Ok(buffer) => buffer,
+            // Auto retry read for non-fatal error.
+            Err(error) if error.kind() == ErrorKind::Interrupted => continue,
+            Err(error) => return Err(encoding::ReadError::Io(std::io::Error::other(error.to_string()))),
+        };
+
+        if buffer.is_empty() {
+            // EOF, but still try to finalize the decoder.
+            return decoder.end().map_err(encoding::ReadError::Decode);
+        }
+
+        let original_len = buffer.len();
+        let status = decoder.push_bytes(&mut buffer).map_err(encoding::ReadError::Decode)?;
+        let consumed = original_len - buffer.len();
+        reader.consume(consumed);
+
+        if status.is_ready() {
+            return decoder.end().map_err(encoding::ReadError::Decode);
+        }
+    }
+
+}
+
+/// Decodes an object from an unbuffered reader using a fixed-size buffer.
+///
+/// For most use cases, prefer [`decode_from_read`] with a [`std::io::BufReader`].
+/// This function is only needed when you have an unbuffered reader which you
+/// cannot wrap. It will probably have worse performance.
+///
+/// # Buffer
+///
+/// Uses a fixed 4KB (4096 bytes) stack-allocated buffer that is reused across
+/// read operations. This size is a good balance between memory usage and
+/// system call efficiency for most use cases.
+///
+/// For different buffer sizes, use [`decode_from_read_unbuffered_with`].
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
+/// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "encoding")]
+pub fn decode_from_read_unbuffered<T, R>(
+    reader: R,
+) -> core::result::Result<T, encoding::ReadError<<T::Decoder as encoding::Decoder>::Error>>
+where
+    T: encoding::Decode,
+    R: Read,
+{
+    decode_from_read_unbuffered_with::<T, R, 4096>(reader)
+}
+
+/// Decodes an object from an unbuffered reader using a custom-sized buffer.
+///
+/// For most use cases, prefer [`decode_from_read`] with a [`std::io::BufReader`].
+/// This function is only needed when you have an unbuffered reader which you
+/// cannot wrap. It will probably have worse performance.
+///
+/// # Buffer
+///
+/// The `BUFFER_SIZE` parameter controls the intermediate buffer size used for
+/// reading. The buffer is allocated on the stack (not heap) and reused across
+/// read operations. Larger buffers reduce the number of system calls, but use
+/// more memory.
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
+/// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "encoding")]
+pub fn decode_from_read_unbuffered_with<T, R, const BUFFER_SIZE: usize>(
+    mut reader: R,
+) -> core::result::Result<T, encoding::ReadError<<T::Decoder as encoding::Decoder>::Error>>
+where
+    T: encoding::Decode,
+    R: Read,
+{
+    let mut decoder = T::decoder();
+    let mut buffer = [0u8; BUFFER_SIZE];
+
+    while decoder.read_limit() > 0 {
+        // Only read what we need, up to buffer size.
+        let clamped_buffer = &mut buffer[..decoder.read_limit().min(BUFFER_SIZE)];
+        match reader.read(clamped_buffer) {
+            Ok(0) => {
+                // EOF, but still try to finalize the decoder.
+                return decoder.end().map_err(encoding::ReadError::Decode);
+            }
+            Ok(bytes_read) => {
+                if decoder
+                    .push_bytes(&mut &clamped_buffer[..bytes_read])
+                    .map_err(encoding::ReadError::Decode)?
+                    .is_ready()
+                {
+                    return decoder.end().map_err(encoding::ReadError::Decode);
+                }
+            }
+            Err(ref e) if e.kind() == ErrorKind::Interrupted => {
+                // Auto retry read for non-fatal error.
+            }
+            Err(e) => return Err(encoding::ReadError::Io(std::io::Error::other(e.to_string()))),
+        }
+    }
+
+    decoder.end().map_err(encoding::ReadError::Decode)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -376,5 +594,122 @@ mod tests {
         let read = reader.read_to_limit(&mut buf, 2).expect("failed to read to limit");
         assert_eq!(read, 2);
         assert_eq!(&buf, "16".as_bytes())
+    }
+
+    #[cfg(feature = "encoding")]
+    mod encoding_tests {
+        use super::*;
+
+        struct TestData(u32);
+
+        impl encoding::Encode for TestData {
+            type Encoder<'s>
+                = encoding::ArrayEncoder<4>
+            where
+                Self: 's;
+
+            fn encoder(&self) -> Self::Encoder<'_> {
+                encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes())
+            }
+        }
+
+        struct TestArray([u8; 4]);
+
+        impl encoding::Decode for TestArray {
+            type Decoder = TestArrayDecoder;
+        }
+
+        #[derive(Default)]
+        struct TestArrayDecoder {
+            inner: encoding::ArrayDecoder<4>,
+        }
+
+        impl encoding::Decoder for TestArrayDecoder {
+            type Output = TestArray;
+            type Error = encoding::UnexpectedEofError;
+
+            fn push_bytes(
+                &mut self,
+                bytes: &mut &[u8],
+            ) -> core::result::Result<encoding::DecoderStatus, Self::Error> {
+                self.inner.push_bytes(bytes)
+            }
+
+            fn end(self) -> core::result::Result<Self::Output, Self::Error> {
+                self.inner.end().map(TestArray)
+            }
+
+            fn read_limit(&self) -> usize {
+                self.inner.read_limit()
+            }
+        }
+
+        #[test]
+        fn encode_to_writer() {
+            let data = TestData(0x1234_5678);
+
+            let mut buf = [0_u8; 4];
+            super::encode_to_writer(&data, buf.as_mut_slice()).unwrap();
+
+            assert_eq!(buf, [0x78, 0x56, 0x34, 0x12]);
+        }
+
+        #[test]
+        fn decode_from_read_success() {
+            let data = [1, 2, 3, 4];
+            let cursor = Cursor::new(&data);
+            let result: core::result::Result<TestArray, _> = super::decode_from_read(cursor);
+            assert!(result.is_ok());
+            let decoded = result.unwrap();
+            assert_eq!(decoded.0, [1, 2, 3, 4]);
+        }
+
+        #[test]
+        fn decode_from_read_unexpected_eof() {
+            let data = [1, 2, 3];
+            let cursor = Cursor::new(&data);
+            let result: core::result::Result<TestArray, _> = super::decode_from_read(cursor);
+            assert!(matches!(result, Err(encoding::ReadError::Decode(_))));
+        }
+
+        #[test]
+        fn decode_from_read_unbuffered_success() {
+            let data = [1, 2, 3, 4];
+            let cursor = Cursor::new(&data);
+            let result: core::result::Result<TestArray, _> =
+                super::decode_from_read_unbuffered(cursor);
+            assert!(result.is_ok());
+            let decoded = result.unwrap();
+            assert_eq!(decoded.0, [1, 2, 3, 4]);
+        }
+
+        #[test]
+        fn decode_from_read_unbuffered_unexpected_eof() {
+            let data = [1, 2, 3];
+            let cursor = Cursor::new(&data);
+            let result: core::result::Result<TestArray, _> =
+                super::decode_from_read_unbuffered(cursor);
+            assert!(matches!(result, Err(encoding::ReadError::Decode(_))));
+        }
+
+        #[test]
+        fn decode_from_read_unbuffered_empty() {
+            let data = [];
+            let cursor = Cursor::new(&data);
+            let result: core::result::Result<TestArray, _> =
+                super::decode_from_read_unbuffered(cursor);
+            assert!(matches!(result, Err(encoding::ReadError::Decode(_))));
+        }
+
+        #[test]
+        fn decode_from_read_unbuffered_extra_data() {
+            let data = [1, 2, 3, 4, 5, 6];
+            let cursor = Cursor::new(&data);
+            let result: core::result::Result<TestArray, _> =
+                super::decode_from_read_unbuffered(cursor);
+            assert!(result.is_ok());
+            let decoded = result.unwrap();
+            assert_eq!(decoded.0, [1, 2, 3, 4]);
+        }
     }
 }

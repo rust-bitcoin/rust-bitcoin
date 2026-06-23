@@ -18,8 +18,11 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "encoding?/std"]
+alloc = ["encoding?/alloc"]
+
+[dependencies]
+encoding = { package = "bitcoin-consensus-encoding", version = "1.0", default-features = false, optional = true }
 
 [package.metadata.docs.rs]
 all-features = true
