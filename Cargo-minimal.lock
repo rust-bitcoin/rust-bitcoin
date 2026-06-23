@@ -57,9 +57,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin"
-version = "0.32.9"
+version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cf93e61f2dbc3e3c41234ca26a65e2c0b0975c52e0f069ab9893ebbede584d3"
+checksum = "7170e7750a20974246f17ece04311b4205a6155f1db564c5b224af817663c3ea"
 dependencies = [
  "base58ck 0.1.0",
  "bech32",
@@ -67,7 +67,7 @@ dependencies = [
  "bitcoin-io 0.1.1",
  "bitcoin-units 0.1.0",
  "bitcoin_hashes 0.14.0",
- "hex-conservative 0.2.2",
+ "hex-conservative 0.2.0",
  "hex_lit",
  "secp256k1 0.29.0",
 ]
@@ -136,7 +136,7 @@ name = "bitcoin-fuzz"
 version = "0.0.1"
 dependencies = [
  "arbitrary",
- "bitcoin 0.32.9",
+ "bitcoin 0.32.0",
  "bitcoin 0.33.0-beta",
  "bitcoin-consensus-encoding",
  "bitcoin-p2p-messages",
@@ -290,7 +290,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb18c03d0db0247e147a21a6faafd5a7eb851c743db062de72018b6b7e8e4d16"
 dependencies = [
  "bitcoin-io 0.1.1",
- "hex-conservative 0.2.2",
+ "hex-conservative 0.2.0",
 ]
 
 [[package]]
@@ -369,9 +369,9 @@ dependencies = [
 
 [[package]]
 name = "hex-conservative"
-version = "0.2.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fda06d18ac606267c40c04e41b9947729bf8b9efe74bd4e82b61a5f26a510b9f"
+checksum = "e1aa273bf451e37ed35ced41c71a5e2a4e29064afb104158f2514bcd71c2c986"
 dependencies = [
  "arrayvec",
 ]
