@@ -524,12 +524,11 @@ where
                 return decoder.end().map_err(encoding::ReadError::Decode);
             }
             Ok(bytes_read) => {
-                if decoder
-                    .push_bytes(&mut &clamped_buffer[..bytes_read])
-                    .map_err(encoding::ReadError::Decode)?
-                    .is_ready()
-                {
-                    return decoder.end().map_err(encoding::ReadError::Decode);
+                let mut to_push = &clamped_buffer[..bytes_read];
+                while !to_push.is_empty() {
+                    if decoder.push_bytes(&mut to_push).map_err(encoding::ReadError::Decode)?.is_ready() {
+                        return decoder.end().map_err(encoding::ReadError::Decode);
+                    }
                 }
             }
             Err(ref e) if e.kind() == ErrorKind::Interrupted => {
