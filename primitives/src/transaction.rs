@@ -1522,12 +1522,37 @@ pub mod error {
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for Transaction {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            version: Version::arbitrary(u)?,
-            lock_time: absolute::LockTime::arbitrary(u)?,
-            inputs: Vec::<TxIn>::arbitrary(u)?,
-            outputs: Vec::<TxOut>::arbitrary(u)?,
-        })
+        let version = Version::arbitrary(u)?;
+        let lock_time = absolute::LockTime::arbitrary(u)?;
+        let mut inputs = Vec::<TxIn>::arbitrary(u)?;
+        let mut outputs = Vec::<TxOut>::arbitrary(u)?;
+
+        let mut seen = alloc::collections::BTreeSet::new();
+        inputs.retain(|input| seen.insert(input.previous_output));
+
+        if inputs.len() > 1 {
+            inputs.retain(|input| input.previous_output != OutPoint::COINBASE_PREVOUT);
+        }
+
+        if inputs.len() == 1 && inputs[0].previous_output == OutPoint::COINBASE_PREVOUT {
+            let len = inputs[0].script_sig.len();
+            if len < 2 || len > 100 {
+                inputs[0].script_sig = ScriptSigBuf::from_bytes(Vec::from([0u8; 2]));
+            }
+        }
+
+        if outputs.is_empty() {
+            outputs.push(TxOut::arbitrary(u)?);
+        }
+
+        let mut remaining = Amount::MAX_MONEY.to_sat();
+        for output in &mut outputs {
+            let capped = output.amount.to_sat().min(remaining);
+            output.amount = Amount::from_sat(capped).expect("capped <= MAX_MONEY");
+            remaining -= capped;
+        }
+
+        Ok(Self { version, lock_time, inputs, outputs })
     }
 }
 
