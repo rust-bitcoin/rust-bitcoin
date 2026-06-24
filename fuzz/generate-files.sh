@@ -26,7 +26,7 @@ cargo-fuzz = true
 # We shouldn't need an explicit version on the next line, but Andrew's tools
 # choke on it otherwise. See https://github.com/nix-community/crate2nix/issues/373
 bitcoin = { path = "../bitcoin", version = "0.33.0-beta", features = [ "serde", "arbitrary" ] }
-old_bitcoin = { version = "0.32.101", package = "bitcoin", features = [ "encoding", "serde" ] }
+bitcoin_0_32 = { version = "0.32.101", package = "bitcoin", features = [ "encoding", "serde" ] }
 bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
 p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
 

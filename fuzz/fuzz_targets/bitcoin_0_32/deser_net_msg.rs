@@ -7,8 +7,8 @@ use libfuzzer_sys::fuzz_target;
 fn main() {}
 
 fn do_test(data: &[u8]) {
-    let _: Result<old_bitcoin::p2p::message::RawNetworkMessage, _> =
-        old_bitcoin::consensus::encode::deserialize(data);
+    let _: Result<bitcoin_0_32::p2p::message::RawNetworkMessage, _> =
+        bitcoin_0_32::consensus::encode::deserialize(data);
 }
 
 fuzz_target!(|data: &[u8]| {

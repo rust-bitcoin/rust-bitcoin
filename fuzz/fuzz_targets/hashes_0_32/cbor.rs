@@ -6,15 +6,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 struct Hmacs {
-    sha1: old_bitcoin::hashes::hmac::Hmac<old_bitcoin::hashes::sha1::Hash>,
-    sha512: old_bitcoin::hashes::hmac::Hmac<old_bitcoin::hashes::sha512::Hash>,
+    sha1: bitcoin_0_32::hashes::hmac::Hmac<bitcoin_0_32::hashes::sha1::Hash>,
+    sha512: bitcoin_0_32::hashes::hmac::Hmac<bitcoin_0_32::hashes::sha512::Hash>,
 }
 
 #[derive(Deserialize, Serialize)]
 struct Main {
     hmacs: Hmacs,
-    ripemd: old_bitcoin::hashes::ripemd160::Hash,
-    sha2d: old_bitcoin::hashes::sha256d::Hash,
+    ripemd: bitcoin_0_32::hashes::ripemd160::Hash,
+    sha2d: bitcoin_0_32::hashes::sha256d::Hash,
 }
 
 #[cfg(not(fuzzing))]

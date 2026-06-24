@@ -2,17 +2,17 @@
 #![cfg_attr(not(fuzzing), allow(unused))]
 
 use libfuzzer_sys::fuzz_target;
-use old_bitcoin::absolute;
-use old_bitcoin::consensus::encode::deserialize_partial;
-use old_bitcoin::consensus::serialize;
-use old_bitcoin::encoding::{self, decode_from_slice_unbounded};
+use bitcoin_0_32::absolute;
+use bitcoin_0_32::consensus::encode::deserialize_partial;
+use bitcoin_0_32::consensus::serialize;
+use bitcoin_0_32::encoding::{self, decode_from_slice_unbounded};
 
 #[cfg(not(fuzzing))]
 fn main() {}
 
 macro_rules! compare_encoding {
     ($data:expr, $ty:ident) => {
-        compare_encoding!($data, old_bitcoin::$ty);
+        compare_encoding!($data, bitcoin_0_32::$ty);
     };
 
     ($data:expr, $ty:ty) => {{

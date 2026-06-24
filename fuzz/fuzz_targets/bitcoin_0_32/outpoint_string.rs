@@ -23,19 +23,19 @@ fn do_test(data: &[u8]) {
         Err(_) => return,
         Ok(s) => s,
     };
-    match data_str.parse::<old_bitcoin::blockdata::transaction::OutPoint>() {
+    match data_str.parse::<bitcoin_0_32::blockdata::transaction::OutPoint>() {
         Ok(op) => {
             assert_eq!(op.to_string().as_bytes(), data_str.as_bytes());
         }
         Err(_) => {
             // If we can't deserialize as a string, try consensus deserializing
-            let res: Result<old_bitcoin::blockdata::transaction::OutPoint, _> =
-                old_bitcoin::consensus::encode::deserialize(data);
+            let res: Result<bitcoin_0_32::blockdata::transaction::OutPoint, _> =
+                bitcoin_0_32::consensus::encode::deserialize(data);
             if let Ok(deser) = res {
-                let ser = old_bitcoin::consensus::encode::serialize(&deser);
+                let ser = bitcoin_0_32::consensus::encode::serialize(&deser);
                 assert_eq!(ser, data);
                 let string = deser.to_string();
-                match string.parse::<old_bitcoin::blockdata::transaction::OutPoint>() {
+                match string.parse::<bitcoin_0_32::blockdata::transaction::OutPoint>() {
                     Ok(destring) => assert_eq!(destring, deser),
                     Err(_) => panic!(),
                 }

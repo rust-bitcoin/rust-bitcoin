@@ -7,14 +7,14 @@ use libfuzzer_sys::fuzz_target;
 fn main() {}
 
 fn do_test(data: &[u8]) {
-    let psbt: Result<old_bitcoin::psbt::Psbt, _> = old_bitcoin::psbt::Psbt::deserialize(data);
+    let psbt: Result<bitcoin_0_32::psbt::Psbt, _> = bitcoin_0_32::psbt::Psbt::deserialize(data);
     match psbt {
         Err(_) => {}
         Ok(psbt) => {
-            let ser = old_bitcoin::psbt::Psbt::serialize(&psbt);
-            let deser = old_bitcoin::psbt::Psbt::deserialize(&ser).unwrap();
+            let ser = bitcoin_0_32::psbt::Psbt::serialize(&psbt);
+            let deser = bitcoin_0_32::psbt::Psbt::deserialize(&ser).unwrap();
             // Since the fuzz data could order psbt fields differently, we compare to our deser/ser instead of data
-            assert_eq!(ser, old_bitcoin::psbt::Psbt::serialize(&deser));
+            assert_eq!(ser, bitcoin_0_32::psbt::Psbt::serialize(&deser));
         }
     }
 }
