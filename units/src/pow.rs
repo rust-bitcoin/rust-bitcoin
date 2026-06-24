@@ -178,17 +178,21 @@ impl Target {
         // OpenSSL, which satoshi put into consensus code, so we're stuck
         // with it. The exponent needs to have 3 subtracted from it, hence
         // this goofy decoding code. 3 is due to 3 bytes in the mantissa.
+        let unshifted_expt = bits >> 24;
         let (mant, expt) = {
-            let unshifted_expt = bits >> 24;
             if unshifted_expt <= 3 {
                 ((bits & 0xFF_FFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
             } else {
                 (bits & 0xFF_FFFF, 8 * ((bits >> 24) - 3))
             }
         };
+        let overflow = mant != 0
+            && (unshifted_expt > 34
+                || (mant > 0xFF && unshifted_expt > 33)
+                || (mant > 0xFFFF && unshifted_expt > 32));
 
-        // The mantissa is signed but may not be negative.
-        if mant > 0x7F_FFFF {
+        // The mantissa is signed but may not be negative or overflow.
+        if mant > 0x7F_FFFF || overflow {
             Self::ZERO
         } else {
             Self(U256::from(mant) << expt)
@@ -1327,10 +1331,27 @@ mod tests {
             (0x0500_9234_u32, 0x9234_0000_u64),
             (0x0492_3456_u32, 0x00_u64), // High bit set (0x80 in 0x92).
             (0x0412_3456_u32, 0x1234_5600_u64), // Inverse of above; no high bit.
+            (0x2101_0000_u32, 0x00_u64), // Overflows 256 bits.
+            (0x2200_0100_u32, 0x00_u64), // Overflows 256 bits.
+            (0x2200_0101_u32, 0x00_u64), // Overflows 256 bits.
+            (0x2300_0001_u32, 0x00_u64), // Overflows 256 bits.
         ];
 
         for (n_bits, target) in tests {
             let want = Target(U256::from(target));
+            let got = Target::from_compact(CompactTarget::from_consensus(n_bits));
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    fn target_from_compact_overflow_boundaries() {
+        let tests = [
+            (0x2100_FFFF_u32, Target(U256::from(0xFFFF_u32) << 240)),
+            (0x2200_00FF_u32, Target(U256::from(0xFF_u32) << 248)),
+        ];
+
+        for (n_bits, want) in tests {
             let got = Target::from_compact(CompactTarget::from_consensus(n_bits));
             assert_eq!(got, want);
         }
