@@ -1031,29 +1031,26 @@ impl<'a> Arbitrary<'a> for AddrV2 {
                 u.arbitrary()?,
                 u.arbitrary()?,
             ))),
-            1 => Ok(Self::Ipv6(Ipv6Addr::new(
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-            ))),
+            1 => {
+                let mut segments: [u16; 8] = u.arbitrary()?;
+                if segments[0..3] == ONION || segments[0..6] == IPV4_EMBEDDED_IPV6 {
+                    segments[0] ^= 1;
+                }
+                Ok(Self::Ipv6(Ipv6Addr::from(segments)))
+            }
             2 => Ok(Self::TorV3(u.arbitrary()?)),
             3 => Ok(Self::I2p(u.arbitrary()?)),
-            4 => Ok(Self::Cjdns(Ipv6Addr::new(
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-            ))),
-            _ => Ok(Self::Unknown(u.arbitrary()?, Vec::<u8>::arbitrary(u)?)),
+            4 => {
+                let mut segments: [u16; 8] = u.arbitrary()?;
+                segments[0] = 0xFC00 | (segments[0] & 0x00FF);
+                Ok(Self::Cjdns(Ipv6Addr::from(segments)))
+            }
+            _ => {
+                let network = u.int_in_range(7..=u8::MAX)?;
+                let mut bytes = Vec::<u8>::arbitrary(u)?;
+                bytes.truncate(512);
+                Ok(Self::Unknown(network, bytes))
+            }
         }
     }
 }
