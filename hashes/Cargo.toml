@@ -3,7 +3,7 @@ name = "bitcoin_hashes"
 # We jumped to `v0.14.100` when doing the MSRV bump to Rust `1.74`
 # leaving room for a bunch of secuity releases upto this number if
 # needed.
-version = "0.14.100"
+version = "0.14.101"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"
@@ -33,7 +33,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 hex = { package = "hex-conservative", version = "0.2.2", default-features = false }
 
-bitcoin-io = { version = "0.1.100", default-features = false, optional = true }
+bitcoin-io = { path = "../io", version = "0.1.100", default-features = false, optional = true }
 # Do NOT use this as a feature! Use the `schemars` feature instead.
 actual-schemars = { package = "schemars", version = "0.8.3", default-features = false, optional = true }
 serde = { version = "1.0.130", default-features = false, optional = true }

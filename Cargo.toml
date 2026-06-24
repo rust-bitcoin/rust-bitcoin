@@ -5,3 +5,9 @@ resolver = "2"
 [workspace.metadata.rbmt.toolchains]
 nightly = "nightly-2026-03-27"
 stable = "1.91.1"
+
+# secp256k1 depends on the crates.io bitcoin_hashes, which is also a local
+# workspace member. Cargo would treat them as two versions, so this patch points
+# secp256k1 at the local copy, keeping a single version in the lockfile for tests.
+[patch.crates-io]
+bitcoin_hashes = { path = "hashes" }

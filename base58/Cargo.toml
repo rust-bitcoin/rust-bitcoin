@@ -24,7 +24,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-hashes = { package = "bitcoin_hashes", version = "0.14.100", default-features = false, features = ["alloc"] }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.14.101", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 hex = { package = "hex-conservative", version = "0.2.2", default-features = false, features = ["alloc"] }

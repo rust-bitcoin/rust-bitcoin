@@ -18,17 +18,8 @@ checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 name = "base58ck"
 version = "0.1.100"
 dependencies = [
- "bitcoin_hashes 0.14.100 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin_hashes",
  "hex-conservative 0.2.2",
-]
-
-[[package]]
-name = "base58ck"
-version = "0.1.100"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec5dc7e09f7bb15f0062da7c03086d6b71a2c84e0af4fccbbc7d8c6559847816"
-dependencies = [
- "bitcoin_hashes 0.14.100 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -57,14 +48,14 @@ name = "bitcoin"
 version = "0.32.100"
 dependencies = [
  "arbitrary",
- "base58ck 0.1.100 (registry+https://github.com/rust-lang/crates.io-index)",
+ "base58ck",
  "base64",
  "bech32",
  "bincode",
  "bitcoin-consensus-encoding",
- "bitcoin-io 0.1.100 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin-io",
  "bitcoin-units",
- "bitcoin_hashes 0.14.100 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin_hashes",
  "bitcoinconsensus",
  "hex-conservative 0.2.2",
  "hex_lit",
@@ -109,12 +100,6 @@ name = "bitcoin-io"
 version = "0.1.100"
 
 [[package]]
-name = "bitcoin-io"
-version = "0.1.100"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11301df0b06f22dea7bb1916403fdd88a371031e495c49b8f96931b28189e175"
-
-[[package]]
 name = "bitcoin-units"
 version = "0.1.100"
 dependencies = [
@@ -127,25 +112,14 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.14.100"
+version = "0.14.101"
 dependencies = [
- "bitcoin-io 0.1.100 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin-io",
  "hex-conservative 0.2.2",
  "schemars",
  "serde",
  "serde_json",
  "serde_test",
-]
-
-[[package]]
-name = "bitcoin_hashes"
-version = "0.14.100"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c9901a56e133a1fc86eeb1113e2591f45f4682451ca893bff494d2f88918e3f"
-dependencies = [
- "bitcoin-io 0.1.100 (registry+https://github.com/rust-lang/crates.io-index)",
- "hex-conservative 0.2.2",
- "serde",
 ]
 
 [[package]]
@@ -366,7 +340,7 @@ version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9465315bc9d4566e1724f0fffcbcc446268cb522e60f9a27bcded6b19c108113"
 dependencies = [
- "bitcoin_hashes 0.14.100 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin_hashes",
  "rand",
  "secp256k1-sys",
  "serde",
