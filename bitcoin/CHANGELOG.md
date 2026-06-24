@@ -47,7 +47,15 @@ The `serde` serialization for `Psbt` has changed.
 
 - BREAKING: Change `Psbt` serde implementations [#4496](https://github.com/rust-bitcoin/rust-bitcoin/pull/4496)
 
-## [0.32.100] - 2026-05-26
+## [0.32.101] - 2026-06-24
+
+**Bump the MSRV to Rust 1.60.0**
+
+- Exposes the new stabilized encoding library through the optional `encoding` feature. Note that enabling it bumps the MSRV to 1.74.0.
+
+## [0.32.100] - 2026-05-26 [YANKED]
+
+> This release was yanked because the MSRV bump to 1.74.0 was too aggressive for some users. See version 0.32.101 for a smaller upgrade to 1.60.0.
 
 **Bump the MSRV to Rust 1.74.0**
 
@@ -893,6 +901,7 @@ downstream users to also have a `num` dependency just so they can use `Uint256::
 
 [Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.33.0-beta...HEAD
 [0.33.0-beta]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.100...bitcoin-0.33.0-beta
+[0.32.101]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.100...bitcoin-0.32.101
 [0.32.100]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.10...bitcoin-0.32.100
 [0.32.10]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.9...bitcoin-0.32.10
 [0.32.9]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.8...bitcoin-0.32.9
