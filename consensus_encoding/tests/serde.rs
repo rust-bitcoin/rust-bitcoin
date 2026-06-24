@@ -2,7 +2,7 @@
 
 //! Tests for `serde_as_consensus`.
 
-#![cfg(all(feature = "hex", feature = "serde"))]
+#![cfg(feature = "serde")]
 
 use bitcoin_consensus_encoding::{
     ArrayDecoder, ArrayEncoder, Decode, Decoder, DecoderStatus, Encode, UnexpectedEofError,

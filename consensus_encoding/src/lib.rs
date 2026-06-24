@@ -86,7 +86,6 @@ mod decode;
 mod encode;
 
 pub mod error;
-#[cfg(feature = "hex")]
 #[cfg(feature = "serde")]
 pub mod serde_as_consensus;
 
