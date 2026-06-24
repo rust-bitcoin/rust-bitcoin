@@ -3,7 +3,7 @@ name = "bitcoin-io"
 # We jumped to `v0.1.100` when doing the MSRV bump to Rust `1.74`
 # leaving room for a bunch of secuity releases upto this number if
 # needed.
-version = "0.1.100"
+version = "0.1.101"
 authors = ["Matt Corallo <birchneutea@mattcorallo.com>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"
@@ -13,13 +13,16 @@ categories = ["no-std"]
 keywords = [ "io", "no-std" ]
 readme = "README.md"
 edition = "2021"
-rust-version = "1.74.0"
+rust-version = "1.60.0"
 exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "encoding?/std"]
+alloc = ["encoding?/alloc"]
+
+[dependencies]
+encoding = { package = "bitcoin-consensus-encoding", version = "1.0", default-features = false, optional = true }
 
 [package.metadata.docs.rs]
 all-features = true
@@ -27,3 +30,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_63)', 'cfg(rust_v_1_72)', 'cfg(rust_v_1_73)', 'cfg(rust_v_1_75)', 'cfg(rust_v_1_78)'] }
+
+[package.metadata.rbmt.test]
+msrv_overrides = { "encoding" = "1.74.0" }

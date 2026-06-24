@@ -22,8 +22,6 @@ jobs:
         toolchain: [stable, msrv]
         dep: [minimal, recent]
     steps:
-      # Cleaning up github bloat so that test feature artifacts don't run out of disk.
-      - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false

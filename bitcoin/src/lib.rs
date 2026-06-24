@@ -21,7 +21,7 @@
 //! * `rand` - (dependency), makes it more convenient to generate random values.
 //! * `serde` - (dependency), implements `serde`-based serialization and
 //!   deserialization.
-//! * `encoding` - enables consensus encoding support.
+//! * `encoding` - enables consensus encoding support. **Raises MSRV to 1.74.0**.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
 //! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it to this
 //!   crate so it knows how to implement `std::error::Error`. At this time there's a hack to
