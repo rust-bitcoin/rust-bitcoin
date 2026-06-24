@@ -31,7 +31,7 @@
 #[macro_export]
 macro_rules! sha256t_tag {
     ($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+);) => {
-        $crate::sha256t_tag_struct!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);
+        $crate::sha256t_tag_struct!($tag_vis, $tag, stringify!($tag), $(#[$($tag_attr)*])*);
 
         impl $crate::sha256t::Tag for $tag {
             const MIDSTATE: $crate::sha256::Midstate = $crate::sha256t_tag_constructor!($constructor, $($tag_value)+);
