@@ -18,6 +18,11 @@ jobs:
       fail-fast: false
       matrix:
         fuzz_target: [
+          bitcoin_0_32_compare_consensus_encoding,
+          bitcoin_0_32_deser_net_msg,
+          bitcoin_0_32_deserialize_address,
+          bitcoin_0_32_deserialize_psbt,
+          bitcoin_0_32_outpoint_string,
           bitcoin_arbitrary_block,
           bitcoin_arbitrary_script,
           bitcoin_arbitrary_transaction,
@@ -61,6 +66,7 @@ jobs:
           bitcoin_encoding_roundtrip_p2p_message_bloom_filter_load,
           bitcoin_encoding_roundtrip_p2p_message_command_string,
           bitcoin_encoding_roundtrip_p2p_message_compact_blocks_send_cmpct,
+          bitcoin_encoding_roundtrip_p2p_message_erlay_send_tx_rcn_cl,
           bitcoin_encoding_roundtrip_p2p_message_fee_filter,
           bitcoin_encoding_roundtrip_p2p_message_filter_c_f_checkpt,
           bitcoin_encoding_roundtrip_p2p_message_filter_c_f_headers,
@@ -104,6 +110,7 @@ jobs:
           consensus_encoding_decode_byte_vec,
           consensus_encoding_decode_compact_size,
           consensus_encoding_decode_decoder2,
+          hashes_0_32_cbor,
           hashes_arbitrary_json,
           hashes_json,
           hashes_ripemd160,
@@ -114,6 +121,7 @@ jobs:
           p2p_arbitrary_addrv2,
           p2p_deserialize_addrv2,
           p2p_deserialize_raw_net_msg,
+          units_0_32_deserialize_amount,
           units_arbitrary_weight,
           units_parse_amount,
           units_parse_int,

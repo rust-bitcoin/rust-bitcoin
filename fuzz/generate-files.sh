@@ -26,7 +26,7 @@ cargo-fuzz = true
 # We shouldn't need an explicit version on the next line, but Andrew's tools
 # choke on it otherwise. See https://github.com/nix-community/crate2nix/issues/373
 bitcoin = { path = "../bitcoin", version = "0.33.0-beta", features = [ "serde", "arbitrary" ] }
-old_bitcoin = { version = "0.32.9", package = "bitcoin" }
+old_bitcoin = { version = "0.32.101", package = "bitcoin", features = [ "encoding", "serde" ] }
 bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
 p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
 
@@ -34,6 +34,7 @@ arbitrary = { version = "1.4.1" }
 libfuzzer-sys = { version = "0.4.0" }
 serde = { version = "1.0.195", features = [ "derive" ] }
 serde_json = "1.0.68"
+serde_cbor = "0.9"
 standard_test = "0.1.0"
 
 [lints.rust]
@@ -52,7 +53,7 @@ allowed_duplicates = [
     "hex-conservative",
     "bitcoin_hashes",
     "bitcoin-io",
-    "hex-conservative",
+    "bitcoin-consensus-encoding",
     "base58ck",
     "bitcoin",
     "bitcoin-internals",
