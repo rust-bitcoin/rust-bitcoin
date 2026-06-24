@@ -113,6 +113,8 @@ version = "1.0.0"
 dependencies = [
  "bitcoin-internals 0.5.0",
  "hex-conservative 1.1.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

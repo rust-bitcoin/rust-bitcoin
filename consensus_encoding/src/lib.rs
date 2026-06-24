@@ -76,11 +76,19 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "hex")]
+pub extern crate hex;
+#[cfg(feature = "serde")]
+pub extern crate serde;
+
 mod compact_size;
 mod decode;
 mod encode;
 
 pub mod error;
+#[cfg(feature = "hex")]
+#[cfg(feature = "serde")]
+pub mod serde_as_consensus;
 
 #[doc(inline)]
 pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSizeU64Decoder};

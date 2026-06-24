@@ -1,4 +1,6 @@
 pub mod bitcoin_consensus_encoding
+pub extern crate bitcoin_consensus_encoding::hex
+pub extern crate bitcoin_consensus_encoding::serde
 pub mod bitcoin_consensus_encoding::error
 pub enum bitcoin_consensus_encoding::error::DecodeError<Err>
 pub bitcoin_consensus_encoding::error::DecodeError::Parse(Err)
@@ -587,6 +589,15 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::VecDec
 pub unsafe fn bitcoin_consensus_encoding::error::VecDecoderError<Err>::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::VecDecoderError<Err>
 pub fn bitcoin_consensus_encoding::error::VecDecoderError<Err>::from(t: T) -> T
+pub mod bitcoin_consensus_encoding::serde_as_consensus
+pub mod bitcoin_consensus_encoding::serde_as_consensus::opt
+pub fn bitcoin_consensus_encoding::serde_as_consensus::opt::deserialize<'d, T, D>(d: D) -> core::result::Result<core::option::Option<T>, <D as serde::de::Deserializer>::Error> where T: bitcoin_consensus_encoding::Encode + bitcoin_consensus_encoding::Decode, D: serde::de::Deserializer<'d>
+pub fn bitcoin_consensus_encoding::serde_as_consensus::opt::serialize<T, S>(t: &core::option::Option<T>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where T: bitcoin_consensus_encoding::Encode + bitcoin_consensus_encoding::Decode, S: serde::ser::Serializer
+pub mod bitcoin_consensus_encoding::serde_as_consensus::vec
+pub fn bitcoin_consensus_encoding::serde_as_consensus::vec::deserialize<'d, T, D>(d: D) -> core::result::Result<alloc::vec::Vec<T>, <D as serde::de::Deserializer>::Error> where T: bitcoin_consensus_encoding::Encode + bitcoin_consensus_encoding::Decode, D: serde::de::Deserializer<'d>
+pub fn bitcoin_consensus_encoding::serde_as_consensus::vec::serialize<T, S>(v: &[T], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where T: bitcoin_consensus_encoding::Encode + bitcoin_consensus_encoding::Decode, S: serde::ser::Serializer
+pub fn bitcoin_consensus_encoding::serde_as_consensus::deserialize<'d, T, D>(d: D) -> core::result::Result<T, <D as serde::de::Deserializer>::Error> where T: bitcoin_consensus_encoding::Encode + bitcoin_consensus_encoding::Decode, D: serde::de::Deserializer<'d>
+pub fn bitcoin_consensus_encoding::serde_as_consensus::serialize<T, S>(value: &T, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where T: bitcoin_consensus_encoding::Encode + bitcoin_consensus_encoding::Decode, S: serde::ser::Serializer
 pub macro bitcoin_consensus_encoding::encoder_newtype!
 pub macro bitcoin_consensus_encoding::encoder_newtype_exact!
 pub enum bitcoin_consensus_encoding::DecodeError<Err>

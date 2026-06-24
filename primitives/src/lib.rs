@@ -52,10 +52,6 @@ pub mod merkle_tree;
 pub mod opcodes;
 #[cfg(feature = "alloc")]
 pub mod script;
-#[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
-#[cfg(feature = "serde")]
-pub mod serde_as_consensus;
 pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;

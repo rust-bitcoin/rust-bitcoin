@@ -1946,9 +1946,9 @@ mod tests {
     #[cfg(feature = "serde")]
     #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
     struct Adt {
-        #[serde(with = "crate::serde_as_consensus")]
+        #[serde(with = "encoding::serde_as_consensus")]
         header: Header,
-        #[serde(with = "crate::serde_as_consensus")]
+        #[serde(with = "encoding::serde_as_consensus")]
         block: Block,
     }
 
