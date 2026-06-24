@@ -178,17 +178,21 @@ impl Target {
         // OpenSSL, which satoshi put into consensus code, so we're stuck
         // with it. The exponent needs to have 3 subtracted from it, hence
         // this goofy decoding code. 3 is due to 3 bytes in the mantissa.
+        let unshifted_expt = bits >> 24;
         let (mant, expt) = {
-            let unshifted_expt = bits >> 24;
             if unshifted_expt <= 3 {
                 ((bits & 0xFF_FFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
             } else {
                 (bits & 0xFF_FFFF, 8 * ((bits >> 24) - 3))
             }
         };
+        let overflow = mant != 0
+            && (unshifted_expt > 34
+                || (mant > 0xFF && unshifted_expt > 33)
+                || (mant > 0xFFFF && unshifted_expt > 32));
 
-        // The mantissa is signed but may not be negative.
-        if mant > 0x7F_FFFF {
+        // The mantissa is signed but may not be negative or overflow.
+        if mant > 0x7F_FFFF || overflow {
             Self::ZERO
         } else {
             Self(U256::from(mant) << expt)
