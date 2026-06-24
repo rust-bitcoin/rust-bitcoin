@@ -180,6 +180,16 @@ pub trait HashEngine: Clone {
 
     /// Finalizes this engine.
     fn finalize(self) -> Self::Hash;
+
+    /// Hashes bytes in one shot.
+    fn hash(data: &[u8]) -> Self::Hash
+    where
+        Self: Default,
+    {
+        let mut engine = Self::default();
+        engine.input(data);
+        engine.finalize()
+    }
 }
 
 /// Encodes an object into a hash engine.
