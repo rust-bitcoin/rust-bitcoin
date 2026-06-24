@@ -26,9 +26,6 @@ pub use self::error::{
     ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseRelativeDerivationPathError,
     ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError
 };
-#[doc(no_inline)]
-#[allow(deprecated_in_future)]
-pub use self::error::DerivationError;
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -1448,10 +1445,6 @@ pub mod error {
             }
         }
     }
-
-    /// Deprecated name for errors deriving an extended public key.
-    #[deprecated(since = "TBD", note = "use `DeriveXpubError` instead")]
-    pub type DerivationError = DeriveXpubError;
 
     /// Out-of-range index when constructing a child number.
     ///
