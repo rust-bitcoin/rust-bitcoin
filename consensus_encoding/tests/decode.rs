@@ -698,3 +698,65 @@ fn check_decoder_panic_on_mismatched_value() {
     let expected = [0x99u8];
     check_decoder(decoder, bytes, &expected);
 }
+
+#[test]
+#[cfg(feature = "std")]
+#[cfg(feature = "alloc")]
+fn decode_from_read_unbuffered_with_loses_unconsumed_bytes() {
+    use std::io::Cursor;
+
+    use bitcoin_consensus_encoding::{
+        decode_from_read_unbuffered_with, Decode, Decoder, DecoderStatus,
+    };
+
+    #[derive(Default)]
+    struct OneAtATimeDecoder {
+        buf: Vec<u8>,
+    }
+
+    #[derive(Debug, PartialEq)]
+    struct OneAtATime(Vec<u8>);
+
+    #[derive(Debug)]
+    struct OneAtATimeError;
+
+    impl Decoder for OneAtATimeDecoder {
+        type Output = OneAtATime;
+        type Error = OneAtATimeError;
+
+        fn push_bytes(
+            &mut self,
+            bytes: &mut &[u8],
+        ) -> core::result::Result<DecoderStatus, Self::Error> {
+            if self.buf.len() < 4 && !bytes.is_empty() {
+                self.buf.push(bytes[0]);
+                *bytes = &bytes[1..];
+            }
+            if self.buf.len() == 4 {
+                Ok(DecoderStatus::Ready)
+            } else {
+                Ok(DecoderStatus::NeedsMore)
+            }
+        }
+
+        fn end(self) -> core::result::Result<Self::Output, Self::Error> {
+            if self.buf.len() == 4 {
+                Ok(OneAtATime(self.buf))
+            } else {
+                Err(OneAtATimeError)
+            }
+        }
+
+        fn read_limit(&self) -> usize { 4 - self.buf.len() }
+    }
+
+    impl Decode for OneAtATime {
+        type Decoder = OneAtATimeDecoder;
+    }
+
+    let data = [0x11, 0x22, 0x33, 0x44];
+    let cursor = Cursor::new(&data);
+    let decoded: OneAtATime =
+        decode_from_read_unbuffered_with::<_, _, 16>(cursor).expect("decode succeeds");
+    assert_eq!(decoded.0, vec![0x11, 0x22, 0x33, 0x44]);
+}
