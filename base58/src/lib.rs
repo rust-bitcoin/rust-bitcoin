@@ -26,7 +26,6 @@ extern crate test;
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(feature = "alloc")]
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 #[cfg(feature = "alloc")]
@@ -35,16 +34,13 @@ pub mod error;
 #[cfg(feature = "alloc")]
 #[cfg(not(feature = "std"))]
 pub use alloc::{string::String, vec::Vec};
-#[cfg(feature = "alloc")]
 use core::fmt;
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
 
-#[cfg(feature = "alloc")]
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
-#[cfg(feature = "alloc")]
 use internals::array_vec::ArrayVec;
 #[allow(unused)] // MSRV polyfill
 #[cfg(feature = "alloc")]
@@ -149,7 +145,6 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     Ok(ret)
 }
 
-#[cfg(feature = "alloc")]
 const SHORT_OPT_BUFFER_LEN: usize = 128;
 
 /// Encodes `data` as a base58 string (see also `base58::encode_check()`).
@@ -189,12 +184,10 @@ pub fn encode_check(data: &[u8]) -> String {
 /// # Errors
 ///
 /// Returns an error if the formatter fails to write the encoded string.
-#[cfg(feature = "alloc")]
 pub fn encode_check_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
     encode_check_to_writer(fmt, data)
 }
 
-#[cfg(feature = "alloc")]
 fn encode_check_to_writer(fmt: &mut impl fmt::Write, data: &[u8]) -> fmt::Result {
     let checksum = sha256d::Hash::hash(data);
     let iter = data.iter().copied().chain(checksum.as_byte_array()[0..4].iter().copied());
@@ -202,24 +195,30 @@ fn encode_check_to_writer(fmt: &mut impl fmt::Write, data: &[u8]) -> fmt::Result
     if reserve_len <= SHORT_OPT_BUFFER_LEN {
         format_iter(fmt, iter, &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new())
     } else {
-        format_iter(fmt, iter, &mut Vec::with_capacity(reserve_len))
+        #[cfg(feature = "alloc")]
+        {
+            format_iter(fmt, iter, &mut Vec::with_capacity(reserve_len))
+        }
+        #[cfg(not(feature = "alloc"))]
+        {
+            // No allocator and the input exceeds the stack scratch buffer
+            let _ = iter;
+            Err(fmt::Error)
+        }
     }
 }
 
 /// Returns the length to reserve when encoding base58 without checksum
-#[cfg(feature = "alloc")]
 const fn encoded_reserve_len(unencoded_len: usize) -> usize {
     // log2(256) / log2(58) ~ 1.37 = 137 / 100
     unencoded_len * 137 / 100
 }
 
 /// Returns the length to reserve when encoding base58 with checksum
-#[cfg(feature = "alloc")]
 const fn encoded_check_reserve_len(unencoded_len: usize) -> usize {
     encoded_reserve_len(unencoded_len + 4)
 }
 
-#[cfg(feature = "alloc")]
 trait Buffer: Sized {
     fn push(&mut self, val: u8);
     fn slice(&self) -> &[u8];
@@ -235,7 +234,6 @@ impl Buffer for Vec<u8> {
     fn slice_mut(&mut self) -> &mut [u8] { self }
 }
 
-#[cfg(feature = "alloc")]
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
     fn push(&mut self, val: u8) { Self::push(self, val) }
 
@@ -244,7 +242,6 @@ impl<const N: usize> Buffer for ArrayVec<u8, N> {
     fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
 }
 
-#[cfg(feature = "alloc")]
 fn format_iter<I, W>(writer: &mut W, data: I, buf: &mut impl Buffer) -> fmt::Result
 where
     I: Iterator<Item = u8> + Clone,
