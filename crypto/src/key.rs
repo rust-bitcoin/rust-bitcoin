@@ -6,7 +6,7 @@
 //! (de)serialized.
 
 #[cfg(feature = "alloc")]
-use alloc::string::String;
+use alloc::string::{String, ToString as _};
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 use core::borrow::Borrow;
@@ -1168,7 +1168,7 @@ impl WifKey {
     #[rustfmt::skip]
     #[cfg(feature = "alloc")]
     #[inline]
-    pub fn fmt_wif(&self, fmt: &mut dyn fmt::Write) -> fmt::Result {
+    pub fn fmt_wif(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 34];
         ret[0] = if self.network_kind.is_mainnet() { 128 } else { 239 };
 
@@ -1186,10 +1186,11 @@ impl WifKey {
     #[cfg(feature = "alloc")]
     #[inline]
     pub fn to_wif(&self) -> String {
-        let mut buf = String::new();
-        let _ = self.fmt_wif(&mut buf);
-        buf.shrink_to_fit();
-        buf
+        struct WifString<'a>(&'a WifKey);
+        impl fmt::Display for WifString<'_> {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt_wif(f) }
+        }
+        WifString(self).to_string()
     }
 
     /// Parses the WIF encoded private key.

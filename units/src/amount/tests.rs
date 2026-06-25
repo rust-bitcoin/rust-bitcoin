@@ -5,7 +5,7 @@
 #[cfg(feature = "alloc")]
 use alloc::format;
 #[cfg(feature = "alloc")]
-use alloc::string::{String, ToString};
+use alloc::string::ToString;
 use core::num::{NonZeroI64, NonZeroU64};
 #[cfg(feature = "std")]
 use std::panic;
@@ -528,10 +528,14 @@ fn to_string() {
 #[test]
 #[cfg(feature = "alloc")]
 fn test_repeat_char() {
-    let mut buf = String::new();
-    repeat_char(&mut buf, '0', 0).unwrap();
+    struct Repeat(char, usize);
+    impl fmt::Display for Repeat {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { repeat_char(f, self.0, self.1) }
+    }
+
+    let buf = Repeat('0', 0).to_string();
     assert_eq!(buf.len(), 0);
-    repeat_char(&mut buf, '0', 42).unwrap();
+    let buf = Repeat('0', 42).to_string();
     assert_eq!(buf.len(), 42);
     assert!(buf.chars().all(|c| c == '0'));
 }
