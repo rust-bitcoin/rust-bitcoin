@@ -8,7 +8,10 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ByteVecDecoder, DecoderStatus};
 
 use super::{Script, ScriptBufDecoderError};
+use crate::opcodes::all::{OP_1, OP_1NEGATE};
+use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
+use crate::script::PushBytes;
 
 /// An owned, growable script.
 ///
@@ -160,6 +163,99 @@ impl<T> ScriptBuf<T> {
     #[inline]
     #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
+
+    /// Adds a single opcode to the script.
+    pub fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
+
+    /// Adds instructions to push some arbitrary data onto the stack.
+    ///
+    /// If the data can be exactly produced by a numeric opcode, that opcode
+    /// will be used, since its behavior is equivalent but will not violate minimality
+    /// rules. To avoid this, use [`ScriptBuf::push_slice_non_minimal`] which will always
+    /// use a push opcode.
+    ///
+    /// However, this method does *not* enforce any numeric minimality rules.
+    /// If your pushes should be interpreted as numbers, ensure your input does
+    /// not have any leading zeros. In particular, the number 0 should be encoded
+    /// as an empty string rather than as a single 0 byte.
+    pub fn push_slice<D: AsRef<PushBytes>>(&mut self, data: D) {
+        let bytes = data.as_ref().as_bytes();
+        if bytes.len() == 1 {
+            match bytes[0] {
+                0x81 => {
+                    self.push_opcode(OP_1NEGATE);
+                }
+                1..=16 => {
+                    self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1)));
+                }
+                _ => {
+                    self.push_slice_non_minimal(data);
+                }
+            }
+        } else {
+            self.push_slice_non_minimal(data);
+        }
+    }
+
+    /// Adds instructions to push some arbitrary data onto the stack without minimality.
+    ///
+    /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
+    ///
+    /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
+    pub fn push_slice_non_minimal<D: AsRef<PushBytes>>(&mut self, data: D) {
+        let data = data.as_ref();
+        self.reserve(Self::reserved_len_for_slice(data.len()));
+        self.push_slice_no_opt(data);
+    }
+
+    /// Computes the sum of `len` and the length of an appropriate push opcode.
+    fn reserved_len_for_slice(len: usize) -> usize {
+        len + match len {
+            0..=0x4b => 1,
+            0x4c..=0xff => 2,
+            0x100..=0xffff => 3,
+            // we don't care about oversized, the other fn will panic anyway
+            _ => 5,
+        }
+    }
+
+    /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
+    ///
+    /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
+    fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_, T> {
+        let vec = core::mem::take(self).into_bytes();
+        ScriptBufAsVec(self, vec)
+    }
+
+    /// Pushes the slice without reserving
+    fn push_slice_no_opt(&mut self, data: &PushBytes) {
+        let mut this = self.as_byte_vec();
+        // Start with a PUSH opcode
+        match data.len() as u64 {
+            n if n < opcodes::OP_PUSHDATA1.into() => {
+                this.push(n as u8);
+            }
+            n if n < 0x100 => {
+                this.push(opcodes::OP_PUSHDATA1);
+                this.push(n as u8);
+            }
+            n if n < 0x10000 => {
+                this.push(opcodes::OP_PUSHDATA2);
+                this.push((n % 0x100) as u8);
+                this.push((n / 0x100) as u8);
+            }
+            // `PushBytes` enforces len < 0x100000000
+            n => {
+                this.push(opcodes::OP_PUSHDATA4);
+                this.push((n % 0x100) as u8);
+                this.push(((n / 0x100) % 0x100) as u8);
+                this.push(((n / 0x10000) % 0x100) as u8);
+                this.push((n / 0x0100_0000) as u8);
+            }
+        }
+        // Then push the raw bytes
+        this.extend_from_slice(data.as_bytes());
+    }
 }
 
 // Cannot derive due to generics.
@@ -214,11 +310,66 @@ impl<T> encoding::Decoder for ScriptBufDecoder<T> {
     fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
+/// Pretends that this is a mutable reference to [`ScriptBuf`]'s internal buffer.
+///
+/// In reality the backing `Vec<u8>` is swapped with an empty one and this is holding both the
+/// reference and the vec. The vec is put back when this drops so it also covers panics. (But not
+/// leaks, which is OK since we never leak.)
+pub(crate) struct ScriptBufAsVec<'a, T>(&'a mut ScriptBuf<T>, Vec<u8>);
+
+impl<T> core::ops::Deref for ScriptBufAsVec<'_, T> {
+    type Target = Vec<u8>;
+
+    fn deref(&self) -> &Self::Target { &self.1 }
+}
+
+impl<T> core::ops::DerefMut for ScriptBufAsVec<'_, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.1 }
+}
+
+impl<T> Drop for ScriptBufAsVec<'_, T> {
+    fn drop(&mut self) {
+        let vec = core::mem::take(&mut self.1);
+        *(self.0) = ScriptBuf::from_bytes(vec);
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a, T> Arbitrary<'a> for ScriptBuf<T> {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = Vec::<u8>::arbitrary(u)?;
         Ok(Self::from_bytes(v))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use alloc::vec;
+
+    use super::ScriptBuf;
+    use crate::script::ScriptSigTag as Tag;
+
+    #[test]
+    fn reserved_len_for_slice() {
+        // Length plus the size of the push opcode that prefixes it.
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0), 1);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0x4b), 0x4b + 1);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0x4c), 0x4c + 2);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0xff), 0xff + 2);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0x100), 0x100 + 3);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0xffff), 0xffff + 3);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0x10000), 0x10000 + 5);
+    }
+
+    #[test]
+    fn as_byte_vec_deref_restores() {
+        let mut script = ScriptBuf::<Tag>::from_bytes(vec![1, 2, 3]);
+        {
+            let vec = script.as_byte_vec();
+            assert_eq!(vec.len(), 3);
+            assert_eq!(vec.as_slice(), &[1, 2, 3]);
+        }
+        assert_eq!(script.as_bytes(), &[1, 2, 3]);
     }
 }

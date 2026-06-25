@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[cfg(feature = "serde")]
-use alloc::borrow::ToOwned;
 use alloc::string::ToString;
 
 use hex::hex;
@@ -265,22 +263,6 @@ fn script_x_only_key() {
     let x_only_key = KEYSTR[2..].parse::<XOnlyPublicKey>().unwrap();
     let script = Builder::<Tag>::new().push_x_only_key(x_only_key);
     assert_eq!(script.into_bytes(), &hex!(KEYSTR) as &[u8]);
-}
-
-#[test]
-fn script_builder() {
-    // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
-    let script = ScriptPubKey::builder()
-        .push_opcode(OP_DUP)
-        .push_opcode(OP_HASH160)
-        .push_slice(hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19"))
-        .push_opcode(OP_EQUALVERIFY)
-        .push_opcode(OP_CHECKSIG)
-        .into_script();
-    assert_eq!(
-        script.to_hex_string_no_length_prefix(),
-        "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac"
-    );
 }
 
 #[test]
@@ -592,55 +574,6 @@ fn multisig() {
                 .unwrap()
                 .is_multisig()
         );
-}
-
-#[test]
-#[cfg(feature = "serde")]
-fn script_json_serialize() {
-    use serde_json;
-
-    let original = ScriptBuf::from_hex_no_length_prefix("827651a0698faaa9a8a7a687").unwrap();
-    let json = serde_json::to_value(&original).unwrap();
-    assert_eq!(json, serde_json::Value::String("827651a0698faaa9a8a7a687".to_owned()));
-    let des = serde_json::from_value::<ScriptBuf>(json).unwrap();
-    assert_eq!(original, des);
-}
-
-#[test]
-fn script_asm() {
-    assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("6363636363686868686800").unwrap().to_string(),
-        "OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0"
-    );
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac").unwrap().to_string(),
-               "OP_PUSHBYTES_33 02715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699 OP_CHECKSIG");
-    // Elements Alpha peg-out transaction with some signatures removed for brevity. Mainly to test PUSHDATA1
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").unwrap().to_string(),
-               "OP_0 OP_PUSHBYTES_71 304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401 OP_0 OP_PUSHDATA1 552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae");
-    // Various weird scripts found in transaction 6d7ed9914625c73c0288694a6819196a27ef6c08f98e1270d975a8e65a3dc09a
-    // which triggered overflow bugs on 32-bit machines in script formatting in the past.
-    assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("01").unwrap().to_string(),
-        "OP_PUSHBYTES_1 <push past end>"
-    );
-    assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("0201").unwrap().to_string(),
-        "OP_PUSHBYTES_2 <push past end>"
-    );
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("4c").unwrap().to_string(), "<unexpected end>");
-    assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("4c0201").unwrap().to_string(),
-        "OP_PUSHDATA1 <push past end>"
-    );
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("4d").unwrap().to_string(), "<unexpected end>");
-    assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("4dffff01").unwrap().to_string(),
-        "OP_PUSHDATA2 <push past end>"
-    );
-    assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("4effffffff01").unwrap().to_string(),
-        "OP_PUSHDATA4 <push past end>"
-    );
 }
 
 #[test]

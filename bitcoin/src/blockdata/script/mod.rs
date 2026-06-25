@@ -68,7 +68,7 @@ use crate::prelude::Vec;
 #[doc(inline)]
 pub use self::{
     borrowed::{ScriptExt, TapScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
-    builder::Builder,
+    builder::{Builder, BuilderExt},
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{ScriptBufExt, ScriptPubKeyBufExt, ScriptSigBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesExt, PushBytesErrorReport},
@@ -85,6 +85,7 @@ pub use primitives::script::{
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
+pub(in crate::blockdata) use self::builder::BuilderExtPriv;
 #[doc(no_inline)]
 pub use self::error::{
     Error, PushBytesError, RedeemScriptSizeError, ScriptIntError, WitnessScriptSizeError,

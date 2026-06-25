@@ -1964,6 +1964,58 @@ impl<T> core::clone::CloneToUninit for bitcoin_primitives::script::WitnessScript
 pub unsafe fn bitcoin_primitives::script::WitnessScriptTag::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_primitives::script::WitnessScriptTag
 pub fn bitcoin_primitives::script::WitnessScriptTag::from(t: T) -> T
+pub struct bitcoin_primitives::script::Builder<T>(_)
+impl<T> bitcoin_primitives::script::Builder<T>
+pub fn bitcoin_primitives::script::Builder<T>::as_script(&self) -> &bitcoin_primitives::script::Script<T>
+pub fn bitcoin_primitives::script::Builder<T>::into_script(self) -> bitcoin_primitives::script::ScriptBuf<T>
+pub const fn bitcoin_primitives::script::Builder<T>::new() -> Self
+pub fn bitcoin_primitives::script::Builder<T>::push_opcode(self, data: bitcoin_primitives::opcodes::Opcode) -> Self
+pub fn bitcoin_primitives::script::Builder<T>::push_slice<D: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(self, data: D) -> Self
+pub fn bitcoin_primitives::script::Builder<T>::push_slice_non_minimal<D: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(self, data: D) -> Self
+impl<T: core::clone::Clone> core::clone::Clone for bitcoin_primitives::script::Builder<T>
+pub fn bitcoin_primitives::script::Builder<T>::clone(&self) -> bitcoin_primitives::script::Builder<T>
+impl<T: core::cmp::Eq> core::cmp::Eq for bitcoin_primitives::script::Builder<T>
+impl<T: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin_primitives::script::Builder<T>
+pub fn bitcoin_primitives::script::Builder<T>::eq(&self, other: &bitcoin_primitives::script::Builder<T>) -> bool
+impl<T> core::convert::From<alloc::vec::Vec<u8>> for bitcoin_primitives::script::Builder<T>
+pub fn bitcoin_primitives::script::Builder<T>::from(v: alloc::vec::Vec<u8>) -> Self
+impl<T> core::default::Default for bitcoin_primitives::script::Builder<T>
+pub fn bitcoin_primitives::script::Builder<T>::default() -> Self
+impl<T> core::fmt::Debug for bitcoin_primitives::script::Builder<T>
+pub fn bitcoin_primitives::script::Builder<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> core::fmt::Display for bitcoin_primitives::script::Builder<T>
+impl<T> core::marker::StructuralPartialEq for bitcoin_primitives::script::Builder<T>
+impl<T> core::marker::Freeze for bitcoin_primitives::script::Builder<T>
+impl<T> core::marker::Send for bitcoin_primitives::script::Builder<T> where T: core::marker::Send
+impl<T> core::marker::Sync for bitcoin_primitives::script::Builder<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for bitcoin_primitives::script::Builder<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for bitcoin_primitives::script::Builder<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::Builder<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::Builder<T> where T: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::script::Builder<T> where U: core::convert::From<T>
+pub fn bitcoin_primitives::script::Builder<T>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::script::Builder<T> where U: core::convert::Into<T>
+pub type bitcoin_primitives::script::Builder<T>::Error = core::convert::Infallible
+pub fn bitcoin_primitives::script::Builder<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::script::Builder<T> where U: core::convert::TryFrom<T>
+pub type bitcoin_primitives::script::Builder<T>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_primitives::script::Builder<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::script::Builder<T> where T: core::clone::Clone
+pub type bitcoin_primitives::script::Builder<T>::Owned = T
+pub fn bitcoin_primitives::script::Builder<T>::clone_into(&self, target: &mut T)
+pub fn bitcoin_primitives::script::Builder<T>::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin_primitives::script::Builder<T> where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin_primitives::script::Builder<T>::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin_primitives::script::Builder<T> where T: 'static + ?core::marker::Sized
+pub fn bitcoin_primitives::script::Builder<T>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::script::Builder<T> where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::Builder<T>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::script::Builder<T> where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::Builder<T>::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::script::Builder<T> where T: core::clone::Clone
+pub unsafe fn bitcoin_primitives::script::Builder<T>::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_primitives::script::Builder<T>
+pub fn bitcoin_primitives::script::Builder<T>::from(t: T) -> T
 #[repr(transparent)] pub struct bitcoin_primitives::script::PushBytes(_)
 impl bitcoin_primitives::script::PushBytes
 pub fn bitcoin_primitives::script::PushBytes::as_bytes(&self) -> &[u8]
@@ -3213,6 +3265,9 @@ pub fn bitcoin_primitives::script::ScriptBuf<T>::from_hex_prefixed(s: &str) -> c
 pub fn bitcoin_primitives::script::ScriptBuf<T>::into_boxed_script(self) -> alloc::boxed::Box<bitcoin_primitives::script::Script<T>>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::into_bytes(self) -> alloc::vec::Vec<u8>
 pub const fn bitcoin_primitives::script::ScriptBuf<T>::new() -> Self
+pub fn bitcoin_primitives::script::ScriptBuf<T>::push_opcode(&mut self, data: bitcoin_primitives::opcodes::Opcode)
+pub fn bitcoin_primitives::script::ScriptBuf<T>::push_slice<D: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(&mut self, data: D)
+pub fn bitcoin_primitives::script::ScriptBuf<T>::push_slice_non_minimal<D: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(&mut self, data: D)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::reserve(&mut self, additional_len: usize)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::reserve_exact(&mut self, additional_len: usize)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::to_hex(&self) -> alloc::string::String

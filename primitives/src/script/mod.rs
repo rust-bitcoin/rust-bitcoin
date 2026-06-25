@@ -3,6 +3,7 @@
 //! Bitcoin scripts.
 
 mod borrowed;
+mod builder;
 mod owned;
 mod push_bytes;
 mod tag;
@@ -29,6 +30,7 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 #[doc(inline)]
 pub use self::{
     borrowed::{Script, ScriptEncoder},
+    builder::Builder,
     owned::{ScriptBuf, ScriptBufDecoder},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesErrorReport},
     tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag},
