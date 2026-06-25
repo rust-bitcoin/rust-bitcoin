@@ -3,12 +3,12 @@
 use core::fmt;
 
 use super::{opcode_to_verify, Error, PushBytes, Script, ScriptBuf};
-use crate::key::{LegacyPublicKey, XOnlyPublicKey};
+use crate::key::{FullPublicKey, LegacyPublicKey, PubkeyHash, SerializedLegacyPublicKey, XOnlyPublicKey};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
-use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _};
+use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _, RedeemScriptTag, ScriptHash, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag, WPubkeyHash};
 use crate::{relative, Sequence};
 
 /// An Object which can be used to construct a script piece by piece.
@@ -136,15 +136,16 @@ impl<T> Builder<T> {
     }
 
     /// Adds instructions to push a public key onto the stack.
-    pub fn push_key(self, key: LegacyPublicKey) -> Self {
-        if key.compressed() {
-            self.push_slice(key.serialize_compressed())
-        } else {
-            self.push_slice(key.serialize_uncompressed())
-        }
+    ///
+    /// Note that this **only** pushes the key itself. It does **not** include any instructions
+    /// that would check the signature. If you're checking signature consider using
+    /// `push_check_sig` instead which correctly handles pushing the appropriate instructions.
+    pub fn push_key<K: PubkeyInScript<T>>(self, key: K) -> Self {
+        self.push_slice(key.serialize())
     }
 
     /// Adds instructions to push an XOnly public key onto the stack.
+    #[deprecated(since = "TBD", note = "Use push_key instead")]
     pub fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Self {
         self.push_slice(x_only_key.serialize().0)
     }
@@ -176,6 +177,104 @@ impl<T> Builder<T> {
     )]
     pub fn push_sequence(self, sequence: Sequence) -> Self {
         self.push_int_unchecked(sequence.to_consensus_u32().into())
+    }
+
+    /// Pushes instructions verifying that the top-most stack element hashes to `hash`.
+    ///
+    /// This is equivalent to `{HASH_OP} <hash> OP_EQUAL` with a few advantages:
+    ///
+    /// * Statically enforced correct instruction for the given type
+    /// * Easy changing of the type if needed
+    /// * More convenient to write
+    ///
+    /// Beware that this does NOT push `OP_DUP` - you need to push it yourself, if needed.
+    ///
+    /// This method works optimally with [`push_verify`](Self::push_verify).
+    pub fn push_check_hash<H: HashInScript<T>>(self, hash: H) -> Self {
+        self.push_opcode(H::OPCODE)
+            .push_slice(hash)
+            .push_opcode(OP_EQUAL)
+    }
+
+    /// Pushes instructions that verify signature using the given key (or key hash).
+    ///
+    /// This method supports both keys and key hashes and, depending on the kind, it pushes
+    /// instructions that either duplicate the top-most element, verify its hash and run checksig
+    /// or simply push the given key and run checksig.
+    pub fn push_check_sig<K: CheckPubkeyInScript<T>>(self, key: &K) -> Self {
+        // Note that we can't just call into `push_check_hash` because there's no way to require
+        // that the trait is only implemented when `K::HASH_OPCODE` is Some.
+        if let Some(hash_opcode) = K::HASH_OPCODE {
+            self.push_opcode(OP_DUP)
+                .push_opcode(hash_opcode)
+                .push_slice(key.serialize())
+                .push_opcode(OP_EQUALVERIFY)
+                .push_opcode(K::CHECKSIG_OPCODE)
+        } else {
+            self.push_slice(key.serialize())
+                .push_opcode(K::CHECKSIG_OPCODE)
+        }
+    }
+
+    /// Push instructions that implement optimized multisig checking.
+    ///
+    /// Depending on the context and the inputs this translates to either:
+    /// * pushing appropriate data followed by `OP_CHECKMULTISIG`
+    /// * pushing 0, followed by (key, OP_CHECKSIGADD) pairs, followed by equality check
+    /// * series of single key checks (if `k == keys.len()` and the script is smaller than other
+    ///   options)
+    ///
+    /// Note that this does **not** implement MuSig.
+    pub fn push_check_multisig<K: MultisigPubkeyInScript<T>>(self, k: u16, keys: &[K]) -> Self {
+        assert!(usize::from(k) <= keys.len());
+        if usize::from(k) == keys.len() {
+            self.push_check_n_of_n_multisig(keys)
+        } else {
+            self.push_check_multisig_non_minimal(k, keys)
+        }
+    }
+
+    /// Push instructions that optimally verify n-of-n multisig.
+    ///
+    /// `OP_CHECKMULTISIG` and `OP_CHECKSIGADD` are not optimal in some scenarios. This function
+    /// avoids them if it is the case while maintaining n of n semantics.
+    ///
+    /// Note that this does **not** implement MuSig.
+    pub fn push_check_n_of_n_multisig<K: MultisigPubkeyInScript<T>>(self, keys: &[K]) -> Self {
+        let (first, remaining) = keys.split_first().expect("keys should be non-empty");
+        if remaining.is_empty() {
+            self.push_check_sig(first)
+        } else if let (MultisigOpcode::Single(_), true) = (K::MULTISIG_OPCODE, keys.len() > 2) {
+            self.push_check_multisig_non_minimal(keys.len().try_into().expect("too many keys"), keys)
+        } else {
+            remaining.iter()
+                .fold(self.push_check_sig(first), |builder, key| builder.push_verify().push_check_sig(key))
+        }
+    }
+
+    /// Push instructions that naively verify multisig using "official" instructions.
+    ///
+    /// This method will use `OP_CHECKMULTISIG` or `OP_CHECKSIGADD`, depending on the context even
+    /// if it's not the most optimal way of getting multisig semantics.
+    pub fn push_check_multisig_non_minimal<K: MultisigPubkeyInScript<T>>(self, k: u16, keys: &[K]) -> Self {
+        assert!(usize::from(k) <= keys.len());
+        match K::MULTISIG_OPCODE {
+            MultisigOpcode::Single(opcode) => {
+                let key_count = i32::try_from(keys.len()).expect("too many keys");
+                keys.iter()
+                    .fold(self.push_int(k.into()).unwrap(), |builder, key| builder.push_key(key))
+                    .push_int(key_count)
+                    .expect("key count is in range")
+                    .push_opcode(opcode)
+            },
+            MultisigOpcode::ChecksigAdd(opcode) => {
+                keys.iter()
+                    .fold(self.push_int(0).unwrap(), |builder, key| builder.push_key(key).push_opcode(opcode))
+                    .push_int(k.into())
+                    .expect("k count is in range")
+                    .push_opcode(OP_EQUAL)
+            },
+        }
     }
 
     /// Converts the `Builder` into `ScriptBuf`.
@@ -210,4 +309,312 @@ impl<T> fmt::Display for Builder<T> {
 
 impl<T> fmt::Debug for Builder<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
+}
+
+/// Represents hashes that are natively supported by the bitcoin script.
+///
+/// This is intended for use with [`Builder::push_check_hash`] but you can bound on it in generic
+/// functions if you need to make scripts generic over hash type.
+pub trait HashInScript<Tag>: AsRef<PushBytes> {
+    /// The opcode that hashes the top-most element on the stack producing a `Self`-like hash type.
+    const OPCODE: Opcode;
+}
+
+impl<U, T: HashInScript<U>> HashInScript<U> for &'_ T {
+    const OPCODE: Opcode = T::OPCODE;
+}
+
+macro_rules! impl_hash_in_script_for_tags {
+    ($hash:ident, $opcode:ident $(, $tag:ident)*) => {
+        $(
+            impl HashInScript<primitives::script::$tag> for hashes::$hash::Hash {
+                const OPCODE: Opcode = $opcode;
+            }
+        )*
+    }
+}
+
+macro_rules! impl_each_hash_in_script {
+    ($($hash:ident => $opcode:ident,)*) => {
+        $(
+            impl_hash_in_script_for_tags!($hash, $opcode, RedeemScriptTag, ScriptPubKeyTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag);
+        )*
+    }
+}
+
+impl_each_hash_in_script! {
+    hash160 => OP_HASH160,
+    ripemd160 => OP_RIPEMD160,
+    sha1 => OP_SHA1,
+    sha256 => OP_SHA256,
+    sha256d => OP_HASH256,
+}
+
+impl HashInScript<ScriptPubKeyTag> for PubkeyHash {
+    const OPCODE: Opcode = OP_HASH160;
+}
+
+impl HashInScript<ScriptPubKeyTag> for ScriptHash {
+    const OPCODE: Opcode = OP_HASH160;
+}
+
+/// While `W` suggests "witness", the type is technically correct in `script_pubkey` since it's
+/// just hashed compressed key.
+impl HashInScript<ScriptPubKeyTag> for WPubkeyHash {
+    const OPCODE: Opcode = OP_HASH160;
+}
+
+/// Represents public keys or their standard hashes that are natively supported by bitcoin script.
+pub trait PubkeyInScript<Tag> {
+    /// The container type holding the bytes of a serialized key.
+    type Serialized: AsRef<PushBytes>;
+
+    /// Serializes the key.
+    #[must_use]
+    fn serialize(&self) -> Self::Serialized;
+}
+
+/// Represents public keys or their standard hashes that are natively supported by bitcoin script.
+pub trait CheckPubkeyInScript<Tag>: PubkeyInScript<Tag> {
+    /// The opcode used for signature checking.
+    ///
+    /// The opcode must take two top-most stack elements, where the top-most one is the public key
+    /// and must leave a bool on the stack after execution.
+    const CHECKSIG_OPCODE: Opcode;
+
+    /// Opcode used to obtain this hash if `Self` is a hash, `None` if it's not.
+    ///
+    /// The trait can be implemented for key hashes in which case this MUST be set to `Some` with
+    /// correct hash-producing opcode inside. If `Self` is bare (non-hashed) public key, this MUST
+    /// be set to `None`.
+    const HASH_OPCODE: Option<Opcode>;
+}
+
+impl<U, T: PubkeyInScript<U>> PubkeyInScript<U> for &'_ T {
+    type Serialized = T::Serialized;
+
+    fn serialize(&self) -> Self::Serialized {
+        (*self).serialize()
+    }
+}
+
+impl<U, T: CheckPubkeyInScript<U>> CheckPubkeyInScript<U> for &'_ T {
+    const CHECKSIG_OPCODE: Opcode = T::CHECKSIG_OPCODE;
+    const HASH_OPCODE: Option<Opcode> = T::HASH_OPCODE;
+}
+
+impl PubkeyInScript<ScriptPubKeyTag> for LegacyPublicKey {
+    type Serialized = SerializedLegacyPublicKey;
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl CheckPubkeyInScript<ScriptPubKeyTag> for LegacyPublicKey {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = None;
+}
+
+// Keys may appear in sript_sig in case of P2PKH.
+impl PubkeyInScript<ScriptSigTag> for LegacyPublicKey {
+    type Serialized = SerializedLegacyPublicKey;
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl PubkeyInScript<RedeemScriptTag> for LegacyPublicKey {
+    type Serialized = SerializedLegacyPublicKey;
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl CheckPubkeyInScript<RedeemScriptTag> for LegacyPublicKey {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = None;
+}
+
+impl PubkeyInScript<ScriptPubKeyTag> for FullPublicKey {
+    type Serialized = [u8; 33];
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl CheckPubkeyInScript<ScriptPubKeyTag> for FullPublicKey {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = None;
+}
+
+impl PubkeyInScript<RedeemScriptTag> for FullPublicKey {
+    type Serialized = [u8; 33];
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl CheckPubkeyInScript<RedeemScriptTag> for FullPublicKey {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = None;
+}
+
+impl PubkeyInScript<WitnessScriptTag> for FullPublicKey {
+    type Serialized = [u8; 33];
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl CheckPubkeyInScript<WitnessScriptTag> for FullPublicKey {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = None;
+}
+
+impl PubkeyInScript<TapScriptTag> for XOnlyPublicKey {
+    type Serialized = [u8; 32];
+
+    fn serialize(&self) -> Self::Serialized {
+        self.serialize().0
+    }
+}
+
+impl CheckPubkeyInScript<TapScriptTag> for XOnlyPublicKey {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = None;
+}
+
+impl PubkeyInScript<ScriptPubKeyTag> for PubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+impl CheckPubkeyInScript<ScriptPubKeyTag> for PubkeyHash {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = Some(OP_HASH160);
+}
+
+impl PubkeyInScript<RedeemScriptTag> for PubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+impl CheckPubkeyInScript<RedeemScriptTag> for PubkeyHash {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = Some(OP_HASH160);
+}
+
+/// While `W` suggests "witness", the type is technically correct in `script_pubkey` since it's
+/// just hashed compressed key.
+impl PubkeyInScript<ScriptPubKeyTag> for WPubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+/// While `W` suggests "witness", the type is technically correct in `script_pubkey` since it's
+/// just hashed compressed key.
+impl CheckPubkeyInScript<ScriptPubKeyTag> for WPubkeyHash {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = Some(OP_HASH160);
+}
+
+/// While `W` suggests "witness", the type is technically correct in `script_pubkey` since it's
+/// just hashed compressed key.
+impl PubkeyInScript<RedeemScriptTag> for WPubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+/// While `W` suggests "witness", the type is technically correct in `script_pubkey` since it's
+/// just hashed compressed key.
+impl CheckPubkeyInScript<RedeemScriptTag> for WPubkeyHash {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = Some(OP_HASH160);
+}
+
+impl PubkeyInScript<WitnessScriptTag> for WPubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+impl CheckPubkeyInScript<WitnessScriptTag> for WPubkeyHash {
+    const CHECKSIG_OPCODE: Opcode = OP_CHECKSIG;
+    const HASH_OPCODE: Option<Opcode> = Some(OP_HASH160);
+
+}
+
+/// Represents public keys that are natively supported by bitcoin script.
+///
+/// This trait intentionally excludes hashed keys to support multisig.
+pub trait MultisigPubkeyInScript<Tag>: CheckPubkeyInScript<Tag> {
+    /// The opcode used to implement multisig for this key.
+    const MULTISIG_OPCODE: MultisigOpcode;
+}
+
+impl<U, T: MultisigPubkeyInScript<U>> MultisigPubkeyInScript<U> for &'_ T {
+    const MULTISIG_OPCODE: MultisigOpcode = T::MULTISIG_OPCODE;
+}
+
+impl MultisigPubkeyInScript<ScriptPubKeyTag> for LegacyPublicKey {
+    const MULTISIG_OPCODE: MultisigOpcode = MultisigOpcode::Single(OP_CHECKMULTISIG);
+}
+
+impl MultisigPubkeyInScript<RedeemScriptTag> for LegacyPublicKey {
+    const MULTISIG_OPCODE: MultisigOpcode = MultisigOpcode::Single(OP_CHECKMULTISIG);
+}
+
+impl MultisigPubkeyInScript<ScriptPubKeyTag> for FullPublicKey {
+    const MULTISIG_OPCODE: MultisigOpcode = MultisigOpcode::Single(OP_CHECKMULTISIG);
+}
+
+impl MultisigPubkeyInScript<RedeemScriptTag> for FullPublicKey {
+    const MULTISIG_OPCODE: MultisigOpcode = MultisigOpcode::Single(OP_CHECKMULTISIG);
+}
+
+impl MultisigPubkeyInScript<WitnessScriptTag> for FullPublicKey {
+    const MULTISIG_OPCODE: MultisigOpcode = MultisigOpcode::Single(OP_CHECKMULTISIG);
+}
+
+impl MultisigPubkeyInScript<TapScriptTag> for XOnlyPublicKey {
+    const MULTISIG_OPCODE: MultisigOpcode = MultisigOpcode::ChecksigAdd(OP_CHECKSIGADD);
+}
+
+/// Contains categorized multisig opcode.
+///
+/// This is used in `MultisigPubkeyInScript` trait to support both legacy and tapscript multisigs.
+#[non_exhaustive]
+pub enum MultisigOpcode {
+    /// The opcode is a single instruction executed after all params and keys were pushed.
+    ///
+    /// Currently this is only used for `OP_CHECKMULTISIG`.
+    Single(Opcode),
+    /// The opcode represents signature checking with addition to an accumulator.
+    ///
+    /// Rather than being a single instruction, the opcode is executed after each key is pushed,
+    /// adding 1 to the accumulator if the signature is *valid* and 0 if the signature is not
+    /// *present*. (Invalid signatures just fail verification.)
+    ///
+    /// Currently this is only used for `OP_CHECKSIGADD`.
+    ChecksigAdd(Opcode),
 }
