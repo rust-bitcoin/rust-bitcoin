@@ -175,6 +175,13 @@ pub trait HashEngine: Clone {
     /// Adds data to the hash engine.
     fn input(&mut self, data: &[u8]);
 
+    /// Adds data to the hash engine and returns the engine.
+    #[must_use]
+    fn with_input(mut self, data: &[u8]) -> Self {
+        self.input(data);
+        self
+    }
+
     /// Returns the number of bytes already input into the engine.
     fn n_bytes_hashed(&self) -> u64;
 
@@ -344,5 +351,14 @@ mod tests {
         let hex = format!("{}", orig);
         let roundtrip = hex.parse::<TestNewtype>().expect("failed to parse hex");
         assert_eq!(roundtrip, orig);
+    }
+
+    #[test]
+    fn engine_with_input_chains() {
+        use crate::{sha256, HashEngine as _};
+
+        let chained =
+            sha256::HashEngine::default().with_input(b"abc").with_input(b"def").finalize();
+        assert_eq!(chained, sha256::Hash::hash(b"abcdef"));
     }
 }
