@@ -46,3 +46,6 @@ exact_features = [
     ["alloc", "serde"],
     ["std", "serde"],
 ]
+
+[package.metadata.rbmt.prerelease]
+enabled = true

@@ -59,3 +59,6 @@ exact_features = [
     ["alloc", "serde", "small-hash"],
     ["std", "serde", "small-hash"],
 ]
+
+[package.metadata.rbmt.prerelease]
+enabled = true
