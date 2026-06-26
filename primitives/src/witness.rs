@@ -13,7 +13,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::Decoder4;
 use encoding::{
     self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, DecoderStatus,
-    Encoder2, EncoderStatus,
+    Encoder2,
 };
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
@@ -284,7 +284,7 @@ impl encoding::Encode for Witness {
         let witness_elements =
             BytesEncoder::without_length_prefix(&self.content[..self.indices_start]);
 
-        WitnessEncoder(Encoder2::new(num_elements, witness_elements))
+        WitnessEncoder::new(Encoder2::new(num_elements, witness_elements))
     }
 }
 
@@ -292,16 +292,10 @@ impl encoding::Decode for Witness {
     type Decoder = WitnessDecoder;
 }
 
-/// The encoder for the [`Witness`] type.
-#[derive(Debug, Clone)]
-pub struct WitnessEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
-
-impl encoding::Encoder for WitnessEncoder<'_> {
-    #[inline]
-    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
-
-    #[inline]
-    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Witness`] type.
+    #[derive(Debug, Clone)]
+    pub struct WitnessEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }
 
 /// The decoder for the [`Witness`] type.
@@ -1736,6 +1730,43 @@ mod test {
         assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
         witness.push([0u8; 253]);
         assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn witness_encoder_len_matches_encoding_length() {
+        use encoding::{Encode as _, ExactSizeEncoder as _};
+
+        // ExactSizeEncoder::len on a fresh encoder must be equal to total encoded length
+        fn assert_exact_len(witness: &Witness) {
+            let encoded_len = encoding::encode_to_vec(witness).len();
+            assert_eq!(witness.encoder().len(), encoded_len);
+        }
+
+        // empty witness: encodes as a single CompactSize zero byte.
+        assert_exact_len(&Witness::new());
+
+        // Single zero-length element.
+        let mut witness = Witness::new();
+        witness.push([0u8; 0]);
+        assert_exact_len(&witness);
+
+        // Multiple elements of differing sizes.
+        let witness =
+            Witness::from_iter([[1u8, 2, 3].as_slice(), [4u8, 5].as_slice(), [6u8].as_slice()]);
+        assert_exact_len(&witness);
+
+        // Element length crossing the CompactSize one-byte boundary (252 -> 253).
+        let mut witness = Witness::new();
+        witness.push([0u8; 252]);
+        assert_exact_len(&witness);
+        witness.push([0u8; 253]);
+        assert_exact_len(&witness);
+
+        // Element count crossing the CompactSize one-byte boundary: 253 elements
+        // makes the leading count prefix three bytes instead of one.
+        let witness = (0..253u32).map(|_| [0xABu8].as_slice()).collect::<Witness>();
+        assert_exact_len(&witness);
     }
 
     #[test]
