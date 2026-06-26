@@ -1898,8 +1898,10 @@ pub trait bitcoin_hashes::HashEngine: core::clone::Clone
 pub type bitcoin_hashes::HashEngine::Hash: bitcoin_hashes::Hash
 pub const bitcoin_hashes::HashEngine::BLOCK_SIZE: usize
 pub fn bitcoin_hashes::HashEngine::finalize(self) -> Self::Hash
+pub fn bitcoin_hashes::HashEngine::hash(data: &[u8]) -> Self::Hash where Self: core::default::Default
 pub fn bitcoin_hashes::HashEngine::input(&mut self, data: &[u8])
 pub fn bitcoin_hashes::HashEngine::n_bytes_hashed(&self) -> u64
+pub fn bitcoin_hashes::HashEngine::with_input(self, data: &[u8]) -> Self
 pub trait bitcoin_hashes::IsByteArray: core::convert::AsRef<[u8]> + bitcoin_hashes::sealed::IsByteArray
 pub const bitcoin_hashes::IsByteArray::LEN: usize
 impl<const N: usize> bitcoin_hashes::IsByteArray for [u8; N]
