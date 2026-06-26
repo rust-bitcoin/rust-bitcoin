@@ -96,3 +96,6 @@ exact_features = [
     ["bitcoinconsensus", "secp-recovery", "base64", "serde"],
     ["std", "bitcoinconsensus-std", "secp-recovery", "base64", "serde"],
 ]
+
+[package.metadata.rbmt.prerelease]
+enabled = true
