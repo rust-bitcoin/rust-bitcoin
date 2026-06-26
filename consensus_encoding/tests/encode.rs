@@ -204,12 +204,14 @@ fn encode_encoder2_with_first_empty_encoder() {
 #[test]
 fn encode_option_encoder_some() {
     let mut encoder = Some(ArrayEncoder::<3>::without_length_prefix([1, 2, 3]));
+    assert_eq!(encoder.len(), 3);
     check_encoder(&mut encoder, &[1, 2, 3]);
 }
 
 #[test]
 fn encode_option_encoder_none() {
     let mut encoder: Option<ArrayEncoder<3>> = None;
+    assert_eq!(encoder.len(), 0);
     check_encoder(&mut encoder, &[]);
 }
 
