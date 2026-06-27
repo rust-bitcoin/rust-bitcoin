@@ -6,7 +6,17 @@
 //! in Bitcoin transactions.
 
 /// Sealed trait representing a type of script.
-pub trait Tag {}
+pub trait Tag: sealed::Sealed {}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::RedeemScriptTag {}
+    impl Sealed for super::ScriptSigTag {}
+    impl Sealed for super::ScriptPubKeyTag {}
+    impl Sealed for super::SignetBlockScriptTag {}
+    impl Sealed for super::TapScriptTag {}
+    impl Sealed for super::WitnessScriptTag {}
+}
 
 /// A P2SH redeem script.
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
