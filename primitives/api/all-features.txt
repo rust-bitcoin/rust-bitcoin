@@ -5221,10 +5221,12 @@ pub unsafe fn bitcoin_primitives::witness::WitnessDecoder::clone_to_uninit(&self
 impl<T> core::convert::From<T> for bitcoin_primitives::witness::WitnessDecoder
 pub fn bitcoin_primitives::witness::WitnessDecoder::from(t: T) -> T
 pub struct bitcoin_primitives::witness::WitnessDecoderError(_)
-pub struct bitcoin_primitives::witness::WitnessEncoder<'e>(_)
-impl bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::witness::WitnessEncoder<'_>
-pub fn bitcoin_primitives::witness::WitnessEncoder<'_>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
-pub fn bitcoin_primitives::witness::WitnessEncoder<'_>::current_chunk(&self) -> &[u8]
+pub struct bitcoin_primitives::witness::WitnessEncoder<'e>(_, _)
+impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::witness::WitnessEncoder<'e>
+pub fn bitcoin_primitives::witness::WitnessEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
+pub fn bitcoin_primitives::witness::WitnessEncoder<'e>::current_chunk(&self) -> &[u8]
+impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::witness::WitnessEncoder<'e>
+pub fn bitcoin_primitives::witness::WitnessEncoder<'e>::len(&self) -> usize
 impl<'e> core::clone::Clone for bitcoin_primitives::witness::WitnessEncoder<'e>
 pub fn bitcoin_primitives::witness::WitnessEncoder<'e>::clone(&self) -> bitcoin_primitives::witness::WitnessEncoder<'e>
 impl<'e> core::fmt::Debug for bitcoin_primitives::witness::WitnessEncoder<'e>
