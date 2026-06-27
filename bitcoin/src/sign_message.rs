@@ -132,11 +132,17 @@ mod message_signing {
                 if s.len() != 88 {
                     return Err(MessageSignatureError::InvalidLength);
                 }
-                let mut byte_array = [0; 65];
-                BASE64_STANDARD
+                let mut byte_array = [0; 66];
+                let decode_len = BASE64_STANDARD
                     .decode_slice_unchecked(s, &mut byte_array)
                     .map_err(|_| MessageSignatureError::InvalidBase64)?;
-                Self::from_byte_array(&byte_array).map_err(MessageSignatureError::from)
+                if decode_len != 65 {
+                    return Err(MessageSignatureError::InvalidLength);
+                }
+                let exact_bytes = byte_array[..65]
+                    .try_into()
+                    .expect("exactly 65 bytes exist in byte_array slice");
+                Self::from_byte_array(&exact_bytes).map_err(MessageSignatureError::from)
             }
 
             /// Converts to base64 encoding.
@@ -233,6 +239,9 @@ pub mod error {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "base64")]
+    #[cfg(feature = "secp-recovery")]
+    use alloc::string::String;
     use alloc::string::ToString;
 
     use super::*;
@@ -317,5 +326,25 @@ mod tests {
 
         let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
         assert_eq!(signature.is_signed_by_address(&p2pkh, msg_hash), Ok(false));
+    }
+
+    #[test]
+    #[cfg(feature = "base64")]
+    #[cfg(feature = "secp-recovery")]
+    fn from_base64_rejects_non_65_byte_decode() {
+        // 88-char base64 can decode to 64, 65, or 66 bytes.
+        let input: String = "A".repeat(88);
+        let result = super::MessageSignature::from_base64(&input);
+        assert!(result.is_err());
+
+        let mut input: String = "A".repeat(86);
+        input.extend(['=', '=']);
+        let result = super::MessageSignature::from_base64(&input);
+        assert!(result.is_err());
+
+        let mut input: String = "A".repeat(87);
+        input.extend(['=']);
+        let result = super::MessageSignature::from_base64(&input);
+        assert!(result.is_err());
     }
 }
