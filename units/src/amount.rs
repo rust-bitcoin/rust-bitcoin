@@ -1958,7 +1958,7 @@ impl<'a> Arbitrary<'a> for SignedAmount {
 
 #[cfg(kani)]
 mod verification {
-    use std::cmp;
+    use core::cmp;
     use std::convert::TryInto;
 
     use super::*;
