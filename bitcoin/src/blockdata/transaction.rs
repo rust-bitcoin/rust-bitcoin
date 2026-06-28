@@ -12,18 +12,35 @@
 //!
 
 use core::convert::Infallible;
+#[cfg(feature = "encoding")]
+use core::mem;
 use core::str::FromStr;
 use core::{cmp, fmt};
 
+#[cfg(feature = "encoding")]
+use encoding::{
+    ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _,
+    Encoder2, Encoder3, Encoder6, EncoderStatus, SliceEncoder, VecDecoder,
+};
 use hashes::{sha256d, Hash};
 use io::{Read, Write};
+#[cfg(feature = "encoding")]
+use units::amount::{AmountDecoder, AmountEncoder};
 use units::parse::{self, ParseIntError};
 
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
+#[cfg(feature = "encoding")]
+use crate::blockdata::locktime::absolute::{
+    LockTimeDecoder, LockTimeDecoderError, LockTimeEncoder,
+};
 use crate::blockdata::locktime::relative::{self, TimeOverflowError};
 use crate::blockdata::script::{Script, ScriptBuf};
+#[cfg(feature = "encoding")]
+use crate::blockdata::script::{ScriptBufDecoder, ScriptEncoder};
 use crate::blockdata::witness::Witness;
+#[cfg(feature = "encoding")]
+use crate::blockdata::witness::{WitnessDecoder, WitnessDecoderError, WitnessEncoder};
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
@@ -1248,7 +1265,130 @@ impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Version`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for Version {
+    type Encoder<'e> = VersionEncoder<'e>;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
+    }
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`Version`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+
+    /// Constructs a new [`Version`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<Version, VersionDecoderError> {
+        let bytes = result.map_err(VersionDecoderError)?;
+        let n = i32::from_le_bytes(bytes);
+        Ok(Version::non_standard(n))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for Version {
+    type Decoder = VersionDecoder;
+}
+
+/// An error consensus decoding a `Version`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for VersionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for VersionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "version decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for VersionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl_consensus_encoding!(TxOut, value, script_pubkey);
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TxOut`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for TxOut {
+    type Encoder<'e> = Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(self.value.encoder(), self.script_pubkey.encoder())
+    }
+}
+
+#[cfg(feature = "encoding")]
+type TxOutInnerDecoder = Decoder2<AmountDecoder, ScriptBufDecoder>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`TxOut`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxOutDecoder(TxOutInnerDecoder);
+
+    /// Constructs a new [`TxOut`] decoder.
+    pub const fn new() -> Self {
+        Self(Decoder2::new(AmountDecoder::new(), ScriptBufDecoder::new()))
+    }
+
+    fn end(
+        result: Result<<TxOutInnerDecoder as encoding::Decoder>::Output, <TxOutInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<TxOut, TxOutDecoderError> {
+        let (value, script_pubkey) = result.map_err(TxOutDecoderError)?;
+        Ok(TxOut { value, script_pubkey })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for TxOut {
+    type Decoder = TxOutDecoder;
+}
+
+/// An error consensus decoding a `TxOut`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TxOutDecoderError(pub(super) <TxOutInnerDecoder as encoding::Decoder>::Error);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for TxOutDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for TxOutDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "txout decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for TxOutDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 
 impl Encodable for OutPoint {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -1263,6 +1403,74 @@ impl Decodable for OutPoint {
             vout: Decodable::consensus_decode(r)?,
         })
     }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`OutPoint`] type.
+    #[derive(Debug, Clone)]
+    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for OutPoint {
+    type Encoder<'e> = OutPointEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        OutPointEncoder::new(Encoder2::new(
+            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
+            ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`OutPoint`] type.
+    // 32 for the txid + 4 for the vout
+    #[derive(Debug, Clone)]
+    pub struct OutPointDecoder(encoding::ArrayDecoder<36>);
+
+    /// Constructs a new [`OutPoint`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 36], encoding::UnexpectedEofError>) -> Result<OutPoint, OutPointDecoderError> {
+        let encoded = result.map_err(OutPointDecoderError)?;
+        let txid_buf: [u8; 32] = encoded[..32].try_into().expect("32 bytes");
+        let vout_buf: [u8; 4] = encoded[32..].try_into().expect("4 bytes");
+
+        let txid = Txid::from_byte_array(txid_buf);
+        let vout = u32::from_le_bytes(vout_buf);
+
+        Ok(OutPoint { txid, vout })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for OutPoint {
+    type Decoder = OutPointDecoder;
+}
+
+/// Error while decoding an `OutPoint`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutPointDecoderError(pub(crate) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for OutPointDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl core::fmt::Display for OutPointDecoderError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write_err!(f, "out point decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for OutPointDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Encodable for TxIn {
@@ -1286,6 +1494,134 @@ impl Decodable for TxIn {
             witness: Witness::default(),
         })
     }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TxIn`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxInEncoder<'e>(
+        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
+    );
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for TxIn {
+    type Encoder<'e> = Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder3::new(
+            self.previous_output.encoder(),
+            self.script_sig.encoder(),
+            self.sequence.encoder(),
+        )
+    }
+}
+
+/// Encodes the witnesses from a list of inputs.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+pub struct WitnessesEncoder<'e> {
+    inputs: &'e [TxIn],
+    /// Encoder for the current witness being encoded.
+    cur_enc: Option<WitnessEncoder<'e>>,
+}
+
+#[cfg(feature = "encoding")]
+impl<'e> WitnessesEncoder<'e> {
+    /// Constructs a new encoder for all witnesses in a list of transaction inputs.
+    pub fn new(inputs: &'e [TxIn]) -> Self {
+        Self { inputs, cur_enc: inputs.first().map(|input| input.witness.encoder()) }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encoder for WitnessesEncoder<'_> {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] {
+        self.cur_enc.as_ref().map(WitnessEncoder::current_chunk).unwrap_or_default()
+    }
+
+    #[inline]
+    fn advance(&mut self) -> EncoderStatus {
+        let Some(cur) = self.cur_enc.as_mut() else {
+            return EncoderStatus::Finished;
+        };
+
+        loop {
+            // On subsequent calls, attempt to advance the current encoder and return
+            // success if this succeeds.
+            if cur.advance().has_more() {
+                return EncoderStatus::HasMore;
+            }
+            // self.inputs guaranteed to be non-empty if cur_enc is non-None.
+            self.inputs = &self.inputs[1..];
+
+            // If advancing the current encoder failed, attempt to move to the next encoder.
+            if let Some(input) = self.inputs.first() {
+                *cur = input.witness.encoder();
+                if !cur.current_chunk().is_empty() {
+                    return EncoderStatus::HasMore;
+                }
+            } else {
+                self.cur_enc = None; // shortcut the next call to advance()
+                return EncoderStatus::Finished;
+            }
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+type TxInInnerDecoder = Decoder3<OutPointDecoder, ScriptBufDecoder, SequenceDecoder>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`TxIn`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxInDecoder(TxInInnerDecoder);
+
+    /// Constructs a new [`TxIn`] decoder.
+    pub const fn new() -> Self {
+        Self(Decoder3::new(
+            OutPointDecoder::new(),
+            ScriptBufDecoder::new(),
+            SequenceDecoder::new(),
+        ))
+    }
+
+    fn end(
+        result: Result<<TxInInnerDecoder as encoding::Decoder>::Output, <TxInInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<TxIn, TxInDecoderError> {
+        let (previous_output, script_sig, sequence) = result.map_err(TxInDecoderError)?;
+        Ok(TxIn { previous_output, script_sig, sequence, witness: Witness::default() })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for TxIn {
+    type Decoder = TxInDecoder;
+}
+
+/// An error consensus decoding a `TxIn`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TxInDecoderError(pub(super) <TxInInnerDecoder as encoding::Decoder>::Error);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for TxInDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for TxInDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "txin decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for TxInDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Encodable for Sequence {
@@ -1363,6 +1699,443 @@ impl Decodable for Transaction {
                 output: Decodable::consensus_decode_from_finite_reader(r)?,
                 lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
             })
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for Transaction {
+    type Encoder<'e> = TransactionEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let version = self.version.encoder();
+        let inputs = Encoder2::new(
+            CompactSizeEncoder::new(self.input.len()),
+            SliceEncoder::without_length_prefix(self.input.as_ref()),
+        );
+        let outputs = Encoder2::new(
+            CompactSizeEncoder::new(self.output.len()),
+            SliceEncoder::without_length_prefix(self.output.as_ref()),
+        );
+        let lock_time = self.lock_time.encoder();
+
+        if self.uses_segwit_serialization() {
+            let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
+            let witnesses = WitnessesEncoder::new(self.input.as_slice());
+            TransactionEncoder::new(Encoder6::new(
+                version,
+                Some(segwit),
+                inputs,
+                outputs,
+                Some(witnesses),
+                lock_time,
+            ))
+        } else {
+            TransactionEncoder::new(Encoder6::new(version, None, inputs, outputs, None, lock_time))
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for Transaction {
+    type Decoder = TransactionDecoder;
+}
+
+#[cfg(feature = "encoding")]
+type TransactionEncoderInner<'e> = Encoder6<
+    VersionEncoder<'e>,
+    Option<ArrayEncoder<2>>,
+    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
+    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
+    Option<WitnessesEncoder<'e>>,
+    LockTimeEncoder<'e>,
+>;
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Transaction`] type.
+    #[derive(Debug, Clone)]
+    pub struct TransactionEncoder<'e>(TransactionEncoderInner<'e>);
+}
+
+/// The decoder for the [`Transaction`] type.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+pub struct TransactionDecoder {
+    state: TransactionDecoderState,
+}
+
+#[cfg(feature = "encoding")]
+impl TransactionDecoder {
+    /// Constructs a new [`TransactionDecoder`].
+    pub const fn new() -> Self {
+        Self { state: TransactionDecoderState::Version(VersionDecoder::new()) }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for TransactionDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+#[allow(clippy::too_many_lines)] // TODO: Can we clean this up?
+impl encoding::Decoder for TransactionDecoder {
+    type Output = Transaction;
+    type Error = TransactionDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
+        use TransactionDecoderError as E;
+        use TransactionDecoderErrorInner as Inner;
+        use TransactionDecoderState as State;
+
+        loop {
+            // Attempt to push to the currently-active decoder and return early on success.
+            match &mut self.state {
+                State::Version(decoder) => {
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Version(e)))?.needs_more() {
+                        // Still more bytes required.
+                        return Ok(DecoderStatus::NeedsMore);
+                    }
+                }
+                State::Inputs(_, _, decoder) =>
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Inputs(e)))?.needs_more() {
+                        return Ok(DecoderStatus::NeedsMore);
+                    },
+                State::SegwitFlag(_) =>
+                    if bytes.is_empty() {
+                        return Ok(DecoderStatus::NeedsMore);
+                    },
+                State::Outputs(_, _, _, decoder) =>
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Outputs(e)))?.needs_more() {
+                        return Ok(DecoderStatus::NeedsMore);
+                    },
+                State::Witnesses(_, _, _, _, decoder) =>
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Witness(e)))?.needs_more() {
+                        return Ok(DecoderStatus::NeedsMore);
+                    },
+                State::LockTime(_, _, _, decoder) =>
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::LockTime(e)))?.needs_more() {
+                        return Ok(DecoderStatus::NeedsMore);
+                    },
+                State::Done(..) => return Ok(DecoderStatus::Ready),
+                State::Errored => panic!("call to push_bytes() after decoder errored"),
+            }
+
+            // If the above failed, end the current decoder and go to the next state.
+            match mem::replace(&mut self.state, State::Errored) {
+                State::Version(decoder) => {
+                    let version = decoder.end().map_err(|e| E(Inner::Version(e)))?;
+                    self.state = State::Inputs(version, Attempt::First, VecDecoder::<TxIn>::new());
+                }
+                State::Inputs(version, attempt, decoder) => {
+                    let inputs = decoder.end().map_err(|e| E(Inner::Inputs(e)))?;
+
+                    if Attempt::First == attempt {
+                        if inputs.is_empty() {
+                            self.state = State::SegwitFlag(version);
+                        } else {
+                            self.state = State::Outputs(
+                                version,
+                                inputs,
+                                IsSegwit::No,
+                                VecDecoder::<TxOut>::new(),
+                            );
+                        }
+                    } else {
+                        self.state = State::Outputs(
+                            version,
+                            inputs,
+                            IsSegwit::Yes,
+                            VecDecoder::<TxOut>::new(),
+                        );
+                    }
+                }
+                State::SegwitFlag(version) => {
+                    let segwit_flag = bytes[0];
+                    *bytes = &bytes[1..];
+
+                    if segwit_flag != 1 {
+                        return Err(E(Inner::UnsupportedSegwitFlag(segwit_flag)));
+                    }
+                    self.state = State::Inputs(version, Attempt::Second, VecDecoder::<TxIn>::new());
+                }
+                State::Outputs(version, inputs, is_segwit, decoder) => {
+                    let outputs = decoder.end().map_err(|e| E(Inner::Outputs(e)))?;
+                    // Handle the zero-input case described in the `Transaction` docs.
+                    if is_segwit == IsSegwit::Yes && !inputs.is_empty() {
+                        self.state = State::Witnesses(
+                            version,
+                            inputs,
+                            outputs,
+                            Iteration(0),
+                            WitnessDecoder::new(),
+                        );
+                    } else {
+                        self.state =
+                            State::LockTime(version, inputs, outputs, LockTimeDecoder::new());
+                    }
+                }
+                State::Witnesses(version, mut inputs, outputs, iteration, decoder) => {
+                    let iteration = iteration.0;
+
+                    inputs[iteration].witness = decoder.end().map_err(|e| E(Inner::Witness(e)))?;
+                    if iteration < inputs.len() - 1 {
+                        self.state = State::Witnesses(
+                            version,
+                            inputs,
+                            outputs,
+                            Iteration(iteration + 1),
+                            WitnessDecoder::new(),
+                        );
+                    } else {
+                        if !inputs.is_empty() && inputs.iter().all(|input| input.witness.is_empty())
+                        {
+                            return Err(E(Inner::NoWitnesses));
+                        }
+                        self.state =
+                            State::LockTime(version, inputs, outputs, LockTimeDecoder::new());
+                    }
+                }
+                State::LockTime(version, inputs, outputs, decoder) => {
+                    let lock_time = decoder.end().map_err(|e| E(Inner::LockTime(e)))?;
+                    self.state = State::Done(Transaction {
+                        version,
+                        lock_time,
+                        input: inputs,
+                        output: outputs,
+                    });
+                    return Ok(DecoderStatus::Ready);
+                }
+                State::Done(..) => return Ok(DecoderStatus::Ready),
+                State::Errored => unreachable!("checked above"),
+            }
+        }
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        use TransactionDecoderError as E;
+        use TransactionDecoderErrorInner as Inner;
+        use TransactionDecoderState as State;
+
+        match self.state {
+            State::Version(_) => Err(E(Inner::EarlyEnd("version"))),
+            State::Inputs(..) => Err(E(Inner::EarlyEnd("inputs"))),
+            State::SegwitFlag(..) => Err(E(Inner::EarlyEnd("segwit flag"))),
+            State::Outputs(..) => Err(E(Inner::EarlyEnd("outputs"))),
+            State::Witnesses(..) => Err(E(Inner::EarlyEnd("witnesses"))),
+            State::LockTime(..) => Err(E(Inner::EarlyEnd("locktime"))),
+            State::Done(tx) => {
+                // Reject transactions with no outputs
+                if tx.output.is_empty() {
+                    return Err(E(Inner::NoOutputs));
+                }
+                // check for null prevout in non-coinbase txs
+                if tx.input.len() > 1 {
+                    for (index, input) in tx.input.iter().enumerate() {
+                        if input.previous_output == OutPoint::null() {
+                            return Err(E(Inner::NullPrevoutInNonCoinbase(index)));
+                        }
+                    }
+                }
+                // check coinbase scriptSig length (must be 2-100 bytes)
+                if tx.is_coinbase() {
+                    let len = tx.input[0].script_sig.len();
+                    if len < 2 {
+                        return Err(E(Inner::CoinbaseScriptSigTooSmall(len)));
+                    }
+                    if len > 100 {
+                        return Err(E(Inner::CoinbaseScriptSigTooLarge(len)));
+                    }
+                }
+                // check for duplicate inputs (CVE-2018-17144).
+                let mut outpoints: Vec<_> = tx.input.iter().map(|i| i.previous_output).collect();
+                outpoints.sort_unstable();
+                for pair in outpoints.windows(2) {
+                    if pair[0] == pair[1] {
+                        return Err(E(Inner::DuplicateInput(pair[0])));
+                    }
+                }
+                // Check that sum of output values doesn't exceed MAX_MONEY (see CVE-2010-5139)
+                // Note: Individual output values are already validated by Amount::from_sat()
+                // during decoding, so we only need to check the sum here.
+                let mut total_out: u64 = 0;
+                for output in &tx.output {
+                    total_out = total_out.saturating_add(output.value.to_sat());
+                    if total_out > Amount::MAX_MONEY.to_sat() {
+                        return Err(E(Inner::OutputValueSumTooLarge(total_out)));
+                    }
+                }
+                Ok(tx)
+            }
+            State::Errored => panic!("call to end() after decoder errored"),
+        }
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize {
+        use TransactionDecoderState as State;
+
+        match &self.state {
+            State::Version(decoder) => decoder.read_limit(),
+            State::Inputs(_, _, decoder) => decoder.read_limit(),
+            State::SegwitFlag(_) => 1,
+            State::Outputs(_, _, _, decoder) => decoder.read_limit(),
+            State::Witnesses(_, _, _, _, decoder) => decoder.read_limit(),
+            State::LockTime(_, _, _, decoder) => decoder.read_limit(),
+            State::Done(_) => 0,
+            // `read_limit` is not documented to panic or return an error, so we
+            // return a dummy value if the decoder is in an error state.
+            State::Errored => 0,
+        }
+    }
+}
+
+/// The state of the transiting decoder.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+enum TransactionDecoderState {
+    /// Decoding the transaction version.
+    Version(VersionDecoder),
+    /// Decoding the transaction inputs.
+    Inputs(Version, Attempt, VecDecoder<TxIn>),
+    /// Decoding the segwit flag.
+    SegwitFlag(Version),
+    /// Decoding the transaction outputs.
+    Outputs(Version, Vec<TxIn>, IsSegwit, VecDecoder<TxOut>),
+    /// Decoding the segwit transaction witnesses.
+    Witnesses(Version, Vec<TxIn>, Vec<TxOut>, Iteration, WitnessDecoder),
+    /// Decoding the transaction lock time.
+    LockTime(Version, Vec<TxIn>, Vec<TxOut>, LockTimeDecoder),
+    /// Done decoding the [`Transaction`].
+    Done(Transaction),
+    /// When `end()`ing a sub-decoder, encountered an error which prevented us
+    /// from constructing the next sub-decoder.
+    Errored,
+}
+
+/// Boolean used to track number of times we have attempted to decode the inputs vector.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum Attempt {
+    /// First time reading inputs.
+    First,
+    /// Second time reading inputs.
+    Second,
+}
+
+/// Boolean used to track whether or not this transaction uses segwit encoding.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum IsSegwit {
+    /// Yes so uses segwit encoding.
+    Yes,
+    /// No segwit flag, marker, or witnesses.
+    No,
+}
+
+/// How many times we have state transitioned to encoding a witness (zero-based).
+#[cfg(feature = "encoding")]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+struct Iteration(usize);
+
+/// An error consensus decoding a `Transaction`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionDecoderError(pub(crate) TransactionDecoderErrorInner);
+
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum TransactionDecoderErrorInner {
+    /// Error while decoding the `version`.
+    Version(VersionDecoderError),
+    /// We only support segwit flag value 0x01.
+    UnsupportedSegwitFlag(u8),
+    /// Error while decoding the `inputs`.
+    Inputs(encoding::VecDecoderError<TxInDecoderError>),
+    /// Error while decoding the `outputs`.
+    Outputs(encoding::VecDecoderError<TxOutDecoderError>),
+    /// Error while decoding one of the witnesses.
+    Witness(WitnessDecoderError),
+    /// Non-empty Segwit transaction with no witnesses.
+    NoWitnesses,
+    /// Error while decoding the `lock_time`.
+    LockTime(LockTimeDecoderError),
+    /// Attempt to call `end()` before the transaction was complete. Holds
+    /// a description of the current state.
+    EarlyEnd(&'static str),
+    /// Null prevout in non-coinbase transaction.
+    NullPrevoutInNonCoinbase(usize),
+    /// Coinbase scriptSig too small (must be at least 2 bytes).
+    CoinbaseScriptSigTooSmall(usize),
+    /// Coinbase scriptSig is too large (must be at most 100 bytes).
+    CoinbaseScriptSigTooLarge(usize),
+    /// Transaction has duplicate inputs (this check prevents CVE-2018-17144 ).
+    DuplicateInput(OutPoint),
+    /// Sum of output values exceeds `MAX_MONEY`
+    OutputValueSumTooLarge(u64),
+    /// Transaction has no outputs.
+    NoOutputs,
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for TransactionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for TransactionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use TransactionDecoderErrorInner as E;
+
+        match self.0 {
+            E::Version(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::UnsupportedSegwitFlag(v) => {
+                write!(f, "we only support segwit flag value 0x01: {}", v)
+            }
+            E::Inputs(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::Outputs(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::Witness(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::NoWitnesses => write!(f, "non-empty Segwit transaction with no witnesses"),
+            E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
+            E::NullPrevoutInNonCoinbase(index) =>
+                write!(f, "null prevout in non-coinbase transaction at input {}", index),
+            E::CoinbaseScriptSigTooSmall(len) =>
+                write!(f, "coinbase scriptSig too small: {} bytes (min 2)", len),
+            E::CoinbaseScriptSigTooLarge(len) =>
+                write!(f, "coinbase scriptSig too large: {} bytes (max 100)", len),
+            E::DuplicateInput(ref outpoint) =>
+                write!(f, "duplicate input: {:?}:{}", outpoint.txid, outpoint.vout),
+            E::OutputValueSumTooLarge(val) =>
+                write!(f, "sum of output values {} satoshis exceeds MAX_MONEY", val),
+            E::NoOutputs => write!(f, "transaction has no outputs"),
+        }
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for TransactionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use TransactionDecoderErrorInner as E;
+
+        match self.0 {
+            E::Version(ref e) => Some(e),
+            E::UnsupportedSegwitFlag(_) => None,
+            E::Inputs(ref e) => Some(e),
+            E::Outputs(ref e) => Some(e),
+            E::Witness(ref e) => Some(e),
+            E::NoWitnesses => None,
+            E::LockTime(ref e) => Some(e),
+            E::EarlyEnd(_) => None,
+            E::NullPrevoutInNonCoinbase(_) => None,
+            E::CoinbaseScriptSigTooSmall(_) => None,
+            E::CoinbaseScriptSigTooLarge(_) => None,
+            E::DuplicateInput(_) => None,
+            E::OutputValueSumTooLarge(_) => None,
+            E::NoOutputs => None,
         }
     }
 }
