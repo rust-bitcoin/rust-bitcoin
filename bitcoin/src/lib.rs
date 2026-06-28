@@ -79,6 +79,7 @@ pub extern crate serde;
 
 mod internal_macros;
 
+include!("../include/array_newtype.rs");
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
 
 pub mod ext {

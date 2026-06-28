@@ -112,17 +112,15 @@ macro_rules! _transparent_ref_conversion {
         $(#[$($from_box_attr:tt)*])*
         $from_box_vis:vis fn $from_box:ident($from_box_arg_name:ident: Box<_>) -> $fn_ret_ty:ty;
     ) => {
-        internals::_emit_alloc! {
-            $(#[$($from_box_attr)*])*
-            #[inline]
-            #[allow(clippy::ptr_as_ptr)] // Cannot use `cast()` because size of `Self` is not know at compile time.
-            $from_box_vis fn $from_box($from_box_arg_name: alloc::boxed::Box<$inner>) -> alloc::boxed::Box<Self> {
-                let ptr = alloc::boxed::Box::into_raw($from_box_arg_name);
-                // SAFETY: the pointer is created by casting a pointer that is pointing to an object
-                // with the same layout and validity invariants and the previous pointer was created
-                // directly from box. (Notice repr(transparent).)
-                unsafe { alloc::boxed::Box::from_raw(ptr as *mut Self) }
-            }
+        $(#[$($from_box_attr)*])*
+        #[inline]
+        #[allow(clippy::ptr_as_ptr)] // Cannot use `cast()` because size of `Self` is not know at compile time.
+        $from_box_vis fn $from_box($from_box_arg_name: alloc::boxed::Box<$inner>) -> alloc::boxed::Box<Self> {
+            let ptr = alloc::boxed::Box::into_raw($from_box_arg_name);
+            // SAFETY: the pointer is created by casting a pointer that is pointing to an object
+            // with the same layout and validity invariants and the previous pointer was created
+            // directly from box. (Notice repr(transparent).)
+            unsafe { alloc::boxed::Box::from_raw(ptr as *mut Self) }
         }
     };
 
@@ -131,16 +129,14 @@ macro_rules! _transparent_ref_conversion {
         $(#[$($from_rc_attr:tt)*])*
         $from_rc_vis:vis fn $from_rc:ident($from_rc_arg_name:ident: Rc<_>) -> $fn_ret_ty:ty;
     ) => {
-        internals::_emit_alloc! {
-            $(#[$($from_rc_attr)*])*
-            #[inline]
-            $from_rc_vis fn $from_rc($from_rc_arg_name: alloc::rc::Rc<$inner>) -> alloc::rc::Rc<Self> {
-                let ptr = alloc::rc::Rc::into_raw($from_rc_arg_name);
-                // SAFETY: the pointer is created by casting a pointer that is pointing to an object
-                // with the same layout and validity invariants and the previous pointer was created
-                // directly from box. (Notice repr(transparent).)
-                unsafe { alloc::rc::Rc::from_raw(ptr as *mut Self) }
-            }
+        $(#[$($from_rc_attr)*])*
+        #[inline]
+        $from_rc_vis fn $from_rc($from_rc_arg_name: alloc::rc::Rc<$inner>) -> alloc::rc::Rc<Self> {
+            let ptr = alloc::rc::Rc::into_raw($from_rc_arg_name);
+            // SAFETY: the pointer is created by casting a pointer that is pointing to an object
+            // with the same layout and validity invariants and the previous pointer was created
+            // directly from box. (Notice repr(transparent).)
+            unsafe { alloc::rc::Rc::from_raw(ptr as *mut Self) }
         }
     };
 
@@ -149,17 +145,15 @@ macro_rules! _transparent_ref_conversion {
         $(#[$($from_arc_attr:tt)*])*
         $from_arc_vis:vis fn $from_arc:ident($from_arc_arg_name:ident: Arc<_>) -> $fn_ret_ty:ty;
     ) => {
-        internals::_emit_alloc! {
-            $(#[$($from_arc_attr)*])*
-            #[cfg(target_has_atomic = "ptr")]
-            #[inline]
-            $from_arc_vis fn $from_arc($from_arc_arg_name: alloc::sync::Arc<$inner>) -> alloc::sync::Arc<Self> {
-                let ptr = alloc::sync::Arc::into_raw($from_arc_arg_name);
-                // SAFETY: the pointer is created by casting a pointer that is pointing to an object
-                // with the same layout and validity invariants and the previous pointer was created
-                // directly from box. (Notice repr(transparent).)
-                unsafe { alloc::sync::Arc::from_raw(ptr as *mut Self) }
-            }
+        $(#[$($from_arc_attr)*])*
+        #[cfg(target_has_atomic = "ptr")]
+        #[inline]
+        $from_arc_vis fn $from_arc($from_arc_arg_name: alloc::sync::Arc<$inner>) -> alloc::sync::Arc<Self> {
+            let ptr = alloc::sync::Arc::into_raw($from_arc_arg_name);
+            // SAFETY: the pointer is created by casting a pointer that is pointing to an object
+            // with the same layout and validity invariants and the previous pointer was created
+            // directly from box. (Notice repr(transparent).)
+            unsafe { alloc::sync::Arc::from_raw(ptr as *mut Self) }
         }
     }
 }

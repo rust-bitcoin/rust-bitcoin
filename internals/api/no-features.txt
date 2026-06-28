@@ -198,7 +198,6 @@ pub unsafe fn bitcoin_internals::error::input_string::InputString::clone_to_unin
 impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::from(t: T) -> T
 pub struct bitcoin_internals::error::InputString(_)
-pub mod bitcoin_internals::macros
 pub mod bitcoin_internals::script
 pub enum bitcoin_internals::script::PushDataLenLen
 pub bitcoin_internals::script::PushDataLenLen::Four = 4
@@ -287,9 +286,6 @@ pub fn [T]::get_array<const ARRAY_LEN: usize>(&self, offset: usize) -> core::opt
 pub fn [T]::split_first_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item; ARRAY_LEN], &[Self::Item])>
 pub fn [T]::split_last_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item], &[Self::Item; ARRAY_LEN])>
 pub macro bitcoin_internals::const_assert!
-pub macro bitcoin_internals::impl_array_newtype!
-pub macro bitcoin_internals::impl_to_hex_from_lower_hex!
 pub macro bitcoin_internals::parse_error_type!
 pub macro bitcoin_internals::rust_version!
-pub macro bitcoin_internals::transparent_newtype!
 pub macro bitcoin_internals::write_err!

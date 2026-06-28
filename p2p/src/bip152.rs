@@ -112,7 +112,7 @@ mod sealed {
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
 pub struct ShortId([u8; 6]);
-internals::impl_array_newtype!(ShortId, u8, 6);
+impl_array_newtype!(ShortId, u8, 6);
 
 impl ShortId {
     /// Calculates the `SipHash24` keys used to calculate short IDs.
