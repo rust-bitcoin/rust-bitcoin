@@ -127,6 +127,21 @@ using `hashes` in `rust-bitcoin` to see an example. Enjoy!
   }
 ```
 
+## [0.14.101] - 2026-06-24
+
+**Bump the MSRV to Rust 1.60.0**
+
+## [0.14.100] - 2026-05-26 [YANKED]
+
+> This release was yanked because the MSRV bump to 1.74.0 was too aggressive for some users. See version 0.14.101 for a smaller upgrade to 1.60.0.
+
+**Bump the MSRV to Rust 1.74.0**
+
+## [0.14.2] - 2026-05-23
+
+* Enable `alloc` feature from `schemars` feature and fix feature gating.
+* Remove the `internals` dependency [#6200](https://github.com/rust-bitcoin/rust-bitcoin/pull/6200)
+
 ## [0.14.1] - 2025-12-03
 
 * remove `doc_auto_cfg`
@@ -360,6 +375,8 @@ Note that we have stopped re-exporting the `core` crate when compiling without `
 [0.17.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.16.0...bitcoin_hashes-0.17.0
 [0.16.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.15.0...bitcoin_hashes-0.16.0
 [0.15.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.14.2...bitcoin_hashes-0.15.0
+[0.14.101]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.14.100...bitcoin_hashes-0.14.101
+[0.14.100]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.14.2...bitcoin_hashes-0.14.100
 [0.14.2]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.14.1...bitcoin_hashes-0.14.2
 [0.14.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.14.0...bitcoin_hashes-0.14.1
 [0.14.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.13.1...bitcoin_hashes-0.14.0

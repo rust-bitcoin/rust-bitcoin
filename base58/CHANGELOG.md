@@ -19,7 +19,13 @@
 - Close all errors [#3533](https://github.com/rust-bitcoin/rust-bitcoin/pull/3533)
 - Bump `hex-conservative` to `0.3.0` [#3543](https://github.com/rust-bitcoin/rust-bitcoin/pull/3543)
 
-## [0.1.100] - 2026-05-27
+## [0.1.101] - 2026-06-24
+
+**Bump the MSRV to Rust 1.60.0**
+
+## [0.1.100] - 2026-05-27 [YANKED]
+
+> This release was yanked because the MSRV bump to 1.74.0 was too aggressive for some users. See version 0.1.101 for a smaller upgrade to 1.60.0.
 
 - Bump MSRV to Rust 1.74.0 [#6126](https://github.com/rust-bitcoin/rust-bitcoin/pull/6126)
 
@@ -38,5 +44,6 @@ Initial release of the `base58ck` crate. This crate was cut out of
 [0.4.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.3.0...base58ck-0.4.0
 [0.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.2.0...base58ck-0.3.0
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.1.100...base58ck-0.2.0
+[0.1.101]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.1.100...base58ck-0.1.101
 [0.1.100]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.1.1...base58ck-0.1.100
 [0.1.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.1.0...base58ck-0.1.1

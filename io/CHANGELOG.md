@@ -34,6 +34,22 @@ update the other `rust-bitcoin` repo dependencies.
 * Bump MSRV to Rust `v1.63.0` [#3100](https://github.com/rust-bitcoin/rust-bitcoin/pull/3100)
 * Remove blanket trait impls [#2453](https://github.com/rust-bitcoin/rust-bitcoin/pull/2453)
 
+## [0.1.101] - 2026-06-24
+
+**Bump the MSRV to Rust 1.60.0**
+
+- Exposes the new stabilized encoding library through the optional `encoding` feature. Note that enabling it bumps the MSRV to 1.74.0.
+
+## [0.1.100] - 2026-05-26 [YANKED]
+
+> This release was yanked because the MSRV bump to 1.74.0 was too aggressive for some users. See version 0.1.101 for a smaller upgrade to 1.60.0.
+
+**Bump the MSRV to Rust 1.74.0**
+
+## [0.1.4] - 2025-10-30
+
+* Remove `doc_auto_cfg`
+
 ## [0.1.3] - 2024-11-02
 
 * Backport IO improvements [#3181](https://github.com/rust-bitcoin/rust-bitcoin/pull/3181)
@@ -69,5 +85,8 @@ Empty crate to reserve the name on crates.io
 [0.4.0-rc.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-io-0.3.0...bitcoin-io-0.4.0-rc.0
 [0.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/io-0.2.0...bitcoin-io-0.3.0
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/io-0.1.3...io-0.2.0
+[0.1.101]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-io-0.1.100...bitcoin-io-0.1.101
+[0.1.100]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-io-0.1.4...bitcoin-io-0.1.100
+[0.1.4]: https://github.com/rust-bitcoin/rust-bitcoin/compare/io-0.1.3...bitcoin-io-0.1.4
 [0.1.3]: https://github.com/rust-bitcoin/rust-bitcoin/compare/io-0.1.2...io-0.1.3
 [0.1.2]: https://github.com/rust-bitcoin/rust-bitcoin/compare/io-0.1.1...io-0.1.2

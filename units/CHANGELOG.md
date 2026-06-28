@@ -111,6 +111,27 @@ In the following PRs:
 * [#3257](https://github.com/rust-bitcoin/rust-bitcoin/pull/3257)
 * [#3247](https://github.com/rust-bitcoin/rust-bitcoin/pull/3274)
 
+## [0.1.101] - 2026-06-24
+
+**Bump the MSRV to Rust 1.60.0**
+
+- Exposes the new stabilized encoding library through the optional `encoding` feature. Note that enabling it bumps the MSRV to 1.74.0.
+
+## [0.1.100] - 2026-05-26 [YANKED]
+
+> This release was yanked because the MSRV bump to 1.74.0 was too aggressive for some users. See version 0.1.101 for a smaller upgrade to 1.60.0.
+
+**Bump the MSRV to Rust 1.74.0**
+
+## [0.1.4] - 2026-05-23
+
+* Remove the `internals` dependency [#6200](https://github.com/rust-bitcoin/rust-bitcoin/pull/6200)
+
+## [0.1.3] - 2026-04-19
+
+* Backport `Arbitrary` to `0.32.x` [#5085](https://github.com/rust-bitcoin/rust-bitcoin/pull/5085)
+* Backport: Add CompactSize range check to deserialization [#5921](https://github.com/rust-bitcoin/rust-bitcoin/pull/5921)
+
 ## [0.1.2] - 2024-07-01
 
 * Remove enable of `alloc` feature in the `internals` dependency.
@@ -150,5 +171,9 @@ Empty crate to reserve the name on crates.io
 [0.4.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.3.0...bitcoin-units-0.4.0
 [0.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/units-0.2.0...bitcoin-units-0.3.0
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/units-0.1.2...units-0.2.0
+[0.1.101]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.1.100...bitcoin-units-0.1.101
+[0.1.100]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.1.4...bitcoin-units-0.1.100
+[0.1.4]: https://github.com/rust-bitcoin/rust-bitcoin/compare/units-0.1.3...bitcoin-units-0.1.4
+[0.1.3]: https://github.com/rust-bitcoin/rust-bitcoin/compare/units-0.1.2...units-0.1.3
 [0.1.2]: https://github.com/rust-bitcoin/rust-bitcoin/compare/units-0.1.1...units-0.1.2
 [0.1.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/units-0.1.0...units-0.1.1
