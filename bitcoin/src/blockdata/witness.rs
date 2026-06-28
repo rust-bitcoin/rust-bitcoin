@@ -402,13 +402,10 @@ impl Witness {
 
     /// Get leaf script following BIP341 rules regarding accounting for an annex.
     ///
-    /// This method is broken: it's called `tapscript` but it's actually returning a leaf script.
-    /// We're not going to fix it because someone might be relying on it thinking leaf script and
-    /// tapscript are the same thing (they are not). Instead, this is deprecated and will be
-    /// removed in the next breaking release. You need to use `taproot_leaf_script` and if you
-    /// intended to use it as leaf script, just access the `script` field of the returned type. If
-    /// you intended tapscript specifically you have to check the version first and bail if it's not
-    /// `LeafVersion::TapScript`.
+    /// This method is broken. It extracts a [`Script`] from a Tapleaf without checking (or even returning)
+    /// the Tapleaf version. Without this information, there is no guarantee that the returned data is even
+    /// a script, let alone a script of the version the user is expecting. Use [`Self::taproot_leaf_script`]
+    /// instead, and check its version field if you are expecting a Tapscript.
     ///
     /// This does not guarantee that this represents a P2TR [`Witness`]. It
     /// merely gets the second to last or third to last element depending on
