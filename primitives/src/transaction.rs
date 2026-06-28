@@ -852,7 +852,8 @@ crate::decoder_newtype! {
     }
 
     fn end(
-        result: Result<<TxInInnerDecoder as encoding::Decoder>::Output, <TxInInnerDecoder as encoding::Decoder>::Error>
+        result: Result<<TxInInnerDecoder as encoding::Decoder>::Output,
+            <TxInInnerDecoder as encoding::Decoder>::Error>
     ) -> Result<TxIn, TxInDecoderError> {
         let (previous_output, script_sig, sequence) = result.map_err(TxInDecoderError::from)?;
         Ok(TxIn { previous_output, script_sig, sequence, witness: Witness::default() })
@@ -3073,6 +3074,7 @@ mod tests {
         assert!(err.source().is_none());
     }
 
+    /// tests for txin and txout _decoder_variant_error ///
     #[test]
     #[cfg(feature = "alloc")]
     fn txin_decoder_first_error() {
@@ -3094,7 +3096,8 @@ mod tests {
         let mut bytes = vec![];
         bytes.extend_from_slice(&TC_TXID_BYTES);
         bytes.extend_from_slice(&TC_VOUT_BYTES);
-        bytes.push(1); // scriptSig length = 1
+        // scriptSig length = 1
+        bytes.push(1);
 
         let mut decoder = TxIn::decoder();
         let mut slice = bytes.as_slice();
@@ -3115,7 +3118,8 @@ mod tests {
         let mut bytes = vec![];
         bytes.extend_from_slice(&TC_TXID_BYTES);
         bytes.extend_from_slice(&TC_VOUT_BYTES);
-        bytes.push(0); // scriptSig length = 0
+        // scriptSig length = 0
+        bytes.push(0);
 
         let mut decoder = TxIn::decoder();
         let mut slice = bytes.as_slice();

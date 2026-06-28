@@ -466,18 +466,18 @@ define_decoder_n_error! {
 /// that flattens its positional `DecoderNError` into it.
 ///
 /// The pattern otherwise written out by hand (see e.g. `HeaderDecoderError` in `bitcoin-primitives`):
-/// so we rather list `field_name => Variant` pairs together (with the composite decoder they come from) 
+/// so we rather list `field_name => Variant` pairs together (with the composite decoder they come from)
 /// than declaring the enum plus `From<Infallible>`, `Display`, [`std::error::Error`] and a positional match by hand.
-/// 
+///
 /// for each variant the inner error type shall be inferred via `<D as Decoder>::Error`.
 /// this eases the fact that they had to be spelled out.
 ///
 /// A dropped, duplicated or mistyped field will fail to compile because the generated 'From'
 /// is a single exhaustive `match` over the real `DecoderNError`
-/// 
-/// The generated `Display` reports the field name (of occurence) 
+///
+/// The generated `Display` reports the field name (of occurence)
 /// (e.g. 'error decoding `script_sig` field').
-/// 
+///
 ///
 /// # Examples:
 ///

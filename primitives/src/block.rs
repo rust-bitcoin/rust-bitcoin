@@ -557,11 +557,11 @@ type HeaderInnerDecoder = Decoder6<
 >;
 
 crate::decoder_newtype! {
-    /// The decoder for the [`Header`] type.
+    /// decoder for [`Header`] type.
     #[derive(Debug, Clone)]
     pub struct HeaderDecoder(HeaderInnerDecoder);
 
-    /// Constructs a new [`Header`] decoder.
+    /// constructs a new [`Header`] decoder.
     pub const fn new() -> Self {
         Self(Decoder6::new(
             VersionDecoder::new(),
@@ -577,12 +577,16 @@ crate::decoder_newtype! {
         HeaderDecoderError::from(err)
     }
 
+
     fn end(
-        result: Result<<HeaderInnerDecoder as encoding::Decoder>::Output, <HeaderInnerDecoder as encoding::Decoder>::Error>
+        result: Result<<HeaderInnerDecoder as encoding::Decoder>::Output,
+            <HeaderInnerDecoder as encoding::Decoder>::Error>
     ) -> Result<Header, HeaderDecoderError> {
+
         let (version, prev_blockhash, merkle_root, time, bits, nonce) =
             result.map_err(HeaderDecoderError::from)?;
         let nonce = u32::from_le_bytes(nonce);
+
         Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
     }
 }
