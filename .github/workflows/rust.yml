@@ -3,7 +3,6 @@ on:   # yamllint disable-line rule:truthy
   push:
     branches:
       - 0.32.x
-      - 'test-ci/**'
   pull_request:
 
 name: Continuous integration
@@ -47,6 +46,19 @@ jobs:
       - uses: ./.github/actions/setup-rbmt
       - name: "Run ${{ matrix.task }}"
         run: cargo rbmt ${{ matrix.task }}
+
+  Prerelease:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # History required for version bump detection.
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Run pre-release checks"
+        run: cargo rbmt prerelease --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
 
   # Non cargo-rbmt jobs manage their toolchain version directly.
   Prepare:
