@@ -19,7 +19,7 @@ pub mod serde;
 
 use core::cmp::Ordering;
 use core::convert::Infallible;
-use core::fmt;
+use core::fmt::{self, Write as _};
 use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
@@ -439,7 +439,7 @@ fn dec_width(mut num: u64) -> usize {
     width
 }
 
-fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
+fn repeat_char(f: &mut fmt::Formatter, c: char, count: usize) -> fmt::Result {
     for _ in 0..count {
         f.write_char(c)?;
     }
@@ -450,7 +450,7 @@ fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
 fn fmt_satoshi_in(
     mut satoshi: u64,
     negative: bool,
-    f: &mut dyn fmt::Write,
+    f: &mut fmt::Formatter,
     denom: Denomination,
     show_denom: bool,
     options: FormatOptions,
