@@ -7,7 +7,7 @@
 //!
 //! [`CompactSize`]: <https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer>
 
-use bitcoin::consensus::encode;
+use bitcoin::encoding;
 use bitcoin::key::WPubkeyHash;
 use bitcoin::{script, WitnessScriptBuf};
 
@@ -37,7 +37,7 @@ fn main() {
     println!("hex created using `LowerHex`: {hex_lower_hex_trait}");
 
     // The `deserialize_hex` function requires the length prefix.
-    assert!(encode::deserialize_hex::<WitnessScriptBuf>(&hex_lower_hex_trait).is_err());
+    assert!(encoding::decode_from_hex::<WitnessScriptBuf>(&hex_lower_hex_trait).is_err());
     // And so does `from_hex_prefixed`.
     assert!(WitnessScriptBuf::from_hex_prefixed(&hex_lower_hex_trait).is_err());
     // But we provide an explicit constructor that does not.
@@ -54,25 +54,25 @@ fn main() {
     let decoded = WitnessScriptBuf::from_hex_prefixed(&hex_inherent).unwrap(); // Defined in `ScriptBufExt`.
     assert_eq!(decoded, script_code);
     // We can also parse the output of `to_hex_string_prefixed` using `deserialize_hex`.
-    let decoded = encode::deserialize_hex::<WitnessScriptBuf>(&hex_inherent).unwrap();
+    let decoded = encoding::decode_from_hex::<WitnessScriptBuf>(&hex_inherent).unwrap();
     assert_eq!(decoded, script_code);
 
     // We also support encode/decode using `consensus::encode` functions.
-    let encoded = encode::serialize_hex(&script_code);
+    let encoded = encoding::encode_to_hex(script_code.as_script(), hex::Case::Lower);
     println!("hex created using consensus::encode::serialize_hex: {encoded}");
 
-    let decoded: WitnessScriptBuf = encode::deserialize_hex(&encoded).unwrap();
+    let decoded: WitnessScriptBuf = encoding::decode_from_hex(&encoded).unwrap();
     assert_eq!(decoded, script_code);
 
     // And we can mix these two calls because both include the length prefix.
-    let encoded = encode::serialize_hex(&script_code);
+    let encoded = encoding::encode_to_hex(script_code.as_script(), hex::Case::Lower);
     let decoded = WitnessScriptBuf::from_hex_prefixed(&encoded).unwrap();
     assert_eq!(decoded, script_code);
 
     // Encode/decode using a byte vector.
-    let encoded = encode::serialize(&script_code);
+    let encoded = encoding::encode_to_vec(script_code.as_script());
     assert_eq!(&encoded[1..], script_code.as_bytes()); // Shows that prefix is the first byte.
-    let decoded: WitnessScriptBuf = encode::deserialize(&encoded).unwrap();
+    let decoded: WitnessScriptBuf = encoding::decode_from_slice(&encoded).unwrap();
     assert_eq!(decoded, script_code);
 
     // to/from bytes excludes the prefix, these are not encoding/decoding functions so this is sane.

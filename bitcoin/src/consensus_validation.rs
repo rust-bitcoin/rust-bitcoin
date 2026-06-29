@@ -5,9 +5,9 @@
 //! Relies on the `bitcoinconsensus` crate that uses Bitcoin Core libconsensus to perform validation.
 
 use crate::amount::Amount;
-use crate::consensus::encode;
 #[cfg(doc)]
 use crate::consensus_validation;
+use crate::encoding;
 use crate::internal_macros::define_extension_trait;
 use crate::script::ScriptPubKey;
 use crate::transaction::{OutPoint, Transaction, TxOut};
@@ -98,7 +98,7 @@ where
     S: FnMut(&OutPoint) -> Option<TxOut>,
     F: Into<u32>,
 {
-    let serialized_tx = encode::serialize(tx);
+    let serialized_tx = encoding::encode_to_vec(tx);
     let flags: u32 = flags.into();
     for (idx, input) in tx.inputs.iter().enumerate() {
         if let Some(output) = spent(&input.previous_output) {

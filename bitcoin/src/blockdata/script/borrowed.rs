@@ -10,12 +10,12 @@ use super::{
     RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
     TapScript, WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
-use crate::consensus::Encodable;
+use crate::encoding::{Encode, ExactSizeEncoder};
 use crate::key::{LegacyPublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode, OpcodeExt as _};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
-use crate::prelude::{sink, String, ToString};
+use crate::prelude::{String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafHashExt as _, TapNodeHash};
 use crate::witness_program::P2A_PROGRAM;
@@ -549,11 +549,11 @@ internal_macros::define_extension_trait! {
                 } else if self.is_witness_program() {
                     32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+                    self.encoder().len().to_u64() // The serialized size of this script_pubkey
                 } else {
                     32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+                    self.encoder().len().to_u64() // The serialized size of this script_pubkey
                 })?
                 / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
                         // Note: We ensure the division happens at the end, since Core performs the division at the end.

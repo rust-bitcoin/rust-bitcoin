@@ -252,12 +252,12 @@ mod sealed {
 
 #[cfg(test)]
 mod test {
-    use alloc::vec::Vec;
-
     use hex::{hex, DisplayHex};
 
     use super::*;
-    use crate::consensus::{deserialize, encode, serialize};
+    use crate::encoding::{
+        decode_from_slice, drain_to_vec, encode_to_vec, BytesEncoder, CompactSizeEncoder, Encoder2,
+    };
     use crate::sighash::EcdsaSighashType;
     use crate::taproot::LeafVersion;
     use crate::Transaction;
@@ -290,16 +290,25 @@ mod test {
         let vec = vec![el_0, el_1];
 
         // Puts a CompactSize at the front as well as one at the front of each element.
-        let want_ser: Vec<u8> = encode::serialize(&vec);
+        let want_ser = {
+            let mut out = drain_to_vec(&mut CompactSizeEncoder::new(vec.len()));
+            for item in &vec {
+                out.extend_from_slice(&drain_to_vec(&mut Encoder2::new(
+                    CompactSizeEncoder::new(item.len()),
+                    BytesEncoder::without_length_prefix(item),
+                )));
+            }
+            out
+        };
 
         // `from_slice` expects bytes slices _without_ leading `CompactSize`.
         let got_witness = Witness::from_slice(&vec);
         assert_eq!(got_witness, want_witness);
 
-        let got_ser = encode::serialize(&got_witness);
+        let got_ser = encode_to_vec(&got_witness);
         assert_eq!(got_ser, want_ser);
 
-        let roundtrip: Witness = encode::deserialize(&got_ser).unwrap();
+        let roundtrip: Witness = decode_from_slice(&got_ser).unwrap();
         assert_eq!(roundtrip, want_witness)
     }
 
@@ -406,7 +415,7 @@ mod test {
     fn tx() {
         const S: &str = "02000000000102b44f26b275b8ad7b81146ba3dbecd081f9c1ea0dc05b97516f56045cfcd3df030100000000ffffffff1cb4749ae827c0b75f3d0a31e63efc8c71b47b5e3634a4c698cd53661cab09170100000000ffffffff020b3a0500000000001976a9143ea74de92762212c96f4dd66c4d72a4deb20b75788ac630500000000000016001493a8dfd1f0b6a600ab01df52b138cda0b82bb7080248304502210084622878c94f4c356ce49c8e33a063ec90f6ee9c0208540888cfab056cd1fca9022014e8dbfdfa46d318c6887afd92dcfa54510e057565e091d64d2ee3a66488f82c0121026e181ffb98ebfe5a64c983073398ea4bcd1548e7b971b4c175346a25a1c12e950247304402203ef00489a0d549114977df2820fab02df75bebb374f5eee9e615107121658cfa02204751f2d1784f8e841bff6d3bcf2396af2f1a5537c0e4397224873fbd3bfbe9cf012102ae6aa498ce2dd204e9180e71b4fb1260fe3d1a95c8025b34e56a9adf5f278af200000000";
         let tx_bytes = hex!(S);
-        let tx: Transaction = deserialize(&tx_bytes).unwrap();
+        let tx: Transaction = decode_from_slice(&tx_bytes).unwrap();
 
         let expected_wit = ["304502210084622878c94f4c356ce49c8e33a063ec90f6ee9c0208540888cfab056cd1fca9022014e8dbfdfa46d318c6887afd92dcfa54510e057565e091d64d2ee3a66488f82c01", "026e181ffb98ebfe5a64c983073398ea4bcd1548e7b971b4c175346a25a1c12e95"];
         for (i, wit_el) in tx.inputs[0].witness.iter().enumerate() {
@@ -423,7 +432,7 @@ mod test {
         assert_eq!(expected_wit[0], tx.inputs[0].witness[0].to_lower_hex_string());
         assert_eq!(expected_wit[1], tx.inputs[0].witness[1].to_lower_hex_string());
 
-        let tx_bytes_back = serialize(&tx);
+        let tx_bytes_back = encode_to_vec(&tx);
         assert_eq!(tx_bytes_back, tx_bytes);
     }
 
@@ -448,9 +457,9 @@ mod test {
     #[test]
     fn fuzz_cases() {
         let bytes = hex!("26ff0000000000c94ce592cf7a4cbb68eb00ce374300000057cd0000000000000026");
-        assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
+        assert!(decode_from_slice::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
 
         let bytes = hex!("24000000ffffffffffffffffffffffff");
-        assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
+        assert!(decode_from_slice::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
     }
 }

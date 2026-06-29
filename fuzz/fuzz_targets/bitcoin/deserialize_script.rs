@@ -8,12 +8,12 @@ fn main() {}
 
 fn do_test(data: &[u8]) {
     let script_result: Result<bitcoin::ScriptPubKeyBuf, _> =
-        bitcoin::consensus::encode::deserialize(data);
+        bitcoin::encoding::decode_from_slice(data);
 
     match script_result {
         Err(_) => {}
         Ok(script) => {
-            let ser = bitcoin::consensus::encode::serialize(&script);
+            let ser = bitcoin::encoding::encode_to_vec(script.as_script());
             assert_eq!(&ser[..], data);
         }
     }
