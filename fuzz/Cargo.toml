@@ -13,7 +13,7 @@ cargo-fuzz = true
 # We shouldn't need an explicit version on the next line, but Andrew's tools
 # choke on it otherwise. See https://github.com/nix-community/crate2nix/issues/373
 bitcoin = { path = "../bitcoin", version = "0.33.0-beta", features = [ "serde", "arbitrary" ] }
-old_bitcoin = { version = "0.32.9", package = "bitcoin" }
+bitcoin_0_32 = { version = "0.32.101", package = "bitcoin", features = [ "encoding", "serde" ] }
 bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
 p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
 
@@ -21,6 +21,7 @@ arbitrary = { version = "1.4.1" }
 libfuzzer-sys = { version = "0.4.0" }
 serde = { version = "1.0.195", features = [ "derive" ] }
 serde_json = "1.0.68"
+serde_cbor = "0.9"
 standard_test = "0.1.0"
 
 [lints.rust]
@@ -39,7 +40,7 @@ allowed_duplicates = [
     "hex-conservative",
     "bitcoin_hashes",
     "bitcoin-io",
-    "hex-conservative",
+    "bitcoin-consensus-encoding",
     "base58ck",
     "bitcoin",
     "bitcoin-internals",
@@ -350,6 +351,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "bitcoin_encoding_roundtrip_p2p_message_erlay_send_tx_rcn_cl"
+path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_erlay_send_tx_rcn_cl.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_fee_filter"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_fee_filter.rs"
 test = false
@@ -623,6 +631,41 @@ doc = false
 bench = false
 
 [[bin]]
+name = "bitcoin_0_32_compare_consensus_encoding"
+path = "fuzz_targets/bitcoin_0_32/compare_consensus_encoding.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bitcoin_0_32_deser_net_msg"
+path = "fuzz_targets/bitcoin_0_32/deser_net_msg.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bitcoin_0_32_deserialize_address"
+path = "fuzz_targets/bitcoin_0_32/deserialize_address.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bitcoin_0_32_deserialize_psbt"
+path = "fuzz_targets/bitcoin_0_32/deserialize_psbt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bitcoin_0_32_outpoint_string"
+path = "fuzz_targets/bitcoin_0_32/outpoint_string.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "consensus_encoding_decode_array"
 path = "fuzz_targets/consensus_encoding/decode_array.rs"
 test = false
@@ -700,6 +743,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "hashes_0_32_cbor"
+path = "fuzz_targets/hashes_0_32/cbor.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "p2p_arbitrary_addrv2"
 path = "fuzz_targets/p2p/arbitrary_addrv2.rs"
 test = false
@@ -744,6 +794,13 @@ bench = false
 [[bin]]
 name = "units_standard_checks"
 path = "fuzz_targets/units/standard_checks.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "units_0_32_deserialize_amount"
+path = "fuzz_targets/units_0_32/deserialize_amount.rs"
 test = false
 doc = false
 bench = false

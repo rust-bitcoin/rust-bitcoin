@@ -71,19 +71,19 @@ fn is_known_decoder_divergence(err: &(dyn std::error::Error + 'static)) -> bool 
 macro_rules! compare_encoding {
     // Simple path for top-level types
     ($data:expr, $ty:ident) => {
-        compare_encoding!($data, bitcoin::$ty, old_bitcoin::$ty);
+        compare_encoding!($data, bitcoin::$ty, bitcoin_0_32::$ty);
     };
 
     // Types in submodules need this because we can't easily concatenate crate prefixes.
     ($data:expr, $new_ty:ty, $old_ty:ty) => {{
         // Try to deserialise using both bitcoin crates. Skip if it can't be deserialised
-        let old_result: Result<$old_ty, _> = old_bitcoin::consensus::encode::deserialize($data);
+        let old_result: Result<$old_ty, _> = bitcoin_0_32::consensus::encode::deserialize($data);
         let new_result: Result<$new_ty, _> = decode_from_slice($data);
 
         match (old_result, new_result) {
             (Ok(old_obj), Ok(new_obj)) => {
                 // Encode with old bitcoin and then compare against new encoding
-                let old_encoded = old_bitcoin::consensus::encode::serialize(&old_obj);
+                let old_encoded = bitcoin_0_32::consensus::encode::serialize(&old_obj);
                 // Uncomment the following two lines if you need to see the difference
                 // in serialisation.
                 // let new_encoded = bitcoin_consensus_encoding::encode_to_vec(&new_obj);
@@ -169,49 +169,49 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, TxMerkleNode);
     compare_encoding!(data, WitnessMerkleNode);
 
-    compare_encoding!(data, bitcoin::block::Header, old_bitcoin::block::Header);
-    compare_encoding!(data, bitcoin::absolute::LockTime, old_bitcoin::absolute::LockTime);
-    compare_encoding!(data, bitcoin::block::Version, old_bitcoin::block::Version);
-    compare_encoding!(data, bitcoin::transaction::Version, old_bitcoin::transaction::Version);
+    compare_encoding!(data, bitcoin::block::Header, bitcoin_0_32::block::Header);
+    compare_encoding!(data, bitcoin::absolute::LockTime, bitcoin_0_32::absolute::LockTime);
+    compare_encoding!(data, bitcoin::block::Version, bitcoin_0_32::block::Version);
+    compare_encoding!(data, bitcoin::transaction::Version, bitcoin_0_32::transaction::Version);
 
     // P2P types
-    compare_encoding!(data, p2p::ServiceFlags, old_bitcoin::p2p::ServiceFlags);
-    compare_encoding!(data, p2p::Magic, old_bitcoin::p2p::Magic);
-    compare_encoding!(data, p2p::address::Address, old_bitcoin::p2p::address::Address);
-    compare_encoding!(data, p2p::bip152::BlockTransactions, old_bitcoin::bip152::BlockTransactions);
-    compare_encoding!(data, p2p::bip152::BlockTransactionsRequest, old_bitcoin::bip152::BlockTransactionsRequest);
-    compare_encoding!(data, p2p::bip152::HeaderAndShortIds, old_bitcoin::bip152::HeaderAndShortIds);
-    compare_encoding!(data, p2p::bip152::PrefilledTransaction, old_bitcoin::bip152::PrefilledTransaction);
-    compare_encoding!(data, p2p::bip152::ShortId, old_bitcoin::bip152::ShortId);
-    compare_encoding!(data, p2p::merkle_tree::MerkleBlock, old_bitcoin::MerkleBlock);
-    compare_encoding!(data, p2p::merkle_tree::PartialMerkleTree, old_bitcoin::merkle_tree::PartialMerkleTree);
-    compare_encoding!(data, p2p::message_blockdata::GetBlocksMessage, old_bitcoin::p2p::message_blockdata::GetBlocksMessage);
-    compare_encoding!(data, p2p::message_blockdata::GetHeadersMessage, old_bitcoin::p2p::message_blockdata::GetHeadersMessage);
-    compare_encoding!(data, p2p::message_bloom::FilterAdd, old_bitcoin::p2p::message_bloom::FilterAdd);
-    compare_encoding!(data, p2p::message_bloom::FilterLoad, old_bitcoin::p2p::message_bloom::FilterLoad);
-    compare_encoding!(data, p2p::message_bloom::BloomFlags, old_bitcoin::p2p::message_bloom::BloomFlags);
-    compare_encoding!(data, p2p::message_compact_blocks::SendCmpct, old_bitcoin::p2p::message_compact_blocks::SendCmpct);
-    compare_encoding!(data, p2p::message_filter::CFHeaders, old_bitcoin::p2p::message_filter::CFHeaders);
-    compare_encoding!(data, p2p::message_filter::CFilter, old_bitcoin::p2p::message_filter::CFilter);
-    compare_encoding!(data, p2p::message_filter::CFCheckpt, old_bitcoin::p2p::message_filter::CFCheckpt);
-    compare_encoding!(data, p2p::message_filter::GetCFCheckpt, old_bitcoin::p2p::message_filter::GetCFCheckpt);
-    compare_encoding!(data, p2p::message_filter::GetCFHeaders, old_bitcoin::p2p::message_filter::GetCFHeaders);
-    compare_encoding!(data, p2p::message_filter::GetCFilters, old_bitcoin::p2p::message_filter::GetCFilters);
-    compare_encoding!(data, p2p::message_filter::FilterHash, old_bitcoin::bip158::FilterHash);
-    compare_encoding!(data, p2p::message_filter::FilterHeader, old_bitcoin::bip158::FilterHeader);
-    compare_encoding!(data, p2p::message_network::Reject, old_bitcoin::p2p::message_network::Reject);
-    compare_encoding!(data, p2p::message_network::RejectReason, old_bitcoin::p2p::message_network::RejectReason);
-    compare_encoding!(data, p2p::message_network::VersionMessage, old_bitcoin::p2p::message_network::VersionMessage);
+    compare_encoding!(data, p2p::ServiceFlags, bitcoin_0_32::p2p::ServiceFlags);
+    compare_encoding!(data, p2p::Magic, bitcoin_0_32::p2p::Magic);
+    compare_encoding!(data, p2p::address::Address, bitcoin_0_32::p2p::address::Address);
+    compare_encoding!(data, p2p::bip152::BlockTransactions, bitcoin_0_32::bip152::BlockTransactions);
+    compare_encoding!(data, p2p::bip152::BlockTransactionsRequest, bitcoin_0_32::bip152::BlockTransactionsRequest);
+    compare_encoding!(data, p2p::bip152::HeaderAndShortIds, bitcoin_0_32::bip152::HeaderAndShortIds);
+    compare_encoding!(data, p2p::bip152::PrefilledTransaction, bitcoin_0_32::bip152::PrefilledTransaction);
+    compare_encoding!(data, p2p::bip152::ShortId, bitcoin_0_32::bip152::ShortId);
+    compare_encoding!(data, p2p::merkle_tree::MerkleBlock, bitcoin_0_32::MerkleBlock);
+    compare_encoding!(data, p2p::merkle_tree::PartialMerkleTree, bitcoin_0_32::merkle_tree::PartialMerkleTree);
+    compare_encoding!(data, p2p::message_blockdata::GetBlocksMessage, bitcoin_0_32::p2p::message_blockdata::GetBlocksMessage);
+    compare_encoding!(data, p2p::message_blockdata::GetHeadersMessage, bitcoin_0_32::p2p::message_blockdata::GetHeadersMessage);
+    compare_encoding!(data, p2p::message_bloom::FilterAdd, bitcoin_0_32::p2p::message_bloom::FilterAdd);
+    compare_encoding!(data, p2p::message_bloom::FilterLoad, bitcoin_0_32::p2p::message_bloom::FilterLoad);
+    compare_encoding!(data, p2p::message_bloom::BloomFlags, bitcoin_0_32::p2p::message_bloom::BloomFlags);
+    compare_encoding!(data, p2p::message_compact_blocks::SendCmpct, bitcoin_0_32::p2p::message_compact_blocks::SendCmpct);
+    compare_encoding!(data, p2p::message_filter::CFHeaders, bitcoin_0_32::p2p::message_filter::CFHeaders);
+    compare_encoding!(data, p2p::message_filter::CFilter, bitcoin_0_32::p2p::message_filter::CFilter);
+    compare_encoding!(data, p2p::message_filter::CFCheckpt, bitcoin_0_32::p2p::message_filter::CFCheckpt);
+    compare_encoding!(data, p2p::message_filter::GetCFCheckpt, bitcoin_0_32::p2p::message_filter::GetCFCheckpt);
+    compare_encoding!(data, p2p::message_filter::GetCFHeaders, bitcoin_0_32::p2p::message_filter::GetCFHeaders);
+    compare_encoding!(data, p2p::message_filter::GetCFilters, bitcoin_0_32::p2p::message_filter::GetCFilters);
+    compare_encoding!(data, p2p::message_filter::FilterHash, bitcoin_0_32::bip158::FilterHash);
+    compare_encoding!(data, p2p::message_filter::FilterHeader, bitcoin_0_32::bip158::FilterHeader);
+    compare_encoding!(data, p2p::message_network::Reject, bitcoin_0_32::p2p::message_network::Reject);
+    compare_encoding!(data, p2p::message_network::RejectReason, bitcoin_0_32::p2p::message_network::RejectReason);
+    compare_encoding!(data, p2p::message_network::VersionMessage, bitcoin_0_32::p2p::message_network::VersionMessage);
 
     // Types that only exist in new bitcoin, but can encode the same as some known type
     compare_encoding!(data, p2p::ProtocolVersion, u32);
-    compare_encoding!(data, p2p::address::AddrV1Message, (u32, old_bitcoin::p2p::Address));
-    compare_encoding!(data, p2p::message::AddrPayload, Vec<(u32, old_bitcoin::p2p::Address)>);
-    compare_encoding!(data, p2p::message::NetworkHeader, (old_bitcoin::block::Header, u8));
+    compare_encoding!(data, p2p::address::AddrV1Message, (u32, bitcoin_0_32::p2p::Address));
+    compare_encoding!(data, p2p::message::AddrPayload, Vec<(u32, bitcoin_0_32::p2p::Address)>);
+    compare_encoding!(data, p2p::message::NetworkHeader, (bitcoin_0_32::block::Header, u8));
     compare_encoding!(data, p2p::message::Ping, u64);
     compare_encoding!(data, p2p::message::Pong, u64);
-    compare_encoding!(data, p2p::message::V1NetworkMessage, old_bitcoin::p2p::message::RawNetworkMessage);
-    compare_encoding!(data, p2p::message_blockdata::BlockLocator, Vec<old_bitcoin::BlockHash>);
+    compare_encoding!(data, p2p::message::V1NetworkMessage, bitcoin_0_32::p2p::message::RawNetworkMessage);
+    compare_encoding!(data, p2p::message_blockdata::BlockLocator, Vec<bitcoin_0_32::BlockHash>);
     compare_encoding!(data, p2p::message_network::Alert, Vec<u8>);
     compare_encoding!(data, p2p::message_network::UserAgent, String);
     compare_encoding!(data, bitcoin::BlockHeight, u32);
@@ -222,18 +222,18 @@ fn do_test(data: &[u8]) {
     // ServiceFlags > 0x0200_0000 are not supported by the old decoder.
     // Skip inputs that would trigger either known divergence.
     if data.first() != Some(&0x03) {
-        compare_encoding!(data, p2p::address::AddrV2, old_bitcoin::p2p::address::AddrV2);
+        compare_encoding!(data, p2p::address::AddrV2, bitcoin_0_32::p2p::address::AddrV2);
     }
     if !addrv2_message_should_skip(data) {
-        compare_encoding!(data, p2p::address::AddrV2Message, old_bitcoin::p2p::address::AddrV2Message);
+        compare_encoding!(data, p2p::address::AddrV2Message, bitcoin_0_32::p2p::address::AddrV2Message);
     }
     if !addrv2_payload_should_skip(data) {
-        compare_encoding!(data, p2p::message::AddrV2Payload, Vec<old_bitcoin::p2p::address::AddrV2Message>);
+        compare_encoding!(data, p2p::message::AddrV2Payload, Vec<bitcoin_0_32::p2p::address::AddrV2Message>);
     }
     // Inventory::Error (type_id=0) encodes differently between old/new bitcoin: old omits the
     // 32-byte hash field, new includes it. Skip inputs that would decode as the Error variant.
     if data.get(..4) != Some(&[0u8; 4]) {
-        compare_encoding!(data, p2p::message_blockdata::Inventory, old_bitcoin::p2p::message_blockdata::Inventory);
+        compare_encoding!(data, p2p::message_blockdata::Inventory, bitcoin_0_32::p2p::message_blockdata::Inventory);
     }
 }
 
