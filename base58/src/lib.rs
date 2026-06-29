@@ -40,27 +40,26 @@ use core::fmt;
 pub use std::{string::String, vec::Vec};
 
 use hashes::sha256d;
-#[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 #[allow(unused)] // MSRV polyfill
-#[cfg(feature = "alloc")]
 use internals::slice::SliceExt;
 
+use crate::error::{
+    Base256Error, DecodeCheckArrayErrorInner, IncorrectChecksumError, TooShortError,
+    UnexpectedLengthError,
+};
 #[cfg(not(feature = "alloc"))]
-use crate::error::InputTooLongErrorInner;
-#[cfg(feature = "alloc")]
-use crate::error::{Base256Error, IncorrectChecksumError, TooShortError};
+use crate::error::{Error, InputTooLongErrorInner, InvalidCharacterError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::{Error, InvalidCharacterError};
 #[doc(no_inline)]
-pub use self::error::InputTooLongError;
+pub use self::error::{DecodeCheckArrayError, InputTooLongError};
 
 #[rustfmt::skip]
-#[cfg(feature = "alloc")]
 static BASE58_DIGITS: [Option<u8>; 128] = [
     None,     None,     None,     None,     None,     None,     None,     None,     // 0-7
     None,     None,     None,     None,     None,     None,     None,     None,     // 8-15
@@ -88,7 +87,6 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 /// # Errors
 ///
 /// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
-#[cfg(feature = "alloc")]
 fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Error<T::Err>> {
     // Build in base 256
     for d58 in data.bytes() {
@@ -161,6 +159,75 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
 
     ret.truncate(remaining.len());
     Ok(ret)
+}
+
+/// Decodes a base58check-encoded string into a fixed-size array, verifying the checksum.
+///
+/// This does not require `alloc`, but it only works for inputs up to 128 characters long. `N` is
+/// the expected length of the decoded payload (excluding the 4 byte checksum). Decoding will fail if
+/// the payload is any other length.
+///
+/// # Errors
+///
+/// * The input contains an invalid base58 character.
+/// * The decoded data is less than 4 bytes (too short for checksum verification).
+/// * The checksum does not match the expected value.
+/// * The input is longer than 128 characters.
+/// * The decoded payload length is not exactly `N` bytes.
+#[allow(clippy::missing_panics_doc)] // payload length is checked before cast unwrap
+pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
+    // 11/15 is just over log_256(58), so the decoded length never exceeds the input length.
+    let mut scratch = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+    build_base256(data, &mut scratch)
+        .map_err(|e| match e {
+            // Too long to decode within the fixed buffer. Report an approximate decoded length.
+            Base256Error::Buffer(_) =>
+                DecodeCheckArrayErrorInner::UnexpectedLength(UnexpectedLengthError {
+                    expected: N,
+                    actual: data.len() * 11 / 15,
+                }),
+            Base256Error::InvalidChar(err) => DecodeCheckArrayErrorInner::Decode(Error::from(err)),
+        })
+        .map_err(DecodeCheckArrayError)?;
+
+    let leading_zeros = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).count();
+    let decoded_len = leading_zeros + scratch.len();
+
+    let mut decoded = [0u8; SHORT_OPT_BUFFER_LEN];
+    scratch.as_mut_slice().reverse();
+
+    // Copy the scratch into a subslice, erroring if out of range.
+    let write_slice = decoded
+        .get_mut(leading_zeros..decoded_len)
+        .ok_or(UnexpectedLengthError { expected: N, actual: data.len() * 11 / 15 })
+        .map_err(DecodeCheckArrayErrorInner::UnexpectedLength)
+        .map_err(DecodeCheckArrayError)?;
+    write_slice.copy_from_slice(&scratch);
+    let decoded = &decoded[..decoded_len];
+
+    let (payload, &data_check) = decoded.split_last_chunk::<4>().ok_or_else(|| {
+        DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(Error::from(TooShortError {
+            length: decoded_len,
+        })))
+    })?;
+
+    if payload.len() != N {
+        return Err(DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
+            UnexpectedLengthError { expected: N, actual: payload.len() },
+        )));
+    }
+
+    let hash_check = *sha256d::Hash::hash(payload).as_byte_array().sub_array::<0, 4>();
+    let expected = u32::from_le_bytes(hash_check);
+    let actual = u32::from_le_bytes(data_check);
+
+    if actual != expected {
+        return Err(DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(Error::from(
+            IncorrectChecksumError { incorrect: actual, expected },
+        ))));
+    }
+
+    Ok(payload.try_into().expect("payload length checked to equal N"))
 }
 
 const SHORT_OPT_BUFFER_LEN: usize = 128;
