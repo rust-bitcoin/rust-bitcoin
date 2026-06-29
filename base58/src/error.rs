@@ -241,3 +241,10 @@ impl std::error::Error for InvalidCharacterError {
         None
     }
 }
+
+#[cfg(feature = "alloc")]
+/// An error that can occur from the `build_base256` function.
+pub(super) enum Base256Error<T> {
+    Buffer(T),
+    InvalidChar(InvalidCharacterError),
+}
