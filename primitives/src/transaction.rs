@@ -917,10 +917,14 @@ crate::decoder_newtype! {
         Self(Decoder2::new(AmountDecoder::new(), ScriptPubKeyBufDecoder::new()))
     }
 
+    fn map_push_bytes_err(err: <TxOutInnerDecoder as encoding::Decoder>::Error) -> TxOutDecoderError {
+        TxOutDecoderError::from(err)
+    }
+
     fn end(
         result: Result<<TxOutInnerDecoder as encoding::Decoder>::Output, <TxOutInnerDecoder as encoding::Decoder>::Error>
     ) -> Result<TxOut, TxOutDecoderError> {
-        let (amount, script_pubkey) = result.map_err(TxOutDecoderError)?;
+        let (amount, script_pubkey) = result.map_err(TxOutDecoderError::from)?;
         Ok(TxOut { amount, script_pubkey })
     }
 }
@@ -1405,26 +1409,19 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a `TxOut`.
     #[cfg(feature = "alloc")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct TxOutDecoderError(pub(super) <super::TxOutInnerDecoder as encoding::Decoder>::Error);
-
-    #[cfg(feature = "alloc")]
-    impl From<Infallible> for TxOutDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    #[cfg(feature = "alloc")]
-    impl fmt::Display for TxOutDecoderError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write_err!(f, "txout decoder error"; self.0)
+    crate::decoder_error! {
+        /// An error consensus decoding a `TxOut`.
+        #[derive(Debug, Clone, PartialEq, Eq)]
+        pub enum TxOutDecoderError from Decoder2<
+            super::AmountDecoder,
+            super::ScriptPubKeyBufDecoder,
+        > {
+            /// Error while decoding the `amount`.
+            amount => Amount,
+            /// Error while decoding the `script_pubkey`.
+            script_pubkey => ScriptPubKey,
         }
-    }
-
-    #[cfg(feature = "std")]
-    impl std::error::Error for TxOutDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
     /// Error while decoding an `OutPoint`.
@@ -3141,7 +3138,7 @@ mod tests {
         assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
-        assert!(matches!(err.0, encoding::Decoder2Error::First(_)));
+        assert!(matches!(err, TxOutDecoderError::Amount(_)));
 
         assert!(!err.to_string().is_empty());
         #[cfg(feature = "std")]
@@ -3159,7 +3156,7 @@ mod tests {
         assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
-        assert!(matches!(err.0, encoding::Decoder2Error::Second(_)));
+        assert!(matches!(err, TxOutDecoderError::ScriptPubKey(_)));
 
         assert!(!err.to_string().is_empty());
         #[cfg(feature = "std")]

@@ -8,12 +8,11 @@
 /// `match` by hand, list `field => Variant` pairs together with the composite decoder they come
 /// from.
 ///
-/// We infer the inner error type for the N variant via <D as Decoder>::Error, that way we wont have it
-/// being spelled out.
+/// We infer the inner error type for the N variant via `<D as Decoder>::Error`, that way we wont
+/// have it being spelled out.
 ///
-/// A dropped, duplicated or mistyped field fails to compile, because The generated `From` is a
-/// single exhaustive `match` over `DecoderNError`, so a dropped/ mistyped/duplicated field
-/// will fail to complie.
+/// The generated `From` is a single exhaustive `match` over `DecoderNError`, so a dropped/ 
+/// mistyped/duplicated field will fail to complie.
 /// The generated `Display` reports the field name (``error decoding `script_sig` field``).
 ///
 macro_rules! decoder_error {

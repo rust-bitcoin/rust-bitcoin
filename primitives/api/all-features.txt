@@ -3719,6 +3719,55 @@ impl<T> core::clone::CloneToUninit for bitcoin_primitives::transaction::error::T
 pub unsafe fn bitcoin_primitives::transaction::error::TxInDecoderError::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_primitives::transaction::error::TxInDecoderError
 pub fn bitcoin_primitives::transaction::error::TxInDecoderError::from(t: T) -> T
+pub enum bitcoin_primitives::transaction::error::TxOutDecoderError
+pub bitcoin_primitives::transaction::error::TxOutDecoderError::Amount(<bitcoin_units::amount::unsigned::AmountDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::transaction::error::TxOutDecoderError::ScriptPubKey(<bitcoin_primitives::script::ScriptPubKeyBufDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+impl core::clone::Clone for bitcoin_primitives::transaction::error::TxOutDecoderError
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::clone(&self) -> bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::cmp::Eq for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::cmp::PartialEq for bitcoin_primitives::transaction::error::TxOutDecoderError
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::eq(&self, other: &bitcoin_primitives::transaction::error::TxOutDecoderError) -> bool
+impl core::convert::From<bitcoin_consensus_encoding::error::Decoder2Error<<bitcoin_units::amount::unsigned::AmountDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_primitives::script::ScriptBufDecoder<bitcoin_primitives::script::ScriptPubKeyTag> as bitcoin_consensus_encoding::decode::Decoder>::Error>> for bitcoin_primitives::transaction::error::TxOutDecoderError
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::from(e: bitcoin_consensus_encoding::error::Decoder2Error<<bitcoin_units::amount::unsigned::AmountDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_primitives::script::ScriptPubKeyBufDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error>) -> Self
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::error::TxOutDecoderError
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::from(never: core::convert::Infallible) -> Self
+impl core::error::Error for bitcoin_primitives::transaction::error::TxOutDecoderError
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for bitcoin_primitives::transaction::error::TxOutDecoderError
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::marker::Freeze for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::marker::Send for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::marker::Sync for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::marker::Unpin for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::error::TxOutDecoderError
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::transaction::error::TxOutDecoderError where U: core::convert::From<T>
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::transaction::error::TxOutDecoderError where U: core::convert::Into<T>
+pub type bitcoin_primitives::transaction::error::TxOutDecoderError::Error = core::convert::Infallible
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::transaction::error::TxOutDecoderError where U: core::convert::TryFrom<T>
+pub type bitcoin_primitives::transaction::error::TxOutDecoderError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::transaction::error::TxOutDecoderError where T: core::clone::Clone
+pub type bitcoin_primitives::transaction::error::TxOutDecoderError::Owned = T
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::clone_into(&self, target: &mut T)
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin_primitives::transaction::error::TxOutDecoderError where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin_primitives::transaction::error::TxOutDecoderError where T: 'static + ?core::marker::Sized
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::transaction::error::TxOutDecoderError where T: ?core::marker::Sized
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::transaction::error::TxOutDecoderError where T: ?core::marker::Sized
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::transaction::error::TxOutDecoderError where T: core::clone::Clone
+pub unsafe fn bitcoin_primitives::transaction::error::TxOutDecoderError::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_primitives::transaction::error::TxOutDecoderError
+pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::from(t: T) -> T
 pub struct bitcoin_primitives::transaction::error::OutPointDecoderError(_)
 impl core::clone::Clone for bitcoin_primitives::transaction::error::OutPointDecoderError
 pub fn bitcoin_primitives::transaction::error::OutPointDecoderError::clone(&self) -> bitcoin_primitives::transaction::error::OutPointDecoderError
@@ -3809,51 +3858,6 @@ impl<T> core::clone::CloneToUninit for bitcoin_primitives::transaction::error::T
 pub unsafe fn bitcoin_primitives::transaction::error::TransactionDecoderError::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_primitives::transaction::error::TransactionDecoderError
 pub fn bitcoin_primitives::transaction::error::TransactionDecoderError::from(t: T) -> T
-pub struct bitcoin_primitives::transaction::error::TxOutDecoderError(_)
-impl core::clone::Clone for bitcoin_primitives::transaction::error::TxOutDecoderError
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::clone(&self) -> bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::cmp::Eq for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::cmp::PartialEq for bitcoin_primitives::transaction::error::TxOutDecoderError
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::eq(&self, other: &bitcoin_primitives::transaction::error::TxOutDecoderError) -> bool
-impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::error::TxOutDecoderError
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::from(never: core::convert::Infallible) -> Self
-impl core::error::Error for bitcoin_primitives::transaction::error::TxOutDecoderError
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Debug for bitcoin_primitives::transaction::error::TxOutDecoderError
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::marker::Freeze for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::marker::Send for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::marker::Sync for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::marker::Unpin for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::error::TxOutDecoderError
-impl<T, U> core::convert::Into<U> for bitcoin_primitives::transaction::error::TxOutDecoderError where U: core::convert::From<T>
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::transaction::error::TxOutDecoderError where U: core::convert::Into<T>
-pub type bitcoin_primitives::transaction::error::TxOutDecoderError::Error = core::convert::Infallible
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::transaction::error::TxOutDecoderError where U: core::convert::TryFrom<T>
-pub type bitcoin_primitives::transaction::error::TxOutDecoderError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_primitives::transaction::error::TxOutDecoderError where T: core::clone::Clone
-pub type bitcoin_primitives::transaction::error::TxOutDecoderError::Owned = T
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::clone_into(&self, target: &mut T)
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_primitives::transaction::error::TxOutDecoderError where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_primitives::transaction::error::TxOutDecoderError where T: 'static + ?core::marker::Sized
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_primitives::transaction::error::TxOutDecoderError where T: ?core::marker::Sized
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::transaction::error::TxOutDecoderError where T: ?core::marker::Sized
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_primitives::transaction::error::TxOutDecoderError where T: core::clone::Clone
-pub unsafe fn bitcoin_primitives::transaction::error::TxOutDecoderError::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_primitives::transaction::error::TxOutDecoderError
-pub fn bitcoin_primitives::transaction::error::TxOutDecoderError::from(t: T) -> T
 pub struct bitcoin_primitives::transaction::error::VersionDecoderError(_)
 impl core::clone::Clone for bitcoin_primitives::transaction::error::VersionDecoderError
 pub fn bitcoin_primitives::transaction::error::VersionDecoderError::clone(&self) -> bitcoin_primitives::transaction::error::VersionDecoderError
@@ -3909,6 +3913,9 @@ pub enum bitcoin_primitives::transaction::TxInDecoderError
 pub bitcoin_primitives::transaction::TxInDecoderError::PreviousOutput(<bitcoin_primitives::transaction::OutPointDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
 pub bitcoin_primitives::transaction::TxInDecoderError::ScriptSig(<bitcoin_primitives::script::ScriptSigBufDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
 pub bitcoin_primitives::transaction::TxInDecoderError::Sequence(<bitcoin_units::sequence::SequenceDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub enum bitcoin_primitives::transaction::TxOutDecoderError
+pub bitcoin_primitives::transaction::TxOutDecoderError::Amount(<bitcoin_units::amount::unsigned::AmountDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::transaction::TxOutDecoderError::ScriptPubKey(<bitcoin_primitives::script::ScriptPubKeyBufDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
 pub struct bitcoin_primitives::transaction::BlockHashDecoder(_)
 pub struct bitcoin_primitives::transaction::BlockHashDecoderError(_)
 pub struct bitcoin_primitives::transaction::Ntxid(_)
@@ -4531,7 +4538,6 @@ impl<T> core::clone::CloneToUninit for bitcoin_primitives::transaction::TxOutDec
 pub unsafe fn bitcoin_primitives::transaction::TxOutDecoder::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_primitives::transaction::TxOutDecoder
 pub fn bitcoin_primitives::transaction::TxOutDecoder::from(t: T) -> T
-pub struct bitcoin_primitives::transaction::TxOutDecoderError(_)
 pub struct bitcoin_primitives::transaction::TxOutEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::TxOutEncoder<'e>
 pub fn bitcoin_primitives::transaction::TxOutEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
