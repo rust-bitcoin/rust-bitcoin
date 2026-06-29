@@ -38,17 +38,19 @@ pub mod bitcoin_primitives::block::error
 pub use bitcoin_primitives::block::error::BlockHeightDecoderError
 pub use bitcoin_primitives::block::error::TooBigForRelativeHeightError
 #[non_exhaustive] pub enum bitcoin_primitives::block::error::HeaderDecoderError
-pub bitcoin_primitives::block::error::HeaderDecoderError::Bits(bitcoin_units::pow::error::CompactTargetDecoderError)
-pub bitcoin_primitives::block::error::HeaderDecoderError::MerkleRoot(bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError)
-pub bitcoin_primitives::block::error::HeaderDecoderError::Nonce(bitcoin_consensus_encoding::error::UnexpectedEofError)
-pub bitcoin_primitives::block::error::HeaderDecoderError::PrevBlockhash(bitcoin_primitives::block::BlockHashDecoderError)
-pub bitcoin_primitives::block::error::HeaderDecoderError::Time(bitcoin_units::time::error::BlockTimeDecoderError)
-pub bitcoin_primitives::block::error::HeaderDecoderError::Version(bitcoin_primitives::block::error::VersionDecoderError)
+pub bitcoin_primitives::block::error::HeaderDecoderError::Bits(<bitcoin_units::pow::CompactTargetDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::error::HeaderDecoderError::MerkleRoot(<bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::error::HeaderDecoderError::Nonce(<bitcoin_consensus_encoding::decode::decoders::ArrayDecoder<4> as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::error::HeaderDecoderError::PrevBlockhash(<bitcoin_primitives::block::BlockHashDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::error::HeaderDecoderError::Time(<bitcoin_units::time::BlockTimeDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::error::HeaderDecoderError::Version(<bitcoin_primitives::block::VersionDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
 impl core::clone::Clone for bitcoin_primitives::block::error::HeaderDecoderError
 pub fn bitcoin_primitives::block::error::HeaderDecoderError::clone(&self) -> bitcoin_primitives::block::error::HeaderDecoderError
 impl core::cmp::Eq for bitcoin_primitives::block::error::HeaderDecoderError
 impl core::cmp::PartialEq for bitcoin_primitives::block::error::HeaderDecoderError
 pub fn bitcoin_primitives::block::error::HeaderDecoderError::eq(&self, other: &bitcoin_primitives::block::error::HeaderDecoderError) -> bool
+impl core::convert::From<bitcoin_consensus_encoding::error::Decoder6Error<<bitcoin_primitives::block::VersionDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_primitives::block::BlockHashDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_units::time::BlockTimeDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_units::pow::CompactTargetDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_consensus_encoding::decode::decoders::ArrayDecoder<4> as bitcoin_consensus_encoding::decode::Decoder>::Error>> for bitcoin_primitives::block::error::HeaderDecoderError
+pub fn bitcoin_primitives::block::error::HeaderDecoderError::from(e: bitcoin_consensus_encoding::error::Decoder6Error<<bitcoin_primitives::block::VersionDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_primitives::block::BlockHashDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_units::time::BlockTimeDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_units::pow::CompactTargetDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error, <bitcoin_consensus_encoding::decode::decoders::ArrayDecoder<4> as bitcoin_consensus_encoding::decode::Decoder>::Error>) -> Self
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::error::HeaderDecoderError
 pub fn bitcoin_primitives::block::error::HeaderDecoderError::from(never: core::convert::Infallible) -> Self
 impl core::fmt::Debug for bitcoin_primitives::block::error::HeaderDecoderError
@@ -309,12 +311,12 @@ pub unsafe fn bitcoin_primitives::block::Checked::clone_to_uninit(&self, dest: *
 impl<T> core::convert::From<T> for bitcoin_primitives::block::Checked
 pub fn bitcoin_primitives::block::Checked::from(t: T) -> T
 #[non_exhaustive] pub enum bitcoin_primitives::block::HeaderDecoderError
-pub bitcoin_primitives::block::HeaderDecoderError::Bits(bitcoin_units::pow::error::CompactTargetDecoderError)
-pub bitcoin_primitives::block::HeaderDecoderError::MerkleRoot(bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError)
-pub bitcoin_primitives::block::HeaderDecoderError::Nonce(bitcoin_consensus_encoding::error::UnexpectedEofError)
-pub bitcoin_primitives::block::HeaderDecoderError::PrevBlockhash(bitcoin_primitives::block::BlockHashDecoderError)
-pub bitcoin_primitives::block::HeaderDecoderError::Time(bitcoin_units::time::error::BlockTimeDecoderError)
-pub bitcoin_primitives::block::HeaderDecoderError::Version(bitcoin_primitives::block::error::VersionDecoderError)
+pub bitcoin_primitives::block::HeaderDecoderError::Bits(<bitcoin_units::pow::CompactTargetDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::HeaderDecoderError::MerkleRoot(<bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::HeaderDecoderError::Nonce(<bitcoin_consensus_encoding::decode::decoders::ArrayDecoder<4> as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::HeaderDecoderError::PrevBlockhash(<bitcoin_primitives::block::BlockHashDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::HeaderDecoderError::Time(<bitcoin_units::time::BlockTimeDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
+pub bitcoin_primitives::block::HeaderDecoderError::Version(<bitcoin_primitives::block::VersionDecoder as bitcoin_consensus_encoding::decode::Decoder>::Error)
 #[non_exhaustive] pub enum bitcoin_primitives::block::InvalidBlockError
 pub bitcoin_primitives::block::InvalidBlockError::InvalidCoinbase
 pub bitcoin_primitives::block::InvalidBlockError::InvalidMerkleRoot

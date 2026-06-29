@@ -574,28 +574,16 @@ crate::decoder_newtype! {
     }
 
     fn map_push_bytes_err(err: <HeaderInnerDecoder as encoding::Decoder>::Error) -> HeaderDecoderError {
-        Self::from_inner(err)
+        HeaderDecoderError::from(err)
     }
 
     fn end(
         result: Result<<HeaderInnerDecoder as encoding::Decoder>::Output, <HeaderInnerDecoder as encoding::Decoder>::Error>
     ) -> Result<Header, HeaderDecoderError> {
-        let (version, prev_blockhash, merkle_root, time, bits, nonce) = result.map_err(Self::from_inner)?;
+        let (version, prev_blockhash, merkle_root, time, bits, nonce) =
+            result.map_err(HeaderDecoderError::from)?;
         let nonce = u32::from_le_bytes(nonce);
         Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
-    }
-}
-
-impl HeaderDecoder {
-    fn from_inner(e: <HeaderInnerDecoder as encoding::Decoder>::Error) -> HeaderDecoderError {
-        match e {
-            encoding::Decoder6Error::First(e) => HeaderDecoderError::Version(e),
-            encoding::Decoder6Error::Second(e) => HeaderDecoderError::PrevBlockhash(e),
-            encoding::Decoder6Error::Third(e) => HeaderDecoderError::MerkleRoot(e),
-            encoding::Decoder6Error::Fourth(e) => HeaderDecoderError::Time(e),
-            encoding::Decoder6Error::Fifth(e) => HeaderDecoderError::Bits(e),
-            encoding::Decoder6Error::Sixth(e) => HeaderDecoderError::Nonce(e),
-        }
     }
 }
 
@@ -747,10 +735,6 @@ pub mod error {
 
     use internals::write_err;
 
-    use crate::merkle_tree::TxMerkleNodeDecoderError;
-    use crate::pow::CompactTargetDecoderError;
-    use crate::time::BlockTimeDecoderError;
-
     #[rustfmt::skip]                // Keep public re-exports separate.
     #[doc(no_inline)]
     pub use units::block::{BlockHeightDecoderError, TooBigForRelativeHeightError};
@@ -827,52 +811,30 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a `Header`.
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    #[non_exhaustive]
-    pub enum HeaderDecoderError {
-        /// Error while decoding the `version`.
-        Version(VersionDecoderError),
-        /// Error while decoding the `prev_blockhash`.
-        PrevBlockhash(BlockHashDecoderError),
-        /// Error while decoding the `merkle_root`.
-        MerkleRoot(TxMerkleNodeDecoderError),
-        /// Error while decoding the `time`.
-        Time(BlockTimeDecoderError),
-        /// Error while decoding the `bits`.
-        Bits(CompactTargetDecoderError),
-        /// Error while decoding the `nonce`.
-        Nonce(encoding::UnexpectedEofError),
-    }
-
-    impl From<Infallible> for HeaderDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    impl fmt::Display for HeaderDecoderError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match *self {
-                Self::Version(ref e) => write_err!(f, "header decoder error"; e),
-                Self::PrevBlockhash(ref e) => write_err!(f, "header decoder error"; e),
-                Self::MerkleRoot(ref e) => write_err!(f, "header decoder error"; e),
-                Self::Time(ref e) => write_err!(f, "header decoder error"; e),
-                Self::Bits(ref e) => write_err!(f, "header decoder error"; e),
-                Self::Nonce(ref e) => write_err!(f, "header decoder error"; e),
-            }
-        }
-    }
-
-    #[cfg(feature = "std")]
-    impl std::error::Error for HeaderDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            match *self {
-                Self::Version(ref e) => Some(e),
-                Self::PrevBlockhash(ref e) => Some(e),
-                Self::MerkleRoot(ref e) => Some(e),
-                Self::Time(ref e) => Some(e),
-                Self::Bits(ref e) => Some(e),
-                Self::Nonce(ref e) => Some(e),
-            }
+    crate::decoder_error! {
+        /// An error consensus decoding a `Header`.
+        #[derive(Debug, Clone, PartialEq, Eq)]
+        #[non_exhaustive]
+        pub enum HeaderDecoderError from Decoder6<
+            super::VersionDecoder,
+            super::BlockHashDecoder,
+            super::TxMerkleNodeDecoder,
+            super::BlockTimeDecoder,
+            super::CompactTargetDecoder,
+            encoding::ArrayDecoder<4>,
+        > {
+            /// Error while decoding the `version`.
+            version => Version,
+            /// Error while decoding the `prev_blockhash`.
+            prev_blockhash => PrevBlockhash,
+            /// Error while decoding the `merkle_root`.
+            merkle_root => MerkleRoot,
+            /// Error while decoding the `time`.
+            time => Time,
+            /// Error while decoding the `bits`.
+            bits => Bits,
+            /// Error while decoding the `nonce`.
+            nonce => Nonce,
         }
     }
 
