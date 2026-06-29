@@ -50,7 +50,7 @@ use internals::slice::SliceExt;
 #[cfg(not(feature = "alloc"))]
 use crate::error::InputTooLongErrorInner;
 #[cfg(feature = "alloc")]
-use crate::error::{IncorrectChecksumError, TooShortError};
+use crate::error::{Base256Error, IncorrectChecksumError, TooShortError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "alloc")]
@@ -80,47 +80,60 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
     Some(55), Some(56), Some(57), None,     None,     None,     None,     None,     // 120-127
 ];
 
+/// Builds the little-endian base-256 representation of base58 `data` into `scratch`.
+///
+/// The padding zero bytes are not decoded, so the big-endian decoded value is directly read
+/// back to front.
+///
+/// # Errors
+///
+/// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
+#[cfg(feature = "alloc")]
+fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Error<T::Err>> {
+    // Build in base 256
+    for d58 in data.bytes() {
+        // Compute "X = X * 58 + next_digit" in base 256
+        if usize::from(d58) >= BASE58_DIGITS.len() {
+            return Err(Base256Error::InvalidChar(InvalidCharacterError::new(d58)));
+        }
+        let mut carry = match BASE58_DIGITS[usize::from(d58)] {
+            Some(d58) => u32::from(d58),
+            None => {
+                return Err(Base256Error::InvalidChar(InvalidCharacterError::new(d58)));
+            }
+        };
+        for d256 in scratch.slice_mut() {
+            carry += u32::from(*d256) * 58;
+            *d256 = carry as u8; // cast loses data intentionally
+            carry /= 256;
+        }
+        while carry > 0 {
+            // This function (build_base256) is only ever called with a Vec (infallible) or an ArrayVec with a pre-checked size.
+            scratch.try_push(carry as u8).map_err(Base256Error::Buffer)?; // cast loses data intentionally
+            carry /= 256;
+        }
+    }
+    Ok(())
+}
+
 /// Decodes a base58-encoded string into a byte vector.
 ///
 /// # Errors
 ///
 /// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
-#[allow(clippy::missing_panics_doc)] // Internal assertion, not user-controllable.
 #[cfg(feature = "alloc")]
 pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     // 11/15 is just over log_256(58)
     let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
-    // Build in base 256
-    for d58 in data.bytes() {
-        // Compute "X = X * 58 + next_digit" in base 256
-        if usize::from(d58) >= BASE58_DIGITS.len() {
-            return Err(InvalidCharacterError::new(d58));
-        }
-        let mut carry = match BASE58_DIGITS[usize::from(d58)] {
-            Some(d58) => u32::from(d58),
-            None => {
-                return Err(InvalidCharacterError::new(d58));
-            }
-        };
-        if scratch.is_empty() {
-            for _ in 0..scratch.capacity() {
-                scratch.push(carry as u8);
-                carry /= 256;
-            }
-        } else {
-            for d256 in &mut scratch {
-                carry += u32::from(*d256) * 58;
-                *d256 = carry as u8; // cast loses data intentionally
-                carry /= 256;
-            }
-        }
-        assert_eq!(carry, 0);
-    }
+    build_base256(data, &mut scratch).map_err(|e| match e {
+        Base256Error::Buffer(_) => unreachable!("Vec cannot fail try_push"),
+        Base256Error::InvalidChar(err) => err,
+    })?;
 
     // Copy leading zeroes directly
     let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).map(|_| 0).collect();
     // Copy rest of string
-    ret.extend(scratch.into_iter().rev().skip_while(|&x| x == 0));
+    ret.extend(scratch.into_iter().rev());
     Ok(ret)
 }
 
