@@ -413,8 +413,8 @@ fn encode_to_buffer<I: Iterator<Item = u8>, T: Buffer>(data: I, buf: &mut T) -> 
 }
 
 #[cfg(test)]
-#[cfg(feature = "alloc")]
 mod tests {
+    #[cfg(feature = "alloc")]
     use alloc::vec;
 
     use hex::hex;
@@ -422,6 +422,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn base58_encode() {
         // Basics
         assert_eq!(Base58CkString::encode_unbounded(&[13, 36][..]).as_str(), "7YY3x3vS");
@@ -454,6 +455,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn base58_decode() {
         // Basics
         assert_eq!(decode("1").ok(), Some(vec![0u8]));
@@ -475,6 +477,75 @@ mod tests {
     }
 
     #[test]
+    fn decode_check_to_array_roundtrip() {
+        let addr = hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d");
+        let encoded = Base58CkString::encode(&addr).unwrap();
+
+        let decoded = decode_check_to_array::<21>(encoded.as_str()).unwrap();
+        assert_eq!(decoded, addr);
+        #[cfg(feature = "alloc")]
+        assert_eq!(decoded.as_slice(), decode_check(encoded.as_str()).unwrap().as_slice());
+    }
+
+    #[test]
+    fn decode_check_to_array_errors() {
+        use crate::error::DecodeCheckArrayErrorInner;
+
+        const STRING_LEN: usize = SHORT_OPT_BUFFER_LEN + 1;
+        const APPROX_LEN: usize = STRING_LEN * 11 / 15;
+
+        let encoded = "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"; // 21 byte payload
+
+        let err = decode_check_to_array::<20>(encoded).unwrap_err();
+        assert_eq!(
+            err,
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
+                crate::error::UnexpectedLengthError { expected: 20, actual: 21 }
+            ))
+        );
+
+        assert!(matches!(
+            decode_check_to_array::<21>("¢").unwrap_err(),
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(_))
+        ));
+
+        assert!(matches!(
+            decode_check_to_array::<21>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHG").unwrap_err(),
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(_))
+        ));
+
+        let long = "1".repeat(STRING_LEN);
+        assert!(matches!(
+            decode_check_to_array::<21>(&long).unwrap_err(),
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
+                crate::UnexpectedLengthError { expected: 21, actual: APPROX_LEN }
+            ))
+        ));
+    }
+
+    #[test]
+    fn decode_check_to_array_at_input_length_limit() {
+        let encoded = "22UzJUbV3TnAhvzqfW411nkMuSfpgxfYfuuCyNPtrA9EQTViEdsmiBAqEyGP4EGFHb1c7XKWFmjWj9uzBdg8kpCVXAaWVGQmovSTnFjSjEEa9sAZqKUYrvnvgVtPVTuj";
+        let want = [0xFFu8; 89];
+        assert_eq!(encoded.len(), SHORT_OPT_BUFFER_LEN);
+        assert_eq!(decode_check_to_array::<89>(encoded).unwrap(), want);
+
+        let encoded = "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111DH4Svg";
+        let mut want = [0u8; 123];
+        want[122] = 0x01;
+        assert_eq!(encoded.len(), SHORT_OPT_BUFFER_LEN);
+        assert_eq!(decode_check_to_array::<123>(encoded).unwrap(), want);
+    }
+
+    #[test]
+    fn decode_check_to_array_leading_zeros() {
+        let data = [0u8, 0, 1, 2, 3];
+        let encoded = Base58CkString::encode(&data).unwrap();
+        assert_eq!(decode_check_to_array::<5>(encoded.as_str()).unwrap(), data);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn base58_roundtrip() {
         let s = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs";
         let v: Vec<u8> = decode_check(s).unwrap();
