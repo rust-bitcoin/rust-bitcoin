@@ -60,13 +60,14 @@ use crate::crypto::key::{
     XOnlyPublicKey,
 };
 use crate::network::{Network, NetworkKind, Params};
+use crate::opcodes::all::OP_PUSHBYTES_0;
 use crate::prelude::{String, ToOwned};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, BuilderExt as _, RedeemScriptSizeError, Script, ScriptExt as _, ScriptHash,
-    ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _, WScriptHash,
-    WitnessScript, WitnessScriptSizeError,
+    self, RedeemScriptSizeError, Script, ScriptExt as _, ScriptHash, ScriptHashableTag,
+    ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _, WScriptHash, WitnessScript,
+    WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
@@ -545,7 +546,8 @@ impl Address {
     ///
     /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwpkh(pk: FullPublicKey, network: impl Into<NetworkKind>) -> Self {
-        let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(pk.wpubkey_hash());
+        let builder =
+            ScriptPubKey::builder().push_opcode(OP_PUSHBYTES_0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
         Self::p2sh_from_hash(script_hash, network)
     }
@@ -574,7 +576,7 @@ impl Address {
         network: impl Into<NetworkKind>,
     ) -> Result<Self, WitnessScriptSizeError> {
         let hash = witness_script.wscript_hash()?;
-        let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(hash);
+        let builder = ScriptPubKey::builder().push_opcode(OP_PUSHBYTES_0).push_slice(hash);
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
         Ok(Self::p2sh_from_hash(script_hash, network))
     }
