@@ -27,7 +27,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::consensus::Params;
 use crate::constants::ChainHash;
-use crate::internal_macros::write_err;
 use crate::p2p::Magic;
 use crate::prelude::*;
 
@@ -260,7 +259,7 @@ pub struct ParseNetworkError(String);
 
 impl fmt::Display for ParseNetworkError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write_err!(f, "failed to parse {} as network", self.0; self)
+        write!(f, "failed to parse {} as network", self.0)
     }
 }
 
