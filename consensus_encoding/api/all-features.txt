@@ -1559,6 +1559,8 @@ pub fn core::option::Option<T>::current_chunk(&self) -> &[u8]
 pub trait bitcoin_consensus_encoding::ExactSizeEncoder: bitcoin_consensus_encoding::Encoder
 pub fn bitcoin_consensus_encoding::ExactSizeEncoder::is_empty(&self) -> bool
 pub fn bitcoin_consensus_encoding::ExactSizeEncoder::len(&self) -> usize
+impl<T: bitcoin_consensus_encoding::ExactSizeEncoder> bitcoin_consensus_encoding::ExactSizeEncoder for core::option::Option<T>
+pub fn core::option::Option<T>::len(&self) -> usize
 pub fn bitcoin_consensus_encoding::check_decode<T: bitcoin_consensus_encoding::Decode + core::cmp::Eq + core::fmt::Debug>(bytes: &[u8], expected: &T) where <<T as bitcoin_consensus_encoding::Decode>::Decoder as bitcoin_consensus_encoding::Decoder>::Error: core::fmt::Debug
 pub fn bitcoin_consensus_encoding::check_decoder<D: bitcoin_consensus_encoding::Decoder>(decoder: D, bytes: &[u8], expected: &<D as bitcoin_consensus_encoding::Decoder>::Output) where <D as bitcoin_consensus_encoding::Decoder>::Output: core::cmp::Eq + core::fmt::Debug, <D as bitcoin_consensus_encoding::Decoder>::Error: core::fmt::Debug
 pub fn bitcoin_consensus_encoding::check_encode<T: bitcoin_consensus_encoding::Encode + ?core::marker::Sized>(value: &T, expected: &[u8])

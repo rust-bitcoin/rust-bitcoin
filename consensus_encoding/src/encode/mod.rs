@@ -488,3 +488,12 @@ impl<T: Encoder> Encoder for Option<T> {
         }
     }
 }
+
+impl<T: ExactSizeEncoder> ExactSizeEncoder for Option<T> {
+    fn len(&self) -> usize {
+        match self {
+            Some(encoder) => encoder.len(),
+            None => 0,
+        }
+    }
+}
