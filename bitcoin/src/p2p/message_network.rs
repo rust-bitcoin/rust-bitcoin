@@ -6,13 +6,24 @@
 //! capabilities.
 //!
 
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
+#[cfg(feature = "encoding")]
+use core::fmt;
+
 use hashes::sha256d;
+#[cfg(feature = "encoding")]
+use hashes::Hash as _;
 use io::{Read, Write};
 
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
+#[cfg(feature = "encoding")]
+use crate::internal_macros::write_err;
 use crate::p2p;
 use crate::p2p::address::Address;
+#[cfg(feature = "encoding")]
+use crate::p2p::address::AddressDecoder;
 use crate::p2p::ServiceFlags;
 use crate::prelude::*;
 
@@ -88,6 +99,149 @@ impl_consensus_encoding!(
     relay
 );
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`VersionMessage`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionMessageEncoder<'e>(
+        encoding::Encoder2<
+            encoding::Encoder3<
+                encoding::ArrayEncoder<4>,
+                crate::p2p::ServiceFlagsEncoder<'e>,
+                encoding::ArrayEncoder<8>
+            >,
+            encoding::Encoder6<
+                crate::p2p::address::AddressEncoder<'e>,
+                crate::p2p::address::AddressEncoder<'e>,
+                encoding::ArrayEncoder<8>,
+                encoding::Encoder2<encoding::CompactSizeEncoder, encoding::BytesEncoder<'e>>,
+                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<1>
+            >
+        >
+    );
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for VersionMessage {
+    type Encoder<'e> = VersionMessageEncoder<'e>;
+
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionMessageEncoder::new(encoding::Encoder2::new(
+            encoding::Encoder3::new(
+                encoding::ArrayEncoder::without_length_prefix(self.version.to_le_bytes()),
+                self.services.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.timestamp.to_le_bytes()),
+            ),
+            encoding::Encoder6::new(
+                self.receiver.encoder(),
+                self.sender.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+                encoding::Encoder2::new(
+                    encoding::CompactSizeEncoder::new(self.user_agent.len()),
+                    encoding::BytesEncoder::without_length_prefix(self.user_agent.as_bytes()),
+                ),
+                encoding::ArrayEncoder::without_length_prefix(self.start_height.to_le_bytes()),
+                encoding::ArrayEncoder::without_length_prefix([u8::from(self.relay)]),
+            ),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for VersionMessage {
+    type Decoder = VersionMessageDecoder;
+}
+
+#[cfg(feature = "encoding")]
+type VersionMessageInnerDecoder = encoding::Decoder2<
+    encoding::Decoder3<
+        encoding::ArrayDecoder<4>,
+        crate::p2p::ServiceFlagsDecoder,
+        encoding::ArrayDecoder<8>,
+    >,
+    encoding::Decoder6<
+        AddressDecoder,
+        AddressDecoder,
+        encoding::ArrayDecoder<8>,
+        encoding::ByteVecDecoder,
+        encoding::ArrayDecoder<4>,
+        encoding::ArrayDecoder<1>,
+    >,
+>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The Decoder for [`VersionMessage`].
+    #[derive(Debug, Default, Clone)]
+    pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+
+    fn map_push_bytes_err(
+        err: <VersionMessageInnerDecoder as encoding::Decoder>::Error
+    ) -> VersionMessageDecoderError {
+        VersionMessageDecoderError::Decoder(err)
+    }
+
+    fn end(
+        result: Result<<VersionMessageInnerDecoder as encoding::Decoder>::Output, <VersionMessageInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<VersionMessage, VersionMessageDecoderError> {
+        let (
+            (version, services, timestamp),
+            (receiver, sender, nonce, user_agent, start_height, relay),
+        ) = result.map_err(VersionMessageDecoderError::Decoder)?;
+        let user_agent = String::from_utf8(user_agent).map_err(|_| VersionMessageDecoderError::InvalidUtf8)?;
+
+        Ok(VersionMessage {
+            version: u32::from_le_bytes(version),
+            services,
+            timestamp: i64::from_le_bytes(timestamp),
+            receiver,
+            sender,
+            nonce: u64::from_le_bytes(nonce),
+            user_agent,
+            start_height: i32::from_le_bytes(start_height),
+            relay: relay[0] != 0,
+        })
+    }
+}
+
+/// Errors occurring when decoding a [`VersionMessage`] message.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum VersionMessageDecoderError {
+    /// Inner decoder error.
+    Decoder(<VersionMessageInnerDecoder as encoding::Decoder>::Error),
+    /// Invalid UTF-8 in the user agent.
+    InvalidUtf8,
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for VersionMessageDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for VersionMessageDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(e) => write_err!(f, "version message decoder error"; e),
+            Self::InvalidUtf8 => write!(f, "invalid utf-8"),
+        }
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for VersionMessageDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(e) => Some(e),
+            Self::InvalidUtf8 => None,
+        }
+    }
+}
+
 /// message rejection reason as a code
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum RejectReason {
@@ -132,6 +286,93 @@ impl Decodable for RejectReason {
     }
 }
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// Encoder type for a [`RejectReason`].
+    #[derive(Debug, Clone)]
+    pub struct RejectReasonEncoder<'e>(encoding::ArrayEncoder<1>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for RejectReason {
+    type Encoder<'e> = RejectReasonEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        RejectReasonEncoder::new(encoding::ArrayEncoder::without_length_prefix([*self as u8]))
+    }
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// Decoder type for a [`RejectReason`].
+    #[derive(Debug, Default, Clone)]
+    pub struct RejectReasonDecoder(encoding::ArrayDecoder<1>);
+
+    fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> RejectReasonDecoderError {
+        RejectReasonDecoderError::Decoder(err)
+    }
+
+    fn end(
+        result: Result<[u8; 1], encoding::UnexpectedEofError>
+    ) -> Result<RejectReason, RejectReasonDecoderError> {
+        let code_arr = result.map_err(RejectReasonDecoderError::Decoder)?;
+        let code = u8::from_le_bytes(code_arr);
+        Ok(match code {
+            0x01 => RejectReason::Malformed,
+            0x10 => RejectReason::Invalid,
+            0x11 => RejectReason::Obsolete,
+            0x12 => RejectReason::Duplicate,
+            0x40 => RejectReason::NonStandard,
+            0x41 => RejectReason::Dust,
+            0x42 => RejectReason::Fee,
+            0x43 => RejectReason::Checkpoint,
+            unknown => return Err(RejectReasonDecoderError::UnknownRejectCode(unknown)),
+        })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for RejectReason {
+    type Decoder = RejectReasonDecoder;
+
+    fn decoder() -> Self::Decoder { RejectReasonDecoder(encoding::ArrayDecoder::new()) }
+}
+
+/// Errors occurring when decoding a [`RejectReason`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RejectReasonDecoderError {
+    /// Inner decoder error.
+    Decoder(<encoding::ArrayDecoder<1> as encoding::Decoder>::Error),
+    /// Unknown reject code.
+    UnknownRejectCode(u8),
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for RejectReasonDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for RejectReasonDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(e) => write_err!(f, "rejectreason error"; e),
+            Self::UnknownRejectCode(code) => write!(f, "unknown reject code {}", code),
+        }
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for RejectReasonDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(e) => Some(e),
+            Self::UnknownRejectCode(_) => None,
+        }
+    }
+}
+
 /// Reject message might be sent by peers rejecting one of our messages
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Reject {
@@ -146,6 +387,125 @@ pub struct Reject {
 }
 
 impl_consensus_encoding!(Reject, message, ccode, reason, hash);
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// Encoder type for a [`Reject`] message.
+    #[derive(Debug, Clone)]
+    pub struct RejectEncoder<'e>(
+        encoding::Encoder4<
+            encoding::Encoder2<encoding::CompactSizeEncoder, encoding::BytesEncoder<'e>>,
+            RejectReasonEncoder<'e>,
+            encoding::Encoder2<encoding::CompactSizeEncoder, encoding::BytesEncoder<'e>>,
+            encoding::ArrayEncoder<32>
+        >
+    );
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for Reject {
+    type Encoder<'e> = RejectEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        RejectEncoder::new(encoding::Encoder4::new(
+            encoding::Encoder2::new(
+                encoding::CompactSizeEncoder::new(self.message.len()),
+                encoding::BytesEncoder::without_length_prefix(self.message.as_bytes()),
+            ),
+            self.ccode.encoder(),
+            encoding::Encoder2::new(
+                encoding::CompactSizeEncoder::new(self.reason.len()),
+                encoding::BytesEncoder::without_length_prefix(self.reason.as_bytes()),
+            ),
+            encoding::ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+type RejectInnerDecoder = encoding::Decoder4<
+    encoding::ByteVecDecoder,
+    RejectReasonDecoder,
+    encoding::ByteVecDecoder,
+    encoding::ArrayDecoder<32>,
+>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// Decoder type for a [`Reject`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct RejectDecoder(RejectInnerDecoder);
+
+    fn map_push_bytes_err(
+        err: <RejectInnerDecoder as encoding::Decoder>::Error
+    ) -> RejectDecoderError {
+        RejectDecoderError::Decoder(err)
+    }
+
+    fn end(
+        result: Result<<RejectInnerDecoder as encoding::Decoder>::Output, <RejectInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<Reject, RejectDecoderError> {
+        let (message, ccode, reason, hash) = result.map_err(RejectDecoderError::Decoder)?;
+        let message = String::from_utf8(message).map_err(|_| RejectDecoderError::InvalidUtf8)?;
+        let reason = String::from_utf8(reason).map_err(|_| RejectDecoderError::InvalidUtf8)?;
+
+        Ok(Reject {
+            message: Cow::Owned(message),
+            ccode,
+            reason: Cow::Owned(reason),
+            hash: sha256d::Hash::from_byte_array(hash),
+        })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for Reject {
+    type Decoder = RejectDecoder;
+
+    fn decoder() -> Self::Decoder {
+        RejectDecoder(encoding::Decoder4::new(
+            encoding::ByteVecDecoder::new(),
+            RejectReason::decoder(),
+            encoding::ByteVecDecoder::new(),
+            encoding::ArrayDecoder::new(),
+        ))
+    }
+}
+
+/// Errors occurring when decoding a [`Reject`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RejectDecoderError {
+    /// Inner decoder error.
+    Decoder(<RejectInnerDecoder as encoding::Decoder>::Error),
+    /// Invalid UTF-8.
+    InvalidUtf8,
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for RejectDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for RejectDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(e) => write_err!(f, "reject error"; e),
+            Self::InvalidUtf8 => write!(f, "invalid utf-8"),
+        }
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for RejectDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(e) => Some(e),
+            Self::InvalidUtf8 => None,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
