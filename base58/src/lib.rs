@@ -50,12 +50,12 @@ use crate::error::{
     UnexpectedLengthError,
 };
 #[cfg(not(feature = "alloc"))]
-use crate::error::{Error, InputTooLongErrorInner, InvalidCharacterError};
+use crate::error::{DecodeCheckError, InputTooLongErrorInner, InvalidCharacterError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
-pub use self::error::{Error, InvalidCharacterError};
+pub use self::error::{DecodeCheckError, InvalidCharacterError};
 #[doc(no_inline)]
 pub use self::error::{DecodeCheckArrayError, InputTooLongError};
 
@@ -143,7 +143,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 /// * The decoded data is less than 4 bytes (too short for checksum verification).
 /// * The checksum does not match the expected value.
 #[cfg(feature = "alloc")]
-pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
+pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     let mut ret: Vec<u8> = decode(data)?;
     let (remaining, &data_check) =
         ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
@@ -186,7 +186,8 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
                     expected: N,
                     actual: data.len() * 11 / 15,
                 }),
-            Base256Error::InvalidChar(err) => DecodeCheckArrayErrorInner::Decode(Error::from(err)),
+            Base256Error::InvalidChar(err) =>
+                DecodeCheckArrayErrorInner::Decode(DecodeCheckError::from(err)),
         })
         .map_err(DecodeCheckArrayError)?;
 
@@ -206,9 +207,9 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     let decoded = &decoded[..decoded_len];
 
     let (payload, &data_check) = decoded.split_last_chunk::<4>().ok_or_else(|| {
-        DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(Error::from(TooShortError {
-            length: decoded_len,
-        })))
+        DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(DecodeCheckError::from(
+            TooShortError { length: decoded_len },
+        )))
     })?;
 
     if payload.len() != N {
@@ -222,9 +223,9 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     let actual = u32::from_le_bytes(data_check);
 
     if actual != expected {
-        return Err(DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(Error::from(
-            IncorrectChecksumError { incorrect: actual, expected },
-        ))));
+        return Err(DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(
+            DecodeCheckError::from(IncorrectChecksumError { incorrect: actual, expected }),
+        )));
     }
 
     Ok(payload.try_into().expect("payload length checked to equal N"))
