@@ -15,9 +15,10 @@
 use core::fmt;
 use core::marker::PhantomData;
 
+use hex::DisplayHex as _;
 use serde::{de, Deserializer, Serializer};
 
-use crate::{Decode, Encode};
+use crate::{Decode, Encode, Encoder as _};
 
 /// Serializes a type as a consensus-encoded hex string.
 ///
@@ -35,15 +36,13 @@ where
 
         impl<T: Encode> fmt::Display for ConsensusHex<'_, T> {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                let encoder = self.0.encoder();
-                let byte_iter = crate::EncoderByteIter::new(encoder);
-                let iter = hex::BytesToHexIter::new(byte_iter, hex::Case::Lower).flatten();
-
-                for ch in iter {
-                    fmt::Display::fmt(&ch, f)?;
+                let mut encoder = self.0.encoder();
+                loop {
+                    fmt::Display::fmt(&encoder.current_chunk().as_hex(), f)?;
+                    if encoder.advance().has_finished() {
+                        return Ok(());
+                    }
                 }
-
-                Ok(())
             }
         }
 
