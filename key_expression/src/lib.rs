@@ -29,10 +29,10 @@ extern crate serde;
 // The impl_array_newtype_stringify requires crate::serde, $crate::hex and
 // crate::hashes to exist.
 #[cfg(feature = "alloc")]
-include!("../include/array_newtype.rs");
+include!(concat!(env!("OUT_DIR"), "/array_newtype.rs"));
 
 #[cfg(feature = "alloc")]
-include!("../include/newtype.rs");
+include!(concat!(env!("OUT_DIR"), "/newtype.rs"));
 
 #[cfg(feature = "alloc")]
 pub mod bip32;

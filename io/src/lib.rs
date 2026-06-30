@@ -649,7 +649,7 @@ where
 }
 
 #[cfg(feature = "std")]
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+include!(concat!(env!("OUT_DIR"), "/newtype.rs")); // Explained in `REPO_DIR/docs/README.md`.
 
 #[cfg(test)]
 mod tests {

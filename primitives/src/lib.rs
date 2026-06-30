@@ -125,7 +125,7 @@ pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
 }
 
 #[cfg(feature = "alloc")]
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
-include!("../include/decoder_newtype.rs"); // decoder_newtype! macro
+include!(concat!(env!("OUT_DIR"), "/newtype.rs")); // Explained in `REPO_DIR/docs/README.md`.
+include!(concat!(env!("OUT_DIR"), "/decoder_newtype.rs")); // decoder_newtype! macro
 #[cfg(feature = "alloc")]
-include!("../include/asref_push_bytes.rs"); // impl_asref_push_bytes! macro
+include!(concat!(env!("OUT_DIR"), "/asref_push_bytes.rs")); // impl_asref_push_bytes! macro

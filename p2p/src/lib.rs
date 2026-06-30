@@ -8,7 +8,7 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 
-include!("../include/array_newtype.rs");
+include!(concat!(env!("OUT_DIR"), "/array_newtype.rs"));
 
 mod network_ext;
 
@@ -501,7 +501,7 @@ impl<'a> Arbitrary<'a> for Magic {
 }
 
 // decoder_newtype! macro
-include!("../include/decoder_newtype.rs");
+include!(concat!(env!("OUT_DIR"), "/decoder_newtype.rs"));
 
 #[cfg(test)]
 mod tests {

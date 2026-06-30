@@ -76,4 +76,4 @@ pub use self::{
 
 // decoder_newtype! macro
 #[cfg(feature = "encoding")]
-include!("../include/decoder_newtype.rs");
+include!(concat!(env!("OUT_DIR"), "/decoder_newtype.rs"));
