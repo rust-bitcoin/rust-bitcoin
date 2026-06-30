@@ -1,5 +1,5 @@
 [workspace]
-members = ["bitcoin", "hashes", "fuzz", "io", "units", "base58"]
+members = ["bitcoin", "hashes", "io", "units", "base58"]
 resolver = "2"
 
 [workspace.metadata.rbmt.toolchains]
