@@ -29,10 +29,6 @@ impl From<Infallible> for ParseError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
-impl From<Infallible> for ParseErrorInner {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
@@ -81,10 +77,6 @@ pub(crate) enum ParseAmountErrorInner {
 }
 
 impl From<Infallible> for ParseAmountError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<Infallible> for ParseAmountErrorInner {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
