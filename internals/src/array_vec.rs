@@ -389,7 +389,7 @@ mod tests {
     #[test]
     fn serde_deserialize_overflow_json_returns_error() {
         // CAP=2 but JSON contains 3 elements -> must error, not panic.
-        // Excercises the read-until-overflow path (no usable size_hint).
+        // Exercises the read-until-overflow path (no usable size_hint).
         let json = "[1,2,3]";
         let res: Result<ArrayVec<u8, 2>, _> = crate::serde_json::from_str(json);
         assert!(res.is_err(), "expected an error for over-capacity input");
@@ -399,7 +399,7 @@ mod tests {
     #[test]
     fn serde_deserialize_overflow_bincode_returns_error() {
         // Exercises the size_hint > CAP fast-reject path; bincode prefixes the
-        // sequence with a length, which becomes the sze_hint on deserialize.
+        // sequence with a length, which becomes the size_hint on deserialize.
         let slice: &[u8] = &[1, 2, 3];
         let bin = crate::bincode::serialize(slice).expect("bincode failed to encode");
         let res: Result<ArrayVec<u8, 2>, _> = crate::bincode::deserialize(&bin);
