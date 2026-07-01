@@ -166,7 +166,7 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
 #[cfg(feature = "alloc")]
 const SHORT_OPT_BUFFER_LEN: usize = 128;
 
-/// Encodes `data` as a base58 string (see also `base58::encode_check()`).
+/// Encodes `data` as a base58 string (see also [`encode_check`]).
 #[allow(clippy::missing_panics_doc)] // fmt::Write returns Result but String is infallible.
 #[cfg(feature = "alloc")]
 pub fn encode(data: &[u8]) -> String {
