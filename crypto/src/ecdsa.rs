@@ -102,8 +102,7 @@ impl Signature {
 impl fmt::Display for Signature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.signature.serialize_der().as_hex(), f)?;
-        fmt::LowerHex::fmt(&[self.sighash_type as u8].as_hex(), f)
+        fmt::Display::fmt(&self.serialize(), f)
     }
 }
 
@@ -448,5 +447,22 @@ mod tests {
         };
 
         assert_eq!(sig.serialize().iter().copied().collect::<Vec<u8>>(), sig.to_vec());
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn signature_display_matches_serialized_signature() {
+        use alloc::format;
+
+        let sig = Signature {
+            signature: secp256k1::ecdsa::Signature::from_str(TEST_SIGNATURE_HEX).unwrap(),
+            sighash_type: EcdsaSighashType::All,
+        };
+
+        let sig_format = format!("{:.4}", sig);
+        let ser_format = format!("{:.4}", sig.serialize());
+        assert_eq!(sig_format, ser_format);
+        assert_eq!(sig_format, "3046");
     }
 }
