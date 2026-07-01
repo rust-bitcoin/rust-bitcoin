@@ -61,20 +61,6 @@ impl encoding::Encode for FilterHash {
     }
 }
 
-encoding::encoder_newtype_exact! {
-    /// Encoder type for [`FilterHeader`].
-    #[derive(Debug, Clone)]
-    pub struct FilterHeaderEncoder<'e>(ArrayEncoder<32>);
-}
-
-impl encoding::Encode for FilterHeader {
-    type Encoder<'e> = FilterHeaderEncoder<'e>;
-
-    fn encoder(&self) -> Self::Encoder<'_> {
-        FilterHeaderEncoder::new(ArrayEncoder::without_length_prefix(self.to_byte_array()))
-    }
-}
-
 type HashInnerDecoder = ArrayDecoder<32>;
 
 crate::decoder_newtype! {
