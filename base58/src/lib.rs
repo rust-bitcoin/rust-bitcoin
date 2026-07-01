@@ -125,6 +125,20 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 ///
+/// # Examples
+///
+/// ```
+/// # #[cfg(feature = "alloc")] {
+/// // A valid base58check string.
+/// let payload = base58ck::decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH")?;
+/// assert_eq!(payload[0], 0x00);
+///
+/// // A typo no longer matches the checksum and is rejected.
+/// assert!(base58ck::decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHG").is_err());
+/// # }
+/// # Ok::<_, base58ck::Error>(())
+/// ```
+///
 /// # Errors
 ///
 /// * The input contains an invalid base58 character.
@@ -174,6 +188,22 @@ pub fn encode(data: &[u8]) -> String {
 /// Encodes `data` as a base58 string including the checksum.
 ///
 /// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the end.
+///
+/// # Examples
+///
+/// ```
+/// # #[cfg(feature = "alloc")] {
+/// let mut encoded = base58ck::encode_check(b"payload bytes");
+///
+/// // Checksum encoding round-trips.
+/// assert_eq!(base58ck::decode_check(&encoded)?, b"payload bytes");
+///
+/// // Character typos invalidate the checksum.
+/// encoded.replace_range(0..1, "Z");
+/// assert!(base58ck::decode_check(&encoded).is_err());
+/// # }
+/// # Ok::<_, base58ck::Error>(())
+/// ```
 #[allow(clippy::missing_panics_doc)] // fmt::Write returns Result but String is infallible.
 #[cfg(feature = "alloc")]
 pub fn encode_check(data: &[u8]) -> String {
@@ -185,6 +215,23 @@ pub fn encode_check(data: &[u8]) -> String {
 /// Encodes a slice as base58, including the checksum, into a formatter.
 ///
 /// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the end.
+///
+/// # Examples
+///
+/// ```
+/// use core::fmt;
+///
+/// struct Payload([u8; 21]);
+///
+/// impl fmt::Display for Payload {
+///     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+///         base58ck::encode_check_to_fmt(f, &self.0)
+///     }
+/// }
+///
+/// # #[cfg(feature = "alloc")]
+/// assert_eq!(Payload([0x05; 21]).to_string(), "329ZKGh9pVe72YoH88HEBPrg7xt8Q5QoBr");
+/// ```
 ///
 /// # Errors
 ///
