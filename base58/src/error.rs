@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Error code for the `base58` crate.
+//! Error types for `base58` functionality.
 
 use core::convert::Infallible;
 use core::fmt;
