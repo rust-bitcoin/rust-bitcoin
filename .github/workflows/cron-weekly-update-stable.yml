@@ -11,9 +11,14 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    strategy:
+      matrix:
+        # Update toolchain on master and LTS branches.
+        branch: [master, 0.32.x]
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
+          ref: ${{ matrix.branch }}
           persist-credentials: false
       - name: Install cargo-rbmt
         run: cargo install --git https://github.com/rust-bitcoin/rust-bitcoin-maintainer-tools.git --rev $(cat rbmt-version) cargo-rbmt
@@ -25,10 +30,11 @@ jobs:
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
+          base: ${{ matrix.branch }}
           author: Update Stable Rustc Bot <bot@example.com>
           committer: Update Stable Rustc Bot <bot@example.com>
-          title: Automated weekly update to rustc stable (to ${{ env.stable_version }})
+          title: Automated weekly update to rustc stable (to ${{ env.stable_version }}) on ${{ matrix.branch }}
           body: |
            Automated update to Cargo.toml workspace metadata by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
           commit-message: Automated update to rustc stable-${{ env.stable_version }}
-          branch: create-pull-request/weekly-stable-update
+          branch: create-pull-request/weekly-stable-update-${{ matrix.branch }}
