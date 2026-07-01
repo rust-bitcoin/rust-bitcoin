@@ -9,10 +9,15 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    strategy:
+      matrix:
+        # Run on master as well as LTS branches.
+        branch: [master, 0.32.x]
     steps:
       - name: 'Checkout your code.'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
+          ref: ${{ matrix.branch }}
           persist-credentials: false
 
       - name: 'Run Kani on your code.'
