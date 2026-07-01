@@ -327,18 +327,18 @@ where
     V: Validation,
 {
     type Encoder<'e>
-        = Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+        = BlockEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder2::new(
+        BlockEncoder::new(Encoder2::new(
             self.header.encoder(),
             Encoder2::new(
                 CompactSizeEncoder::new(self.transactions.len()),
                 SliceEncoder::without_length_prefix(&self.transactions),
             ),
-        )
+        ))
     }
 }
 

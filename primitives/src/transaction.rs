@@ -763,16 +763,16 @@ encoding::encoder_newtype_exact! {
 #[cfg(feature = "alloc")]
 impl encoding::Encode for TxIn {
     type Encoder<'e>
-        = Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
+        = TxInEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder3::new(
+        TxInEncoder::new(Encoder3::new(
             self.previous_output.encoder(),
             self.script_sig.encoder(),
             self.sequence.encoder(),
-        )
+        ))
     }
 }
 
@@ -890,12 +890,12 @@ encoding::encoder_newtype_exact! {
 #[cfg(feature = "alloc")]
 impl encoding::Encode for TxOut {
     type Encoder<'e>
-        = Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>
+        = TxOutEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder2::new(self.amount.encoder(), self.script_pubkey.encoder())
+        TxOutEncoder::new(Encoder2::new(self.amount.encoder(), self.script_pubkey.encoder()))
     }
 }
 

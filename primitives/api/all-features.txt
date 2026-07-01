@@ -411,7 +411,7 @@ pub fn bitcoin_primitives::block::Block<V>::fmt(&self, f: &mut core::fmt::Format
 impl<V: bitcoin_primitives::block::Validation> core::fmt::LowerHex for bitcoin_primitives::block::Block<V>
 impl<V: bitcoin_primitives::block::Validation> core::fmt::UpperHex for bitcoin_primitives::block::Block<V>
 impl<V> bitcoin_consensus_encoding::encode::Encode for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation
-pub type bitcoin_primitives::block::Block<V>::Encoder<'e> where Self: 'e = bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_primitives::block::HeaderEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_consensus_encoding::compact_size::CompactSizeEncoder, bitcoin_consensus_encoding::encode::encoders::SliceEncoder<'e, bitcoin_primitives::transaction::Transaction>>>
+pub type bitcoin_primitives::block::Block<V>::Encoder<'e> where Self: 'e = bitcoin_primitives::block::BlockEncoder<'e>
 pub fn bitcoin_primitives::block::Block<V>::encoder(&self) -> Self::Encoder
 impl<V> core::clone::Clone for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::clone::Clone
 pub fn bitcoin_primitives::block::Block<V>::clone(&self) -> bitcoin_primitives::block::Block<V>
@@ -4293,7 +4293,7 @@ pub const bitcoin_primitives::transaction::TxIn::EMPTY_COINBASE: Self
 impl bitcoin_consensus_encoding::decode::Decode for bitcoin_primitives::transaction::TxIn
 pub type bitcoin_primitives::transaction::TxIn::Decoder = bitcoin_primitives::transaction::TxInDecoder
 impl bitcoin_consensus_encoding::encode::Encode for bitcoin_primitives::transaction::TxIn
-pub type bitcoin_primitives::transaction::TxIn::Encoder<'e> where Self: 'e = bitcoin_consensus_encoding::encode::encoders::Encoder3<bitcoin_primitives::transaction::OutPointEncoder<'e>, bitcoin_primitives::script::ScriptEncoder<'e>, bitcoin_units::sequence::SequenceEncoder<'e>>
+pub type bitcoin_primitives::transaction::TxIn::Encoder<'e> where Self: 'e = bitcoin_primitives::transaction::TxInEncoder<'e>
 pub fn bitcoin_primitives::transaction::TxIn::encoder(&self) -> Self::Encoder
 impl core::clone::Clone for bitcoin_primitives::transaction::TxIn
 pub fn bitcoin_primitives::transaction::TxIn::clone(&self) -> bitcoin_primitives::transaction::TxIn
@@ -4430,7 +4430,7 @@ pub bitcoin_primitives::transaction::TxOut::script_pubkey: bitcoin_primitives::s
 impl bitcoin_consensus_encoding::decode::Decode for bitcoin_primitives::transaction::TxOut
 pub type bitcoin_primitives::transaction::TxOut::Decoder = bitcoin_primitives::transaction::TxOutDecoder
 impl bitcoin_consensus_encoding::encode::Encode for bitcoin_primitives::transaction::TxOut
-pub type bitcoin_primitives::transaction::TxOut::Encoder<'e> where Self: 'e = bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_units::amount::unsigned::AmountEncoder<'e>, bitcoin_primitives::script::ScriptEncoder<'e>>
+pub type bitcoin_primitives::transaction::TxOut::Encoder<'e> where Self: 'e = bitcoin_primitives::transaction::TxOutEncoder<'e>
 pub fn bitcoin_primitives::transaction::TxOut::encoder(&self) -> Self::Encoder
 impl core::clone::Clone for bitcoin_primitives::transaction::TxOut
 pub fn bitcoin_primitives::transaction::TxOut::clone(&self) -> bitcoin_primitives::transaction::TxOut
