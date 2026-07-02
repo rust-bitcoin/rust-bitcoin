@@ -626,6 +626,18 @@ mod test {
         assert_eq!(4, core::mem::align_of::<FunctionScopeHash>());
     }
 
+    #[test]
+    fn multiple_tags_one_invocation() {
+        use crate::sha256t::Tag;
+
+        sha256t_tag! {
+            pub struct FooTag = hash_str("foo");
+            pub struct BarTag = hash_str("bar");
+        }
+
+        assert_ne!(FooTag::MIDSTATE, BarTag::MIDSTATE);
+    }
+
     // NB: This runs with and without `hex` feature enabled, testing different code paths for each.
     #[test]
     #[cfg(feature = "alloc")]
