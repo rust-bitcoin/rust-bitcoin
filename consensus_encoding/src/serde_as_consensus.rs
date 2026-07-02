@@ -111,12 +111,45 @@ where
 pub mod opt {
     //! `serde` serialize and deserialize `Option<T>`.
     //!
-    //! **WARNING:**
+    //! Note: This module does not produce consensus-encoded options (i.e., with a length prefix
+    //! of 0 or 1), it defers to the data format's serialization.
     //!
-    //! This module is specifically for using `serde` to be able to serialize any object that is
-    //! `Encode`/`Decode` if said object is in an `Option`.
+    //! This module is designed for serializing and deserializing objects that implement
+    //! `Encode`/`Decode` when wrapped in an `Option`. Use with
+    //! `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::opt")]`.
     //!
-    //! Use with `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::opt")]`.
+    //! # Examples
+    //!
+    //! ```
+    //! # use bitcoin_consensus_encoding::{Encode, Decode, ArrayEncoder, ArrayDecoder, Decoder, DecoderStatus};
+    //! # #[derive(Debug, PartialEq)]
+    //! # struct MyType([u8; 4]);
+    //! # impl Encode for MyType {
+    //! #     type Encoder<'e> = ArrayEncoder<4>;
+    //! #     fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
+    //! # }
+    //! # struct MyTypeDecoder(ArrayDecoder<4>);
+    //! # impl Default for MyTypeDecoder {
+    //! #     fn default() -> Self { MyTypeDecoder(ArrayDecoder::new()) }
+    //! # }
+    //! # impl Decoder for MyTypeDecoder {
+    //! #     type Output = MyType;
+    //! #     type Error = bitcoin_consensus_encoding::UnexpectedEofError;
+    //! #     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> { self.0.push_bytes(bytes) }
+    //! #     fn end(self) -> Result<Self::Output, Self::Error> { self.0.end().map(MyType) }
+    //! #     fn read_limit(&self) -> usize { self.0.read_limit() }
+    //! # }
+    //! # impl Decode for MyType {
+    //! #     type Decoder = MyTypeDecoder;
+    //! # }
+    //! use serde::{Deserialize, Serialize};
+    //!
+    //! #[derive(Serialize, Deserialize)]
+    //! struct MyStruct {
+    //!     #[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::opt")]
+    //!     field: Option<MyType>,
+    //! }
+    //! ```
 
     use core::fmt;
     use core::marker::PhantomData;
@@ -183,13 +216,45 @@ pub mod opt {
 pub mod vec {
     //! `serde` serialize and deserialize `Vec<T>`.
     //!
-    //! **WARNING:**
+    //! Note: This module does not produce consensus-encoded vectors (i.e., with a length prefix),
+    //! it defers to the data format's vector serialization.
     //!
-    //! This is not a consensus encoded vector (i.e, with length prefix). This module is
-    //! specifically for using `serde` to be able to serialize any object that is
-    //! `Encode`/`Decode` if said object is in a `Vec`.
+    //! It is designed for serializing and deserializing objects that implement `Encode`/`Decode`
+    //! when wrapped in a `Vec`. Use with
+    //! `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::vec")]`.
     //!
-    //! Use with `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::vec")]`.
+    //! # Examples
+    //!
+    //! ```
+    //! # use bitcoin_consensus_encoding::{Encode, Decode, ArrayEncoder, ArrayDecoder, Decoder, DecoderStatus};
+    //! # #[derive(Debug, PartialEq)]
+    //! # struct MyType([u8; 2]);
+    //! # impl Encode for MyType {
+    //! #     type Encoder<'e> = ArrayEncoder<2>;
+    //! #     fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
+    //! # }
+    //! # struct MyTypeDecoder(ArrayDecoder<2>);
+    //! # impl Default for MyTypeDecoder {
+    //! #     fn default() -> Self { MyTypeDecoder(ArrayDecoder::new()) }
+    //! # }
+    //! # impl Decoder for MyTypeDecoder {
+    //! #     type Output = MyType;
+    //! #     type Error = bitcoin_consensus_encoding::UnexpectedEofError;
+    //! #     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> { self.0.push_bytes(bytes) }
+    //! #     fn end(self) -> Result<Self::Output, Self::Error> { self.0.end().map(MyType) }
+    //! #     fn read_limit(&self) -> usize { self.0.read_limit() }
+    //! # }
+    //! # impl Decode for MyType {
+    //! #     type Decoder = MyTypeDecoder;
+    //! # }
+    //! use serde::{Deserialize, Serialize};
+    //!
+    //! #[derive(Serialize, Deserialize)]
+    //! struct MyStruct {
+    //!     #[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::vec")]
+    //!     items: Vec<MyType>,
+    //! }
+    //! ```
 
     use alloc::vec::Vec;
     use core::fmt;
