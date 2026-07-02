@@ -450,7 +450,6 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         // If hash_type & 3 equals SIGHASH_SINGLE:
         //      sha_single_output (32): the SHA256 of the corresponding output in CTxOut format.
         if sighash == TapSighashType::Single {
-            let mut enc = sha256::Hash::engine();
             let txout = self
                 .tx
                 .borrow()
@@ -461,8 +460,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     outputs_length: self.tx.borrow().outputs.len(),
                 }))
                 .map_err(SigningDataError::Sighash)?;
-            hashes::encode_to_engine(txout, &mut enc);
-            let hash = sha256::Hash::from_engine(enc);
+            let hash = hashes::encode_to_hash::<_, sha256::HashEngine>(txout);
             writer.write_all(&hash.to_byte_array())?;
         }
 

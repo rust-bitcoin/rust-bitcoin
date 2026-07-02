@@ -16,7 +16,9 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ArrayDecoder, Decoder6};
 #[cfg(feature = "alloc")]
 use encoding::{CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
-use hashes::{sha256d, HashEngine as _};
+use hashes::sha256d;
+#[cfg(feature = "alloc")]
+use hashes::HashEngine as _;
 
 #[cfg(feature = "hex")]
 use crate::hex_codec::HexPrimitive;
@@ -465,9 +467,8 @@ impl Header {
     /// Returns the block hash.
     // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
     pub fn block_hash(&self) -> BlockHash {
-        let mut engine = sha256d::Hash::engine();
-        hashes::encode_to_engine(self, &mut engine);
-        BlockHash::from_byte_array(engine.finalize().to_byte_array())
+        let hash = hashes::encode_to_hash::<_, sha256d::HashEngine>(self);
+        BlockHash::from_byte_array(hash.to_byte_array())
     }
 }
 
