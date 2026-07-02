@@ -48,6 +48,7 @@
 //! * [`decode_from_read_with`]: Counterpart to [`decode_from_read`].
 //! * [`decode_from_slice_with`]: Counterpart to [`decode_from_slice`].
 //! * [`decode_from_slice_unbounded_with`]: Counterpart to [`decode_from_slice_unbounded`].
+//! * [`decode_from_hex_with`]: Counterpart to [`decode_from_hex`].
 //!
 //! And on the encoding side we provide:
 //!
@@ -62,8 +63,8 @@
 //!
 //! * `std` - Enables std lib I/O driver functions and `std::error::Error` impls (implies `alloc`).
 //! * `alloc` - Enables [`encode_to_vec`], `Vec`-based decoders, and allocation-based helpers.
-//! * `hex` - Enables [`decode_from_hex`], [`encode_to_hex`] and [`drain_to_hex`]. Encoding also
-//!   requires `alloc`.
+//! * `hex` - Enables [`decode_from_hex`], [`decode_from_hex_with`], [`encode_to_hex`] and
+//!   [`drain_to_hex`]. Encoding also requires `alloc`.
 
 #![no_std]
 // Coding conventions.
@@ -93,7 +94,7 @@ pub mod serde_as_consensus;
 pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSizeU64Decoder};
 #[cfg(feature = "hex")]
 #[doc(inline)]
-pub use self::decode::decode_from_hex;
+pub use self::decode::{decode_from_hex, decode_from_hex_with};
 #[doc(inline)]
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
