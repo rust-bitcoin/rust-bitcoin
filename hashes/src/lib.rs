@@ -223,6 +223,28 @@ where
     }
 }
 
+/// Encodes an object into a hash value.
+pub fn encode_to_hash<T, H>(obj: &T) -> H::Hash
+where
+    T: encoding::Encode + ?Sized,
+    H: HashEngine + Default,
+{
+    let mut engine = H::default();
+    encode_to_engine(obj, &mut engine);
+    engine.finalize()
+}
+
+/// Drains the output of an [`encoding::Encoder`] into a hash value.
+pub fn drain_to_hash<T, H>(encoder: &mut T) -> H::Hash
+where
+    T: encoding::Encoder + ?Sized,
+    H: HashEngine + Default,
+{
+    let mut engine = H::default();
+    drain_to_engine(encoder, &mut engine);
+    engine.finalize()
+}
+
 /// Trait which applies to hashes of all types.
 pub trait Hash:
     Copy + Clone + PartialEq + Eq + PartialOrd + Ord + hash::Hash + convert::AsRef<[u8]>
