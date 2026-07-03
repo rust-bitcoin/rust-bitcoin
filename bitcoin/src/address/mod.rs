@@ -65,9 +65,8 @@ use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
     self, BuilderExt as _, RedeemScriptSizeError, Script, ScriptExt as _, ScriptHash,
-    ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _,
-    ScriptPubKeyExt as _, WScriptHash, WitnessScript, WitnessScriptExt as _,
-    WitnessScriptSizeError,
+    ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _, WScriptHash,
+    WitnessScript, WitnessScriptExt as _, WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 

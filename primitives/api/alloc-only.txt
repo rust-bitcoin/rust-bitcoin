@@ -3026,15 +3026,24 @@ pub fn bitcoin_primitives::script::PushBytesBuf::from(t: T) -> T
 pub struct bitcoin_primitives::script::PushBytesError
 pub struct bitcoin_primitives::script::RedeemScriptSizeError
 #[repr(transparent)] pub struct bitcoin_primitives::script::Script<T>(_, _)
+impl bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>
+pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>::is_op_return(&self) -> bool
+pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>::is_p2a(&self) -> bool
+pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>::is_p2pkh(&self) -> bool
+pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>::is_p2sh(&self) -> bool
+pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>::is_witness_program(&self) -> bool
 impl<T> bitcoin_primitives::script::Script<T>
 pub const fn bitcoin_primitives::script::Script<T>::as_bytes(&self) -> &[u8]
 pub fn bitcoin_primitives::script::Script<T>::as_mut_bytes(&mut self) -> &mut [u8]
 pub fn bitcoin_primitives::script::Script<T>::into_script_buf(self: alloc::boxed::Box<Self>) -> bitcoin_primitives::script::ScriptBuf<T>
 pub const fn bitcoin_primitives::script::Script<T>::is_empty(&self) -> bool
+pub fn bitcoin_primitives::script::Script<T>::is_p2wpkh(&self) -> bool where T: bitcoin_primitives::script::ScriptHashableTag
+pub fn bitcoin_primitives::script::Script<T>::is_p2wsh(&self) -> bool where T: bitcoin_primitives::script::ScriptHashableTag
 pub const fn bitcoin_primitives::script::Script<T>::len(&self) -> usize
 pub const fn bitcoin_primitives::script::Script<T>::new() -> &'static Self
 pub fn bitcoin_primitives::script::Script<T>::to_bytes(&self) -> alloc::vec::Vec<u8>
 pub fn bitcoin_primitives::script::Script<T>::to_vec(&self) -> alloc::vec::Vec<u8>
+pub fn bitcoin_primitives::script::Script<T>::witness_version(&self) -> core::option::Option<bitcoin_primitives::witness_version::WitnessVersion> where T: bitcoin_primitives::script::ScriptHashableTag
 pub const fn bitcoin_primitives::script::Script<T>::from_bytes(bytes: &[u8]) -> &Self
 pub fn bitcoin_primitives::script::Script<T>::from_bytes_mut(bytes: &mut [u8]) -> &mut Self
 impl core::convert::TryFrom<&bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
@@ -3134,6 +3143,11 @@ pub fn bitcoin_primitives::script::Script<T>::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::script::Script<T> where T: ?core::marker::Sized
 pub fn bitcoin_primitives::script::Script<T>::borrow_mut(&mut self) -> &mut T
 pub struct bitcoin_primitives::script::ScriptBuf<T>(_, _)
+impl bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>
+pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_op_return<T: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(data: T) -> Self
+pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2a() -> Self
+pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2sh(script_hash: bitcoin_primitives::script::ScriptHash) -> Self
+pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2wsh(script_hash: bitcoin_primitives::script::WScriptHash) -> Self
 impl<T> bitcoin_primitives::script::ScriptBuf<T>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::as_mut_script(&mut self) -> &mut bitcoin_primitives::script::Script<T>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::as_script(&self) -> &bitcoin_primitives::script::Script<T>

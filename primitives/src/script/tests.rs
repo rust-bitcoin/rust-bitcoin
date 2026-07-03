@@ -296,6 +296,78 @@ fn partial_ord() {
 }
 
 #[test]
+#[cfg(feature = "hex")]
+fn provably_unspendable() {
+    // p2pk
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_op_return());
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_op_return());
+    // p2pkhash
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac"
+    )
+    .unwrap()
+    .is_op_return());
+    assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
+    )
+    .unwrap()
+    .is_op_return());
+}
+
+#[test]
+#[cfg(feature = "hex")]
+fn op_return() {
+    assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
+    )
+    .unwrap()
+    .is_op_return());
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac"
+    )
+    .unwrap()
+    .is_op_return());
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix("").unwrap().is_op_return());
+}
+
+#[test]
+#[cfg(feature = "hex")]
+fn script_p2sh_p2pkh_template() {
+    // random outputs I picked out of the mempool
+    assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac"
+    )
+    .unwrap()
+    .is_p2pkh());
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac"
+    )
+    .unwrap()
+    .is_p2sh());
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ad"
+    )
+    .unwrap()
+    .is_p2pkh());
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix("").unwrap().is_p2pkh());
+    assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87"
+    )
+    .unwrap()
+    .is_p2sh());
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87"
+    )
+    .unwrap()
+    .is_p2pkh());
+    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
+        "a314acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87"
+    )
+    .unwrap()
+    .is_p2sh());
+}
+
+#[test]
 fn script_hash_from_script() {
     let script = RedeemScript::from_bytes(&[0x51; 520]);
     assert!(ScriptHash::from_script(script).is_ok());
@@ -672,6 +744,128 @@ fn witness_to_signet_script() {
     let witness = WitnessScriptBuf::from(bytes.clone());
     let signet: SignetBlockScriptBuf = witness.into();
     assert_eq!(signet.as_bytes(), &bytes);
+}
+
+// Builds a witness-program-shaped script: version byte, push opcode, then `program_len` bytes.
+fn witness_program_bytes(version_byte: u8, push_opcode: u8, program_len: usize) -> Vec<u8> {
+    let mut v = vec![version_byte, push_opcode];
+    v.resize(2 + program_len, 0xab);
+    v
+}
+
+#[test]
+fn witness_version_valid() {
+    use crate::witness_version::WitnessVersion;
+
+    let p2wpkh = ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x14, 20));
+    assert_eq!(p2wpkh.witness_version(), Some(WitnessVersion::V0));
+
+    let p2wsh = ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x20, 32));
+    assert_eq!(p2wsh.witness_version(), Some(WitnessVersion::V0));
+
+    let p2tr = ScriptPubKeyBuf::from(witness_program_bytes(0x51, 0x20, 32));
+    assert_eq!(p2tr.witness_version(), Some(WitnessVersion::V1));
+
+    let push2 = ScriptPubKeyBuf::from(witness_program_bytes(0x51, 0x02, 2));
+    assert_eq!(push2.witness_version(), Some(WitnessVersion::V1));
+
+    let max = ScriptPubKeyBuf::from(witness_program_bytes(0x51, 0x28, 40));
+    assert_eq!(max.witness_version(), Some(WitnessVersion::V1));
+
+    assert!(ScriptPubKeyBuf::from(vec![0x00, 0x01, 0xab]).witness_version().is_none());
+    assert!(ScriptPubKeyBuf::from(witness_program_bytes(0x51, 0x28, 41))
+        .witness_version()
+        .is_none());
+
+    assert!(ScriptPubKeyBuf::from(vec![0x00, 0x01, 0xab, 0xab]).witness_version().is_none());
+
+    assert!(ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x14, 19))
+        .witness_version()
+        .is_none());
+
+    assert!(ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x14, 21))
+        .witness_version()
+        .is_none());
+}
+
+#[test]
+fn script_is_p2wsh() {
+    let p2wsh = ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x20, 32));
+    assert!(p2wsh.is_p2wsh());
+
+    assert!(!ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x21, 33)).is_p2wsh());
+    assert!(!ScriptPubKeyBuf::from(witness_program_bytes(0x51, 0x20, 32)).is_p2wsh());
+    assert!(!ScriptPubKeyBuf::from(vec![0xab; 34]).is_p2wsh());
+}
+
+#[test]
+fn script_is_p2wpkh() {
+    let p2wpkh = ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x14, 20));
+    assert!(p2wpkh.is_p2wpkh());
+
+    assert!(!ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x15, 21)).is_p2wpkh());
+    assert!(!ScriptPubKeyBuf::from(witness_program_bytes(0x51, 0x14, 20)).is_p2wpkh());
+    assert!(!ScriptPubKeyBuf::from(vec![0xab; 22]).is_p2wpkh());
+}
+
+#[test]
+fn script_is_witness_program() {
+    let p2wpkh = ScriptPubKeyBuf::from(witness_program_bytes(0x00, 0x14, 20));
+    assert!(p2wpkh.is_witness_program());
+
+    assert!(!ScriptPubKeyBuf::from(vec![0x00, 0x01, 0xab]).is_witness_program());
+}
+
+#[test]
+fn script_is_p2a() {
+    let p2a = ScriptPubKeyBuf::new_p2a();
+    assert!(p2a.is_p2a());
+    assert_eq!(p2a.as_bytes(), &[0x51, 0x02, 0x4e, 0x73]);
+
+    assert!(!ScriptPubKeyBuf::from(vec![0x00, 0x02, 0x4e, 0x73]).is_p2a());
+    assert!(!ScriptPubKeyBuf::from(vec![0x51, 0x02, 0xaa, 0xbb]).is_p2a());
+    assert!(!ScriptPubKeyBuf::from(vec![0x51, 0x03, 0x4e, 0x73, 0x00]).is_p2a());
+}
+
+#[test]
+fn new_op_return() {
+    let op_return = ScriptPubKeyBuf::new_op_return([0x01u8, 0x02, 0x03]);
+    assert!(op_return.is_op_return());
+    assert!(!op_return.is_empty());
+    assert_eq!(op_return.as_bytes(), &[0x6a, 0x03, 0x01, 0x02, 0x03]);
+}
+
+#[test]
+fn new_p2sh() {
+    let script_hash = ScriptHash::from_byte_array([0x12; 20]);
+    let p2sh = ScriptPubKeyBuf::new_p2sh(script_hash);
+    assert!(p2sh.is_p2sh());
+    assert!(!p2sh.is_empty());
+
+    let mut want = vec![0xa9, 0x14];
+    want.extend([0x12; 20]);
+    want.push(0x87);
+    assert_eq!(p2sh.as_bytes(), &want[..]);
+}
+
+#[test]
+fn new_p2wsh() {
+    let wscript_hash = WScriptHash::from_byte_array([0x34; 32]);
+    let p2wsh = ScriptPubKeyBuf::new_p2wsh(wscript_hash);
+    assert!(p2wsh.is_p2wsh());
+    assert!(!p2wsh.is_empty());
+
+    let mut want = vec![0x00, 0x20];
+    want.extend([0x34; 32]);
+    assert_eq!(p2wsh.as_bytes(), &want[..]);
+}
+
+#[test]
+fn new_p2a() {
+    let p2a = ScriptPubKeyBuf::new_p2a();
+    assert!(p2a.is_p2a());
+    assert!(!p2a.is_empty());
+    assert_eq!(p2a.as_bytes(), &[0x51, 0x02, 0x4e, 0x73]);
 }
 
 #[test]

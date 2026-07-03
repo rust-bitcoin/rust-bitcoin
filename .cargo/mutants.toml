@@ -71,6 +71,7 @@ exclude_re = [
     "primitives/.* <impl MerkleNode for TxMerkleNode>::calculate_root", # Behind cfg(target_arch = "aarch64"), not compiled on x86_64 CI runner
     "primitives/.* <impl MerkleNode for WitnessMerkleNode>::calculate_root", # Behind cfg(target_arch = "aarch64"), not compiled on x86_64 CI runner
     "primitives/.* replace \\% with \\+ in ScriptBuf<T>::push_slice_no_opt", # as u8 truncation makes >= 0x100 impossible to test
+    "primitives/.* replace \\|\\| with && in Script<T>::witness_version", # && is impossible, and every byte is rejected by the length checks
 
     # consensus_encoding - most of these are for mutations in the logic used to determine when to stop encoding or decoding.
     "consensus_encoding/.* <impl Decoder for ArrayDecoder<N>>::push_bytes", # Mutations cause an infinite loop

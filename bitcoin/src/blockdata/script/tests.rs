@@ -470,39 +470,6 @@ fn script_hashes() {
 }
 
 #[test]
-fn provably_unspendable() {
-    // p2pk
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_op_return());
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_op_return());
-    // p2pkhash
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac"
-    )
-    .unwrap()
-    .is_op_return());
-    assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
-    )
-    .unwrap()
-    .is_op_return());
-}
-
-#[test]
-fn op_return() {
-    assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
-    )
-    .unwrap()
-    .is_op_return());
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac"
-    )
-    .unwrap()
-    .is_op_return());
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix("").unwrap().is_op_return());
-}
-
-#[test]
 fn standard_op_return() {
     assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
         "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
@@ -581,42 +548,6 @@ fn script_buf_collect() {
     assert_eq!(&core::iter::empty::<Instruction<'_>>().collect::<ScriptBuf>(), Script::new());
     let script = ScriptBuf::from_hex_no_length_prefix("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").unwrap();
     assert_eq!(script.instructions().collect::<Result<ScriptBuf, _>>().unwrap(), script);
-}
-
-#[test]
-fn script_p2sh_p2pkh_template() {
-    // random outputs I picked out of the mempool
-    assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac"
-    )
-    .unwrap()
-    .is_p2pkh());
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac"
-    )
-    .unwrap()
-    .is_p2sh());
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ad"
-    )
-    .unwrap()
-    .is_p2pkh());
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix("").unwrap().is_p2pkh());
-    assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87"
-    )
-    .unwrap()
-    .is_p2sh());
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87"
-    )
-    .unwrap()
-    .is_p2pkh());
-    assert!(!ScriptPubKeyBuf::from_hex_no_length_prefix(
-        "a314acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87"
-    )
-    .unwrap()
-    .is_p2sh());
 }
 
 #[test]
