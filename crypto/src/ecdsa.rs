@@ -40,7 +40,7 @@ pub use self::error::ParseSignatureError;
 const MAX_SIG_LEN: usize = 73;
 
 /// An ECDSA signature with the corresponding hash type.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Signature {
     /// The underlying ECDSA Signature.
@@ -101,9 +101,22 @@ impl Signature {
 #[cfg(feature = "hex")]
 impl fmt::Display for Signature {
     #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::LowerHex for Signature {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.signature.serialize_der().as_hex(), f)?;
-        fmt::LowerHex::fmt(&[self.sighash_type as u8].as_hex(), f)
+        self.serialize().fmt(f)
+    }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::UpperHex for Signature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.serialize().fmt(f)
     }
 }
 
@@ -279,6 +292,27 @@ impl<'a> IntoIterator for &'a SerializedSignature {
     fn into_iter(self) -> Self::IntoIter { (**self).iter() }
 }
 
+impl From<Signature> for SerializedSignature {
+    #[inline]
+    fn from(value: Signature) -> Self { Self::from_signature(value) }
+}
+
+impl TryFrom<SerializedSignature> for Signature {
+    type Error = DecodeError;
+
+    #[inline]
+    fn try_from(value: SerializedSignature) -> Result<Self, Self::Error> { value.to_signature() }
+}
+
+impl<'a> TryFrom<&'a SerializedSignature> for Signature {
+    type Error = DecodeError;
+
+    #[inline]
+    fn try_from(value: &'a SerializedSignature) -> Result<Self, Self::Error> {
+        value.to_signature()
+    }
+}
+
 /// Error types for ECDSA
 pub mod error {
     use core::convert::Infallible;
@@ -438,15 +472,56 @@ mod tests {
     #[cfg(feature = "alloc")]
     const TEST_SIGNATURE_HEX: &str = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
 
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn sig() -> Signature {
+        Signature {
+            signature: secp256k1::ecdsa::Signature::from_str(TEST_SIGNATURE_HEX).unwrap(),
+            sighash_type: EcdsaSighashType::All,
+        }
+    }
+
     #[test]
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn iterate_serialized_signature() {
+        let sig = sig();
+
+        assert_eq!(sig.serialize().iter().copied().collect::<Vec<u8>>(), sig.to_vec());
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn signature_display_matches_serialized_signature() {
+        use alloc::format;
+
         let sig = Signature {
             signature: secp256k1::ecdsa::Signature::from_str(TEST_SIGNATURE_HEX).unwrap(),
             sighash_type: EcdsaSighashType::All,
         };
 
-        assert_eq!(sig.serialize().iter().copied().collect::<Vec<u8>>(), sig.to_vec());
+        let sig_format = format!("{:.4}", sig);
+        let ser_format = format!("{:.4}", sig.serialize());
+        assert_eq!(sig_format, ser_format);
+        assert_eq!(sig_format, "3046");
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn sig_lower_hex() {
+        let want = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab4501";
+        let got = alloc::format!("{:x}", sig());
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn sig_upper_hex() {
+        let want = "3046022100839C1FBC5304DE944F697C9F4B1D01D1FAEBA32D751C0F7ACB21AC8A0F436A72022100E89BD46BB3A5A62ADC679F659B7CE876D83EE297C7A5587B2011C4FCC72EAB4501";
+        let got = alloc::format!("{:X}", sig());
+        assert_eq!(got, want);
     }
 }
