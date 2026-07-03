@@ -21,8 +21,10 @@ use network::NetworkKind;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-    DerivationError, IndexOutOfRangeError, InvalidBase58PayloadLengthError,
-    ParseChildNumberError, ParseDerivationPathError, ParseError, InvalidSeedLengthError
+    CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
+    InvalidBase58PayloadLengthError, InvalidSeedLengthError, MaximumDepthExceededError,
+    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseRelativeDerivationPathError,
+    ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError
 };
 
 /// Version bytes for extended public keys on the Bitcoin network.
@@ -452,7 +454,7 @@ impl AsRef<[ChildNumber]> for RelativeDerivationPath {
 }
 
 impl FromStr for RelativeDerivationPath {
-    type Err = ParseDerivationPathError;
+    type Err = ParseRelativeDerivationPathError;
 
     fn from_str(path: &str) -> Result<Self, Self::Err> {
         if path.is_empty() {
@@ -460,15 +462,15 @@ impl FromStr for RelativeDerivationPath {
         }
 
         if path == "m" || path.starts_with("m/") {
-            return Err(ParseDerivationPathError::UnexpectedMasterPrefix);
+            return Err(ParseRelativeDerivationPathError::UnexpectedMasterPrefix);
         }
 
         let mut ret = Vec::new();
         for part in path.split('/') {
             if part.is_empty() {
-                return Err(ParseDerivationPathError::EmptyChild);
+                return Err(ParseRelativeDerivationPathError::EmptyChild);
             }
-            ret.push(part.parse()?);
+            ret.push(part.parse().map_err(ParseRelativeDerivationPathError::Child)?);
         }
         Ok(Self(ret))
     }
@@ -523,19 +525,27 @@ impl Default for AbsoluteDerivationPath {
 }
 
 impl FromStr for AbsoluteDerivationPath {
-    type Err = ParseDerivationPathError;
+    type Err = ParseAbsoluteDerivationPathError;
 
     fn from_str(path: &str) -> Result<Self, Self::Err> {
         if path == "m" {
             return Ok(Self::master());
         }
 
-        let path = path.strip_prefix("m/").ok_or(ParseDerivationPathError::MissingMasterPrefix)?;
+        let path =
+            path.strip_prefix("m/").ok_or(ParseAbsoluteDerivationPathError::MissingMasterPrefix)?;
         if path.is_empty() {
-            return Err(ParseDerivationPathError::EmptyChild);
+            return Err(ParseAbsoluteDerivationPathError::EmptyChild);
         }
 
-        Ok(Self(path.parse()?))
+        let mut ret = Vec::new();
+        for part in path.split('/') {
+            if part.is_empty() {
+                return Err(ParseAbsoluteDerivationPathError::EmptyChild);
+            }
+            ret.push(part.parse().map_err(ParseAbsoluteDerivationPathError::Child)?);
+        }
+        Ok(Self(RelativeDerivationPath(ret)))
     }
 }
 
@@ -758,7 +768,10 @@ impl Xpriv {
     ///
     /// [`derive_xpriv`]: Xpriv::derive_xpriv
     #[deprecated(since = "TBD", note = "use `derive_xpriv()` instead")]
-    pub fn derive_priv<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
+    pub fn derive_priv<P: AsRef<[ChildNumber]>>(
+        &self,
+        path: P,
+    ) -> Result<Self, MaximumDepthExceededError> {
         self.derive_xpriv(path)
     }
 
@@ -769,7 +782,10 @@ impl Xpriv {
     /// # Errors
     ///
     /// Returns an error if the derived key exceeds the maximum key depth.
-    pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
+    pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(
+        &self,
+        path: P,
+    ) -> Result<Self, MaximumDepthExceededError> {
         let mut sk: Self = *self;
         for cnum in path.as_ref() {
             sk = sk.ckd_priv(*cnum)?;
@@ -778,7 +794,7 @@ impl Xpriv {
     }
 
     /// Private->Private child key derivation
-    fn ckd_priv(&self, i: ChildNumber) -> Result<Self, DerivationError> {
+    fn ckd_priv(&self, i: ChildNumber) -> Result<Self, MaximumDepthExceededError> {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
         if i.is_normal() {
             // Non-hardened key: compute public data and use that.
@@ -800,7 +816,7 @@ impl Xpriv {
 
         Ok(Self {
             network: self.network,
-            depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
+            depth: self.depth.checked_add(1).ok_or(MaximumDepthExceededError {})?,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             private_key: tweaked,
@@ -808,31 +824,27 @@ impl Xpriv {
         })
     }
 
-    /// Decoding extended private key from binary data according to BIP-0032
+    /// Decodes an extended private key from binary data according to BIP-0032.
     ///
     /// # Errors
     ///
-    /// * [`ParseError::UnknownVersion`] if the decoded network value is not main or testnet.
-    /// * [`ParseError::InvalidPrivateKeyPrefix`] if the private key bytes don't start with zero.
-    /// * [`ParseError::Secp256k1`] if the private key bytes are not a valid secp secret key.
-    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
-    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
-    ///   fingerprint is non-zero.
-    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
-    ///   non-zero.
-    pub fn decode(data: &[u8]) -> Result<Self, ParseError> {
+    /// * [`XprivDecodeError::Xkey`] if the common xkey fields are invalid.
+    /// * [`XprivDecodeError::UnknownVersion`] if the decoded network value is not main or testnet.
+    /// * [`XprivDecodeError::InvalidPrivateKeyPrefix`] if the private key bytes don't start with zero.
+    /// * [`XprivDecodeError::Secp256k1`] if the private key bytes are not a valid secp secret key.
+    pub fn decode(data: &[u8]) -> Result<Self, XprivDecodeError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
-            Common::decode(data)?;
+            Common::decode(data).map_err(XprivDecodeError::Xkey)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PRIVATE => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PRIVATE => NetworkKind::Test,
-            unknown => return Err(ParseError::UnknownVersion(unknown)),
+            unknown => return Err(XprivDecodeError::UnknownVersion(unknown)),
         };
 
         let (&zero, private_key) = key.split_first();
         if zero != 0 {
-            return Err(ParseError::InvalidPrivateKeyPrefix);
+            return Err(XprivDecodeError::InvalidPrivateKeyPrefix);
         }
 
         Ok(Self {
@@ -913,7 +925,7 @@ impl Xpub {
     ///
     /// [`derive_xpub`]: Xpub::derive_xpub
     #[deprecated(since = "TBD", note = "use `derive_xpub()` instead")]
-    pub fn derive_pub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
+    pub fn derive_pub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DeriveXpubError> {
         self.derive_xpub(path)
     }
 
@@ -925,7 +937,7 @@ impl Xpub {
     /// # Errors
     ///
     /// Returns an error if any of the [`ChildNumber`]s are hardened.
-    pub fn derive_xpub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
+    pub fn derive_xpub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DeriveXpubError> {
         let mut pk: Self = *self;
         for cnum in path.as_ref() {
             pk = pk.ckd_pub(*cnum)?;
@@ -942,9 +954,9 @@ impl Xpub {
     pub fn ckd_pub_tweak(
         &self,
         i: ChildNumber,
-    ) -> Result<(secp256k1::SecretKey, ChainCode), DerivationError> {
+    ) -> Result<(secp256k1::SecretKey, ChainCode), CannotDeriveHardenedChildError> {
         if i.is_hardened() {
-            return Err(DerivationError::CannotDeriveHardenedChild);
+            return Err(CannotDeriveHardenedChildError {});
         }
 
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
@@ -967,14 +979,18 @@ impl Xpub {
     /// Returns an error if the given [`ChildNumber`] is hardened, or if next key exceeds
     /// the maximum derivation depth.
     #[allow(clippy::missing_panics_doc)]
-    pub fn ckd_pub(&self, i: ChildNumber) -> Result<Self, DerivationError> {
-        let (sk, chain_code) = self.ckd_pub_tweak(i)?;
+    pub fn ckd_pub(&self, i: ChildNumber) -> Result<Self, DeriveXpubError> {
+        let (sk, chain_code) =
+            self.ckd_pub_tweak(i).map_err(DeriveXpubError::CannotDeriveHardenedChild)?;
         let tweaked =
             self.public_key.add_exp_tweak(&sk.into()).expect("cryptographically unreachable");
 
         Ok(Self {
             network: self.network,
-            depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
+            depth: self
+                .depth
+                .checked_add(1)
+                .ok_or(DeriveXpubError::MaximumDepthExceeded(MaximumDepthExceededError {}))?,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             public_key: tweaked,
@@ -982,25 +998,21 @@ impl Xpub {
         })
     }
 
-    /// Decoding extended public key from binary data according to BIP-0032
+    /// Decodes an extended public key from binary data according to BIP-0032.
     ///
     /// # Errors
     ///
-    /// * [`ParseError::UnknownVersion`] if the decoded network value is not main or testnet.
-    /// * [`ParseError::Secp256k1`] if the public key bytes are not a valid secp public key.
-    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
-    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
-    ///   fingerprint is non-zero.
-    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
-    ///   non-zero.
-    pub fn decode(data: &[u8]) -> Result<Self, ParseError> {
+    /// * [`XpubDecodeError::Xkey`] if the common xkey fields are invalid.
+    /// * [`XpubDecodeError::UnknownVersion`] if the decoded network value is not main or testnet.
+    /// * [`XpubDecodeError::Secp256k1`] if the public key bytes are not a valid secp public key.
+    pub fn decode(data: &[u8]) -> Result<Self, XpubDecodeError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
-            Common::decode(data)?;
+            Common::decode(data).map_err(XpubDecodeError::Xkey)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PUBLIC => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PUBLIC => NetworkKind::Test,
-            unknown => return Err(ParseError::UnknownVersion(unknown)),
+            unknown => return Err(XpubDecodeError::UnknownVersion(unknown)),
         };
 
         Ok(Self {
@@ -1046,16 +1058,18 @@ impl fmt::Display for Xpriv {
 }
 
 impl FromStr for Xpriv {
-    type Err = ParseError;
+    type Err = ParseXprivError;
 
-    fn from_str(inp: &str) -> Result<Self, ParseError> {
+    fn from_str(inp: &str) -> Result<Self, ParseXprivError> {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
-            return Err(InvalidBase58PayloadLengthError { length: data.len() }.into());
+            return Err(ParseXprivError::InvalidBase58PayloadLength(
+                InvalidBase58PayloadLengthError { length: data.len() },
+            ));
         }
 
-        Self::decode(&data)
+        Self::decode(&data).map_err(ParseXprivError::Decode)
     }
 }
 
@@ -1066,16 +1080,18 @@ impl fmt::Display for Xpub {
 }
 
 impl FromStr for Xpub {
-    type Err = ParseError;
+    type Err = ParseXpubError;
 
-    fn from_str(inp: &str) -> Result<Self, ParseError> {
+    fn from_str(inp: &str) -> Result<Self, ParseXpubError> {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
-            return Err(InvalidBase58PayloadLengthError { length: data.len() }.into());
+            return Err(ParseXpubError::InvalidBase58PayloadLength(
+                InvalidBase58PayloadLengthError { length: data.len() },
+            ));
         }
 
-        Self::decode(&data)
+        Self::decode(&data).map_err(ParseXpubError::Decode)
     }
 }
 
@@ -1103,14 +1119,14 @@ impl Common {
     ///
     /// # Errors
     ///
-    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
-    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
+    /// * [`XkeyDecodeError::WrongExtendedKeyLength`] if the data is not the correct length.
+    /// * [`XkeyDecodeError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
     ///   fingerprint is non-zero.
-    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
+    /// * [`XkeyDecodeError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
     ///   non-zero.
-    fn decode(data: &[u8]) -> Result<Self, ParseError> {
+    fn decode(data: &[u8]) -> Result<Self, XkeyDecodeError> {
         let data: &[u8; 78] =
-            data.try_into().map_err(|_| ParseError::WrongExtendedKeyLength(data.len()))?;
+            data.try_into().map_err(|_| XkeyDecodeError::WrongExtendedKeyLength(data.len()))?;
 
         let (&network, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();
@@ -1120,11 +1136,11 @@ impl Common {
 
         if depth == 0 {
             if parent_fingerprint != [0u8; 4] {
-                return Err(ParseError::NonZeroParentFingerprintForMasterKey);
+                return Err(XkeyDecodeError::NonZeroParentFingerprintForMasterKey);
             }
 
             if child_number != [0u8; 4] {
-                return Err(ParseError::NonZeroChildNumberForMasterKey);
+                return Err(XkeyDecodeError::NonZeroChildNumberForMasterKey);
             }
         }
 
@@ -1146,45 +1162,38 @@ pub mod error {
 
     use internals::write_err;
 
-    /// A BIP-0032 error
+    /// Error decoding common fields of a BIP-0032 extended key.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    pub enum ParseError {
-        /// A secp256k1 error occurred
-        Secp256k1(secp256k1::Error),
-        /// Unknown version magic bytes
-        UnknownVersion([u8; 4]),
+    pub enum XkeyDecodeError {
         /// Encoded extended key data has wrong length
         WrongExtendedKeyLength(usize),
-        /// Base58 encoding error
-        Base58(base58::Error),
-        /// Base58 decoded data was an invalid length.
-        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
-        /// Invalid private key prefix (byte 45 must be 0)
-        InvalidPrivateKeyPrefix,
         /// Non-zero parent fingerprint for a master key (depth 0)
         NonZeroParentFingerprintForMasterKey,
         /// Non-zero child number for a master key (depth 0)
         NonZeroChildNumberForMasterKey,
     }
 
-    impl From<Infallible> for ParseError {
+    impl From<Infallible> for XkeyDecodeError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for ParseError {
+    #[cfg(feature = "std")]
+    impl std::error::Error for XkeyDecodeError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::WrongExtendedKeyLength(_) => None,
+                Self::NonZeroParentFingerprintForMasterKey => None,
+                Self::NonZeroChildNumberForMasterKey => None,
+            }
+        }
+    }
+
+    impl fmt::Display for XkeyDecodeError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
-                Self::UnknownVersion(ref bytes) =>
-                    write!(f, "unknown version magic bytes: {:?}", bytes),
                 Self::WrongExtendedKeyLength(ref len) =>
                     write!(f, "encoded extended key data has wrong length {}", len),
-                Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
-                Self::InvalidPrivateKeyPrefix => f.write_str(
-                    "invalid private key prefix, byte 45 must be 0 as required by BIP-0032",
-                ),
                 Self::NonZeroParentFingerprintForMasterKey =>
                     f.write_str("non-zero parent fingerprint in master key"),
                 Self::NonZeroChildNumberForMasterKey =>
@@ -1193,68 +1202,246 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for ParseError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            match self {
-                Self::Secp256k1(ref e) => Some(e),
-                Self::Base58(ref e) => Some(e),
-                Self::InvalidBase58PayloadLength(ref e) => Some(e),
-                Self::UnknownVersion(_) | Self::WrongExtendedKeyLength(_) => None,
-                Self::InvalidPrivateKeyPrefix => None,
-                Self::NonZeroParentFingerprintForMasterKey => None,
-                Self::NonZeroChildNumberForMasterKey => None,
-            }
-        }
-    }
-
-    impl From<secp256k1::Error> for ParseError {
-        fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
-    }
-
-    impl From<base58::Error> for ParseError {
-        fn from(err: base58::Error) -> Self { Self::Base58(err) }
-    }
-
-    impl From<InvalidBase58PayloadLengthError> for ParseError {
-        fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
-    }
-
-    /// A BIP-0032 error
+    /// Error decoding binary BIP-0032 xpriv data.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    pub enum DerivationError {
-        /// Attempted to derive a hardened child from an xpub.
-        ///
-        /// You can only derive hardened children from xprivs.
-        CannotDeriveHardenedChild,
-        /// Attempted to derive a child of depth 256 or higher.
-        ///
-        /// There is no way to encode such xkeys.
-        MaximumDepthExceeded,
+    pub enum XprivDecodeError {
+        /// A common xkey decode error.
+        Xkey(XkeyDecodeError),
+        /// A secp256k1 error occurred.
+        Secp256k1(secp256k1::Error),
+        /// Unknown private version magic bytes.
+        UnknownVersion([u8; 4]),
+        /// Invalid private key prefix (byte 45 must be 0).
+        InvalidPrivateKeyPrefix,
     }
 
-    impl From<Infallible> for DerivationError {
+    impl From<Infallible> for XprivDecodeError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for DerivationError {
+    impl std::error::Error for XprivDecodeError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::CannotDeriveHardenedChild => None,
-                Self::MaximumDepthExceeded => None,
+                Self::Xkey(ref e) => Some(e),
+                Self::Secp256k1(ref e) => Some(e),
+                Self::UnknownVersion(_) | Self::InvalidPrivateKeyPrefix => None,
             }
         }
     }
 
-    impl fmt::Display for DerivationError {
+    impl fmt::Display for XprivDecodeError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Xkey(ref e) => e.fmt(f),
+                Self::Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+                Self::UnknownVersion(ref bytes) =>
+                    write!(f, "unknown private version magic bytes: {:?}", bytes),
+                Self::InvalidPrivateKeyPrefix => f.write_str(
+                    "invalid private key prefix, byte 45 must be 0 as required by BIP-0032",
+                ),
+            }
+        }
+    }
+
+    impl From<secp256k1::Error> for XprivDecodeError {
+        fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
+    }
+
+    /// Error decoding binary BIP-0032 xpub data.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum XpubDecodeError {
+        /// A common xkey decode error.
+        Xkey(XkeyDecodeError),
+        /// A secp256k1 error occurred.
+        Secp256k1(secp256k1::Error),
+        /// Unknown public version magic bytes.
+        UnknownVersion([u8; 4]),
+    }
+
+    impl From<Infallible> for XpubDecodeError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for XpubDecodeError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Xkey(ref e) => Some(e),
+                Self::Secp256k1(ref e) => Some(e),
+                Self::UnknownVersion(_) => None,
+            }
+        }
+    }
+
+    impl fmt::Display for XpubDecodeError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Xkey(ref e) => e.fmt(f),
+                Self::Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+                Self::UnknownVersion(ref bytes) =>
+                    write!(f, "unknown public version magic bytes: {:?}", bytes),
+            }
+        }
+    }
+
+    impl From<secp256k1::Error> for XpubDecodeError {
+        fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
+    }
+
+    /// Error parsing a base58check BIP-0032 xpriv string.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum ParseXprivError {
+        /// Base58 encoding error.
+        Base58(base58::Error),
+        /// Base58 decoded data was an invalid length.
+        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+        /// Binary xpriv decode error.
+        Decode(XprivDecodeError),
+    }
+
+    impl From<Infallible> for ParseXprivError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseXprivError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Base58(ref e) => Some(e),
+                Self::InvalidBase58PayloadLength(ref e) => Some(e),
+                Self::Decode(ref e) => Some(e),
+            }
+        }
+    }
+
+    impl fmt::Display for ParseXprivError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
+                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
+                Self::Decode(ref e) => e.fmt(f),
+            }
+        }
+    }
+
+    impl From<base58::Error> for ParseXprivError {
+        fn from(e: base58::Error) -> Self { Self::Base58(e) }
+    }
+
+    /// Error parsing a base58check BIP-0032 xpub string.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum ParseXpubError {
+        /// Base58 encoding error.
+        Base58(base58::Error),
+        /// Base58 decoded data was an invalid length.
+        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+        /// Binary xpub decode error.
+        Decode(XpubDecodeError),
+    }
+
+    impl From<Infallible> for ParseXpubError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseXpubError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Base58(ref e) => Some(e),
+                Self::InvalidBase58PayloadLength(ref e) => Some(e),
+                Self::Decode(ref e) => Some(e),
+            }
+        }
+    }
+
+    impl fmt::Display for ParseXpubError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
+                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
+                Self::Decode(ref e) => e.fmt(f),
+            }
+        }
+    }
+
+    impl From<base58::Error> for ParseXpubError {
+        fn from(e: base58::Error) -> Self { Self::Base58(e) }
+    }
+
+    /// Attempted to derive a child of depth 256 or higher.
+    ///
+    /// There is no way to encode such xkeys.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct MaximumDepthExceededError {}
+
+    impl From<Infallible> for MaximumDepthExceededError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for MaximumDepthExceededError {}
+
+    impl fmt::Display for MaximumDepthExceededError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("cannot derive child of depth 256 or higher")
+        }
+    }
+
+    /// Attempted to derive a hardened child from an xpub.
+    ///
+    /// You can only derive hardened children from xprivs.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct CannotDeriveHardenedChildError {}
+
+    impl From<Infallible> for CannotDeriveHardenedChildError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for CannotDeriveHardenedChildError {}
+
+    impl fmt::Display for CannotDeriveHardenedChildError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("cannot derive hardened child of public key")
+        }
+    }
+
+    /// Error deriving an extended public key.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum DeriveXpubError {
+        /// Attempted to derive a hardened child from an xpub.
+        CannotDeriveHardenedChild(CannotDeriveHardenedChildError),
+        /// Attempted to derive a child of depth 256 or higher.
+        MaximumDepthExceeded(MaximumDepthExceededError),
+    }
+
+    impl From<Infallible> for DeriveXpubError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for DeriveXpubError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::CannotDeriveHardenedChild(ref e) => Some(e),
+                Self::MaximumDepthExceeded(ref e) => Some(e),
+            }
+        }
+    }
+
+    impl fmt::Display for DeriveXpubError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
-                Self::CannotDeriveHardenedChild =>
-                    f.write_str("cannot derive hardened child of public key"),
-                Self::MaximumDepthExceeded =>
-                    f.write_str("cannot derive child of depth 256 or higher"),
+                Self::CannotDeriveHardenedChild(ref e) => e.fmt(f),
+                Self::MaximumDepthExceeded(ref e) => e.fmt(f),
             }
         }
     }
@@ -1274,17 +1461,17 @@ pub mod error {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for IndexOutOfRangeError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "index {} out of range [0, 2^31 - 1] (do you have a hardened child number, rather than an index?)", self.index)
-        }
-    }
-
     #[cfg(feature = "std")]
     impl std::error::Error for IndexOutOfRangeError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self { index: _ } = self;
             None
+        }
+    }
+
+    impl fmt::Display for IndexOutOfRangeError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "index {} out of range [0, 2^31 - 1] (do you have a hardened child number, rather than an index?)", self.index)
         }
     }
 
@@ -1301,15 +1488,6 @@ pub mod error {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for ParseChildNumberError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match *self {
-                Self::IndexOutOfRange(ref e) => e.fmt(f),
-                Self::ParseInt(ref e) => e.fmt(f),
-            }
-        }
-    }
-
     #[cfg(feature = "std")]
     impl std::error::Error for ParseChildNumberError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -1320,48 +1498,87 @@ pub mod error {
         }
     }
 
-    /// Error parsing a derivation path.
+    impl fmt::Display for ParseChildNumberError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match *self {
+                Self::IndexOutOfRange(ref e) => e.fmt(f),
+                Self::ParseInt(ref e) => e.fmt(f),
+            }
+        }
+    }
+
+    /// Error parsing a relative derivation path.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum ParseDerivationPathError {
+    #[non_exhaustive]
+    pub enum ParseRelativeDerivationPathError {
         /// Failed to parse a child number.
         Child(ParseChildNumberError),
         /// The path contained an empty child number.
         EmptyChild,
-        /// The absolute path was missing the `m` master prefix.
-        MissingMasterPrefix,
         /// The relative path unexpectedly contained the `m` master prefix.
         UnexpectedMasterPrefix,
     }
 
-    impl From<Infallible> for ParseDerivationPathError {
+    impl From<Infallible> for ParseRelativeDerivationPathError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for ParseDerivationPathError {
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseRelativeDerivationPathError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match *self {
+                Self::Child(ref e) => Some(e),
+                Self::EmptyChild | Self::UnexpectedMasterPrefix => None,
+            }
+        }
+    }
+
+    impl fmt::Display for ParseRelativeDerivationPathError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 Self::Child(ref e) => write_err!(f, "failed to parse child number"; e),
                 Self::EmptyChild => f.write_str("derivation path contains an empty child number"),
-                Self::MissingMasterPrefix =>
-                    f.write_str("absolute derivation path is missing master prefix `m`"),
                 Self::UnexpectedMasterPrefix =>
                     f.write_str("relative derivation path contains unexpected master prefix `m`"),
             }
         }
     }
 
+    /// Error parsing an absolute derivation path.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum ParseAbsoluteDerivationPathError {
+        /// Failed to parse a child number.
+        Child(ParseChildNumberError),
+        /// The path contained an empty child number.
+        EmptyChild,
+        /// The absolute path was missing the `m` master prefix.
+        MissingMasterPrefix,
+    }
+
+    impl From<Infallible> for ParseAbsoluteDerivationPathError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     #[cfg(feature = "std")]
-    impl std::error::Error for ParseDerivationPathError {
+    impl std::error::Error for ParseAbsoluteDerivationPathError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match *self {
                 Self::Child(ref e) => Some(e),
-                Self::EmptyChild | Self::MissingMasterPrefix | Self::UnexpectedMasterPrefix => None,
+                Self::EmptyChild | Self::MissingMasterPrefix => None,
             }
         }
     }
 
-    impl From<ParseChildNumberError> for ParseDerivationPathError {
-        fn from(e: ParseChildNumberError) -> Self { Self::Child(e) }
+    impl fmt::Display for ParseAbsoluteDerivationPathError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match *self {
+                Self::Child(ref e) => write_err!(f, "failed to parse child number"; e),
+                Self::EmptyChild => f.write_str("derivation path contains an empty child number"),
+                Self::MissingMasterPrefix =>
+                    f.write_str("absolute derivation path is missing master prefix `m`"),
+            }
+        }
     }
 
     /// Decoded base58 data was an invalid length.
@@ -1371,13 +1588,21 @@ pub mod error {
         pub(crate) length: usize,
     }
 
+    impl From<Infallible> for InvalidBase58PayloadLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidBase58PayloadLengthError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { length: _ } = self;
+            None
+        }
+    }
+
     impl InvalidBase58PayloadLengthError {
         /// Returns the invalid payload length.
         pub fn invalid_base58_payload_length(&self) -> usize { self.length }
-    }
-
-    impl From<Infallible> for InvalidBase58PayloadLengthError {
-        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for InvalidBase58PayloadLengthError {
@@ -1390,27 +1615,27 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for InvalidBase58PayloadLengthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { length: _ } = self;
-            None
-        }
-    }
-
     /// Master seed had an invalid length.
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub struct InvalidSeedLengthError {
         pub(crate) length: usize,
     }
 
+    impl From<Infallible> for InvalidSeedLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidSeedLengthError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { length: _ } = self;
+            None
+        }
+    }
+
     impl InvalidSeedLengthError {
         /// Returns the invalid seed length.
         pub fn invalid_seed_length(&self) -> usize { self.length }
-    }
-
-    impl From<Infallible> for InvalidSeedLengthError {
-        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for InvalidSeedLengthError {
@@ -1420,14 +1645,6 @@ pub mod error {
                 "invalid BIP-0032 master seed length: {} (expected 16 to 64 inclusive)",
                 self.length
             )
-        }
-    }
-
-    #[cfg(feature = "std")]
-    impl std::error::Error for InvalidSeedLengthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { length: _ } = self;
-            None
         }
     }
 }
@@ -1516,12 +1733,12 @@ mod tests {
         for path in ["n/0'/0", "4/m/5", "0h/0x"] {
             assert!(matches!(
                 path.parse::<RelativeDerivationPath>(),
-                Err(ParseDerivationPathError::Child(ParseChildNumberError::ParseInt(..))),
+                Err(ParseRelativeDerivationPathError::Child(ParseChildNumberError::ParseInt(..))),
             ));
         }
         assert_eq!(
             "//3/0'".parse::<RelativeDerivationPath>(),
-            Err(ParseDerivationPathError::EmptyChild)
+            Err(ParseRelativeDerivationPathError::EmptyChild)
         );
     }
 
@@ -1585,7 +1802,7 @@ mod tests {
         let invalid_path = "2147483648";
         assert_eq!(
             invalid_path.parse::<RelativeDerivationPath>(),
-            Err(ParseDerivationPathError::Child(ParseChildNumberError::IndexOutOfRange(
+            Err(ParseRelativeDerivationPathError::Child(ParseChildNumberError::IndexOutOfRange(
                 IndexOutOfRangeError { index: 2_147_483_648 }
             ))),
         );
@@ -1604,11 +1821,11 @@ mod tests {
         assert_eq!("".parse::<RelativeDerivationPath>().unwrap(), RelativeDerivationPath(vec![]));
         assert_eq!(
             "m".parse::<RelativeDerivationPath>(),
-            Err(ParseDerivationPathError::UnexpectedMasterPrefix)
+            Err(ParseRelativeDerivationPathError::UnexpectedMasterPrefix)
         );
         assert_eq!(
             "m/".parse::<RelativeDerivationPath>(),
-            Err(ParseDerivationPathError::UnexpectedMasterPrefix)
+            Err(ParseRelativeDerivationPathError::UnexpectedMasterPrefix)
         );
     }
 
@@ -1666,15 +1883,15 @@ mod tests {
 
         assert_eq!(
             "".parse::<AbsoluteDerivationPath>(),
-            Err(ParseDerivationPathError::MissingMasterPrefix)
+            Err(ParseAbsoluteDerivationPathError::MissingMasterPrefix)
         );
         assert_eq!(
             "0/1".parse::<AbsoluteDerivationPath>(),
-            Err(ParseDerivationPathError::MissingMasterPrefix)
+            Err(ParseAbsoluteDerivationPathError::MissingMasterPrefix)
         );
         assert_eq!(
             "m/".parse::<AbsoluteDerivationPath>(),
-            Err(ParseDerivationPathError::EmptyChild)
+            Err(ParseAbsoluteDerivationPathError::EmptyChild)
         );
     }
 
@@ -1749,7 +1966,10 @@ mod tests {
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
         if path.contains_hardened_child() {
-            assert_eq!(pk.derive_xpub(path), Err(DerivationError::CannotDeriveHardenedChild));
+            assert_eq!(
+                pk.derive_xpub(path),
+                Err(DeriveXpubError::CannotDeriveHardenedChild(CannotDeriveHardenedChildError {}))
+            );
         } else {
             assert_eq!(&pk.derive_xpub(path).unwrap().to_string()[..], expected_pk);
         }
@@ -1762,7 +1982,12 @@ mod tests {
                 pk = Xpub::from_xpriv(&sk);
                 assert_eq!(pk, pk2);
             } else {
-                assert_eq!(pk.ckd_pub(num), Err(DerivationError::CannotDeriveHardenedChild));
+                assert_eq!(
+                    pk.ckd_pub(num),
+                    Err(DeriveXpubError::CannotDeriveHardenedChild(
+                        CannotDeriveHardenedChildError {}
+                    ))
+                );
                 pk = Xpub::from_xpriv(&sk);
             }
         }
@@ -1916,7 +2141,7 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(ParseError::InvalidPrivateKeyPrefix) => {}
+            Err(XprivDecodeError::InvalidPrivateKeyPrefix) => {}
             _ => panic!("Expected InvalidPrivateKeyPrefix error, got {:?}", result),
         }
     }
@@ -1927,7 +2152,9 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(ParseError::NonZeroChildNumberForMasterKey) => {}
+            Err(ParseXprivError::Decode(XprivDecodeError::Xkey(
+                XkeyDecodeError::NonZeroChildNumberForMasterKey,
+            ))) => {}
             _ => panic!("Expected NonZeroChildNumberForMasterKey error, got {:?}", result),
         }
     }
@@ -1938,7 +2165,9 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(ParseError::NonZeroParentFingerprintForMasterKey) => {}
+            Err(ParseXprivError::Decode(XprivDecodeError::Xkey(
+                XkeyDecodeError::NonZeroParentFingerprintForMasterKey,
+            ))) => {}
             _ => panic!("Expected NonZeroParentFingerprintForMasterKey error, got {:?}", result),
         }
     }
