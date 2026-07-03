@@ -20,6 +20,8 @@ pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
 
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
 use core::str::FromStr;
 use core::{fmt, ops};
 
@@ -208,6 +210,70 @@ impl Decodable for ServiceFlags {
         Ok(ServiceFlags(Decodable::consensus_decode(r)?))
     }
 }
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`ServiceFlags`] type.
+    #[derive(Debug, Clone)]
+    pub struct ServiceFlagsEncoder<'e>(encoding::ArrayEncoder<8>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for ServiceFlags {
+    type Encoder<'e> = ServiceFlagsEncoder<'e>;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ServiceFlagsEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.0.to_le_bytes(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`ServiceFlags`] type.
+    #[derive(Debug, Clone)]
+    pub struct ServiceFlagsDecoder(encoding::ArrayDecoder<8>);
+
+    /// Constructs a new [`ServiceFlags`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(
+        result: Result<[u8; 8], encoding::UnexpectedEofError>
+    ) -> Result<ServiceFlags, ServiceFlagsDecoderError> {
+        let n = u64::from_le_bytes(result.map_err(ServiceFlagsDecoderError)?);
+        Ok(ServiceFlags(n))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for ServiceFlags {
+    type Decoder = ServiceFlagsDecoder;
+}
+
+/// An error consensus decoding a [`ServiceFlags`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ServiceFlagsDecoderError(
+    pub(crate) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error
+);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for ServiceFlagsDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for ServiceFlagsDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "serviceflags error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for ServiceFlagsDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// Network magic bytes to identify the cryptocurrency network the message was intended for.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct Magic([u8; 4]);
@@ -341,6 +407,66 @@ impl BorrowMut<[u8]> for Magic {
 
 impl BorrowMut<[u8; 4]> for Magic {
     fn borrow_mut(&mut self) -> &mut [u8; 4] { &mut self.0 }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder type for network [`Magic`].
+    #[derive(Debug, Clone)]
+    pub struct MagicEncoder<'e>(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for Magic {
+    type Encoder<'e> = MagicEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        MagicEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.0))
+    }
+}
+
+#[cfg(feature = "encoding")]
+type MagicInnerDecoder = encoding::ArrayDecoder<4>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder type for a network [`Magic`].
+    #[derive(Debug, Default, Clone)]
+    pub struct MagicDecoder(MagicInnerDecoder);
+
+    fn end(
+        result: Result<[u8; 4], <MagicInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<Magic, MagicDecoderError> {
+        let bytes = result.map_err(MagicDecoderError)?;
+        Ok(Magic::from_bytes(bytes))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for Magic {
+    type Decoder = MagicDecoder;
+}
+
+/// An error consensus decoding a `Magic`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MagicDecoderError(pub(crate) <MagicInnerDecoder as encoding::Decoder>::Error);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for MagicDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for MagicDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "magic error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for MagicDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// An error in parsing magic bytes.

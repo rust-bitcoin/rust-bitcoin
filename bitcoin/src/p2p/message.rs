@@ -13,6 +13,8 @@ use io::{Read, Write};
 
 use crate::blockdata::{block, transaction};
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
+#[cfg(feature = "encoding")]
+use crate::internal_macros::write_err;
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
 use crate::p2p::{
@@ -121,6 +123,85 @@ impl Decodable for CommandString {
         }
 
         Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
+    }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`CommandString`] type.
+    #[derive(Debug, Clone)]
+    pub struct CommandStringEncoder<'e>(encoding::ArrayEncoder<12>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for CommandString {
+    type Encoder<'e> = CommandStringEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let mut rawbytes = [0u8; 12];
+        let strbytes = self.0.as_bytes();
+        debug_assert!(strbytes.len() <= 12);
+        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
+        CommandStringEncoder::new(encoding::ArrayEncoder::without_length_prefix(rawbytes))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for CommandString {
+    type Decoder = CommandStringDecoder;
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// Decoder for [`CommandString`].
+    #[derive(Debug, Default, Clone)]
+    pub struct CommandStringDecoder(encoding::ArrayDecoder<12>);
+
+    fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> CommandStringDecoderError {
+        CommandStringDecoderError::UnexpectedEof(err)
+    }
+
+    fn end(result: Result<[u8; 12], encoding::UnexpectedEofError>) -> Result<CommandString, CommandStringDecoderError> {
+        let rawbytes = result.map_err(CommandStringDecoderError::UnexpectedEof)?;
+        let trimmed =
+            rawbytes.iter().rposition(|&b| b != 0).map_or(&rawbytes[..0], |i| &rawbytes[..=i]);
+
+        if !trimmed.is_ascii() {
+            return Err(CommandStringDecoderError::NotAscii);
+        }
+
+        Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
+    }
+}
+
+/// Error decoding a [`CommandString`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum CommandStringDecoderError {
+    /// Unexpected end of data.
+    UnexpectedEof(encoding::UnexpectedEofError),
+    /// Command string contains non-ASCII characters.
+    NotAscii,
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for CommandStringDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::UnexpectedEof(e) => write_err!(f, "unexpected end of data"; e),
+            Self::NotAscii => write!(f, "command string must be ASCII"),
+        }
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for CommandStringDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::UnexpectedEof(e) => Some(e),
+            Self::NotAscii => None,
+        }
     }
 }
 
