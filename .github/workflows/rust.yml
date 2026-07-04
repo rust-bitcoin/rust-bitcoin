@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [api, lint, docs, docsrs, bench]
+        task: [api, lint, docs, docsrs]
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -49,6 +49,20 @@ jobs:
       - uses: ./.github/actions/setup-rbmt
       - name: "Run ${{ matrix.task }}"
         run: cargo rbmt ${{ matrix.task }}
+
+  Bench:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Run bench"
+        env:
+          RUSTFLAGS: --cfg=bench
+        run: cargo rbmt run --toolchain nightly -- bench
 
   Prerelease:
     runs-on: ubuntu-24.04
