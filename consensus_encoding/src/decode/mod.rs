@@ -143,11 +143,37 @@ impl DecoderStatus {
 pub fn decode_from_hex<T: Decode>(
     hex: &str,
 ) -> Result<T, FromHexError<<T::Decoder as Decoder>::Error>> {
+    decode_from_hex_internal(hex, T::decoder())
+}
+
+/// Decodes an object from a hex string without heap allocations using a [`Decoder`] type.
+///
+/// Unlike [`decode_from_hex`], this takes a generic [`Decoder`] parameter, allowing use with
+/// decoders which don't have a dedicated [`Decode`] implementer (e.g. [`CompactSizeDecoder`]).
+///
+/// # Errors
+///
+/// [`FromHexError`] if the string has an odd number of characters, any character is not a
+/// valid hex digit, or if decoding the type fails, including if bytes remain unconsumed
+/// after the decoder completes.
+///
+/// [`CompactSizeDecoder`]: crate::CompactSizeDecoder
+#[cfg(feature = "hex")]
+pub fn decode_from_hex_with<D: Decoder + Default>(
+    hex: &str,
+) -> Result<D::Output, FromHexError<D::Error>> {
+    decode_from_hex_internal(hex, D::default())
+}
+
+#[cfg(feature = "hex")]
+fn decode_from_hex_internal<D: Decoder>(
+    hex: &str,
+    mut decoder: D,
+) -> Result<D::Output, FromHexError<D::Error>> {
     let iter = hex::HexSliceToBytesIter::new(hex)
         .map_err(FromHexErrorInner::OddLength)
         .map_err(FromHexError)?;
 
-    let mut decoder = T::decoder();
     let mut buffer = [0u8; 4096];
     let mut index = 0;
 
