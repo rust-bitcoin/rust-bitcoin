@@ -125,7 +125,7 @@ where
 
 impl<T: HashEngine> fmt::Debug for Hkdf<T> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        use crate::{sha256t, sha256t_tag};
+        use crate::{sha256, sha256t};
 
         struct Fingerprint([u8; 8]); // Print 16 hex characters as a fingerprint.
 
@@ -133,8 +133,9 @@ impl<T: HashEngine> fmt::Debug for Hkdf<T> {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { crate::debug_hex(&self.0, f) }
         }
 
-        sha256t_tag! {
-            pub struct Tag = hash_str("bitcoin_hashes1DEBUG");
+        struct Tag;
+        impl sha256t::Tag for Tag {
+            const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag(b"bitcoin_hashes1DEBUG");
         }
 
         let hash = sha256t::Hash::<Tag>::hash(self.prk.as_ref());

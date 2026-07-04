@@ -19,7 +19,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use crypto::key::{TweakedKeypair, UntweakedKeypair};
 use crypto::{ecdsa, taproot, PrivateKey};
 use encoding::CompactSizeEncoder;
-use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
+use hashes::{hash_newtype, sha256, sha256d, sha256t};
 use io::Write;
 
 use crate::consensus::{encode, Encodable};
@@ -104,8 +104,12 @@ impl SegwitV0Sighash {
     }
 }
 
-sha256t_tag! {
-    pub struct TapSighashTag = hash_str("TapSighash");
+/// The tag used for [`TapSighash`].
+#[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+pub struct TapSighashTag;
+
+impl sha256t::Tag for TapSighashTag {
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag(b"TapSighash");
 }
 
 hash_newtype! {
