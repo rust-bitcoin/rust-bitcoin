@@ -44,6 +44,8 @@ use core::fmt::{self, Display, Formatter};
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
+#[cfg(feature = "encoding")]
+use encoding::ArrayRefEncoder;
 use hashes::{sha256d, siphash24, Hash};
 use io::{Read, Write};
 
@@ -68,6 +70,126 @@ hashes::hash_newtype! {
 
 impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// Encoder type for [`FilterHash`].
+    #[derive(Debug, Clone)]
+    pub struct FilterHashEncoder<'e>(ArrayRefEncoder<'e, 32>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for FilterHash {
+    type Encoder<'e> = FilterHashEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        FilterHashEncoder::new(ArrayRefEncoder::without_length_prefix(self.as_byte_array()))
+    }
+}
+
+#[cfg(feature = "encoding")]
+type HashInnerDecoder = encoding::ArrayDecoder<32>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`FilterHash`] type.
+    #[derive(Debug, Default, Clone)]
+    pub struct FilterHashDecoder(HashInnerDecoder);
+
+    fn end(
+        result: Result<[u8; 32], encoding::UnexpectedEofError>
+    ) -> Result<FilterHash, FilterHashDecoderError> {
+        let arr = result.map_err(FilterHashDecoderError)?;
+        Ok(FilterHash::from_byte_array(arr))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for FilterHash {
+    type Decoder = FilterHashDecoder;
+}
+
+/// Errors occurring when decoding a [`FilterHash`] message.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FilterHashDecoderError(
+    pub(crate) <HashInnerDecoder as encoding::Decoder>::Error,
+);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for FilterHashDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for FilterHashDecoderError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write_err!(f, "filterhash error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for FilterHashDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`FilterHeader`] type.
+    #[derive(Debug, Clone)]
+    pub struct FilterHeaderEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for FilterHeader {
+    type Encoder<'e> = FilterHeaderEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        FilterHeaderEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(
+            self.as_byte_array(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// Decoder for the [`FilterHeader`] type.
+    #[derive(Debug, Default, Clone)]
+    pub struct FilterHeaderDecoder(HashInnerDecoder);
+
+    fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<FilterHeader, FilterHeaderDecoderError> {
+        Ok(FilterHeader::from_byte_array(result.map_err(FilterHeaderDecoderError)?))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for FilterHeader {
+    type Decoder = FilterHeaderDecoder;
+}
+
+/// Errors occurring when decoding a [`FilterHeader`] message.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FilterHeaderDecoderError(
+    pub(crate) <HashInnerDecoder as encoding::Decoder>::Error
+);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for FilterHeaderDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for FilterHeaderDecoderError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write_err!(f, "filterheader error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for FilterHeaderDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 
 /// Errors for blockfilter.
 #[derive(Debug)]
