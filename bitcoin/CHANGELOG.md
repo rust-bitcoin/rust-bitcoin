@@ -1,3 +1,10 @@
+# 0.31.4 - 2026-07-23
+
+This version is now End-of-Life (EOL).
+
+In order to publish this release we had to remove the `core2` dependency because `core2` has been
+yanked from `crates.io`. This meant removing the `no-std` feature as well.
+
 # 0.31.3 - 2026-04-02
 
 * Remove `non_exhaustive` from `Network` [#4657](https://github.com/rust-bitcoin/rust-bitcoin/pull/4657)
