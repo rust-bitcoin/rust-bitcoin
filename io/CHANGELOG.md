@@ -1,4 +1,12 @@
-# 0.1.100 - 2026-05-26
+# 0.1.101 - 2026-06-24
+
+**Bump the MSRV to Rust 1.60.0**
+
+- Exposes the new stabilized encoding library through the optional `encoding` feature. Note that enabling it bumps the MSRV to 1.74.0.
+
+# 0.1.100 - 2026-05-26 [YANKED]
+
+> This release was yanked because the MSRV bump to 1.74.0 was too aggressive for some users. See version 0.1.101 for a smaller upgrade to 1.60.0.
 
 **Bump the MSRV to Rust 1.74.0**
 
