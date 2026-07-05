@@ -107,17 +107,13 @@ impl fmt::Display for Signature {
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Signature {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.serialize().fmt(f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.serialize().fmt(f) }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Signature {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.serialize().fmt(f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.serialize().fmt(f) }
 }
 
 #[cfg(feature = "hex")]
