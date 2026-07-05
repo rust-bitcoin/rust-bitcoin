@@ -41,7 +41,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use crypto::key::{
     TweakedKeypair, TweakedPublicKey, UntweakedKeypair, UntweakedPublicKey, XOnlyPublicKey,
 };
-use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine as _};
+use hashes::{hash_newtype, sha256, sha256t, HashEngine as _};
 use secp256k1::Scalar;
 
 /// Maximum depth of a Taproot tree script spend path.
@@ -67,8 +67,12 @@ pub const TAPROOT_CONTROL_MAX_SIZE: usize =
     TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
 
 // Taproot test vectors from BIP-0341 state the hashes without any reversing
-sha256t_tag! {
-    pub struct TapLeafTag = hash_str("TapLeaf");
+/// The tag used for [`TapLeafHash`].
+#[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+pub struct TapLeafTag;
+
+impl sha256t::Tag for TapLeafTag {
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag(b"TapLeaf");
 }
 
 hash_newtype! {
@@ -83,8 +87,12 @@ hashes::impl_hex_for_newtype!(TapLeafHash);
 #[cfg(feature = "hex")]
 hashes::impl_serde_for_newtype!(TapLeafHash);
 
-sha256t_tag! {
-    pub struct TapBranchTag = hash_str("TapBranch");
+/// The tag used for [`TapNodeHash`].
+#[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+pub struct TapBranchTag;
+
+impl sha256t::Tag for TapBranchTag {
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag(b"TapBranch");
 }
 
 hash_newtype! {
@@ -101,8 +109,12 @@ hashes::impl_hex_for_newtype!(TapNodeHash);
 #[cfg(feature = "hex")]
 hashes::impl_serde_for_newtype!(TapNodeHash);
 
-sha256t_tag! {
-    pub struct TapTweakTag = hash_str("TapTweak");
+/// The tag used for [`TapTweakHash`].
+#[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+pub struct TapTweakTag;
+
+impl sha256t::Tag for TapTweakTag {
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag(b"TapTweak");
 }
 
 hash_newtype! {
