@@ -7,9 +7,8 @@
 //!
 //! [`CompactSize`]: <https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer>
 
-use bitcoin::encoding;
 use bitcoin::key::WPubkeyHash;
-use bitcoin::{script, WitnessScriptBuf};
+use bitcoin::{encoding, script, WitnessScriptBuf};
 
 fn main() {
     let pk = "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".parse::<WPubkeyHash>().unwrap();

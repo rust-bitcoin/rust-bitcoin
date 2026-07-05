@@ -1773,7 +1773,12 @@ mod tests {
         let bad = "deadbeef00"; // arbitrary even-length hex that will fail decoding
         let err = Transaction::from_str(bad).unwrap_err();
         assert!(matches!(
-            err.source().unwrap().source().unwrap().downcast_ref::<TransactionDecoderError>().unwrap(),
+            err.source()
+                .unwrap()
+                .source()
+                .unwrap()
+                .downcast_ref::<TransactionDecoderError>()
+                .unwrap(),
             TransactionDecoderError { .. },
         ));
     }
