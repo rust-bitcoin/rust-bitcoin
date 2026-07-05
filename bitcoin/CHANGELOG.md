@@ -1,5 +1,14 @@
 # unreleased
 
+# 0.32.102 - 2026-07-06
+
+- Backport: Make `SendCmpct` idempotent [#6525](https://github.com/rust-bitcoin/rust-bitcoin/pull/6525)
+- Add `consensus_encoding` to block/compact-block p2p message types [#6457](https://github.com/rust-bitcoin/rust-bitcoin/pull/6457)
+- Add `consensus_encoding` support to types in `bitcoin-primitives` [#6333](https://github.com/rust-bitcoin/rust-bitcoin/pull/6333)
+- Add `consensus_encoding` support to core p2p message types [#6443](https://github.com/rust-bitcoin/rust-bitcoin/pull/6443)
+- Add `consensus_encoding` support to BIP157/158 filter message types [#6444](https://github.com/rust-bitcoin/rust-bitcoin/pull/6444)
+- Use `write!` in `ParseNetwork` and `UnknownAddressType` error displays [#6386](https://github.com/rust-bitcoin/rust-bitcoin/pull/6386)
+
 # 0.32.101 - 2026-06-24
 
 **Bump the MSRV to Rust 1.60.0**
