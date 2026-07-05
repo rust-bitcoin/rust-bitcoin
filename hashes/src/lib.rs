@@ -158,11 +158,11 @@ pub type HmacSha256 = Hmac<sha256::Hash>;
 /// HMAC-SHA-512: Type alias for the [`Hmac<Sha512>`] type.
 pub type HmacSha512 = Hmac<sha512::Hash>;
 
-/// HKDF-HMAC-SHA-256: Type alias for the [`Hkdf<Sha256>`] type.
-pub type HkdfSha256 = Hkdf<sha256::Hash>;
+/// HKDF-HMAC-SHA-256: Type alias for the [`Hkdf<sha256::HashEngine>`] type.
+pub type HkdfSha256 = Hkdf<sha256::HashEngine>;
 
-/// HKDF-HMAC-SHA-512: Type alias for the [`Hkdf<Sha512>`] type.
-pub type HkdfSha512 = Hkdf<sha512::Hash>;
+/// HKDF-HMAC-SHA-512: Type alias for the [`Hkdf<sha512::HashEngine>`] type.
+pub type HkdfSha512 = Hkdf<sha512::HashEngine>;
 
 /// A hashing engine which bytes can be serialized into.
 pub trait HashEngine: Clone {
