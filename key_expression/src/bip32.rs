@@ -209,6 +209,15 @@ pub struct Xpub {
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpub, "a BIP-0032 extended public key");
 
+/// Tweak data for deriving a BIP-0032 child xpub.
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub struct XpubChildTweak {
+    /// The scalar added to the parent public key to derive the child public key.
+    pub tweak: secp256k1::Scalar,
+    /// The derived child chain code.
+    pub chain_code: ChainCode,
+}
+
 /// Flag with the hardened bit turned on.
 const HARDENED_FLAG: u32 = 1 << 31;
 
@@ -912,10 +921,11 @@ impl Xpub {
     /// derivation depth.
     #[allow(clippy::missing_panics_doc)]
     pub fn derive_child(&self, child_number: ChildNumber) -> Result<Self, DeriveXpubError> {
-        let (sk, chain_code) =
-            self.ckd_pub_tweak(child_number).map_err(DeriveXpubError::CannotDeriveHardenedChild)?;
+        let tweak = self
+            .derive_child_tweak(child_number)
+            .map_err(DeriveXpubError::CannotDeriveHardenedChild)?;
         let tweaked =
-            self.public_key.add_exp_tweak(&sk.into()).expect("cryptographically unreachable");
+            self.public_key.add_exp_tweak(&tweak.tweak).expect("cryptographically unreachable");
 
         Ok(Self {
             network: self.network,
@@ -926,7 +936,7 @@ impl Xpub {
             parent_fingerprint: self.fingerprint(),
             child_number,
             public_key: tweaked,
-            chain_code,
+            chain_code: tweak.chain_code,
         })
     }
 
@@ -953,10 +963,10 @@ impl Xpub {
     ///
     /// Returns an error if the given [`ChildNumber`] is hardened.
     #[allow(clippy::missing_panics_doc)]
-    pub fn ckd_pub_tweak(
+    pub fn derive_child_tweak(
         &self,
         i: ChildNumber,
-    ) -> Result<(secp256k1::SecretKey, ChainCode), CannotDeriveHardenedChildError> {
+    ) -> Result<XpubChildTweak, CannotDeriveHardenedChildError> {
         if i.is_hardened() {
             return Err(CannotDeriveHardenedChildError {});
         }
@@ -971,7 +981,7 @@ impl Xpub {
         )
         .expect("cryptographically unreachable");
         let chain_code = ChainCode::from_hmac(hmac);
-        Ok((private_key, chain_code))
+        Ok(XpubChildTweak { tweak: private_key.into(), chain_code })
     }
 
     /// Decodes an extended public key from binary data according to BIP-0032.
@@ -1954,10 +1964,14 @@ mod tests {
         for &num in &path.0 {
             sk = sk.derive_child(num).unwrap();
             if num.is_normal() {
+                let tweak = pk.derive_child_tweak(num).unwrap();
+                assert_eq!(tweak.chain_code, Xpub::from_xpriv(&sk).chain_code);
+
                 let pk2 = pk.derive_child(num).unwrap();
                 pk = Xpub::from_xpriv(&sk);
                 assert_eq!(pk, pk2);
             } else {
+                assert_eq!(pk.derive_child_tweak(num), Err(CannotDeriveHardenedChildError {}));
                 assert_eq!(
                     pk.derive_child(num),
                     Err(DeriveXpubError::CannotDeriveHardenedChild(
