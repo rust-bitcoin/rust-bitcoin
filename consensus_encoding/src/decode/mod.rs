@@ -159,7 +159,7 @@ pub fn decode_from_hex<T: Decode>(
 ///
 /// [`CompactSizeDecoder`]: crate::CompactSizeDecoder
 #[cfg(feature = "hex")]
-pub fn decode_from_hex_with<D: Decoder + Default>(
+pub fn decode_from_hex_with_decoder<D: Decoder + Default>(
     hex: &str,
 ) -> Result<D::Output, FromHexError<D::Error>> {
     decode_from_hex_internal(hex, D::default())
@@ -244,7 +244,7 @@ pub fn decode_from_slice<T: Decode>(
 /// during decode.
 ///
 /// [`CompactSizeDecoder`]: crate::CompactSizeDecoder
-pub fn decode_from_slice_with<D: Decoder + Default>(
+pub fn decode_from_slice_with_decoder<D: Decoder + Default>(
     bytes: &[u8],
 ) -> Result<D::Output, DecodeError<D::Error>> {
     decode_from_slice_internal(bytes, D::default())
@@ -290,7 +290,7 @@ where
 /// use with decoders which don't have a dedicated [`Decode`] implementer
 /// (e.g. [`CompactSizeDecoder`]).
 ///
-/// Unlike [`decode_from_slice_with`], this function will not error if the slice contains
+/// Unlike [`decode_from_slice_with_decoder`], this function will not error if the slice contains
 /// additional bytes that are not required to decode. Furthermore, the byte slice reference provided
 /// to this function will be updated based on the consumed data, returning the unconsumed bytes.
 ///
@@ -300,7 +300,7 @@ where
 /// insufficient data.
 ///
 /// [`CompactSizeDecoder`]: crate::CompactSizeDecoder
-pub fn decode_from_slice_unbounded_with<D: Decoder + Default>(
+pub fn decode_from_slice_unbounded_with_decoder<D: Decoder + Default>(
     bytes: &mut &[u8],
 ) -> Result<D::Output, D::Error> {
     decode_from_slice_unbounded_internal(bytes, D::default())
@@ -358,7 +358,7 @@ where
 ///
 /// [`CompactSizeDecoder`]: crate::CompactSizeDecoder
 #[cfg(feature = "std")]
-pub fn decode_from_read_with<D, R>(reader: R) -> Result<D::Output, ReadError<D::Error>>
+pub fn decode_from_read_with_decoder<D, R>(reader: R) -> Result<D::Output, ReadError<D::Error>>
 where
     D: Decoder + Default,
     R: std::io::BufRead,

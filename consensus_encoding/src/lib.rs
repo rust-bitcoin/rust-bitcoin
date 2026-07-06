@@ -45,10 +45,10 @@
 //! associated decoder. The following variants instead accept a [`Decoder`] type directly,
 //! instantiated with [`Default`], and can be used when the output type does not implement [`Decode`]:
 //!
-//! * [`decode_from_read_with`]: Counterpart to [`decode_from_read`].
-//! * [`decode_from_slice_with`]: Counterpart to [`decode_from_slice`].
-//! * [`decode_from_slice_unbounded_with`]: Counterpart to [`decode_from_slice_unbounded`].
-//! * [`decode_from_hex_with`]: Counterpart to [`decode_from_hex`].
+//! * [`decode_from_read_with_decoder`]: Counterpart to [`decode_from_read`].
+//! * [`decode_from_slice_with_decoder`]: Counterpart to [`decode_from_slice`].
+//! * [`decode_from_slice_unbounded_with_decoder`]: Counterpart to [`decode_from_slice_unbounded`].
+//! * [`decode_from_hex_with_decoder`]: Counterpart to [`decode_from_hex`].
 //!
 //! And on the encoding side we provide:
 //!
@@ -63,7 +63,7 @@
 //!
 //! * `std` - Enables std lib I/O driver functions and `std::error::Error` impls (implies `alloc`).
 //! * `alloc` - Enables [`encode_to_vec`], `Vec`-based decoders, and allocation-based helpers.
-//! * `hex` - Enables [`decode_from_hex`], [`decode_from_hex_with`], [`encode_to_hex`] and
+//! * `hex` - Enables [`decode_from_hex`], [`decode_from_hex_with_decoder`], [`encode_to_hex`] and
 //!   [`drain_to_hex`]. Encoding also requires `alloc`.
 
 #![no_std]
@@ -94,7 +94,7 @@ pub mod serde_as_consensus;
 pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSizeU64Decoder};
 #[cfg(feature = "hex")]
 #[doc(inline)]
-pub use self::decode::{decode_from_hex, decode_from_hex_with};
+pub use self::decode::{decode_from_hex, decode_from_hex_with_decoder};
 #[doc(inline)]
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
@@ -103,13 +103,14 @@ pub use self::decode::decoders::{ByteVecDecoder, VecDecoder};
 #[doc(inline)]
 pub use self::decode::{
     check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded,
-    decode_from_slice_unbounded_with, decode_from_slice_with, Decode, Decoder, DecoderStatus,
+    decode_from_slice_unbounded_with_decoder, decode_from_slice_with_decoder, Decode, Decoder,
+    DecoderStatus,
 };
 #[cfg(feature = "std")]
 #[doc(inline)]
 pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with,
-    decode_from_read_with,
+    decode_from_read_with_decoder,
 };
 #[doc(inline)]
 pub use self::encode::encoders::{
