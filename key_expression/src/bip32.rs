@@ -758,45 +758,18 @@ impl Xpriv {
     /// secret key representation.
     pub fn to_keypair(self) -> Keypair { Keypair::from_private_key(&self.to_private_key()) }
 
-    /// Derives an extended private key from a path.
-    ///
-    /// The `path` argument can be both of type `RelativeDerivationPath` or `Vec<ChildNumber>`.
-    ///
-    /// # Errors
-    ///
-    /// See [`derive_xpriv`].
-    ///
-    /// [`derive_xpriv`]: Xpriv::derive_xpriv
-    #[deprecated(since = "TBD", note = "use `derive_xpriv()` instead")]
-    pub fn derive_priv<P: AsRef<[ChildNumber]>>(
-        &self,
-        path: P,
-    ) -> Result<Self, MaximumDepthExceededError> {
-        self.derive_xpriv(path)
-    }
-
-    /// Derives an extended private key from a path.
-    ///
-    /// The `path` argument can be both of type `RelativeDerivationPath` or `Vec<ChildNumber>`.
+    /// Derives an extended private key child.
     ///
     /// # Errors
     ///
     /// Returns an error if the derived key exceeds the maximum key depth.
-    pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(
+    #[allow(clippy::missing_panics_doc)]
+    pub fn derive_child(
         &self,
-        path: P,
+        child_number: ChildNumber,
     ) -> Result<Self, MaximumDepthExceededError> {
-        let mut sk: Self = *self;
-        for cnum in path.as_ref() {
-            sk = sk.ckd_priv(*cnum)?;
-        }
-        Ok(sk)
-    }
-
-    /// Private->Private child key derivation
-    fn ckd_priv(&self, i: ChildNumber) -> Result<Self, MaximumDepthExceededError> {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
-        if i.is_normal() {
+        if child_number.is_normal() {
             // Non-hardened key: compute public data and use that.
             engine.input(&secp256k1::PublicKey::from_secret_key(&self.private_key).serialize()[..]);
         } else {
@@ -805,7 +778,7 @@ impl Xpriv {
             engine.input(&self.private_key[..]);
         }
 
-        engine.input(&u32::from(i).to_be_bytes());
+        engine.input(&u32::from(child_number).to_be_bytes());
         let hmac: Hmac<sha512::Hash> = engine.finalize();
         let sk = secp256k1::SecretKey::from_secret_bytes(
             *hmac.as_byte_array().split_array::<32, 32>().0,
@@ -818,10 +791,26 @@ impl Xpriv {
             network: self.network,
             depth: self.depth.checked_add(1).ok_or(MaximumDepthExceededError {})?,
             parent_fingerprint: self.fingerprint(),
-            child_number: i,
+            child_number,
             private_key: tweaked,
             chain_code: ChainCode::from_hmac(hmac),
         })
+    }
+
+    /// Derives an extended private key from a path.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the derived key exceeds the maximum key depth.
+    pub fn derive_from_path<P: AsRef<[ChildNumber]>>(
+        &self,
+        path: P,
+    ) -> Result<Self, MaximumDepthExceededError> {
+        let mut sk: Self = *self;
+        for cnum in path.as_ref() {
+            sk = sk.derive_child(*cnum)?;
+        }
+        Ok(sk)
     }
 
     /// Decodes an extended private key from binary data according to BIP-0032.
@@ -915,32 +904,45 @@ impl Xpub {
     /// the internal public key representation.
     pub fn to_x_only_public_key(self) -> XOnlyPublicKey { XOnlyPublicKey::from(self.public_key) }
 
-    /// Attempts to derive an extended public key from a path.
-    ///
-    /// The `path` argument can be any type implementing `AsRef<[ChildNumber]>`, such as `RelativeDerivationPath`, for instance.
+    /// Derives an extended public key child.
     ///
     /// # Errors
     ///
-    /// See [`derive_xpub`].
-    ///
-    /// [`derive_xpub`]: Xpub::derive_xpub
-    #[deprecated(since = "TBD", note = "use `derive_xpub()` instead")]
-    pub fn derive_pub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DeriveXpubError> {
-        self.derive_xpub(path)
+    /// Returns an error if the given [`ChildNumber`] is hardened, or if next key exceeds the maximum
+    /// derivation depth.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn derive_child(&self, child_number: ChildNumber) -> Result<Self, DeriveXpubError> {
+        let (sk, chain_code) =
+            self.ckd_pub_tweak(child_number).map_err(DeriveXpubError::CannotDeriveHardenedChild)?;
+        let tweaked =
+            self.public_key.add_exp_tweak(&sk.into()).expect("cryptographically unreachable");
+
+        Ok(Self {
+            network: self.network,
+            depth: self
+                .depth
+                .checked_add(1)
+                .ok_or(DeriveXpubError::MaximumDepthExceeded(MaximumDepthExceededError {}))?,
+            parent_fingerprint: self.fingerprint(),
+            child_number,
+            public_key: tweaked,
+            chain_code,
+        })
     }
 
-    /// Attempts to derive an extended public key from a path.
-    ///
-    /// The `path` argument can be any type implementing `AsRef<[ChildNumber]>`, such as
-    /// `RelativeDerivationPath`, for instance.
+    /// Derives an extended public key from a path.
     ///
     /// # Errors
     ///
-    /// Returns an error if any of the [`ChildNumber`]s are hardened.
-    pub fn derive_xpub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DeriveXpubError> {
+    /// Returns an error if any of the [`ChildNumber`]s are hardened, or if any derived key exceeds
+    /// the maximum derivation depth.
+    pub fn derive_from_path<P: AsRef<[ChildNumber]>>(
+        &self,
+        path: P,
+    ) -> Result<Self, DeriveXpubError> {
         let mut pk: Self = *self;
         for cnum in path.as_ref() {
-            pk = pk.ckd_pub(*cnum)?;
+            pk = pk.derive_child(*cnum)?;
         }
         Ok(pk)
     }
@@ -970,32 +972,6 @@ impl Xpub {
         .expect("cryptographically unreachable");
         let chain_code = ChainCode::from_hmac(hmac);
         Ok((private_key, chain_code))
-    }
-
-    /// Public->Public child key derivation
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the given [`ChildNumber`] is hardened, or if next key exceeds
-    /// the maximum derivation depth.
-    #[allow(clippy::missing_panics_doc)]
-    pub fn ckd_pub(&self, i: ChildNumber) -> Result<Self, DeriveXpubError> {
-        let (sk, chain_code) =
-            self.ckd_pub_tweak(i).map_err(DeriveXpubError::CannotDeriveHardenedChild)?;
-        let tweaked =
-            self.public_key.add_exp_tweak(&sk.into()).expect("cryptographically unreachable");
-
-        Ok(Self {
-            network: self.network,
-            depth: self
-                .depth
-                .checked_add(1)
-                .ok_or(DeriveXpubError::MaximumDepthExceeded(MaximumDepthExceededError {}))?,
-            parent_fingerprint: self.fingerprint(),
-            child_number: i,
-            public_key: tweaked,
-            chain_code,
-        })
     }
 
     /// Decodes an extended public key from binary data according to BIP-0032.
@@ -1960,30 +1936,30 @@ mod tests {
         let mut pk = Xpub::from_xpriv(&sk);
         let path = path.as_relative();
 
-        // Check derivation convenience method for Xpriv
-        assert_eq!(&sk.derive_xpriv(path).unwrap().to_string()[..], expected_sk);
+        // Check derivation convenience methods for Xpriv.
+        assert_eq!(&sk.derive_from_path(path).unwrap().to_string()[..], expected_sk);
 
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
         if path.contains_hardened_child() {
             assert_eq!(
-                pk.derive_xpub(path),
+                pk.derive_from_path(path),
                 Err(DeriveXpubError::CannotDeriveHardenedChild(CannotDeriveHardenedChildError {}))
             );
         } else {
-            assert_eq!(&pk.derive_xpub(path).unwrap().to_string()[..], expected_pk);
+            assert_eq!(&pk.derive_from_path(path).unwrap().to_string()[..], expected_pk);
         }
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one
         for &num in &path.0 {
-            sk = sk.ckd_priv(num).unwrap();
+            sk = sk.derive_child(num).unwrap();
             if num.is_normal() {
-                let pk2 = pk.ckd_pub(num).unwrap();
+                let pk2 = pk.derive_child(num).unwrap();
                 pk = Xpub::from_xpriv(&sk);
                 assert_eq!(pk, pk2);
             } else {
                 assert_eq!(
-                    pk.ckd_pub(num),
+                    pk.derive_child(num),
                     Err(DeriveXpubError::CannotDeriveHardenedChild(
                         CannotDeriveHardenedChildError {}
                     ))
