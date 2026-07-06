@@ -30,14 +30,6 @@ impl Error {
         }
     }
 
-    /// Returns the incorrect checksum along with the expected checksum, if encountered.
-    pub fn incorrect_checksum(&self) -> Option<(u32, u32)> {
-        match self.0 {
-            ErrorInner::IncorrectChecksum(ref e) => Some((e.incorrect, e.expected)),
-            _ => None,
-        }
-    }
-
     /// Returns the invalid base58 string length (require at least 4 bytes for checksum), if encountered.
     pub fn invalid_length(&self) -> Option<usize> {
         match self.0 {
