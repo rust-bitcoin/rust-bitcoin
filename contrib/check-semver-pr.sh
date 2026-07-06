@@ -179,21 +179,22 @@ generate_json_files_features_alloc() {
 }
 
 # Check if there are breaking changes.
-# We loop through all the generated files and check if there is a FAIL
-# in the cargo semver-checks output.
-# If we detect a fail, we create an empty file semver-break.
+# We loop through all the generated files and check whether cargo semver-checks
+# reported a major (breaking) change.
+# Minor changes are not breaking and are ignored.
+# If we detect a break, we create an empty file semver-break.
 # If the following CI step finds this file, it will add:
 # 1. a comment on the PR.
 # 2. a label to the PR.
 check_for_breaking_changes() {
     for file in *semver.txt; do
         echo "Checking $file"
-        if grep -q "FAIL" "$file"; then
-            echo "You have introduced changes to the public API"
-            echo "FAIL found in $file"
+        # Only flag major failures. minor changes are ignored.
+        if grep -qE '[1-9][0-9]* major .* checks failed' "$file"; then
+            echo "You have introduced breaking changes to the public API"
+            echo "Major semver break found in $file"
             cat "$file"
             # flag it as a breaking change
-            # Handle the case where FAIL is found
             touch semver-break
 
             for crate in "${SEMVER_HARD_FAIL_CRATES[@]}"; do
