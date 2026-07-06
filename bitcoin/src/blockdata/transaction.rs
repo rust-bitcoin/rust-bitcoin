@@ -1779,7 +1779,7 @@ impl Default for TransactionDecoder {
 }
 
 #[cfg(feature = "encoding")]
-#[allow(clippy::too_many_lines)] // TODO: Can we clean this up?
+#[allow(clippy::too_many_lines)]
 impl encoding::Decoder for TransactionDecoder {
     type Output = Transaction;
     type Error = TransactionDecoderError;
