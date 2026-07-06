@@ -17,7 +17,7 @@ set -euo pipefail
 RUSTDOCFLAGS="-Z unstable-options --document-private-items --document-hidden-items --output-format=json --cap-lints=allow"
 
 # Crates that have reached 1.0 must not introduce semver-breaking API changes.
-SEMVER_HARD_FAIL_CRATES=("bitcoin-consensus-encoding")
+SEMVER_HARD_FAIL_CRATES=("bitcoin-consensus-encoding" "bitcoin_hashes" "bitcoin-network-kind")
 
 # These will be set to the commit SHA from the PR's target branch
 # GitHub Actions CI.
