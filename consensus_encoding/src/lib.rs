@@ -40,6 +40,7 @@
 //! * [`decode_from_read_unbuffered_with`]: As above with custom sized stack-allocated buffer.
 //! * [`decode_from_slice`]: Decode from a byte slice (errors if slice is not completely consumed).
 //! * [`decode_from_slice_unbounded`]: Slice can contain additional data after decoding completes.
+//! * [`decode_from_hex`]: Decode from a hex string without heap allocations.
 //!
 //! Each function above takes a type parameter `T: Decode` to select the output type and its
 //! associated decoder. The following variants instead accept a [`Decoder`] type directly,
