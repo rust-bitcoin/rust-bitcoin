@@ -19,3 +19,4 @@ fuzz/coverage
 
 # Local tooling
 .maintainer-tools
+Cargo.lock.backup
