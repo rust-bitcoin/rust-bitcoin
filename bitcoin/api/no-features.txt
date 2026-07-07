@@ -1007,7 +1007,7 @@ impl<V> core::cmp::PartialOrd for bitcoin::address::Address<V> where V: bitcoin:
   pub fn bitcoin::address::Address<V>::partial_cmp(&self, other: &bitcoin::address::Address<V>) -> core::option::Option<core::cmp::Ordering> [impl: impl<V> core::cmp::PartialOrd for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::cmp::PartialOrd]
 impl<V> core::hash::Hash for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::hash::Hash
   pub fn bitcoin::address::Address<V>::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl<V> core::hash::Hash for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::hash::Hash]
-impl<V> core::marker::StructuralPartialEq for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation
+impl<V> core::marker::StructuralPartialEq for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::cmp::PartialEq
 impl<V> core::marker::Freeze for bitcoin::address::Address<V>
 impl<V> core::marker::Send for bitcoin::address::Address<V>
 impl<V> core::marker::Sync for bitcoin::address::Address<V>
@@ -13325,7 +13325,7 @@ impl<Subtype> core::fmt::Debug for bitcoin::psbt::raw::ProprietaryKey<Subtype> w
   pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<Subtype> core::fmt::Debug for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::fmt::Debug]
 impl<Subtype> core::hash::Hash for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::hash::Hash
   pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl<Subtype> core::hash::Hash for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::hash::Hash]
-impl<Subtype> core::marker::StructuralPartialEq for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
+impl<Subtype> core::marker::StructuralPartialEq for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::cmp::PartialEq
 impl<Subtype> core::marker::Freeze for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Freeze
 impl<Subtype> core::marker::Send for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Send
 impl<Subtype> core::marker::Sync for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Sync
@@ -16800,7 +16800,7 @@ impl<'u, T> core::fmt::Debug for bitcoin::sighash::Prevouts<'u, T> where T: 'u +
   pub fn bitcoin::sighash::Prevouts<'u, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<'u, T> core::fmt::Debug for bitcoin::sighash::Prevouts<'u, T> where T: 'u + core::borrow::Borrow<bitcoin::blockdata::transaction::TxOut> + core::fmt::Debug]
 impl<'u, T> core::hash::Hash for bitcoin::sighash::Prevouts<'u, T> where T: 'u + core::borrow::Borrow<bitcoin::blockdata::transaction::TxOut> + core::hash::Hash
   pub fn bitcoin::sighash::Prevouts<'u, T>::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl<'u, T> core::hash::Hash for bitcoin::sighash::Prevouts<'u, T> where T: 'u + core::borrow::Borrow<bitcoin::blockdata::transaction::TxOut> + core::hash::Hash]
-impl<'u, T> core::marker::StructuralPartialEq for bitcoin::sighash::Prevouts<'u, T> where T: 'u + core::borrow::Borrow<bitcoin::blockdata::transaction::TxOut>
+impl<'u, T> core::marker::StructuralPartialEq for bitcoin::sighash::Prevouts<'u, T> where T: 'u + core::borrow::Borrow<bitcoin::blockdata::transaction::TxOut> + core::cmp::PartialEq
 impl<'u, T> core::marker::Freeze for bitcoin::sighash::Prevouts<'u, T> where T: core::marker::Freeze
 impl<'u, T> core::marker::Send for bitcoin::sighash::Prevouts<'u, T> where T: core::marker::Send + core::marker::Sync
 impl<'u, T> core::marker::Sync for bitcoin::sighash::Prevouts<'u, T> where T: core::marker::Sync
@@ -18858,12 +18858,12 @@ impl<S: core::clone::Clone> core::clone::Clone for bitcoin::taproot::LeafScript<
 impl<S: core::cmp::Eq> core::cmp::Eq for bitcoin::taproot::LeafScript<S>
 impl<S: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin::taproot::LeafScript<S>
   pub fn bitcoin::taproot::LeafScript<S>::eq(&self, other: &bitcoin::taproot::LeafScript<S>) -> bool [impl: impl<S: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin::taproot::LeafScript<S>]
+impl<S: core::cmp::PartialEq> core::marker::StructuralPartialEq for bitcoin::taproot::LeafScript<S>
 impl<S: core::fmt::Debug> core::fmt::Debug for bitcoin::taproot::LeafScript<S>
   pub fn bitcoin::taproot::LeafScript<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<S: core::fmt::Debug> core::fmt::Debug for bitcoin::taproot::LeafScript<S>]
 impl<S: core::hash::Hash> core::hash::Hash for bitcoin::taproot::LeafScript<S>
   pub fn bitcoin::taproot::LeafScript<S>::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl<S: core::hash::Hash> core::hash::Hash for bitcoin::taproot::LeafScript<S>]
 impl<S: core::marker::Copy> core::marker::Copy for bitcoin::taproot::LeafScript<S>
-impl<S> core::marker::StructuralPartialEq for bitcoin::taproot::LeafScript<S>
 impl<S> core::marker::Freeze for bitcoin::taproot::LeafScript<S> where S: core::marker::Freeze
 impl<S> core::marker::Send for bitcoin::taproot::LeafScript<S> where S: core::marker::Send
 impl<S> core::marker::Sync for bitcoin::taproot::LeafScript<S> where S: core::marker::Sync
@@ -21888,7 +21888,7 @@ impl<V> core::cmp::PartialOrd for bitcoin::address::Address<V> where V: bitcoin:
   pub fn bitcoin::address::Address<V>::partial_cmp(&self, other: &bitcoin::address::Address<V>) -> core::option::Option<core::cmp::Ordering> [impl: impl<V> core::cmp::PartialOrd for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::cmp::PartialOrd]
 impl<V> core::hash::Hash for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::hash::Hash
   pub fn bitcoin::address::Address<V>::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl<V> core::hash::Hash for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::hash::Hash]
-impl<V> core::marker::StructuralPartialEq for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation
+impl<V> core::marker::StructuralPartialEq for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::cmp::PartialEq
 impl<V> core::marker::Freeze for bitcoin::address::Address<V>
 impl<V> core::marker::Send for bitcoin::address::Address<V>
 impl<V> core::marker::Sync for bitcoin::address::Address<V>
