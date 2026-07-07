@@ -858,6 +858,10 @@ fn new_p2wsh() {
     let mut want = vec![0x00, 0x20];
     want.extend([0x34; 32]);
     assert_eq!(p2wsh.as_bytes(), &want[..]);
+
+    let redeem_script = RedeemScriptBuf::new_p2wsh(wscript_hash);
+    assert!(redeem_script.is_p2wsh());
+    assert_eq!(redeem_script.as_bytes(), &want[..]);
 }
 
 #[test]
