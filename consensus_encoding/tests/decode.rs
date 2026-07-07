@@ -7,7 +7,7 @@ use std::io::{Cursor, Read};
 
 use bitcoin_consensus_encoding as encoding;
 #[cfg(feature = "hex")]
-use bitcoin_consensus_encoding::{decode_from_hex, decode_from_hex_with};
+use bitcoin_consensus_encoding::{decode_from_hex, decode_from_hex_with_decoder};
 #[cfg(feature = "alloc")]
 use encoding::check_decode;
 use encoding::{
@@ -295,9 +295,9 @@ fn decode_from_hex_test() {
     assert_eq!(result.unwrap().0, [0x01, 0x02, 0x03, 0x04]);
     let result: Result<TestArray, _> = decode_from_hex("DEADBEEF");
     assert_eq!(result.unwrap().0, [0xDE, 0xAD, 0xBE, 0xEF]);
-    let result = decode_from_hex_with::<TestArrayDecoder>("01020304");
+    let result = decode_from_hex_with_decoder::<TestArrayDecoder>("01020304");
     assert_eq!(result.unwrap().0, [0x01, 0x02, 0x03, 0x04]);
-    let result = decode_from_hex_with::<TestArrayDecoder>("DEADBEEF");
+    let result = decode_from_hex_with_decoder::<TestArrayDecoder>("DEADBEEF");
     assert_eq!(result.unwrap().0, [0xDE, 0xAD, 0xBE, 0xEF]);
 }
 

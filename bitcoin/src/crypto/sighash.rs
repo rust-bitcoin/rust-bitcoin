@@ -1643,7 +1643,7 @@ mod tests {
         let tx: Transaction = decode_from_slice(&tx_bytes).unwrap();
         let prevout_bytes = hex::decode_to_vec(prevout_hex).unwrap();
         let prevouts =
-            encoding::decode_from_slice_with::<encoding::VecDecoder<TxOut>>(&prevout_bytes)
+            encoding::decode_from_slice_with_decoder::<encoding::VecDecoder<TxOut>>(&prevout_bytes)
                 .unwrap();
         let annex_inner;
         let annex = match annex_hex {
