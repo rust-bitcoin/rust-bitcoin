@@ -73,7 +73,6 @@ pub trait ScriptPubKeyBufExt: sealed::Sealed {
 
 #[cfg(feature = "alloc")]
 impl ScriptPubKeyBufExt for ScriptPubKeyBuf {
-    /// Generates P2PK-type of scriptPubkey.
     fn new_p2pk(pubkey: LegacyPublicKey) -> Self {
         Builder::new()
             .push_slice(pubkey.serialize())
@@ -91,8 +90,6 @@ impl ScriptPubKeyBufExt for ScriptPubKeyBuf {
             .into_script()
     }
 
-    /// Generates P2TR for script spending path using an internal public key and some optional
-    /// script tree Merkle root.
     fn new_p2tr<K: Into<UntweakedPublicKey>>(
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
@@ -103,13 +100,11 @@ impl ScriptPubKeyBufExt for ScriptPubKeyBuf {
         new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
     }
 
-    /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
     fn new_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
         new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
     }
 
-    /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
     fn new_witness_program(witness_program: &WitnessProgram) -> Self {
         Builder::new()
             .push_opcode(witness_program.version().into())
