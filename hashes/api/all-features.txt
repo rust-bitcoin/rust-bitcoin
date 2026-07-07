@@ -111,8 +111,8 @@ impl core::default::Default for bitcoin_hashes::hash160::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::hash160::HashEngine
   pub fn bitcoin_hashes::hash160::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::hash160::HashEngine]
 impl std::io::Write for bitcoin_hashes::hash160::HashEngine
-  pub fn bitcoin_hashes::hash160::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::hash160::HashEngine]
-  pub fn bitcoin_hashes::hash160::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::hash160::HashEngine]
+  pub fn bitcoin_hashes::hash160::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::hash160::HashEngine]
+  pub fn bitcoin_hashes::hash160::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::hash160::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::hash160::HashEngine
 impl core::marker::Send for bitcoin_hashes::hash160::HashEngine
 impl core::marker::Sync for bitcoin_hashes::hash160::HashEngine
@@ -362,8 +362,8 @@ impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashe
   pub fn bitcoin_hashes::hmac::HmacEngine<T>::input(&mut self, buf: &[u8]) [impl: impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>]
   pub fn bitcoin_hashes::hmac::HmacEngine<T>::n_bytes_hashed(&self) -> u64 [impl: impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>]
 impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>
-  pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> std::io::error::Result<()> [impl: impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>]
-  pub fn bitcoin_hashes::hmac::HmacEngine<T>::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>]
+  pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> core::io::error::Result<()> [impl: impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>]
+  pub fn bitcoin_hashes::hmac::HmacEngine<T>::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>]
 impl<T: core::clone::Clone + bitcoin_hashes::HashEngine> core::clone::Clone for bitcoin_hashes::hmac::HmacEngine<T>
   pub fn bitcoin_hashes::hmac::HmacEngine<T>::clone(&self) -> bitcoin_hashes::hmac::HmacEngine<T> [impl: impl<T: core::clone::Clone + bitcoin_hashes::HashEngine> core::clone::Clone for bitcoin_hashes::hmac::HmacEngine<T>]
 impl<T: core::fmt::Debug + bitcoin_hashes::HashEngine> core::fmt::Debug for bitcoin_hashes::hmac::HmacEngine<T>
@@ -588,8 +588,8 @@ impl core::default::Default for bitcoin_hashes::ripemd160::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::ripemd160::HashEngine
   pub fn bitcoin_hashes::ripemd160::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::ripemd160::HashEngine]
 impl std::io::Write for bitcoin_hashes::ripemd160::HashEngine
-  pub fn bitcoin_hashes::ripemd160::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::ripemd160::HashEngine]
-  pub fn bitcoin_hashes::ripemd160::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::ripemd160::HashEngine]
+  pub fn bitcoin_hashes::ripemd160::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::ripemd160::HashEngine]
+  pub fn bitcoin_hashes::ripemd160::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::ripemd160::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::ripemd160::HashEngine
 impl core::marker::Send for bitcoin_hashes::ripemd160::HashEngine
 impl core::marker::Sync for bitcoin_hashes::ripemd160::HashEngine
@@ -728,8 +728,8 @@ impl core::default::Default for bitcoin_hashes::sha1::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::sha1::HashEngine
   pub fn bitcoin_hashes::sha1::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::sha1::HashEngine]
 impl std::io::Write for bitcoin_hashes::sha1::HashEngine
-  pub fn bitcoin_hashes::sha1::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha1::HashEngine]
-  pub fn bitcoin_hashes::sha1::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha1::HashEngine]
+  pub fn bitcoin_hashes::sha1::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha1::HashEngine]
+  pub fn bitcoin_hashes::sha1::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha1::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::sha1::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha1::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha1::HashEngine
@@ -923,8 +923,8 @@ impl core::default::Default for bitcoin_hashes::sha256::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::sha256::HashEngine
   pub fn bitcoin_hashes::sha256::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::sha256::HashEngine]
 impl std::io::Write for bitcoin_hashes::sha256::HashEngine
-  pub fn bitcoin_hashes::sha256::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha256::HashEngine]
-  pub fn bitcoin_hashes::sha256::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha256::HashEngine]
+  pub fn bitcoin_hashes::sha256::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha256::HashEngine]
+  pub fn bitcoin_hashes::sha256::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha256::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::sha256::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha256::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha256::HashEngine
@@ -1168,8 +1168,8 @@ impl core::default::Default for bitcoin_hashes::sha256d::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::sha256d::HashEngine
   pub fn bitcoin_hashes::sha256d::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::sha256d::HashEngine]
 impl std::io::Write for bitcoin_hashes::sha256d::HashEngine
-  pub fn bitcoin_hashes::sha256d::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha256d::HashEngine]
-  pub fn bitcoin_hashes::sha256d::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha256d::HashEngine]
+  pub fn bitcoin_hashes::sha256d::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha256d::HashEngine]
+  pub fn bitcoin_hashes::sha256d::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha256d::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::sha256d::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha256d::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha256d::HashEngine
@@ -1299,8 +1299,8 @@ impl<T: bitcoin_hashes::sha256t::Tag> core::clone::Clone for bitcoin_hashes::sha
 impl<T: bitcoin_hashes::sha256t::Tag> core::default::Default for bitcoin_hashes::sha256t::HashEngine<T>
   pub fn bitcoin_hashes::sha256t::HashEngine<T>::default() -> Self [impl: impl<T: bitcoin_hashes::sha256t::Tag> core::default::Default for bitcoin_hashes::sha256t::HashEngine<T>]
 impl<T: bitcoin_hashes::sha256t::Tag> std::io::Write for bitcoin_hashes::sha256t::HashEngine<T>
-  pub fn bitcoin_hashes::sha256t::HashEngine<T>::flush(&mut self) -> std::io::error::Result<()> [impl: impl<T: bitcoin_hashes::sha256t::Tag> std::io::Write for bitcoin_hashes::sha256t::HashEngine<T>]
-  pub fn bitcoin_hashes::sha256t::HashEngine<T>::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl<T: bitcoin_hashes::sha256t::Tag> std::io::Write for bitcoin_hashes::sha256t::HashEngine<T>]
+  pub fn bitcoin_hashes::sha256t::HashEngine<T>::flush(&mut self) -> core::io::error::Result<()> [impl: impl<T: bitcoin_hashes::sha256t::Tag> std::io::Write for bitcoin_hashes::sha256t::HashEngine<T>]
+  pub fn bitcoin_hashes::sha256t::HashEngine<T>::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl<T: bitcoin_hashes::sha256t::Tag> std::io::Write for bitcoin_hashes::sha256t::HashEngine<T>]
 impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_hashes::sha256t::HashEngine<T>
   pub fn bitcoin_hashes::sha256t::HashEngine<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_hashes::sha256t::HashEngine<T>]
 impl<T> core::marker::Freeze for bitcoin_hashes::sha256t::HashEngine<T>
@@ -1443,8 +1443,8 @@ impl core::default::Default for bitcoin_hashes::sha384::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::sha384::HashEngine
   pub fn bitcoin_hashes::sha384::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::sha384::HashEngine]
 impl std::io::Write for bitcoin_hashes::sha384::HashEngine
-  pub fn bitcoin_hashes::sha384::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha384::HashEngine]
-  pub fn bitcoin_hashes::sha384::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha384::HashEngine]
+  pub fn bitcoin_hashes::sha384::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha384::HashEngine]
+  pub fn bitcoin_hashes::sha384::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha384::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::sha384::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha384::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha384::HashEngine
@@ -1581,8 +1581,8 @@ impl core::default::Default for bitcoin_hashes::sha3_256::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::sha3_256::HashEngine
   pub fn bitcoin_hashes::sha3_256::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::sha3_256::HashEngine]
 impl std::io::Write for bitcoin_hashes::sha3_256::HashEngine
-  pub fn bitcoin_hashes::sha3_256::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha3_256::HashEngine]
-  pub fn bitcoin_hashes::sha3_256::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha3_256::HashEngine]
+  pub fn bitcoin_hashes::sha3_256::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha3_256::HashEngine]
+  pub fn bitcoin_hashes::sha3_256::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha3_256::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::sha3_256::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha3_256::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha3_256::HashEngine
@@ -1721,8 +1721,8 @@ impl core::default::Default for bitcoin_hashes::sha512::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::sha512::HashEngine
   pub fn bitcoin_hashes::sha512::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::sha512::HashEngine]
 impl std::io::Write for bitcoin_hashes::sha512::HashEngine
-  pub fn bitcoin_hashes::sha512::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha512::HashEngine]
-  pub fn bitcoin_hashes::sha512::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha512::HashEngine]
+  pub fn bitcoin_hashes::sha512::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha512::HashEngine]
+  pub fn bitcoin_hashes::sha512::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha512::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::sha512::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha512::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha512::HashEngine
@@ -1861,8 +1861,8 @@ impl core::default::Default for bitcoin_hashes::sha512_256::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::sha512_256::HashEngine
   pub fn bitcoin_hashes::sha512_256::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::sha512_256::HashEngine]
 impl std::io::Write for bitcoin_hashes::sha512_256::HashEngine
-  pub fn bitcoin_hashes::sha512_256::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha512_256::HashEngine]
-  pub fn bitcoin_hashes::sha512_256::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha512_256::HashEngine]
+  pub fn bitcoin_hashes::sha512_256::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::sha512_256::HashEngine]
+  pub fn bitcoin_hashes::sha512_256::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::sha512_256::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::sha512_256::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha512_256::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha512_256::HashEngine
@@ -2000,8 +2000,8 @@ impl core::clone::Clone for bitcoin_hashes::siphash24::HashEngine
 impl core::fmt::Debug for bitcoin_hashes::siphash24::HashEngine
   pub fn bitcoin_hashes::siphash24::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_hashes::siphash24::HashEngine]
 impl std::io::Write for bitcoin_hashes::siphash24::HashEngine
-  pub fn bitcoin_hashes::siphash24::HashEngine::flush(&mut self) -> std::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::siphash24::HashEngine]
-  pub fn bitcoin_hashes::siphash24::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::siphash24::HashEngine]
+  pub fn bitcoin_hashes::siphash24::HashEngine::flush(&mut self) -> core::io::error::Result<()> [impl: impl std::io::Write for bitcoin_hashes::siphash24::HashEngine]
+  pub fn bitcoin_hashes::siphash24::HashEngine::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl std::io::Write for bitcoin_hashes::siphash24::HashEngine]
 impl core::marker::Freeze for bitcoin_hashes::siphash24::HashEngine
 impl core::marker::Send for bitcoin_hashes::siphash24::HashEngine
 impl core::marker::Sync for bitcoin_hashes::siphash24::HashEngine
@@ -2247,8 +2247,8 @@ impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashe
   pub fn bitcoin_hashes::hmac::HmacEngine<T>::input(&mut self, buf: &[u8]) [impl: impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>]
   pub fn bitcoin_hashes::hmac::HmacEngine<T>::n_bytes_hashed(&self) -> u64 [impl: impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>]
 impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>
-  pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> std::io::error::Result<()> [impl: impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>]
-  pub fn bitcoin_hashes::hmac::HmacEngine<T>::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize> [impl: impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>]
+  pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> core::io::error::Result<()> [impl: impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>]
+  pub fn bitcoin_hashes::hmac::HmacEngine<T>::write(&mut self, buf: &[u8]) -> core::io::error::Result<usize> [impl: impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>]
 impl<T: core::clone::Clone + bitcoin_hashes::HashEngine> core::clone::Clone for bitcoin_hashes::hmac::HmacEngine<T>
   pub fn bitcoin_hashes::hmac::HmacEngine<T>::clone(&self) -> bitcoin_hashes::hmac::HmacEngine<T> [impl: impl<T: core::clone::Clone + bitcoin_hashes::HashEngine> core::clone::Clone for bitcoin_hashes::hmac::HmacEngine<T>]
 impl<T: core::fmt::Debug + bitcoin_hashes::HashEngine> core::fmt::Debug for bitcoin_hashes::hmac::HmacEngine<T>
