@@ -11,7 +11,7 @@ use super::{Script, ScriptBufDecoderError, P2A_PROGRAM};
 use crate::opcodes::all::{OP_1, OP_1NEGATE, OP_EQUAL, OP_HASH160, OP_RETURN};
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
-use crate::script::{Builder, PushBytes, ScriptHash, WScriptHash};
+use crate::script::{Builder, PushBytes, ScriptHash, ScriptHashableTag, WScriptHash};
 use crate::witness_version::WitnessVersion;
 use crate::ScriptPubKeyBuf;
 
@@ -84,6 +84,15 @@ impl<T> ScriptBuf<T> {
     pub fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError> {
         let v = hex::decode_to_vec(s)?;
         Ok(Self::from_bytes(v))
+    }
+
+    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
+    pub fn new_p2wsh(script_hash: WScriptHash) -> Self
+    where
+        T: ScriptHashableTag,
+    {
+        // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
+        super::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
     }
 
     /// Returns a reference to unsized script.
@@ -273,12 +282,6 @@ impl ScriptPubKeyBuf {
             .push_slice(script_hash)
             .push_opcode(OP_EQUAL)
             .into_script()
-    }
-
-    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-    pub fn new_p2wsh(script_hash: WScriptHash) -> Self {
-        // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-        super::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
     }
 
     /// Generates pay to anchor output.
