@@ -11,7 +11,7 @@ use super::{Script, ScriptBufDecoderError, P2A_PROGRAM};
 use crate::opcodes::all::{OP_1, OP_1NEGATE, OP_EQUAL, OP_HASH160, OP_RETURN};
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
-use crate::script::{Builder, PushBytes, ScriptHash, WScriptHash};
+use crate::script::{Builder, PushBytes, ScriptHash, ScriptHashableTag, WScriptHash};
 use crate::witness_version::WitnessVersion;
 use crate::ScriptPubKeyBuf;
 
@@ -275,15 +275,17 @@ impl ScriptPubKeyBuf {
             .into_script()
     }
 
-    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-    pub fn new_p2wsh(script_hash: WScriptHash) -> Self {
-        // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-        super::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
-    }
-
     /// Generates pay to anchor output.
     pub fn new_p2a() -> Self {
         super::new_witness_program_unchecked(WitnessVersion::V1, P2A_PROGRAM)
+    }
+}
+
+impl<T: ScriptHashableTag> ScriptBuf<T> {
+    /// Generates a P2WSH witness program script with a given hash of the witness script.
+    pub fn new_p2wsh(script_hash: WScriptHash) -> Self {
+        // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
+        super::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
     }
 }
 

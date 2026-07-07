@@ -3663,7 +3663,8 @@ impl bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPub
 pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_op_return<T: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(data: T) -> Self
 pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2a() -> Self
 pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2sh(script_hash: bitcoin_primitives::script::ScriptHash) -> Self
-pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2wsh(script_hash: bitcoin_primitives::script::WScriptHash) -> Self
+impl<T: bitcoin_primitives::script::ScriptHashableTag> bitcoin_primitives::script::ScriptBuf<T>
+pub fn bitcoin_primitives::script::ScriptBuf<T>::new_p2wsh(script_hash: bitcoin_primitives::script::WScriptHash) -> Self
 impl<T> bitcoin_primitives::script::ScriptBuf<T>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::as_mut_script(&mut self) -> &mut bitcoin_primitives::script::Script<T>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::as_script(&self) -> &bitcoin_primitives::script::Script<T>
