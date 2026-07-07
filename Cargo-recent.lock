@@ -169,7 +169,6 @@ name = "bitcoin-internals"
 version = "0.5.0"
 dependencies = [
  "bincode",
- "hex-conservative 1.1.0",
  "serde",
  "serde_json",
 ]
