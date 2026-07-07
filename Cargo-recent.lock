@@ -80,6 +80,7 @@ dependencies = [
  "base64",
  "bech32",
  "bincode",
+ "bitcoin-addresses",
  "bitcoin-consensus-encoding 1.0.0",
  "bitcoin-crypto",
  "bitcoin-internals 0.5.0",
@@ -101,6 +102,12 @@ dependencies = [
 [[package]]
 name = "bitcoin-addresses"
 version = "0.0.0"
+dependencies = [
+ "bitcoin-crypto",
+ "bitcoin-internals 0.5.0",
+ "bitcoin-primitives",
+ "bitcoin-taproot-primitives",
+]
 
 [[package]]
 name = "bitcoin-bip158"

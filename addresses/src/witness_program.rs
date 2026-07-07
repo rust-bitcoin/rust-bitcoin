@@ -7,13 +7,11 @@
 //!
 //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+use crypto::key::{FullPublicKey, TweakedPublicKey, UntweakedPublicKey};
 use internals::array_vec::ArrayVec;
-
-use super::witness_version::WitnessVersion;
-use super::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
-use crate::crypto::key::{FullPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::script::WitnessScriptExt as _;
-use crate::taproot::TapNodeHash;
+use primitives::script::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
+use primitives::witness_version::WitnessVersion;
+use taproot_primitives::{TapNodeHash, TapTweak as _};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -43,6 +41,13 @@ pub struct WitnessProgram {
 
 impl WitnessProgram {
     /// Constructs a new witness program, copying the content from the given byte slice.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::InvalidLength`] if the given bytes are shorter than [`MIN_SIZE`], or
+    ///   longer than [`MAX_SIZE`].
+    /// - [`Error::InvalidSegwitV0Length`] if the given version is [`WitnessVersion::V0`] and
+    ///   bytes is not 20 or 32 bytes long.
     pub fn new(version: WitnessVersion, bytes: &[u8]) -> Result<Self, Error> {
         let program_len = bytes.len();
         if program_len < MIN_SIZE || program_len > MAX_SIZE {
@@ -80,8 +85,12 @@ impl WitnessProgram {
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the script exceeds 10,000 bytes.
     pub fn p2wsh(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
-        script.wscript_hash().map(Self::p2wsh_from_hash)
+        WScriptHash::from_script(script).map(Self::p2wsh_from_hash)
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
@@ -116,6 +125,7 @@ impl WitnessProgram {
     pub fn version(&self) -> WitnessVersion { self.version }
 
     /// Returns the witness program.
+    #[allow(clippy::missing_panics_doc)] // expect panic is unreachable by witness program limit
     pub fn program(&self) -> &PushBytes {
         self.program
             .as_slice()
