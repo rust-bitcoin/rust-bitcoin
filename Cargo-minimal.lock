@@ -27,7 +27,7 @@ dependencies = [
 name = "base58ck"
 version = "0.4.0"
 dependencies = [
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin_hashes 1.0.0",
  "hex-conservative 1.1.0",
 ]
@@ -84,7 +84,7 @@ dependencies = [
  "bitcoin-addresses",
  "bitcoin-consensus-encoding 1.0.0",
  "bitcoin-crypto",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin-io 0.5.0",
  "bitcoin-key-expression",
  "bitcoin-network-kind",
@@ -105,7 +105,7 @@ name = "bitcoin-addresses"
 version = "0.0.0"
 dependencies = [
  "bitcoin-crypto",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin-primitives",
  "bitcoin-taproot-primitives",
 ]
@@ -118,7 +118,7 @@ version = "0.0.0"
 name = "bitcoin-consensus-encoding"
 version = "1.0.0"
 dependencies = [
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "hex-conservative 1.1.0",
  "serde",
  "serde_json",
@@ -130,7 +130,7 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2d6094e2a1ba3c93b5a596fe5a10d1a10c3c6e06785cde89f693a044c01aa40"
 dependencies = [
- "bitcoin-internals 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin-internals 0.5.0",
 ]
 
 [[package]]
@@ -139,7 +139,7 @@ version = "0.2.0"
 dependencies = [
  "arbitrary",
  "base58ck 0.4.0",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin-network-kind",
  "bitcoin-primitives",
  "bitcoin_hashes 1.0.0",
@@ -168,19 +168,19 @@ dependencies = [
 [[package]]
 name = "bitcoin-internals"
 version = "0.5.0"
-dependencies = [
- "bincode",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "bitcoin-internals"
-version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a30a22d1f112dde8e16be7b45c63645dc165cef254f835b3e1e9553e485cfa64"
 dependencies = [
  "hex-conservative 0.3.0",
+]
+
+[[package]]
+name = "bitcoin-internals"
+version = "0.6.0"
+dependencies = [
+ "bincode",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -197,7 +197,7 @@ name = "bitcoin-io"
 version = "0.5.0"
 dependencies = [
  "bitcoin-consensus-encoding 1.0.0",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin_hashes 1.0.0",
 ]
 
@@ -209,7 +209,7 @@ dependencies = [
  "base58ck 0.4.0",
  "bincode",
  "bitcoin-crypto",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin-network-kind",
  "bitcoin_hashes 1.0.0",
  "hex-conservative 1.1.0",
@@ -223,7 +223,7 @@ name = "bitcoin-network-kind"
 version = "1.0.0"
 dependencies = [
  "arbitrary",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "serde",
  "serde_json",
  "serde_test",
@@ -235,7 +235,7 @@ version = "0.1.0"
 dependencies = [
  "arbitrary",
  "bitcoin-consensus-encoding 1.0.0",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin-network-kind",
  "bitcoin-primitives",
  "bitcoin-units 0.5.0",
@@ -251,7 +251,7 @@ dependencies = [
  "arbitrary",
  "bincode",
  "bitcoin-consensus-encoding 1.0.0",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin-units 0.5.0",
  "bitcoin_hashes 1.0.0",
  "hex-conservative 1.1.0",
@@ -271,7 +271,7 @@ version = "0.1.0"
 dependencies = [
  "arbitrary",
  "bitcoin-crypto",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "bitcoin_hashes 1.0.0",
  "secp256k1 0.32.0-beta.2",
  "serde",
@@ -294,7 +294,7 @@ dependencies = [
  "arbitrary",
  "bincode",
  "bitcoin-consensus-encoding 1.0.0",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "serde",
  "serde_json",
  "serde_test",
@@ -326,7 +326,7 @@ version = "1.0.0"
 dependencies = [
  "arbitrary",
  "bitcoin-consensus-encoding 1.0.0",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.6.0",
  "cpufeatures",
  "hex-conservative 1.1.0",
  "serde",

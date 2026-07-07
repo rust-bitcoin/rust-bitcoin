@@ -21,7 +21,7 @@ alloc = ["internals/alloc", "hex?/alloc", "serde?/alloc"]
 serde = ["alloc", "hex", "dep:serde"]
 
 [dependencies]
-internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0" }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
 
 hex = { package = "hex-conservative", version = "1.1.0", default-features = false, features = [], optional = true }
 serde = { version = "1.0.195", default-features = false, features = ["derive"], optional = true }

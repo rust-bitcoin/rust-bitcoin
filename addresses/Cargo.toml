@@ -20,7 +20,7 @@ alloc = ["crypto/alloc", "internals/alloc", "primitives/alloc", "taproot_primiti
 
 [dependencies]
 crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.2.0", default-features = false, features = [] }
-internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0" }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
 taproot_primitives = { package = "bitcoin-taproot-primitives", path = "../taproot-primitives", version = "0.1.0", default-features = false, features = [] }
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.102.0", default-features = false, features = ["hex"] }
 

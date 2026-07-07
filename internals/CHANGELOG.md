@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-07
+
+### Deletions
+
+- Remove unused or single-use types [#6339](https://github.com/rust-bitcoin/rust-bitcoin/pull/6339)
+- Remove the now-unused `hex` dependency [#6490](https://github.com/rust-bitcoin/rust-bitcoin/pull/6490)
+- Remove `internals::compact_size` module [#5374](https://github.com/rust-bitcoin/rust-bitcoin/pull/5374)
+- Remove the unstable `hex-conservative` dependency [#6148](https://github.com/rust-bitcoin/rust-bitcoin/pull/6148)
+- Remove `macros` module [#6340](https://github.com/rust-bitcoin/rust-bitcoin/pull/6340)
+- Move `ToU64` to `bitcoin` [#6362](https://github.com/rust-bitcoin/rust-bitcoin/pull/6362)
+
+### Improvements
+
+- Implement `Serialize`/`Deserialize` for `ArrayVec` [#6099](https://github.com/rust-bitcoin/rust-bitcoin/pull/6099)
+- Implement `ArrayVec::try_push` [#6193](https://github.com/rust-bitcoin/rust-bitcoin/pull/6193)
+- Add `spare_capacity_mut` and `set_len` to `ArrayVec` [#6235](https://github.com/rust-bitcoin/rust-bitcoin/pull/6235)
+
 ## [0.5.0] - 2025-12-05
 
 - Remove `doc_auto_cfg` [#5162](https://github.com/rust-bitcoin/rust-bitcoin/pull/5162)
