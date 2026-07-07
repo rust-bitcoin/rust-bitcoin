@@ -3508,7 +3508,6 @@ impl bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPub
 pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_op_return<T: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(data: T) -> Self
 pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2a() -> Self
 pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2sh(script_hash: bitcoin_primitives::script::ScriptHash) -> Self
-pub fn bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>::new_p2wsh(script_hash: bitcoin_primitives::script::WScriptHash) -> Self
 impl<T> bitcoin_primitives::script::ScriptBuf<T>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::as_mut_script(&mut self) -> &mut bitcoin_primitives::script::Script<T>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::as_script(&self) -> &bitcoin_primitives::script::Script<T>
@@ -3517,6 +3516,7 @@ pub const fn bitcoin_primitives::script::ScriptBuf<T>::from_bytes(bytes: alloc::
 pub fn bitcoin_primitives::script::ScriptBuf<T>::into_boxed_script(self) -> alloc::boxed::Box<bitcoin_primitives::script::Script<T>>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::into_bytes(self) -> alloc::vec::Vec<u8>
 pub const fn bitcoin_primitives::script::ScriptBuf<T>::new() -> Self
+pub fn bitcoin_primitives::script::ScriptBuf<T>::new_p2wsh(script_hash: bitcoin_primitives::script::WScriptHash) -> Self where T: bitcoin_primitives::script::ScriptHashableTag
 pub fn bitcoin_primitives::script::ScriptBuf<T>::push_opcode(&mut self, data: bitcoin_primitives::opcodes::Opcode)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::push_slice<D: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(&mut self, data: D)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::push_slice_non_minimal<D: core::convert::AsRef<bitcoin_primitives::script::PushBytes>>(&mut self, data: D)
