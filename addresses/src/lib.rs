@@ -120,6 +120,7 @@ mod sealed {
 }
 
 /// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
+///
 /// Does not do any checks on version or program length.
 ///
 /// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
