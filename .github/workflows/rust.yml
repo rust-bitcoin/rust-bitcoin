@@ -127,7 +127,7 @@ jobs:
       - name: "Install target"
         run: rustup target add ${{ matrix.target }}
       - name: "Install cross"
-        run: cargo install cross --locked
+        run: cargo install cross --locked --git https://github.com/cross-rs/cross --rev 64b5bb4d3d34de062552b9a2093affe77b4ad16a
       - name: "Set dependencies"
         run: cp Cargo-recent.lock Cargo.lock
       - name: "Run cross test"
