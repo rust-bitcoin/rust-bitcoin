@@ -221,7 +221,6 @@ const fn encoded_check_reserve_len(unencoded_len: usize) -> usize {
 trait Buffer: Sized {
     type Err: fmt::Debug;
 
-    fn push(&mut self, val: u8);
     fn try_push(&mut self, val: u8) -> Result<(), Self::Err>;
     fn slice(&self) -> &[u8];
     fn slice_mut(&mut self) -> &mut [u8];
@@ -230,8 +229,6 @@ trait Buffer: Sized {
 #[cfg(feature = "alloc")]
 impl Buffer for Vec<u8> {
     type Err = Infallible;
-
-    fn push(&mut self, val: u8) { Self::push(self, val) }
 
     fn try_push(&mut self, val: u8) -> Result<(), Self::Err> {
         self.push(val);
@@ -245,8 +242,6 @@ impl Buffer for Vec<u8> {
 
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
     type Err = internals::array_vec::error::Error;
-
-    fn push(&mut self, val: u8) { Self::push(self, val) }
 
     fn try_push(&mut self, val: u8) -> Result<(), Self::Err> { self.try_push(val) }
 
