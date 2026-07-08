@@ -26,7 +26,6 @@ extern crate test;
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(feature = "alloc")]
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 #[cfg(feature = "alloc")]
@@ -45,7 +44,6 @@ pub use std::{string::String, vec::Vec};
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
-#[cfg(feature = "alloc")]
 use internals::array_vec::ArrayVec;
 #[allow(unused)] // MSRV polyfill
 #[cfg(feature = "alloc")]
@@ -220,7 +218,6 @@ const fn encoded_check_reserve_len(unencoded_len: usize) -> usize {
     encoded_reserve_len(unencoded_len + 4)
 }
 
-#[cfg(feature = "alloc")]
 trait Buffer: Sized {
     type Err: fmt::Debug;
 
@@ -246,7 +243,6 @@ impl Buffer for Vec<u8> {
     fn slice_mut(&mut self) -> &mut [u8] { self }
 }
 
-#[cfg(feature = "alloc")]
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
     type Err = internals::array_vec::error::Error;
 
@@ -265,6 +261,16 @@ where
     I: Iterator<Item = u8> + Clone,
     W: fmt::Write,
 {
+    // format_iter is only called from within encode_check_to_writer, and always has a sufficiently sized buffer.
+    encode_to_buffer(data, buf).expect("encode_to_buffer is infallible with well-sized buffer");
+
+    let str_slice =
+        core::str::from_utf8(buf.slice()).expect("encode_to_buffer writes ASCII bytes to buf");
+    writer.write_str(str_slice)
+}
+
+// Base58 encode the data in the iterator `data` to the buffer buf as ASCII bytes
+fn encode_to_buffer<I: Iterator<Item = u8>, T: Buffer>(data: I, buf: &mut T) -> Result<(), T::Err> {
     let mut leading_zero_count = 0;
     let mut leading_zeroes = true;
     // Build string in little endian with 0-58 in place of characters...
@@ -283,18 +289,19 @@ where
         }
 
         while carry > 0 {
-            buf.push((carry % 58) as u8); // cast loses data intentionally
+            buf.try_push((carry % 58) as u8)?; // cast loses data intentionally
             carry /= 58;
         }
     }
 
-    // ... then reverse it and convert to chars
+    // ... then reverse it and convert to ASCII
     for _ in 0..leading_zero_count {
-        buf.push(0);
+        buf.try_push(0)?;
     }
 
-    for ch in buf.slice().iter().rev() {
-        writer.write_char(char::from(BASE58_CHARS[usize::from(*ch)]))?;
+    buf.slice_mut().reverse();
+    for ch in buf.slice_mut() {
+        *ch = BASE58_CHARS[usize::from(*ch)];
     }
 
     Ok(())
