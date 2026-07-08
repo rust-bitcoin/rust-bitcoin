@@ -43,14 +43,23 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
+#[cfg(feature = "encoding")]
+use encoding::{
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2,
+    Encoder3, EncoderStatus, SliceEncoder, VecDecoder,
+};
 use hashes::Hash;
 use io::{Read, Write};
 
 use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block, TxMerkleNode};
+#[cfg(feature = "encoding")]
+use crate::blockdata::block::{HeaderDecoder, HeaderEncoder};
 use crate::blockdata::transaction::{Transaction, Txid};
 use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
+#[cfg(feature = "encoding")]
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.
@@ -160,6 +169,68 @@ impl Decodable for MerkleBlock {
             txn: Decodable::consensus_decode(r)?,
         })
     }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder type for a [`MerkleBlock`].
+    #[derive(Debug, Clone)]
+    pub struct MerkleBlockEncoder<'e>(Encoder2<HeaderEncoder<'e>, PartialMerkleTreeEncoder<'e>>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for MerkleBlock {
+    type Encoder<'e> = MerkleBlockEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        MerkleBlockEncoder::new(encoding::Encoder2::new(self.header.encoder(), self.txn.encoder()))
+    }
+}
+
+#[cfg(feature = "encoding")]
+type MerkleBlockInnerDecoder = Decoder2<HeaderDecoder, PartialMerkleTreeDecoder>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for a [`MerkleBlock`].
+    #[derive(Debug, Default, Clone)]
+    pub struct MerkleBlockDecoder(MerkleBlockInnerDecoder);
+
+    fn end(
+        result: Result<(block::Header, PartialMerkleTree), <MerkleBlockInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<MerkleBlock, MerkleBlockDecoderError> {
+        let (header, txn) = result.map_err(MerkleBlockDecoderError)?;
+        Ok(MerkleBlock { header, txn })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for MerkleBlock {
+    type Decoder = MerkleBlockDecoder;
+}
+
+/// An error occurring when decoding a [`MerkleBlock`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MerkleBlockDecoderError(
+    pub(crate) <MerkleBlockInnerDecoder as encoding::Decoder>::Error,
+);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for MerkleBlockDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for MerkleBlockDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "merkleblock error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for MerkleBlockDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// Data structure that represents a partial merkle tree.
@@ -479,6 +550,134 @@ impl Decodable for PartialMerkleTree {
 
         Ok(PartialMerkleTree { num_transactions, hashes, bits })
     }
+}
+
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+struct BitVecEncoder {
+    buffer: Vec<u8>,
+    exhausted: bool,
+}
+
+#[cfg(feature = "encoding")]
+impl BitVecEncoder {
+    fn new(bits: &[bool]) -> Self {
+        let mut buffer = Vec::with_capacity((bits.len() + 7) / 8);
+        for chunk in bits.chunks(8) {
+            let mut byte = 0u8;
+            for (i, bit) in chunk.iter().enumerate() {
+                byte |= u8::from(*bit) << i;
+            }
+            buffer.push(byte);
+        }
+        Self { buffer, exhausted: false }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encoder for BitVecEncoder {
+    fn current_chunk(&self) -> &[u8] {
+        if self.exhausted {
+            &[]
+        } else {
+            &self.buffer
+        }
+    }
+
+    fn advance(&mut self) -> EncoderStatus {
+        self.exhausted = true;
+        EncoderStatus::Finished
+    }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for a [`PartialMerkleTree`].
+    #[derive(Debug, Clone)]
+    pub struct PartialMerkleTreeEncoder<'e>(
+        Encoder3<
+            ArrayEncoder<4>,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxMerkleNode>>,
+            Encoder2<CompactSizeEncoder, BitVecEncoder>,
+        >
+    );
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for PartialMerkleTree {
+    type Encoder<'e> = PartialMerkleTreeEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        PartialMerkleTreeEncoder::new(Encoder3::new(
+            ArrayEncoder::without_length_prefix(self.num_transactions.to_le_bytes()),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.hashes.len()),
+                SliceEncoder::without_length_prefix(&self.hashes),
+            ),
+            Encoder2::new(
+                CompactSizeEncoder::new((self.bits.len() + 7) / 8),
+                BitVecEncoder::new(&self.bits),
+            ),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+type PartialMerkleTreeInnerDecoder =
+    Decoder3<ArrayDecoder<4>, VecDecoder<TxMerkleNode>, ByteVecDecoder>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder type for a [`PartialMerkleTree`].
+    #[derive(Debug, Default, Clone)]
+    pub struct PartialMerkleTreeDecoder(PartialMerkleTreeInnerDecoder);
+
+    fn end(
+        result: Result<
+            <PartialMerkleTreeInnerDecoder as encoding::Decoder>::Output,
+            <PartialMerkleTreeInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<PartialMerkleTree, PartialMerkleTreeDecoderError> {
+        let (num_transactions, hashes, compress_bit_vec) =
+            result.map_err(PartialMerkleTreeDecoderError)?;
+        let num_transactions = u32::from_le_bytes(num_transactions);
+        let mut bits = Vec::with_capacity(compress_bit_vec.len());
+        for byte in compress_bit_vec {
+            for i in 0..8 {
+                bits.push((byte & (1 << i)) != 0);
+            }
+        }
+        Ok(PartialMerkleTree { num_transactions, bits, hashes })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for PartialMerkleTree {
+    type Decoder = PartialMerkleTreeDecoder;
+}
+
+/// An error decoding a [`PartialMerkleTree`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PartialMerkleTreeDecoderError(
+    pub(crate) <PartialMerkleTreeInnerDecoder as encoding::Decoder>::Error,
+);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for PartialMerkleTreeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for PartialMerkleTreeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "partial merkletree error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for PartialMerkleTreeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// An error when verifying the merkle block.
