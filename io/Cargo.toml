@@ -34,5 +34,8 @@ unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_63)', 'cfg(rust_v
 [package.metadata.rbmt.test]
 msrv_overrides = { "encoding" = "1.74.0" }
 
+[package.metadata.rbmt.api]
+enabled = true
+
 [package.metadata.rbmt.prerelease]
 enabled = true
