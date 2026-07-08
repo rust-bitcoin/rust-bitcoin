@@ -2,7 +2,7 @@
 
 //! # Bitcoin Base58 Encoding and Decoding
 //!
-//! This crate can be used in a no-std environment but requires an allocator.
+//! This crate can be used in a no-std environment but requires an allocator for decoding.
 
 #![no_std]
 // Experimental features we need.
