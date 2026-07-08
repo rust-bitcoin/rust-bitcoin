@@ -3385,6 +3385,10 @@ pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubK
 pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>::is_p2pkh(&self) -> bool
 pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>::is_p2sh(&self) -> bool
 pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>::is_witness_program(&self) -> bool
+impl bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>
+pub fn bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>::wscript_hash(&self) -> core::result::Result<bitcoin_primitives::script::WScriptHash, bitcoin_primitives::script::WitnessScriptSizeError>
+impl<T: bitcoin_primitives::script::ScriptHashableTag> bitcoin_primitives::script::Script<T>
+pub fn bitcoin_primitives::script::Script<T>::script_hash(&self) -> core::result::Result<bitcoin_primitives::script::ScriptHash, bitcoin_primitives::script::RedeemScriptSizeError>
 impl<T> bitcoin_primitives::script::Script<T>
 pub const fn bitcoin_primitives::script::Script<T>::as_bytes(&self) -> &[u8]
 pub fn bitcoin_primitives::script::Script<T>::as_mut_bytes(&mut self) -> &mut [u8]
