@@ -745,10 +745,8 @@ impl NetworkMessage {
 /// A Network message using the v1 p2p protocol.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct V1NetworkMessage {
-    magic: Magic,
+    header: V1MessageHeader,
     payload: NetworkMessage,
-    payload_len: u32,
-    checksum: [u8; 4],
 }
 
 impl V1NetworkMessage {
@@ -758,9 +756,9 @@ impl V1NetworkMessage {
     ///
     /// Panics if the payload length exceeds `u32::MAX`.
     pub fn new(magic: Magic, payload: NetworkMessage) -> Self {
-        let (bytes_hashed, checksum) = sha2_checksum(&payload);
-        let payload_len = u32::try_from(bytes_hashed).expect("network message use u32 as length");
-        Self { magic, payload, payload_len, checksum }
+        let cmd = payload.command();
+        let header = V1MessageHeader::new(magic, &payload, cmd);
+        Self { header, payload }
     }
 
     /// Consumes the [`V1NetworkMessage`] instance and returns the inner payload.
@@ -770,7 +768,7 @@ impl V1NetworkMessage {
     pub fn payload(&self) -> &NetworkMessage { &self.payload }
 
     /// Magic bytes to identify the network these messages are meant for
-    pub fn magic(&self) -> &Magic { &self.magic }
+    pub fn magic(&self) -> &Magic { &self.header.magic }
 
     /// Returns the message command as a static string reference.
     ///
@@ -1006,12 +1004,7 @@ encoding::encoder_newtype! {
     #[derive(Debug, Clone)]
     pub struct V1NetworkMessageEncoder<'e>(
         encoding::Encoder2<
-            encoding::Encoder4<
-                encoding::ArrayEncoder<4>,
-                CommandStringEncoder,
-                encoding::ArrayEncoder<4>,
-                encoding::ArrayEncoder<4>,
-            >,
+            V1MessageHeaderEncoder<'e>,
             NetworkMessageEncoder<'e>,
         >
     );
@@ -1022,12 +1015,7 @@ impl encoding::Encode for V1NetworkMessage {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         V1NetworkMessageEncoder::new(encoding::Encoder2::new(
-            encoding::Encoder4::new(
-                encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
-                self.command().encoder(),
-                encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
-                encoding::ArrayEncoder::without_length_prefix(self.checksum),
-            ),
+            self.header.encoder(),
             NetworkMessageEncoder::new(&self.payload),
         ))
     }
@@ -1329,7 +1317,6 @@ enum DecoderState {
     },
     ReadingPayload {
         magic: Magic,
-        length: u32,
         checksum: [u8; 4],
         payload_decoder: NetworkMessageDecoder,
         // Hash engine to compute checksum over raw payload bytes as they arrive.
@@ -1380,7 +1367,6 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                     let payload_decoder = NetworkMessageDecoder::new(header.command, payload_len);
                     self.state = DecoderState::ReadingPayload {
                         magic: header.magic,
-                        length: header.length,
                         checksum: header.checksum,
                         payload_decoder,
                         checksum_engine: sha256d::HashEngine::new(),
@@ -1411,7 +1397,6 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                 .expect_err("push_bytes() moves to ReadingPayload on header_decoder completion")),
             DecoderState::ReadingPayload {
                 magic,
-                length,
                 checksum,
                 payload_decoder,
                 checksum_engine,
@@ -1431,7 +1416,10 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                     ));
                 }
 
-                Ok(V1NetworkMessage { magic, payload, payload_len: length, checksum })
+                let cmd = payload.command();
+                let header = V1MessageHeader::new(magic, &payload, cmd);
+
+                Ok(V1NetworkMessage { header, payload })
             }
         }
     }
@@ -2666,7 +2654,7 @@ mod test {
         let msg: V1NetworkMessage = msg.unwrap();
 
         let preimage = V1NetworkMessage::new(Magic::BITCOIN, NetworkMessage::GetAddr);
-        assert_eq!(preimage.magic, msg.magic);
+        assert_eq!(preimage.magic(), msg.magic());
         assert_eq!(preimage.payload, msg.payload);
     }
 
@@ -2707,7 +2695,7 @@ mod test {
 
         assert!(msg.is_ok());
         let msg = msg.unwrap();
-        assert_eq!(msg.magic, Magic::BITCOIN);
+        assert_eq!(*msg.magic(), Magic::BITCOIN);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, ProtocolVersion::INVALID_CB_NO_BAN_VERSION);
             assert_eq!(
@@ -2791,7 +2779,7 @@ mod test {
 
         let msg = msg.unwrap();
         assert_eq!(encoding::encode_to_vec(&msg).len(), data.to_vec().len() - 2);
-        assert_eq!(msg.magic, Magic::BITCOIN);
+        assert_eq!(*msg.magic(), Magic::BITCOIN);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, ProtocolVersion::INVALID_CB_NO_BAN_VERSION);
             assert_eq!(
