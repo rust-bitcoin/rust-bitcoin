@@ -412,26 +412,26 @@ mod tests {
     #[test]
     fn base58_encode() {
         // Basics
-        assert_eq!(&encode(&[0][..]), "1");
-        assert_eq!(&encode(&[1][..]), "2");
-        assert_eq!(&encode(&[58][..]), "21");
-        assert_eq!(&encode(&[13, 36][..]), "211");
+        assert_eq!(Base58CkString::encode_unbounded(&[13, 36][..]).as_str(), "7YY3x3vS");
 
         // Leading zeroes
-        assert_eq!(&encode(&[0, 13, 36][..]), "1211");
-        assert_eq!(&encode(&[0, 0, 0, 0, 13, 36][..]), "1111211");
+        assert_eq!(Base58CkString::encode_unbounded(&[0, 13, 36][..]).as_str(), "17YZPJu4L");
+        assert_eq!(
+            Base58CkString::encode_unbounded(&[0, 0, 0, 0, 13, 36][..]).as_str(),
+            "11117YaXDHva"
+        );
 
         // Long input (>128 bytes => has to use heap)
-        let res = encode(
+        let res = Base58CkString::encode_unbounded(
             "BitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBit\
         coinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoin"
                 .as_bytes(),
         );
         let exp =
-            "ZqC5ZdfpZRi7fjA8hbhX5pEE96MdH9hEaC1YouxscPtbJF16qVWksHWR4wwvx7MotFcs2ChbJqK8KJ9X\
-        wZznwWn1JFDhhTmGo9v6GjAVikzCsBWZehu7bm22xL8b5zBR5AsBygYRwbFJsNwNkjpyFuDKwmsUTKvkULCvucPJrN5\
-        QUdxpGakhqkZFL7RU4yT";
-        assert_eq!(&res, exp);
+            "4hqMa7U6Kxg4YstWo7KztyYAAkTuhuLWTvrHia8nrgx5eb2E8cf79wD9dBjd4c9STsTTXWZT5pp985vP\
+        nL4MVTQrt4EW5jgAk5Fh81PoF6jjhCyUZY2kZ8iYaM5XpfPkZ6aki57S6oiuVv4cmJz2ou8ssxEKNRJMWjSFL5izLbe\
+        s9rugAdBdrboyHMSAtSNY1Nrb4";
+        assert_eq!(res.as_str(), exp);
 
         // Addresses
         let addr = hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d");
@@ -472,7 +472,7 @@ mod tests {
         // Check that empty slice passes roundtrip.
         assert_eq!(decode_check(Base58CkString::encode_unbounded(&[]).as_str()), Ok(vec![]));
         // Check that `len > 4` is enforced.
-        assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(TooShortError { length: 3 }.into()));
+        assert_eq!(decode_check("Ldp"), Err(TooShortError { length: 3 }.into()));
     }
 }
 
