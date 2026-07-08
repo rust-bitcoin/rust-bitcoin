@@ -1,14 +1,10 @@
-# Supported versions
+# Supported Versions
 
-List of crates, their versions that we still actively maintain, and the dependency versions.
+Three versions of the `bitcoin` crate are supported, the current in development version and two Long-Term Support (LTS) versions.
 
-## Bitcoin LTS versions
+Because the `bitcoin` crate is an umbrella across the rest of the crates in the workspace, the oldest LTS version's minimum dependencies determine the LTS versions of the other crates.
 
-- `v0.30` (Security and bug fixes only)
-- `v0.31` (Security and bug fixes only)
-- `v0.32`
-
-`v0.32` is the version most of the eccosystem is on. It is actively maintained. This means:
+LTS versions are actively maintained and receive updates like the following.
 
 1. Will backport anything that is easy enough if requested and if possible within semver rules.
 2. May attempt more involved backport work if we deem it important enough.
@@ -16,43 +12,11 @@ List of crates, their versions that we still actively maintain, and the dependen
 4. Security and bug fixes, obviously.
 
 (1) includes new features developed on `master`, so contributors are welcome to contribute a new
-feature with the explicit aim of then backporting it to `0.32`.
+feature with the explicit aim of then backporting to LTS branches.
 
-## Dependency version map
+## `bitcoin` LTS Versions
 
-The LTS `bitcoin` releases and dependency versions (of crates in this repository).
+- `v0.32.100+` -- MSRV of `1.60.0` and the optional `encoding` feature.
+- `v0.32.10+` -- MSRV of `1.56.1`.
 
-- `bitcoin 0.30`
-  -> `bitcoin-private 0.1`
-  -> `hashes 0.12`
-
-- `bitcoin 0.31`
-  -> `internals 0.2`
-  -> `hashes 0.13`
-
-- `bitcoin 0.32`
-  -> `base58ck 0.1`
-  -> `internals 0.3`
-  -> `io 0.1`
-  -> `units 0.1`
-  -> `hashes 0.14`
-
-Currently in development:
-
-- `bitcoin 0.33-rc.x`
-  -> `hashes 0.17`
-  -> `io 0.2`
-  -> `internals 0.4`
-  -> `primitives-1.0.0-rc.x`
-  -> `units-1.0.0-rc.x`
-  -> (transitively `consensus-encoding 1.0.0-rc.x`)
-
-Once the RC cycle is done:
-
-- `bitcoin 0.33`
-  -> `hashes 0.17`
-  -> `io 0.2`
-  -> `internals 0.4`
-  -> `primitives-1.0.0`
-  -> `units-1.0.0`
-  -> `consensus-encoding 1.0.0`
+As of 2026-07-07, `v0.32` is the version most of the ecosystem is on and is actively maintained. Due to its longevity, we are in the unconventional spot of maintaining two branches of `v0.32` in an effort to make it easier for users to migrate to the stabilized crates.
