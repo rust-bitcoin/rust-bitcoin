@@ -148,6 +148,45 @@ impl std::error::Error for TooShortError {
     }
 }
 
+/// The input was too long to be encoded into the fixed-size buffer.
+///
+/// Without `alloc` any encoded base58check string must fit in 128 characters.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InputTooLongError(pub(super) InputTooLongErrorInner);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(super) struct InputTooLongErrorInner {
+    /// The length of the un-encoded input data in bytes (excluding the 4 checksum bytes).
+    pub(super) input_len: usize,
+}
+
+impl InputTooLongError {
+    /// Returns the length of the input data in bytes (excluding the 4 checksum bytes).
+    pub fn input_length(&self) -> usize { self.0.input_len }
+}
+
+impl From<Infallible> for InputTooLongError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for InputTooLongError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "base58check encoding of {} bytes of data exceeds the 128 character buffer",
+            self.0.input_len
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InputTooLongError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let InputTooLongErrorInner { input_len: _ } = self.0;
+        None
+    }
+}
+
 /// Found an invalid ASCII byte while decoding base58 string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidCharacterError(pub(super) InvalidCharacterErrorInner);
@@ -158,6 +197,7 @@ pub(super) struct InvalidCharacterErrorInner {
 }
 
 impl InvalidCharacterError {
+    #[cfg(feature = "alloc")]
     pub(super) fn new(invalid: u8) -> Self { Self(InvalidCharacterErrorInner { invalid }) }
 
     /// Returns the invalid base58 character.

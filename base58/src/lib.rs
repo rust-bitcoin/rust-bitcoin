@@ -28,7 +28,6 @@ extern crate std;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-#[cfg(feature = "alloc")]
 pub mod error;
 
 #[cfg(feature = "alloc")]
@@ -40,7 +39,6 @@ use core::fmt;
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
 
-#[cfg(feature = "alloc")]
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
@@ -49,6 +47,8 @@ use internals::array_vec::ArrayVec;
 #[cfg(feature = "alloc")]
 use internals::slice::SliceExt;
 
+#[cfg(not(feature = "alloc"))]
+use crate::error::InputTooLongErrorInner;
 #[cfg(feature = "alloc")]
 use crate::error::{IncorrectChecksumError, TooShortError};
 
@@ -56,6 +56,8 @@ use crate::error::{IncorrectChecksumError, TooShortError};
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::{Error, InvalidCharacterError};
+#[doc(no_inline)]
+pub use self::error::InputTooLongError;
 
 #[rustfmt::skip]
 #[cfg(feature = "alloc")]
@@ -148,8 +150,104 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     Ok(ret)
 }
 
-#[cfg(feature = "alloc")]
 const SHORT_OPT_BUFFER_LEN: usize = 128;
+
+/// A base58check-encoded string (data followed by a 4 byte `SHA256d` checksum, base58-encoded).
+///
+/// Strings of at most 128 characters can be encoded without allocating. Longer strings can only
+/// be produced when the `alloc` feature is enabled.
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct Base58CkString(Base58CkInner);
+
+#[derive(Clone, Hash, PartialEq, Eq)]
+enum Base58CkInner {
+    /// ASCII string of length at most 128 base58 characters (roughly 93 bytes)
+    Small(ArrayVec<u8, SHORT_OPT_BUFFER_LEN>),
+    /// Unbounded string (available with "alloc" only).
+    #[cfg(feature = "alloc")]
+    Large(Vec<u8>),
+}
+
+impl Base58CkString {
+    /// Encodes `data` as a base58check string, including the checksum.
+    ///
+    /// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the
+    /// end before encoding.
+    ///
+    /// # Errors
+    ///
+    /// If the `alloc` feature is disabled and `data` encodes to more than 128 base58 characters.
+    /// With `alloc` enabled this function is infallible. If you will only be using this with `alloc`,
+    /// you can alternatively call [`Self::encode_unbounded`].
+    pub fn encode(data: &[u8]) -> Result<Self, InputTooLongError> {
+        #[cfg(feature = "alloc")]
+        {
+            Ok(Self::encode_unbounded(data))
+        }
+        #[cfg(not(feature = "alloc"))]
+        {
+            let mut buf = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+            let checksum = sha256d::Hash::hash(data);
+            let iter = data.iter().copied().chain(checksum.as_byte_array()[0..4].iter().copied());
+
+            encode_to_buffer(iter, &mut buf)
+                .map(|()| Self(Base58CkInner::Small(buf)))
+                .map_err(|_| InputTooLongError(InputTooLongErrorInner { input_len: data.len() }))
+        }
+    }
+
+    /// Encodes `data` of any length as a base58check string.
+    #[allow(clippy::missing_panics_doc)] // encode_to_buffer is infallible in both cases
+    #[cfg(feature = "alloc")]
+    pub fn encode_unbounded(data: &[u8]) -> Self {
+        let checksum = sha256d::Hash::hash(data);
+        let iter = data.iter().copied().chain(checksum.as_byte_array()[0..4].iter().copied());
+        let reserve_len = encoded_check_reserve_len(data.len());
+        if reserve_len <= SHORT_OPT_BUFFER_LEN {
+            let mut buf = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+            encode_to_buffer(iter, &mut buf)
+                .expect("encode_to_buffer is infallible with well-sized ArrayVec buf");
+            Self(Base58CkInner::Small(buf))
+        } else {
+            let mut buf = Vec::with_capacity(reserve_len);
+            encode_to_buffer(iter, &mut buf).expect("encode_to_buffer is infallible with Vec buf");
+            Self(Base58CkInner::Large(buf))
+        }
+    }
+
+    /// Returns the base58check-encoded string.
+    #[allow(clippy::missing_panics_doc)] // Base58 characters are always valid ASCII.
+    pub fn as_str(&self) -> &str {
+        core::str::from_utf8(self.as_bytes()).expect("base58 characters are valid ASCII")
+    }
+
+    /// Returns the base58check-encoded string as ASCII bytes.
+    pub fn as_bytes(&self) -> &[u8] {
+        match self.0 {
+            Base58CkInner::Small(ref data) => data.slice(),
+            #[cfg(feature = "alloc")]
+            Base58CkInner::Large(ref data) => data.slice(),
+        }
+    }
+}
+
+impl AsRef<str> for Base58CkString {
+    fn as_ref(&self) -> &str { self.as_str() }
+}
+
+impl AsRef<[u8]> for Base58CkString {
+    fn as_ref(&self) -> &[u8] { self.as_bytes() }
+}
+
+impl fmt::Display for Base58CkString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.as_str().fmt(f) }
+}
+
+impl fmt::Debug for Base58CkString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("Base58CkString").field(&self.as_str()).finish()
+    }
+}
 
 /// Encodes `data` as a base58 string (see also `base58::encode_check()`).
 #[allow(clippy::missing_panics_doc)] // fmt::Write returns Result but String is infallible.
