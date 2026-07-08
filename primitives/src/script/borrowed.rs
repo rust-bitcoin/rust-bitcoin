@@ -16,9 +16,11 @@ use super::{ScriptBuf, P2A_PROGRAM};
 use crate::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUAL, OP_EQUALVERIFY, OP_HASH160, OP_RETURN};
 use crate::opcodes::{Opcode, OP_PUSHBYTES_2, OP_PUSHBYTES_20, OP_PUSHBYTES_32};
 use crate::prelude::{Box, ToOwned, Vec};
-use crate::script::ScriptHashableTag;
+use crate::script::{
+    RedeemScriptSizeError, ScriptHash, ScriptHashableTag, WScriptHash, WitnessScriptSizeError,
+};
 use crate::witness_version::WitnessVersion;
-use crate::ScriptPubKey;
+use crate::{ScriptPubKey, WitnessScript};
 
 // Defined in `REPO_DIR/include/newtype.rs`.
 crate::transparent_newtype! {
@@ -286,6 +288,30 @@ impl ScriptPubKey {
     #[inline]
     pub fn is_op_return(&self) -> bool {
         self.as_bytes().first().is_some_and(|&b| b == OP_RETURN.to_u8())
+    }
+}
+
+impl WitnessScript {
+    /// Returns 256-bit hash of the script for P2WSH outputs.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the script exceeds 10,000 bytes.
+    #[inline]
+    pub fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
+        WScriptHash::from_script(self)
+    }
+}
+
+impl<T: ScriptHashableTag> Script<T> {
+    /// Returns 160-bit hash of the script for P2SH outputs.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the script exceeds 520 bytes.
+    #[inline]
+    pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
+        ScriptHash::from_script(self)
     }
 }
 
