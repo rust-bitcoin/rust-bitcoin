@@ -51,7 +51,11 @@ The `serde` serialization for `Psbt` has changed.
 
 **Bump the MSRV to Rust 1.60.0**
 
-- Exposes the new stabilized encoding library through the optional `encoding` feature. Note that enabling it bumps the MSRV to 1.74.0.
+Exposes the new stabilized encoding library through the optional `encoding` feature. Note that enabling it bumps the MSRV to 1.74.0.
+
+- Remove mutagen [#6337](https://github.com/rust-bitcoin/rust-bitcoin/pull/6337)
+- Use `write!` in `ParseNetwork` and `UnknownAddressType` error displays [#6386](https://github.com/rust-bitcoin/rust-bitcoin/pull/6386)
+- Add `consensus_encoding` to types present in units 1.0 [#6184](https://github.com/rust-bitcoin/rust-bitcoin/pull/6184)
 
 ## [0.32.100] - 2026-05-26 [YANKED]
 
