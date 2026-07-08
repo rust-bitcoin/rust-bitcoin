@@ -249,60 +249,6 @@ impl fmt::Debug for Base58CkString {
     }
 }
 
-/// Encodes `data` as a base58 string (see also `base58::encode_check()`).
-#[allow(clippy::missing_panics_doc)] // fmt::Write returns Result but String is infallible.
-#[cfg(feature = "alloc")]
-pub fn encode(data: &[u8]) -> String {
-    let reserve_len = encoded_reserve_len(data.len());
-    let mut res = String::with_capacity(reserve_len);
-    if reserve_len <= SHORT_OPT_BUFFER_LEN {
-        format_iter(
-            &mut res,
-            data.iter().copied(),
-            &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new(),
-        )
-    } else {
-        format_iter(&mut res, data.iter().copied(), &mut Vec::with_capacity(reserve_len))
-    }
-    .expect("string doesn't error");
-    res
-}
-
-/// Encodes `data` as a base58 string including the checksum.
-///
-/// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the end.
-#[allow(clippy::missing_panics_doc)] // fmt::Write returns Result but String is infallible.
-#[cfg(feature = "alloc")]
-pub fn encode_check(data: &[u8]) -> String {
-    let mut res = String::with_capacity(encoded_check_reserve_len(data.len()));
-    encode_check_to_writer(&mut res, data).expect("string doesn't fail");
-    res
-}
-
-/// Encodes a slice as base58, including the checksum, into a formatter.
-///
-/// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the end.
-///
-/// # Errors
-///
-/// Returns an error if the formatter fails to write the encoded string.
-#[cfg(feature = "alloc")]
-pub fn encode_check_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
-    encode_check_to_writer(fmt, data)
-}
-
-#[cfg(feature = "alloc")]
-fn encode_check_to_writer(fmt: &mut impl fmt::Write, data: &[u8]) -> fmt::Result {
-    let checksum = sha256d::Hash::hash(data);
-    let iter = data.iter().copied().chain(checksum.as_byte_array()[0..4].iter().copied());
-    let reserve_len = encoded_check_reserve_len(data.len());
-    if reserve_len <= SHORT_OPT_BUFFER_LEN {
-        format_iter(fmt, iter, &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new())
-    } else {
-        format_iter(fmt, iter, &mut Vec::with_capacity(reserve_len))
-    }
-}
-
 /// Returns the length to reserve when encoding base58 without checksum
 #[cfg(feature = "alloc")]
 const fn encoded_reserve_len(unencoded_len: usize) -> usize {
@@ -346,20 +292,6 @@ impl<const N: usize> Buffer for ArrayVec<u8, N> {
     fn slice(&self) -> &[u8] { self.as_slice() }
 
     fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
-}
-
-#[cfg(feature = "alloc")]
-fn format_iter<I, W>(writer: &mut W, data: I, buf: &mut impl Buffer) -> fmt::Result
-where
-    I: Iterator<Item = u8> + Clone,
-    W: fmt::Write,
-{
-    // format_iter is only called from within encode_check_to_writer, and always has a sufficiently sized buffer.
-    encode_to_buffer(data, buf).expect("encode_to_buffer is infallible with well-sized buffer");
-
-    let str_slice =
-        core::str::from_utf8(buf.slice()).expect("encode_to_buffer writes ASCII bytes to buf");
-    writer.write_str(str_slice)
 }
 
 // Base58 encode the data in the iterator `data` to the buffer buf as ASCII bytes
