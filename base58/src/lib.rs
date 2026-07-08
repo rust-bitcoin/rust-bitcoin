@@ -435,7 +435,10 @@ mod tests {
 
         // Addresses
         let addr = hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d");
-        assert_eq!(&encode_check(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
+        assert_eq!(
+            Base58CkString::encode_unbounded(&addr[..]).as_str(),
+            "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"
+        );
     }
 
     #[test]
@@ -463,11 +466,11 @@ mod tests {
     fn base58_roundtrip() {
         let s = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs";
         let v: Vec<u8> = decode_check(s).unwrap();
-        assert_eq!(encode_check(&v[..]), s);
-        assert_eq!(decode_check(&encode_check(&v[..])).ok(), Some(v));
+        assert_eq!(Base58CkString::encode_unbounded(&v[..]).as_str(), s);
+        assert_eq!(decode_check(Base58CkString::encode_unbounded(&v[..]).as_str()).ok(), Some(v));
 
         // Check that empty slice passes roundtrip.
-        assert_eq!(decode_check(&encode_check(&[])), Ok(vec![]));
+        assert_eq!(decode_check(Base58CkString::encode_unbounded(&[]).as_str()), Ok(vec![]));
         // Check that `len > 4` is enforced.
         assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(TooShortError { length: 3 }.into()));
     }
@@ -482,8 +485,8 @@ mod benches {
         let data: alloc::vec::Vec<_> = (0u8..50).collect();
 
         bh.iter(|| {
-            let r = super::encode_check(&data);
-            black_box(&r);
+            let r = super::Base58CkString::encode_unbounded(&data);
+            black_box(r.as_str());
         });
     }
 
@@ -492,8 +495,8 @@ mod benches {
         let data: alloc::vec::Vec<_> = (0u8..78).collect(); // length of xpub
 
         bh.iter(|| {
-            let r = super::encode_check(&data);
-            black_box(&r);
+            let r = super::Base58CkString::encode_unbounded(&data);
+            black_box(r.as_str());
         });
     }
 }
