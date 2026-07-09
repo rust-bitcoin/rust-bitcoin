@@ -166,6 +166,9 @@ impl<T> ScriptBuf<T> {
     #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
+    /// Constructs a new script builder
+    pub fn builder() -> Builder<T> { Builder::new() }
+
     /// Adds a single opcode to the script.
     pub fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
 

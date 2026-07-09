@@ -22,9 +22,6 @@ pub use addresses::ScriptPubKeyBufExt;
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.
     pub trait ScriptBufExt<T> impl<T> for ScriptBuf<T> {
-        /// Constructs a new script builder
-        fn builder() -> Builder<T> { Builder::new() }
-
         /// Adds instructions to push an integer onto the stack.
         ///
         /// Integers are encoded as little-endian signed-magnitude numbers, but there are dedicated
