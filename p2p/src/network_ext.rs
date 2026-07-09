@@ -15,6 +15,9 @@ pub trait NetworkExt {
 
     /// The default network [`Magic`] for a given [`Network`].
     fn default_network_magic(self) -> Magic;
+
+    /// Returns the default RPC port for the given network.
+    fn default_rpc_port(&self) -> u16;
 }
 
 impl NetworkExt for Network {
@@ -30,6 +33,20 @@ impl NetworkExt for Network {
             Self::Testnet(TestnetVersion::V4) => 48333,
             Self::Testnet(_) => 48333,
             Self::Regtest => 18444,
+        }
+    }
+
+    /// The default RPC port for a given [`Network`].
+    ///
+    /// Note: All [`TestnetVersion`] variants >4 are treated as [`TestnetVersion::V4`].
+    /// This function will be updated as new test networks are defined.
+    fn default_rpc_port(&self) -> u16 {
+        match self {
+            Self::Bitcoin => 8332,
+            Self::Signet => 38332,
+            Self::Testnet(TestnetVersion::V3) => 18332,
+            Self::Testnet(TestnetVersion::V4 | _) => 48332,
+            Self::Regtest => 18442,
         }
     }
 
@@ -54,6 +71,23 @@ mod tests {
     use alloc::vec;
 
     use super::*;
+
+    #[test]
+    fn default_rpc_port() {
+        let networks = [
+            Network::Bitcoin,
+            Network::Signet,
+            Network::Testnet(TestnetVersion::V3),
+            Network::Testnet(TestnetVersion::V4),
+            Network::Regtest,
+        ];
+
+        let rpc_ports = vec![8332, 38332, 18332, 48332, 18442];
+
+        for (network, rpc_port) in networks.iter().zip(rpc_ports) {
+            assert_eq!(network.default_rpc_port(), rpc_port);
+        }
+    }
 
     #[test]
     fn default_p2p_port() {
