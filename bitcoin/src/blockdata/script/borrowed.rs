@@ -7,8 +7,8 @@ use internals::array::ArrayExt; // For `split_first`.
 use super::witness_version::WitnessVersion;
 use super::{
     Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
-    RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
-    TapScript, WScriptHash, WitnessScript, WitnessScriptSizeError,
+    RedeemScriptSizeError, Script, ScriptHashableTag, ScriptPubKey, ScriptSig, TapScript,
+    WitnessScript, WitnessScriptSizeError,
 };
 use crate::encoding::{Encode, ExactSizeEncoder};
 use crate::key::{LegacyPublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -143,14 +143,6 @@ internal_macros::define_extension_trait! {
         // These methods only exist for scriptPubKey and redeemScript, as indicated by the
         // where clauses on them.
 
-        /// Returns 160-bit hash of the script for P2SH outputs.
-        #[inline]
-        fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError>
-        where T: ScriptHashableTag
-        {
-            ScriptHash::from_script(self)
-        }
-
         /// Computes the P2SH output corresponding to this redeem script.
         fn to_p2sh(&self) -> Result<ScriptPubKeyBuf, RedeemScriptSizeError>
         where T: ScriptHashableTag
@@ -184,12 +176,6 @@ internal_macros::define_extension_trait! {
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`WitnessScript`] type.
     pub trait WitnessScriptExt impl for WitnessScript {
-        /// Returns 256-bit hash of the script for P2WSH outputs.
-        #[inline]
-        fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
-            WScriptHash::from_script(self)
-        }
-
         /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
         /// script").
         fn to_p2wsh(&self) -> Result<ScriptPubKeyBuf, WitnessScriptSizeError> {

@@ -145,8 +145,6 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`WitnessExt::p2wsh`]: crate::blockdata::witness::WitnessExt::p2wsh
         fn p2sh_p2wsh(witness_script: &WitnessScript) -> Result<ScriptSigBuf, super::WitnessScriptSizeError> {
-            use super::WitnessScriptExt as _;
-
             let hash = witness_script.wscript_hash()?;
             let redeem_script: super::ScriptPubKeyBuf = Builder::new().push_int_unchecked(0).push_slice(hash).into_script();
             Ok(Builder::new().push_slice(<&PushBytes>::try_from(redeem_script.as_bytes()).expect("redeem script is 34 bytes")).into_script())
