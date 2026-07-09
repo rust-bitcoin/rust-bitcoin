@@ -17,7 +17,7 @@ set -euo pipefail
 RUSTDOCFLAGS="-Z unstable-options --document-private-items --document-hidden-items --output-format=json --cap-lints=allow"
 
 # Crates that have reached 1.0 must not introduce semver-breaking API changes.
-SEMVER_HARD_FAIL_CRATES=("bitcoin-consensus-encoding")
+SEMVER_HARD_FAIL_CRATES=("bitcoin-consensus-encoding" "bitcoin_hashes" "bitcoin-network-kind")
 
 # These will be set to the commit SHA from the PR's target branch
 # GitHub Actions CI.
@@ -58,6 +58,11 @@ main() {
     generate_json_files_no_default_features "bitcoin-consensus-encoding" "current"
     generate_json_files_features_alloc "bitcoin-consensus-encoding" "current"
 
+    # 7. bitcoin-network-kind: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-network-kind" "current"
+    generate_json_files_no_default_features "bitcoin-network-kind" "current"
+    generate_json_files_features_alloc "bitcoin-network-kind" "current"
+
 
     # Switch to target commit.
     echo "Checking out target commit at $TARGET_COMMIT"
@@ -92,6 +97,11 @@ main() {
     generate_json_files_no_default_features "bitcoin-consensus-encoding" "master"
     generate_json_files_features_alloc "bitcoin-consensus-encoding" "master"
 
+    # 7. bitcoin-network-kind: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-network-kind" "master"
+    generate_json_files_no_default_features "bitcoin-network-kind" "master"
+    generate_json_files_features_alloc "bitcoin-network-kind" "master"
+
     # Check for API semver breaks on all the generated JSON files above.
     run_cargo_semver_check "bitcoin" "all-features"
     run_cargo_semver_check "bitcoin" "no-default-features"
@@ -109,6 +119,9 @@ main() {
     run_cargo_semver_check "bitcoin-consensus-encoding" "all-features"
     run_cargo_semver_check "bitcoin-consensus-encoding" "no-default-features"
     run_cargo_semver_check "bitcoin-consensus-encoding" "alloc"
+    run_cargo_semver_check "bitcoin-network-kind" "all-features"
+    run_cargo_semver_check "bitcoin-network-kind" "no-default-features"
+    run_cargo_semver_check "bitcoin-network-kind" "alloc"
 
     # Invoke cargo semver-checks to check for breaking changes
     # in all generated files.
