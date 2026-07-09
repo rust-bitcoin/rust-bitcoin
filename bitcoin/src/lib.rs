@@ -118,7 +118,6 @@ pub mod ext {
 pub mod address;
 pub mod bip158;
 pub mod blockdata;
-pub mod consensus;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod consensus_validation;
 // Private until we either make this a crate or flatten it - still to be decided.
@@ -236,9 +235,6 @@ pub mod amount {
     //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
     //! We refer to the documentation on the types for more information.
 
-    use crate::consensus::{self, encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
-
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
@@ -264,60 +260,6 @@ pub mod amount {
             TooPreciseError, UnknownDenominationError,
         };
     }
-
-    impl Decodable for Amount {
-        #[inline]
-        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Self::from_sat(Decodable::consensus_decode(r)?).map_err(|_| {
-                consensus::parse_failed_error("amount is greater than Amount::MAX_MONEY")
-            })
-        }
-    }
-
-    impl Encodable for Amount {
-        #[inline]
-        fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-            self.to_sat().consensus_encode(w)
-        }
-    }
-}
-
-mod encode_impls {
-    //! Encodable/Decodable implementations.
-    // While we are deprecating, re-exporting, and generally moving things around just put these here.
-
-    use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
-    use crate::{BlockHeight, BlockHeightInterval};
-
-    /// Implements Encodable and Decodable for a simple wrapper type.
-    ///
-    /// Wrapper type is required to implement `to_u32()` and `From<u32>`.
-    macro_rules! impl_encodable_for_u32_wrapper {
-        ($ty:ident) => {
-            impl Decodable for $ty {
-                #[inline]
-                fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-                    let inner = u32::consensus_decode(r)?;
-                    Ok($ty::from(inner))
-                }
-            }
-
-            impl Encodable for $ty {
-                #[inline]
-                fn consensus_encode<W: Write + ?Sized>(
-                    &self,
-                    w: &mut W,
-                ) -> Result<usize, io::Error> {
-                    let inner = self.to_u32();
-                    inner.consensus_encode(w)
-                }
-            }
-        };
-    }
-
-    impl_encodable_for_u32_wrapper!(BlockHeight);
-    impl_encodable_for_u32_wrapper!(BlockHeightInterval);
 }
 
 /// A conversion trait for unsigned integer types smaller than or equal to 64-bits.

@@ -37,10 +37,6 @@ pub mod locktime {
         //! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
         //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
-        use io::{BufRead, Write};
-
-        use crate::consensus::encode::{self, Decodable, Encodable};
-
         // Re-export everything from the `units::locktime::absolute` module.
         #[rustfmt::skip]        // Keep public re-exports separate.
         #[doc(inline)]
@@ -56,21 +52,6 @@ pub mod locktime {
         #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
         #[doc(hidden)]
         pub type Time = MedianTimePast;
-
-        impl Encodable for LockTime {
-            #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-                let v = self.to_consensus_u32();
-                v.consensus_encode(w)
-            }
-        }
-
-        impl Decodable for LockTime {
-            #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-                u32::consensus_decode(r).map(Self::from_consensus)
-            }
-        }
     }
 
     pub mod relative {

@@ -4,45 +4,6 @@
 //!
 //! Macros meant to be used inside the Rust Bitcoin library.
 
-macro_rules! impl_consensus_encoding {
-    ($thing:ident, $($field:ident),+) => (
-        impl $crate::consensus::Encodable for $thing {
-            #[inline]
-            fn consensus_encode<W: $crate::io::Write + ?Sized>(
-                &self,
-                w: &mut W,
-            ) -> core::result::Result<usize, $crate::io::Error> {
-                let mut len = 0;
-                $(len += self.$field.consensus_encode(w)?;)+
-                Ok(len)
-            }
-        }
-
-        impl $crate::consensus::Decodable for $thing {
-
-            #[inline]
-            fn consensus_decode_from_finite_reader<R: $crate::io::BufRead + ?Sized>(
-                r: &mut R,
-            ) -> core::result::Result<$thing, $crate::consensus::encode::Error> {
-                Ok($thing {
-                    $($field: $crate::consensus::Decodable::consensus_decode_from_finite_reader(r)?),+
-                })
-            }
-
-            #[inline]
-            fn consensus_decode<R: $crate::io::BufRead + ?Sized>(
-                r: &mut R,
-            ) -> core::result::Result<$thing, $crate::consensus::encode::Error> {
-                let mut r = $crate::io::Read::take(r, crate::ToU64::to_u64($crate::consensus::encode::MAX_VEC_SIZE));
-                Ok($thing {
-                    $($field: $crate::consensus::Decodable::consensus_decode(&mut r)?),+
-                })
-            }
-        }
-    );
-}
-pub(crate) use impl_consensus_encoding;
-
 macro_rules! only_doc_attrs {
     ({}, {$($fun:tt)*}) => {
         $($fun)*

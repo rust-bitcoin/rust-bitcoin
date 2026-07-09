@@ -8,16 +8,14 @@
 //! these blocks and the blockchain.
 
 use encoding::CompactSizeEncoder;
-use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
 use crate::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::TargetExt as _;
 use crate::prelude::Vec;
 use crate::script::{PushBytesExt as _, ScriptExt as _};
 use crate::transaction::{Coinbase, Transaction, TransactionExt as _};
-use crate::{internal_macros, BlockTime, Target, ToU64, Weight, Work};
+use crate::{internal_macros, Target, ToU64, Weight, Work};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -42,21 +40,6 @@ pub use self::error::{
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
-
-impl Encodable for BlockHash {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_byte_array().consensus_encode(w)
-    }
-}
-
-impl Decodable for BlockHash {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
-    }
-}
-
-#[rustfmt::skip]
-internal_macros::impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Header`] type.
@@ -93,30 +76,6 @@ internal_macros::define_extension_trait! {
 
         /// Returns the total work of the block.
         fn work(&self) -> Work { self.target().to_work() }
-    }
-}
-
-impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_consensus().consensus_encode(w)
-    }
-}
-
-impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Self::from_consensus)
-    }
-}
-
-impl Encodable for BlockTime {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_u32().consensus_encode(w)
-    }
-}
-
-impl Decodable for BlockTime {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Self::from_u32)
     }
 }
 
@@ -237,57 +196,6 @@ fn block_base_size(transactions: &[Transaction]) -> usize {
     size += transactions.iter().map(|tx| tx.base_size()).sum::<usize>();
 
     size
-}
-
-impl Encodable for Block<Unchecked> {
-    #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let (header, transactions) = self.as_parts();
-        let mut len = 0;
-        len += header.consensus_encode(w)?;
-        len += w.emit_compact_size(transactions.len())?;
-        for tx in transactions.iter() {
-            len += tx.consensus_encode(w)?;
-        }
-        Ok(len)
-    }
-}
-
-impl Encodable for Block<Checked> {
-    #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.header().consensus_encode(w)?;
-
-        let transactions = self.transactions();
-        len += w.emit_compact_size(transactions.len())?;
-        for c in transactions.iter() {
-            len += c.consensus_encode(w)?;
-        }
-
-        Ok(len)
-    }
-}
-
-impl Decodable for Block<Unchecked> {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        let header = Decodable::consensus_decode_from_finite_reader(r)?;
-        let transactions = Decodable::consensus_decode_from_finite_reader(r)?;
-
-        Ok(Self::new_unchecked(header, transactions))
-    }
-
-    #[inline]
-    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        let mut r = io::Read::take(r, crate::ToU64::to_u64(encode::MAX_VEC_SIZE));
-        let header = Decodable::consensus_decode(&mut r)?;
-        let transactions = Decodable::consensus_decode(&mut r)?;
-
-        Ok(Self::new_unchecked(header, transactions))
-    }
 }
 
 mod sealed {
@@ -416,7 +324,9 @@ mod tests {
     use crate::pow::test_utils::{u128_to_work, u64_to_work};
     use crate::script::{ScriptPubKeyBuf, ScriptSigBuf};
     use crate::transaction::{OutPoint, Transaction, TxIn, TxOut, Txid};
-    use crate::{block, Amount, CompactTarget, Network, Sequence, TestnetVersion, Witness, Wtxid};
+    use crate::{
+        block, Amount, BlockTime, CompactTarget, Network, Sequence, TestnetVersion, Witness, Wtxid,
+    };
 
     #[test]
     fn coinbase_and_bip34() {

@@ -14,12 +14,12 @@
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::CompactSizeEncoder;
 use internals::const_casts;
-use io::{BufRead, Write};
 
 use super::Weight;
-use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
-use crate::prelude::{Borrow, Vec};
+use crate::prelude::Borrow;
+#[cfg(feature = "arbitrary")]
+use crate::prelude::Vec;
 use crate::script::{
     RedeemScript, ScriptExt as _, ScriptExtPriv as _, ScriptPubKey, ScriptPubKeyBuf,
     ScriptPubKeyExt as _, WitnessScript,
@@ -46,30 +46,6 @@ pub use self::error::{
     VersionDecoderError,
 };
 
-impl Encodable for Txid {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_byte_array().consensus_encode(w)
-    }
-}
-
-impl Decodable for Txid {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
-    }
-}
-
-impl Encodable for Wtxid {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_byte_array().consensus_encode(w)
-    }
-}
-
-impl Decodable for Wtxid {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
-    }
-}
-
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Txid`] type.
     pub trait TxidExt impl for Txid {
@@ -87,12 +63,6 @@ internal_macros::define_extension_trait! {
         fn all_zeros() -> Self { Self::COINBASE }
     }
 }
-
-// Duplicated in `primitives`.
-/// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
-const SEGWIT_MARKER: u8 = 0x00;
-/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-0141)
-const SEGWIT_FLAG: u8 = 0x01;
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`OutPoint`] type.
@@ -608,136 +578,6 @@ impl TransactionExtPriv for Transaction {
         // To avoid serialization ambiguity, no inputs means we use BIP-0141 serialization (see
         // `Transaction` docs for full explanation).
         self.inputs.is_empty()
-    }
-}
-
-impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_u32().consensus_encode(w)
-    }
-}
-
-impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Self::maybe_non_standard)
-    }
-}
-
-internal_macros::impl_consensus_encoding!(TxOut, amount, script_pubkey);
-
-impl Encodable for OutPoint {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = self.txid.consensus_encode(w)?;
-        Ok(len + self.vout.consensus_encode(w)?)
-    }
-}
-impl Decodable for OutPoint {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self { txid: Decodable::consensus_decode(r)?, vout: Decodable::consensus_decode(r)? })
-    }
-}
-
-impl Encodable for TxIn {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.previous_output.consensus_encode(w)?;
-        len += self.script_sig.consensus_encode(w)?;
-        len += self.sequence.consensus_encode(w)?;
-        Ok(len)
-    }
-}
-impl Decodable for TxIn {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        Ok(Self {
-            previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
-            script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
-            sequence: Decodable::consensus_decode_from_finite_reader(r)?,
-            witness: Witness::default(),
-        })
-    }
-}
-
-impl Encodable for Sequence {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
-}
-
-impl Decodable for Sequence {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Sequence)
-    }
-}
-
-impl Encodable for Transaction {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.version.consensus_encode(w)?;
-
-        // Legacy transaction serialization format only includes inputs and outputs.
-        if !self.uses_segwit_serialization() {
-            len += self.inputs.consensus_encode(w)?;
-            len += self.outputs.consensus_encode(w)?;
-        } else {
-            // BIP-0141 (SegWit) transaction serialization also includes marker, flag, and witness data.
-            len += SEGWIT_MARKER.consensus_encode(w)?;
-            len += SEGWIT_FLAG.consensus_encode(w)?;
-            len += self.inputs.consensus_encode(w)?;
-            len += self.outputs.consensus_encode(w)?;
-            for input in &self.inputs {
-                len += input.witness.consensus_encode(w)?;
-            }
-        }
-        len += self.lock_time.consensus_encode(w)?;
-        Ok(len)
-    }
-}
-
-impl Decodable for Transaction {
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        let version = Version::consensus_decode_from_finite_reader(r)?;
-        let inputs = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-        // SegWit
-        if inputs.is_empty() {
-            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
-            match segwit_flag {
-                // BIP-0144 input witnesses
-                1 => {
-                    let mut inputs = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-                    let outputs = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
-                    for txin in inputs.iter_mut() {
-                        txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
-                    }
-                    if !inputs.is_empty() && inputs.iter().all(|input| input.witness.is_empty()) {
-                        Err(consensus::parse_failed_error(
-                            "witness flag set but no witnesses present",
-                        ))
-                    } else {
-                        Ok(Self {
-                            version,
-                            inputs,
-                            outputs,
-                            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-                        })
-                    }
-                }
-                // We don't support anything else
-                x => Err(encode::ParseError::UnsupportedSegwitFlag(x).into()),
-            }
-        // non-SegWit
-        } else {
-            Ok(Self {
-                version,
-                inputs,
-                outputs: Decodable::consensus_decode_from_finite_reader(r)?,
-                lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-            })
-        }
     }
 }
 
@@ -1416,25 +1256,6 @@ mod tests {
         tx_without_witness.inputs.iter_mut().for_each(|input| input.witness.clear());
         assert_eq!(tx_without_witness.total_size(), tx_without_witness.total_size());
         assert_eq!(tx_without_witness.total_size(), expected_strippedsize);
-    }
-
-    // We temporarily abuse `Transaction` for testing consensus serde adapter.
-    #[test]
-    #[cfg(feature = "serde")]
-    fn consensus_serde() {
-        use crate::consensus::serde as con_serde;
-        let json = "\"010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff3603da1b0e00045503bd5704c7dd8a0d0ced13bb5785010800000000000a636b706f6f6c122f4e696e6a61506f6f6c2f5345475749542fffffffff02b4e5a212000000001976a914876fbb82ec05caa6af7a3b5e5a983aae6c6cc6d688ac0000000000000000266a24aa21a9edf91c46b49eb8a29089980f02ee6b57e7d63d33b18b4fddac2bcd7db2a39837040120000000000000000000000000000000000000000000000000000000000000000000000000\"";
-        let mut deserializer = serde_json::Deserializer::from_str(json);
-        let tx =
-            con_serde::With::<con_serde::Hex>::deserialize::<'_, Transaction, _>(&mut deserializer)
-                .unwrap();
-        let tx_bytes = hex::decode_to_vec(&json[1..(json.len() - 1)]).unwrap();
-        let expected = decode_from_slice::<Transaction>(&tx_bytes).unwrap();
-        assert_eq!(tx, expected);
-        let mut bytes = Vec::new();
-        let mut serializer = serde_json::Serializer::new(&mut bytes);
-        con_serde::With::<con_serde::Hex>::serialize(&tx, &mut serializer).unwrap();
-        assert_eq!(bytes, json.as_bytes())
     }
 
     #[test]
