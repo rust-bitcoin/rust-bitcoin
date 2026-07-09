@@ -20,12 +20,12 @@ rand = ["secp256k1/rand"]
 alloc = ["base58/alloc", "hashes/alloc", "hex?/alloc", "internals/alloc", "network/alloc", "primitives/alloc", "secp256k1/alloc", "serde?/alloc"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "secp256k1/serde"]
 arbitrary = ["dep:arbitrary", "secp256k1/arbitrary"]
-hex = ["dep:hex", "hashes/hex", "internals/hex", "primitives/hex"]
+hex = ["dep:hex", "hashes/hex", "primitives/hex"]
 
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.4.0", default-features = false }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.0.0", default-features = false, features = ["hex"] }
-internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["hex"] }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0" }
 network = { package = "bitcoin-network-kind", path = "../network", version = "1.0.0", default-features = false }
 # This is a temporary dep for the sake of PushBytes impls. This should not be retained for crypto 1.0.
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.102.0", default-features = false, features = [] }
