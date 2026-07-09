@@ -116,7 +116,7 @@ pub use self::decode::{
 #[doc(inline)]
 pub use self::encode::encoders::{
     ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
-    SliceEncoder,
+    PrefixedBytesEncoder, PrefixedSliceEncoder, SliceEncoder,
 };
 #[doc(inline)]
 pub use self::encode::{
