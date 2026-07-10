@@ -100,7 +100,6 @@ impl<T: bitcoin_hashes::Hash> core::fmt::Display for bitcoin_hashes::hmac::Hmac<
   pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<T: bitcoin_hashes::Hash> core::fmt::Display for bitcoin_hashes::hmac::Hmac<T>]
 impl<T: bitcoin_hashes::Hash> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
   pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<T: bitcoin_hashes::Hash> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>]
-impl<T: bitcoin_hashes::Hash> core::marker::StructuralPartialEq for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::Hash> core::ops::index::Index<core::ops::range::Range<usize>> for bitcoin_hashes::hmac::Hmac<T>
   pub type bitcoin_hashes::hmac::Hmac<T>::Output = [u8] [impl: impl<T: bitcoin_hashes::Hash> core::ops::index::Index<core::ops::range::Range<usize>> for bitcoin_hashes::hmac::Hmac<T>]
   pub fn bitcoin_hashes::hmac::Hmac<T>::index(&self, index: core::ops::range::Range<usize>) -> &[u8] [impl: impl<T: bitcoin_hashes::Hash> core::ops::index::Index<core::ops::range::Range<usize>> for bitcoin_hashes::hmac::Hmac<T>]
@@ -123,6 +122,7 @@ impl<T: core::cmp::Ord + bitcoin_hashes::Hash> core::cmp::Ord for bitcoin_hashes
   pub fn bitcoin_hashes::hmac::Hmac<T>::cmp(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> core::cmp::Ordering [impl: impl<T: core::cmp::Ord + bitcoin_hashes::Hash> core::cmp::Ord for bitcoin_hashes::hmac::Hmac<T>]
 impl<T: core::cmp::PartialEq + bitcoin_hashes::Hash> core::cmp::PartialEq for bitcoin_hashes::hmac::Hmac<T>
   pub fn bitcoin_hashes::hmac::Hmac<T>::eq(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> bool [impl: impl<T: core::cmp::PartialEq + bitcoin_hashes::Hash> core::cmp::PartialEq for bitcoin_hashes::hmac::Hmac<T>]
+impl<T: core::cmp::PartialEq + bitcoin_hashes::Hash> core::marker::StructuralPartialEq for bitcoin_hashes::hmac::Hmac<T>
 impl<T: core::cmp::PartialOrd + bitcoin_hashes::Hash> core::cmp::PartialOrd for bitcoin_hashes::hmac::Hmac<T>
   pub fn bitcoin_hashes::hmac::Hmac<T>::partial_cmp(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> core::option::Option<core::cmp::Ordering> [impl: impl<T: core::cmp::PartialOrd + bitcoin_hashes::Hash> core::cmp::PartialOrd for bitcoin_hashes::hmac::Hmac<T>]
 impl<T: core::hash::Hash + bitcoin_hashes::Hash> core::hash::Hash for bitcoin_hashes::hmac::Hmac<T>
@@ -1329,7 +1329,6 @@ impl<T: bitcoin_hashes::Hash> core::fmt::Display for bitcoin_hashes::hmac::Hmac<
   pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<T: bitcoin_hashes::Hash> core::fmt::Display for bitcoin_hashes::hmac::Hmac<T>]
 impl<T: bitcoin_hashes::Hash> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
   pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<T: bitcoin_hashes::Hash> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>]
-impl<T: bitcoin_hashes::Hash> core::marker::StructuralPartialEq for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::Hash> core::ops::index::Index<core::ops::range::Range<usize>> for bitcoin_hashes::hmac::Hmac<T>
   pub type bitcoin_hashes::hmac::Hmac<T>::Output = [u8] [impl: impl<T: bitcoin_hashes::Hash> core::ops::index::Index<core::ops::range::Range<usize>> for bitcoin_hashes::hmac::Hmac<T>]
   pub fn bitcoin_hashes::hmac::Hmac<T>::index(&self, index: core::ops::range::Range<usize>) -> &[u8] [impl: impl<T: bitcoin_hashes::Hash> core::ops::index::Index<core::ops::range::Range<usize>> for bitcoin_hashes::hmac::Hmac<T>]
@@ -1352,6 +1351,7 @@ impl<T: core::cmp::Ord + bitcoin_hashes::Hash> core::cmp::Ord for bitcoin_hashes
   pub fn bitcoin_hashes::hmac::Hmac<T>::cmp(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> core::cmp::Ordering [impl: impl<T: core::cmp::Ord + bitcoin_hashes::Hash> core::cmp::Ord for bitcoin_hashes::hmac::Hmac<T>]
 impl<T: core::cmp::PartialEq + bitcoin_hashes::Hash> core::cmp::PartialEq for bitcoin_hashes::hmac::Hmac<T>
   pub fn bitcoin_hashes::hmac::Hmac<T>::eq(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> bool [impl: impl<T: core::cmp::PartialEq + bitcoin_hashes::Hash> core::cmp::PartialEq for bitcoin_hashes::hmac::Hmac<T>]
+impl<T: core::cmp::PartialEq + bitcoin_hashes::Hash> core::marker::StructuralPartialEq for bitcoin_hashes::hmac::Hmac<T>
 impl<T: core::cmp::PartialOrd + bitcoin_hashes::Hash> core::cmp::PartialOrd for bitcoin_hashes::hmac::Hmac<T>
   pub fn bitcoin_hashes::hmac::Hmac<T>::partial_cmp(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> core::option::Option<core::cmp::Ordering> [impl: impl<T: core::cmp::PartialOrd + bitcoin_hashes::Hash> core::cmp::PartialOrd for bitcoin_hashes::hmac::Hmac<T>]
 impl<T: core::hash::Hash + bitcoin_hashes::Hash> core::hash::Hash for bitcoin_hashes::hmac::Hmac<T>

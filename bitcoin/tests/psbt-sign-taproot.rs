@@ -339,7 +339,7 @@ fn create_psbt_for_taproot_script_path_spend(
 fn finalize_psbt_for_script_path_spend(mut psbt: Psbt) -> Psbt {
     psbt.inputs.iter_mut().for_each(|input| {
         let mut script_witness: Witness = Witness::new();
-        for (_, signature) in input.tap_script_sigs.iter() {
+        for signature in input.tap_script_sigs.values() {
             script_witness.push(signature.to_vec());
         }
         for (control_block, (script, _)) in input.tap_scripts.iter() {
