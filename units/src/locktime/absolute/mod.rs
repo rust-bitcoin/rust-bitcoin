@@ -694,12 +694,7 @@ impl MedianTimePast {
     /// the chain tip then a transaction with this lock can be broadcast for inclusion in the next
     /// block.
     #[inline]
-    pub fn is_satisfied_by(self, time: Self) -> bool {
-        // The locktime check in Core during block validation uses the MTP
-        // of the previous block - which is expected to be `time` here.
-        // This requires a strict less-than comparison (`<`) per BIP-113.
-        self < time
-    }
+    pub fn is_satisfied_by(self, time: Self) -> bool { self < time }
 }
 
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(MedianTimePast);
