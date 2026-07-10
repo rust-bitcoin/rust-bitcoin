@@ -4,8 +4,18 @@
 //! BIP152  Compact Blocks network messages
 //!
 
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
+#[cfg(feature = "encoding")]
+use core::fmt;
+
+#[cfg(feature = "encoding")]
+use encoding::{ArrayDecoder, ArrayEncoder, Decoder2, Encoder2};
+
 use crate::bip152;
 use crate::internal_macros::impl_consensus_encoding;
+#[cfg(feature = "encoding")]
+use crate::internal_macros::write_err;
 
 /// sendcmpct message
 #[derive(PartialEq, Eq, Clone, Debug, Copy, PartialOrd, Ord, Hash)]
@@ -16,6 +26,72 @@ pub struct SendCmpct {
     pub version: u64,
 }
 impl_consensus_encoding!(SendCmpct, send_compact, version);
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// Encoder type for the [`SendCmpct`] message.
+    #[derive(Debug, Clone)]
+    pub struct SendCmpctEncoder<'e>(Encoder2<ArrayEncoder<1>, ArrayEncoder<8>>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for SendCmpct {
+    type Encoder<'e> = SendCmpctEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        SendCmpctEncoder::new(Encoder2::new(
+            ArrayEncoder::without_length_prefix([u8::from(self.send_compact)]),
+            ArrayEncoder::without_length_prefix(self.version.to_le_bytes()),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+type SendCmpctInnerDecoder = Decoder2<ArrayDecoder<1>, ArrayDecoder<8>>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// Decoder type for the [`SendCmpct`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct SendCmpctDecoder(SendCmpctInnerDecoder);
+
+    fn end(
+        result: Result<([u8; 1], [u8; 8]), <SendCmpctInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<SendCmpct, SendCmpctDecoderError> {
+        let (send_cmpct, version) = result.map_err(SendCmpctDecoderError)?;
+        let send_compact = u8::from_le_bytes(send_cmpct) != 0;
+        Ok(SendCmpct { send_compact, version: u64::from_le_bytes(version) })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for SendCmpct {
+    type Decoder = SendCmpctDecoder;
+}
+
+/// Errors occurring when decoding a [`SendCmpct`] message.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SendCmpctDecoderError(
+    pub(crate) <SendCmpctInnerDecoder as encoding::Decoder>::Error
+);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for SendCmpctDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for SendCmpctDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "sendcmpct error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for SendCmpctDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 
 /// cmpctblock message
 ///
