@@ -98,7 +98,7 @@ pub struct UnknownAddressTypeError(pub String);
 
 impl fmt::Display for UnknownAddressTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "failed to parse {} as address type", self.0; self)
+        write!(f, "failed to parse {} as address type", self.0)
     }
 }
 
