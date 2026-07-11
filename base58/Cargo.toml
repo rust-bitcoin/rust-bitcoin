@@ -31,3 +31,6 @@ unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', '
 
 [package.metadata.rbmt.api]
 enabled = true
+
+[package.metadata.rbmt.prerelease]
+enabled = true

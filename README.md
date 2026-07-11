@@ -141,7 +141,6 @@ Unit and integration tests are available for those interested, along with benchm
 developers, especially new contributors looking for something to work on, we do:
 
 - Fuzz testing with [`Hongfuzz`](https://github.com/rust-fuzz/honggfuzz-rs)
-- Mutation testing with [`Mutagen`](https://github.com/llogiq/mutagen)
 - Code verification with [`Kani`](https://github.com/model-checking/kani)
 
 There are always more tests to write and more bugs to find, contributions to our testing efforts
@@ -156,12 +155,6 @@ Run as for any other Rust project `cargo test --all-features`.
 
 We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
 bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
-
-### Mutation tests
-
-We have started doing mutation testing with [mutagen](https://github.com/llogiq/mutagen). To run
-these tests first install the latest dev version with `cargo +nightly install --git https://github.com/llogiq/mutagen`
-then run with `RUSTFLAGS='--cfg=mutate' cargo +nightly mutagen`.
 
 ### Code verification
 
@@ -183,17 +176,6 @@ In order to speed up the review process the CI pipeline can be run locally using
 [act](https://github.com/nektos/act). The `fuzz` and `Cross` jobs will be skipped when using `act`
 due to caching being unsupported at this time. We do not *actively* support `act` but will merge PRs
 fixing `act` issues.
-
-### Githooks
-
-To assist devs in catching errors _before_ running CI we provide some githooks. If you do not
-already have locally configured githooks you can use the ones in this repository by running, in the
-root directory of the repository:
-```
-git config --local core.hooksPath githooks/
-```
-
-Alternatively add symlinks in your `.git/hooks` directory to any of the githooks we provide.
 
 ## Policy on Altcoins/Altchains
 
