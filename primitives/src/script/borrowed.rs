@@ -17,7 +17,8 @@ use crate::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUAL, OP_EQUALVERIFY, OP_HASH
 use crate::opcodes::{Opcode, OP_PUSHBYTES_2, OP_PUSHBYTES_20, OP_PUSHBYTES_32};
 use crate::prelude::{Box, ToOwned, Vec};
 use crate::script::{
-    RedeemScriptSizeError, ScriptHash, ScriptHashableTag, WScriptHash, WitnessScriptSizeError,
+    Builder, RedeemScriptSizeError, ScriptHash, ScriptHashableTag, WScriptHash,
+    WitnessScriptSizeError,
 };
 use crate::witness_version::WitnessVersion;
 use crate::{ScriptPubKey, WitnessScript};
@@ -188,6 +189,9 @@ impl<T> Script<T> {
     #[inline]
     #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
+
+    /// Constructs a new script builder
+    pub fn builder() -> Builder<T> { Builder::new() }
 
     /// Returns witness version of the script, if any.
     ///

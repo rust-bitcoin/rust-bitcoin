@@ -6,9 +6,9 @@ use internals::array::ArrayExt; // For `split_first`.
 
 use super::witness_version::WitnessVersion;
 use super::{
-    Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
-    RedeemScriptSizeError, Script, ScriptHashableTag, ScriptPubKey, ScriptSig, TapScript,
-    WitnessScript, WitnessScriptSizeError,
+    Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript, RedeemScriptSizeError,
+    Script, ScriptHashableTag, ScriptPubKey, ScriptSig, TapScript, WitnessScript,
+    WitnessScriptSizeError,
 };
 use crate::encoding::{Encode, ExactSizeEncoder};
 use crate::key::{LegacyPublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -23,9 +23,6 @@ use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, ToU64 as _, Witne
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
     pub trait ScriptExt<T> impl<T> for Script<T> {
-        /// Constructs a new script builder
-        fn builder() -> Builder<T> { Builder::new() }
-
         /// Counts the sigops for this Script using accurate counting.
         ///
         /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
