@@ -8,6 +8,7 @@ use bitcoin_consensus_encoding::{
     ArrayDecoder, ArrayEncoder, Decode, Decoder, DecoderStatus, Encode, UnexpectedEofError,
 };
 
+#[derive(Debug, PartialEq)]
 struct TestArray<const N: usize>([u8; N]);
 
 impl<const N: usize> Encode for TestArray<N> {
@@ -39,7 +40,7 @@ impl<const N: usize> Decode for TestArray<N> {
     type Decoder = TestArrayDecoder<N>;
 }
 
-#[derive(serde::Serialize)]
+#[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 struct WithConsensus(
     #[serde(with = "bitcoin_consensus_encoding::serde_as_consensus")] TestArray<4>,
 );
@@ -49,4 +50,16 @@ fn serialize_array_bytes_as_hex_json() {
     let value = WithConsensus(TestArray([0xef, 0xbe, 0xad, 0xde]));
 
     assert_eq!(serde_json::to_string(&value).unwrap(), "\"efbeadde\"");
+}
+
+#[test]
+fn deserialize_hex_json_into_array() {
+    let json = "\"efbeadde\"";
+
+    let decoded: WithConsensus = serde_json::from_str(json).unwrap();
+
+    assert_eq!(
+        decoded,
+        WithConsensus(TestArray([0xef, 0xbe, 0xad, 0xde]))
+    );
 }
