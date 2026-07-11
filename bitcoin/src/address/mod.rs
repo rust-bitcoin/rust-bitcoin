@@ -195,7 +195,7 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Test => PUBKEY_ADDRESS_PREFIX_TEST,
                 };
                 prefixed[1..].copy_from_slice(hash.as_byte_array());
-                base58::encode_check_to_fmt(fmt, &prefixed[..])
+                base58::Base58CkString::encode_unbounded(&prefixed[..]).fmt(fmt)
             }
             P2sh { hash, network } => {
                 let mut prefixed = [0; 21];
@@ -204,7 +204,7 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Test => SCRIPT_ADDRESS_PREFIX_TEST,
                 };
                 prefixed[1..].copy_from_slice(hash.as_byte_array());
-                base58::encode_check_to_fmt(fmt, &prefixed[..])
+                base58::Base58CkString::encode_unbounded(&prefixed[..]).fmt(fmt)
             }
             Segwit { program, hrp } => {
                 let hrp = hrp.to_hrp();
@@ -1620,13 +1620,13 @@ mod tests {
 
         let mut payload = [0u8; 22]; // Invalid: should be 21
         payload[0] = PUBKEY_ADDRESS_PREFIX_MAIN;
-        let encoded = base58::encode_check(&payload);
+        let encoded = base58::Base58CkString::encode_unbounded(&payload);
 
-        let err = Address::<NetworkUnchecked>::from_base58_str(&encoded).unwrap_err();
+        let err = Address::<NetworkUnchecked>::from_base58_str(encoded.as_str()).unwrap_err();
         match err {
             Base58Error::InvalidBase58PayloadLength(inner) => {
                 assert_eq!(inner.invalid_base58_payload_length(), 22); // Payload size
-                assert_ne!(inner.invalid_base58_payload_length(), encoded.len()); // Not string size
+                assert_ne!(inner.invalid_base58_payload_length(), encoded.as_str().len()); // Not string size
             }
             other => panic!("unexpected error: {other:?}"),
         }

@@ -1185,11 +1185,11 @@ impl WifKey {
         ret[1..33].copy_from_slice(&self.private_key.as_inner()[..]);
         let privkey = if self.private_key.compressed() {
             ret[33] = 1;
-            base58::encode_check(&ret[..])
+            base58::Base58CkString::encode_unbounded(&ret[..])
         } else {
-            base58::encode_check(&ret[..33])
+            base58::Base58CkString::encode_unbounded(&ret[..33])
         };
-        fmt.write_str(&privkey)
+        fmt.write_str(privkey.as_str())
     }
 
     /// Gets the WIF encoding of this private key.

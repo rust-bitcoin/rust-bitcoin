@@ -2,7 +2,7 @@
 
 //! # Bitcoin Base58 Encoding and Decoding
 //!
-//! This crate can be used in a no-std environment but requires an allocator.
+//! This crate can be used in a no-std environment but requires an allocator for decoding.
 
 #![no_std]
 // Experimental features we need.
@@ -26,30 +26,29 @@ extern crate test;
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(feature = "alloc")]
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-#[cfg(feature = "alloc")]
 pub mod error;
 
 #[cfg(feature = "alloc")]
 #[cfg(not(feature = "std"))]
 pub use alloc::{string::String, vec::Vec};
 #[cfg(feature = "alloc")]
+use core::convert::Infallible;
 use core::fmt;
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
 
-#[cfg(feature = "alloc")]
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
-#[cfg(feature = "alloc")]
 use internals::array_vec::ArrayVec;
 #[allow(unused)] // MSRV polyfill
 #[cfg(feature = "alloc")]
 use internals::slice::SliceExt;
 
+#[cfg(not(feature = "alloc"))]
+use crate::error::InputTooLongErrorInner;
 #[cfg(feature = "alloc")]
 use crate::error::{IncorrectChecksumError, TooShortError};
 
@@ -57,6 +56,8 @@ use crate::error::{IncorrectChecksumError, TooShortError};
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::{Error, InvalidCharacterError};
+#[doc(no_inline)]
+pub use self::error::InputTooLongError;
 
 #[rustfmt::skip]
 #[cfg(feature = "alloc")]
@@ -149,60 +150,102 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     Ok(ret)
 }
 
-#[cfg(feature = "alloc")]
 const SHORT_OPT_BUFFER_LEN: usize = 128;
 
-/// Encodes `data` as a base58 string (see also `base58::encode_check()`).
-#[allow(clippy::missing_panics_doc)] // fmt::Write returns Result but String is infallible.
-#[cfg(feature = "alloc")]
-pub fn encode(data: &[u8]) -> String {
-    let reserve_len = encoded_reserve_len(data.len());
-    let mut res = String::with_capacity(reserve_len);
-    if reserve_len <= SHORT_OPT_BUFFER_LEN {
-        format_iter(
-            &mut res,
-            data.iter().copied(),
-            &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new(),
-        )
-    } else {
-        format_iter(&mut res, data.iter().copied(), &mut Vec::with_capacity(reserve_len))
+/// A base58check-encoded string (data followed by a 4 byte `SHA256d` checksum, base58-encoded).
+///
+/// Strings of at most 128 characters can be encoded without allocating. Longer strings can only
+/// be produced when the `alloc` feature is enabled.
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct Base58CkString(Base58CkInner);
+
+#[derive(Clone, Hash, PartialEq, Eq)]
+enum Base58CkInner {
+    /// ASCII string of length at most 128 base58 characters (roughly 93 bytes)
+    Small(ArrayVec<u8, SHORT_OPT_BUFFER_LEN>),
+    /// Unbounded string (available with "alloc" only).
+    #[cfg(feature = "alloc")]
+    Large(Vec<u8>),
+}
+
+impl Base58CkString {
+    /// Encodes `data` as a base58check string, including the checksum.
+    ///
+    /// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the
+    /// end before encoding.
+    ///
+    /// # Errors
+    ///
+    /// If the `alloc` feature is disabled and `data` encodes to more than 128 base58 characters.
+    /// With `alloc` enabled this function is infallible. If you will only be using this with `alloc`,
+    /// you can alternatively call [`Self::encode_unbounded`].
+    pub fn encode(data: &[u8]) -> Result<Self, InputTooLongError> {
+        #[cfg(feature = "alloc")]
+        {
+            Ok(Self::encode_unbounded(data))
+        }
+        #[cfg(not(feature = "alloc"))]
+        {
+            let mut buf = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+            let checksum = sha256d::Hash::hash(data);
+            let iter = data.iter().copied().chain(checksum.as_byte_array()[0..4].iter().copied());
+
+            encode_to_buffer(iter, &mut buf)
+                .map(|()| Self(Base58CkInner::Small(buf)))
+                .map_err(|_| InputTooLongError(InputTooLongErrorInner { input_len: data.len() }))
+        }
     }
-    .expect("string doesn't error");
-    res
+
+    /// Encodes `data` of any length as a base58check string.
+    #[allow(clippy::missing_panics_doc)] // encode_to_buffer is infallible in both cases
+    #[cfg(feature = "alloc")]
+    pub fn encode_unbounded(data: &[u8]) -> Self {
+        let checksum = sha256d::Hash::hash(data);
+        let iter = data.iter().copied().chain(checksum.as_byte_array()[0..4].iter().copied());
+        let reserve_len = encoded_check_reserve_len(data.len());
+        if reserve_len <= SHORT_OPT_BUFFER_LEN {
+            let mut buf = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+            encode_to_buffer(iter, &mut buf)
+                .expect("encode_to_buffer is infallible with well-sized ArrayVec buf");
+            Self(Base58CkInner::Small(buf))
+        } else {
+            let mut buf = Vec::with_capacity(reserve_len);
+            encode_to_buffer(iter, &mut buf).expect("encode_to_buffer is infallible with Vec buf");
+            Self(Base58CkInner::Large(buf))
+        }
+    }
+
+    /// Returns the base58check-encoded string.
+    #[allow(clippy::missing_panics_doc)] // Base58 characters are always valid ASCII.
+    pub fn as_str(&self) -> &str {
+        core::str::from_utf8(self.as_bytes()).expect("base58 characters are valid ASCII")
+    }
+
+    /// Returns the base58check-encoded string as ASCII bytes.
+    pub fn as_bytes(&self) -> &[u8] {
+        match self.0 {
+            Base58CkInner::Small(ref data) => data.slice(),
+            #[cfg(feature = "alloc")]
+            Base58CkInner::Large(ref data) => data.slice(),
+        }
+    }
 }
 
-/// Encodes `data` as a base58 string including the checksum.
-///
-/// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the end.
-#[allow(clippy::missing_panics_doc)] // fmt::Write returns Result but String is infallible.
-#[cfg(feature = "alloc")]
-pub fn encode_check(data: &[u8]) -> String {
-    let mut res = String::with_capacity(encoded_check_reserve_len(data.len()));
-    encode_check_to_writer(&mut res, data).expect("string doesn't fail");
-    res
+impl AsRef<str> for Base58CkString {
+    fn as_ref(&self) -> &str { self.as_str() }
 }
 
-/// Encodes a slice as base58, including the checksum, into a formatter.
-///
-/// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the end.
-///
-/// # Errors
-///
-/// Returns an error if the formatter fails to write the encoded string.
-#[cfg(feature = "alloc")]
-pub fn encode_check_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
-    encode_check_to_writer(fmt, data)
+impl AsRef<[u8]> for Base58CkString {
+    fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
 
-#[cfg(feature = "alloc")]
-fn encode_check_to_writer(fmt: &mut impl fmt::Write, data: &[u8]) -> fmt::Result {
-    let checksum = sha256d::Hash::hash(data);
-    let iter = data.iter().copied().chain(checksum.as_byte_array()[0..4].iter().copied());
-    let reserve_len = encoded_check_reserve_len(data.len());
-    if reserve_len <= SHORT_OPT_BUFFER_LEN {
-        format_iter(fmt, iter, &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new())
-    } else {
-        format_iter(fmt, iter, &mut Vec::with_capacity(reserve_len))
+impl fmt::Display for Base58CkString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.as_str().fmt(f) }
+}
+
+impl fmt::Debug for Base58CkString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("Base58CkString").field(&self.as_str()).finish()
     }
 }
 
@@ -219,37 +262,40 @@ const fn encoded_check_reserve_len(unencoded_len: usize) -> usize {
     encoded_reserve_len(unencoded_len + 4)
 }
 
-#[cfg(feature = "alloc")]
 trait Buffer: Sized {
-    fn push(&mut self, val: u8);
+    type Err: fmt::Debug;
+
+    fn try_push(&mut self, val: u8) -> Result<(), Self::Err>;
     fn slice(&self) -> &[u8];
     fn slice_mut(&mut self) -> &mut [u8];
 }
 
 #[cfg(feature = "alloc")]
 impl Buffer for Vec<u8> {
-    fn push(&mut self, val: u8) { Self::push(self, val) }
+    type Err = Infallible;
+
+    fn try_push(&mut self, val: u8) -> Result<(), Self::Err> {
+        self.push(val);
+        Ok(())
+    }
 
     fn slice(&self) -> &[u8] { self }
 
     fn slice_mut(&mut self) -> &mut [u8] { self }
 }
 
-#[cfg(feature = "alloc")]
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
-    fn push(&mut self, val: u8) { Self::push(self, val) }
+    type Err = internals::array_vec::error::Error;
+
+    fn try_push(&mut self, val: u8) -> Result<(), Self::Err> { self.try_push(val) }
 
     fn slice(&self) -> &[u8] { self.as_slice() }
 
     fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
 }
 
-#[cfg(feature = "alloc")]
-fn format_iter<I, W>(writer: &mut W, data: I, buf: &mut impl Buffer) -> fmt::Result
-where
-    I: Iterator<Item = u8> + Clone,
-    W: fmt::Write,
-{
+// Base58 encode the data in the iterator `data` to the buffer buf as ASCII bytes
+fn encode_to_buffer<I: Iterator<Item = u8>, T: Buffer>(data: I, buf: &mut T) -> Result<(), T::Err> {
     let mut leading_zero_count = 0;
     let mut leading_zeroes = true;
     // Build string in little endian with 0-58 in place of characters...
@@ -268,18 +314,19 @@ where
         }
 
         while carry > 0 {
-            buf.push((carry % 58) as u8); // cast loses data intentionally
+            buf.try_push((carry % 58) as u8)?; // cast loses data intentionally
             carry /= 58;
         }
     }
 
-    // ... then reverse it and convert to chars
+    // ... then reverse it and convert to ASCII
     for _ in 0..leading_zero_count {
-        buf.push(0);
+        buf.try_push(0)?;
     }
 
-    for ch in buf.slice().iter().rev() {
-        writer.write_char(char::from(BASE58_CHARS[usize::from(*ch)]))?;
+    buf.slice_mut().reverse();
+    for ch in buf.slice_mut() {
+        *ch = BASE58_CHARS[usize::from(*ch)];
     }
 
     Ok(())
@@ -297,30 +344,33 @@ mod tests {
     #[test]
     fn base58_encode() {
         // Basics
-        assert_eq!(&encode(&[0][..]), "1");
-        assert_eq!(&encode(&[1][..]), "2");
-        assert_eq!(&encode(&[58][..]), "21");
-        assert_eq!(&encode(&[13, 36][..]), "211");
+        assert_eq!(Base58CkString::encode_unbounded(&[13, 36][..]).as_str(), "7YY3x3vS");
 
         // Leading zeroes
-        assert_eq!(&encode(&[0, 13, 36][..]), "1211");
-        assert_eq!(&encode(&[0, 0, 0, 0, 13, 36][..]), "1111211");
+        assert_eq!(Base58CkString::encode_unbounded(&[0, 13, 36][..]).as_str(), "17YZPJu4L");
+        assert_eq!(
+            Base58CkString::encode_unbounded(&[0, 0, 0, 0, 13, 36][..]).as_str(),
+            "11117YaXDHva"
+        );
 
         // Long input (>128 bytes => has to use heap)
-        let res = encode(
+        let res = Base58CkString::encode_unbounded(
             "BitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBit\
         coinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoin"
                 .as_bytes(),
         );
         let exp =
-            "ZqC5ZdfpZRi7fjA8hbhX5pEE96MdH9hEaC1YouxscPtbJF16qVWksHWR4wwvx7MotFcs2ChbJqK8KJ9X\
-        wZznwWn1JFDhhTmGo9v6GjAVikzCsBWZehu7bm22xL8b5zBR5AsBygYRwbFJsNwNkjpyFuDKwmsUTKvkULCvucPJrN5\
-        QUdxpGakhqkZFL7RU4yT";
-        assert_eq!(&res, exp);
+            "4hqMa7U6Kxg4YstWo7KztyYAAkTuhuLWTvrHia8nrgx5eb2E8cf79wD9dBjd4c9STsTTXWZT5pp985vP\
+        nL4MVTQrt4EW5jgAk5Fh81PoF6jjhCyUZY2kZ8iYaM5XpfPkZ6aki57S6oiuVv4cmJz2ou8ssxEKNRJMWjSFL5izLbe\
+        s9rugAdBdrboyHMSAtSNY1Nrb4";
+        assert_eq!(res.as_str(), exp);
 
         // Addresses
         let addr = hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d");
-        assert_eq!(&encode_check(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
+        assert_eq!(
+            Base58CkString::encode_unbounded(&addr[..]).as_str(),
+            "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"
+        );
     }
 
     #[test]
@@ -348,13 +398,13 @@ mod tests {
     fn base58_roundtrip() {
         let s = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs";
         let v: Vec<u8> = decode_check(s).unwrap();
-        assert_eq!(encode_check(&v[..]), s);
-        assert_eq!(decode_check(&encode_check(&v[..])).ok(), Some(v));
+        assert_eq!(Base58CkString::encode_unbounded(&v[..]).as_str(), s);
+        assert_eq!(decode_check(Base58CkString::encode_unbounded(&v[..]).as_str()).ok(), Some(v));
 
         // Check that empty slice passes roundtrip.
-        assert_eq!(decode_check(&encode_check(&[])), Ok(vec![]));
+        assert_eq!(decode_check(Base58CkString::encode_unbounded(&[]).as_str()), Ok(vec![]));
         // Check that `len > 4` is enforced.
-        assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(TooShortError { length: 3 }.into()));
+        assert_eq!(decode_check("Ldp"), Err(TooShortError { length: 3 }.into()));
     }
 }
 
@@ -367,8 +417,8 @@ mod benches {
         let data: alloc::vec::Vec<_> = (0u8..50).collect();
 
         bh.iter(|| {
-            let r = super::encode_check(&data);
-            black_box(&r);
+            let r = super::Base58CkString::encode_unbounded(&data);
+            black_box(r.as_str());
         });
     }
 
@@ -377,8 +427,8 @@ mod benches {
         let data: alloc::vec::Vec<_> = (0u8..78).collect(); // length of xpub
 
         bh.iter(|| {
-            let r = super::encode_check(&data);
-            black_box(&r);
+            let r = super::Base58CkString::encode_unbounded(&data);
+            black_box(r.as_str());
         });
     }
 }

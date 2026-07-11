@@ -1053,7 +1053,7 @@ impl Xpub {
 
 impl fmt::Display for Xpriv {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        base58::encode_check_to_fmt(fmt, &self.encode()[..])
+        base58::Base58CkString::encode_unbounded(&self.encode()).fmt(fmt)
     }
 }
 
@@ -1075,7 +1075,7 @@ impl FromStr for Xpriv {
 
 impl fmt::Display for Xpub {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        base58::encode_check_to_fmt(fmt, &self.encode()[..])
+        base58::Base58CkString::encode_unbounded(&self.encode()[..]).fmt(fmt)
     }
 }
 
