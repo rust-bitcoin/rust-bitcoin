@@ -10,15 +10,11 @@
   <p>
     <a href="https://crates.io/crates/bitcoin"><img alt="Crate Info" src="https://img.shields.io/crates/v/bitcoin.svg"/></a>
     <a href="https://github.com/rust-bitcoin/rust-bitcoin/blob/master/LICENSE"><img alt="CC0 1.0 Universal Licensed" src="https://img.shields.io/badge/license-CC0--1.0-blue.svg"/></a>
-    <a href="https://github.com/rust-bitcoin/rust-bitcoin/actions?query=workflow%3AContinuous%20integration"><img alt="CI Status" src="https://github.com/rust-bitcoin/rust-bitcoin/workflows/Continuous%20integration/badge.svg"></a>
     <a href="https://docs.rs/bitcoin"><img alt="API Docs" src="https://img.shields.io/badge/docs.rs-bitcoin-green"/></a>
     <a href="https://blog.rust-lang.org/2023/11/16/Rust-1.74.0/"><img alt="Rustc Version 1.74.0+" src="https://img.shields.io/badge/rustc-1.74.0%2B-lightgrey.svg"/></a>
     <a href="https://gnusha.org/bitcoin-rust/"><img alt="Chat on IRC" src="https://img.shields.io/badge/irc-%23bitcoin--rust%20on%20libera.chat-blue"></a>
-    <a href="https://github.com/model-checking/kani"><img alt="kani" src="https://github.com/rust-bitcoin/rust-bitcoin/workflows/Kani%20CI/badge.svg"></a>
   </p>
 </div>
-
-[Documentation](https://docs.rs/bitcoin/)
 
 Supports (or should support)
 
@@ -26,10 +22,9 @@ Supports (or should support)
 * De/serialization of blocks and transactions
 * Script de/serialization
 * Private keys and address creation, de/serialization and validation (including full BIP-0032 support)
-* PSBT v0 de/serialization and all but the Input Finalizer role. Use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/index.html) to finalize.
 
 For JSONRPC interaction with Bitcoin Core, it is recommended to use
-[rust-bitcoincore-rpc](https://github.com/rust-bitcoin/rust-bitcoincore-rpc).
+[corepc-client](https://crates.io/crates/corepc-client).
 
 It is recommended to always use [cargo-crev](https://github.com/crev-dev/cargo-crev) to verify the
 trustworthiness of each of your dependencies, including this one.
@@ -116,19 +111,22 @@ Our code is public domain so by all means fork it and go wild :)
 
 Release notes are done per crate, see:
 
-- [`addresses` CHANGELOG](addresses/CHANGELOG.md)
-- [`base58` CHANGELOG](base58/CHANGELOG.md)
-- [`bip158` CHANGELOG](bip158/CHANGELOG.md)
-- [`bitcoin` CHANGELOG](bitcoin/CHANGELOG.md)
-- [`chacha20_poly1305` CHANGELOG](chacha20_poly1305/CHANGELOG.md)
-- [`consensus_encoding` CHANGELOG](consensus_encoding/CHANGELOG.md)
-- [`crypto` CHANGELOG](crypto/CHANGELOG.md)
-- [`hashes` CHANGELOG](hashes/CHANGELOG.md)
-- [`internals` CHANGELOG](internals/CHANGELOG.md)
-- [`io` CHANGELOG](io/CHANGELOG.md)
-- [`p2p` CHANGELOG](p2p/CHANGELOG.md)
-- [`primitives` CHANGELOG](primitives/CHANGELOG.md)
-- [`units` CHANGELOG](units/CHANGELOG.md)
+- [`base58ck`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/base58/CHANGELOG.md)
+- [`bitcoin`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/CHANGELOG.md)
+- [`bitcoin-addresses`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/addresses/CHANGELOG.md)
+- [`bitcoin-bip158`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bip158/CHANGELOG.md)
+- [`bitcoin-consensus-encoding`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/consensus_encoding/CHANGELOG.md)
+- [`bitcoin-crypto`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/crypto/CHANGELOG.md)
+- [`bitcoin-internals`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/internals/CHANGELOG.md)
+- [`bitcoin-io`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
+- [`bitcoin-key-expression`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/key_expression/CHANGELOG.md)
+- [`bitcoin-network-kind`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/network/CHANGELOG.md)
+- [`bitcoin-p2p-messages`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/p2p/CHANGELOG.md)
+- [`bitcoin-primitives`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
+- [`bitcoin-taproot-primitives`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/taproot-primitives/CHANGELOG.md)
+- [`bitcoin-units`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md)
+- [`bitcoin_hashes`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
+- [`chacha20-poly1305`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/chacha20_poly1305/CHANGELOG.md)
 
 
 ## Licensing
