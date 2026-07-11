@@ -13,6 +13,7 @@
 use core::fmt;
 
 use super::{Encode, Encoder, EncoderStatus, ExactSizeEncoder};
+use crate::CompactSizeEncoder;
 
 /// An encoder for a single byte slice.
 #[derive(Debug, Clone)]
@@ -34,6 +35,34 @@ impl Encoder for BytesEncoder<'_> {
 impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
     #[inline]
     fn len(&self) -> usize { self.sl.len() }
+}
+
+/// An encoder for a single byte slice, including a compact size length prefix.
+#[derive(Debug, Clone)]
+pub struct PrefixedBytesEncoder<'sl>(Encoder2<CompactSizeEncoder, BytesEncoder<'sl>>);
+
+impl<'sl> PrefixedBytesEncoder<'sl> {
+    /// Constructs a byte encoder which encodes the given byte slice, with a length prefix.
+    #[inline]
+    pub fn new(sl: &'sl [u8]) -> Self {
+        Self(Encoder2::new(
+            CompactSizeEncoder::new(sl.len()),
+            BytesEncoder::without_length_prefix(sl),
+        ))
+    }
+}
+
+impl Encoder for PrefixedBytesEncoder<'_> {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    #[inline]
+    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+}
+
+impl ExactSizeEncoder for PrefixedBytesEncoder<'_> {
+    #[inline]
+    fn len(&self) -> usize { self.0.len() }
 }
 
 /// An encoder for a single array.
@@ -98,9 +127,7 @@ pub struct SliceEncoder<'e, T: Encode> {
 impl<'e, T: Encode> SliceEncoder<'e, T> {
     /// Constructs an encoder which encodes the slice _without_ adding the length prefix.
     ///
-    /// To encode with a length prefix consider using [`Encoder2`].
-    ///
-    /// E.g, `Encoder2<CompactSizeEncoder, SliceEncoder<'e, Foo>>`.
+    /// To encode with a length prefix, use [`PrefixedSliceEncoder`] instead.
     pub fn without_length_prefix(sl: &'e [T]) -> Self {
         // In this `map` call we cannot remove the closure. Seems to be a bug in the compiler.
         // Perhaps https://github.com/rust-lang/rust/issues/102540 which is 3 years old with
@@ -162,6 +189,44 @@ impl<T: Encode> Encoder for SliceEncoder<'_, T> {
             }
         }
     }
+}
+
+/// An encoder for a list of encodable types, including a length prefix.
+pub struct PrefixedSliceEncoder<'e, T: Encode>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, T>>);
+
+impl<'e, T: Encode> PrefixedSliceEncoder<'e, T> {
+    /// Constructs an encoder which encodes the slice, adding the length prefix.
+    #[inline]
+    pub fn new(sl: &'e [T]) -> Self {
+        Self(Encoder2::new(
+            CompactSizeEncoder::new(sl.len()),
+            SliceEncoder::without_length_prefix(sl),
+        ))
+    }
+}
+
+impl<'e, T: Encode> fmt::Debug for PrefixedSliceEncoder<'e, T>
+where
+    T::Encoder<'e>: fmt::Debug,
+{
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.0.fmt(f) }
+}
+
+impl<'e, T: Encode> Clone for PrefixedSliceEncoder<'e, T>
+where
+    T::Encoder<'e>: Clone,
+{
+    #[inline]
+    fn clone(&self) -> Self { Self(self.0.clone()) }
+}
+
+impl<T: Encode> Encoder for PrefixedSliceEncoder<'_, T> {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    #[inline]
+    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
 /// Helper macro to define an unrolled `EncoderN` composite encoder.

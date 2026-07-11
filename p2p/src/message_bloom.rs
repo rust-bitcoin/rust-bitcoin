@@ -9,8 +9,7 @@ use alloc::vec::Vec;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4,
-    Encoder2, Encoder3,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decoder4, Encoder2, Encoder3, PrefixedBytesEncoder,
 };
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -35,7 +34,7 @@ encoding::encoder_newtype_exact! {
     #[derive(Debug, Clone)]
     pub struct FilterLoadEncoder<'e>(
         Encoder2<
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            PrefixedBytesEncoder<'e>,
             Encoder3<
                 ArrayEncoder<4>,
                 ArrayEncoder<4>,
@@ -50,10 +49,7 @@ impl encoding::Encode for FilterLoad {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         FilterLoadEncoder::new(Encoder2::new(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.filter.len()),
-                BytesEncoder::without_length_prefix(&self.filter),
-            ),
+            PrefixedBytesEncoder::new(&self.filter),
             Encoder3::new(
                 ArrayEncoder::without_length_prefix(self.hash_funcs.to_le_bytes()),
                 ArrayEncoder::without_length_prefix(self.tweak.to_le_bytes()),
@@ -159,17 +155,14 @@ pub struct FilterAdd {
 encoding::encoder_newtype_exact! {
     /// The encoder of the [`FilterAdd`] message.
     #[derive(Debug, Clone)]
-    pub struct FilterAddEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct FilterAddEncoder<'e>(PrefixedBytesEncoder<'e>);
 }
 
 impl encoding::Encode for FilterAdd {
     type Encoder<'e> = FilterAddEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterAddEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.data.len()),
-            BytesEncoder::without_length_prefix(&self.data),
-        ))
+        FilterAddEncoder::new(PrefixedBytesEncoder::new(&self.data))
     }
 }
 

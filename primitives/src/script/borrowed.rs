@@ -10,7 +10,7 @@ use core::ops::{
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{BytesEncoder, CompactSizeEncoder, Encode, Encoder2};
+use encoding::{Encode, PrefixedBytesEncoder};
 
 use super::{ScriptBuf, P2A_PROGRAM};
 use crate::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUAL, OP_EQUALVERIFY, OP_HASH160, OP_RETURN};
@@ -326,17 +326,14 @@ impl<T> Encode for Script<T> {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        ScriptEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.as_bytes().len()),
-            BytesEncoder::without_length_prefix(self.as_bytes()),
-        ))
+        ScriptEncoder::new(PrefixedBytesEncoder::new(self.as_bytes()))
     }
 }
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Script<T>`] type.
     #[derive(Debug, Clone)]
-    pub struct ScriptEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct ScriptEncoder<'e>(PrefixedBytesEncoder<'e>);
 }
 
 #[cfg(feature = "arbitrary")]

@@ -13,8 +13,7 @@ use alloc::vec::Vec;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4,
-    Encoder2, Encoder4,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decoder4, Encoder4, PrefixedBytesEncoder,
 };
 use hashes::sha256d;
 
@@ -199,17 +198,14 @@ pub struct UserAgent {
 encoding::encoder_newtype_exact! {
     /// The encoder for a [`UserAgent`] string.
     #[derive(Debug, Clone)]
-    pub struct UserAgentEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct UserAgentEncoder<'e>(PrefixedBytesEncoder<'e>);
 }
 
 impl encoding::Encode for UserAgent {
     type Encoder<'e> = UserAgentEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        UserAgentEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.user_agent.len()),
-            BytesEncoder::without_length_prefix(self.user_agent.as_bytes()),
-        ))
+        UserAgentEncoder::new(PrefixedBytesEncoder::new(self.user_agent.as_bytes()))
     }
 }
 
@@ -470,9 +466,9 @@ encoding::encoder_newtype_exact! {
     #[derive(Debug, Clone)]
     pub struct RejectEncoder<'e>(
         Encoder4<
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            PrefixedBytesEncoder<'e>,
             RejectReasonEncoder<'e>,
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            PrefixedBytesEncoder<'e>,
             ArrayEncoder<32>,
         >
     );
@@ -483,15 +479,9 @@ impl encoding::Encode for Reject {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         RejectEncoder::new(Encoder4::new(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.message.len()),
-                BytesEncoder::without_length_prefix(self.message.as_bytes()),
-            ),
+            PrefixedBytesEncoder::new(self.message.as_bytes()),
             self.ccode.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.reason.len()),
-                BytesEncoder::without_length_prefix(self.reason.as_bytes()),
-            ),
+            PrefixedBytesEncoder::new(self.reason.as_bytes()),
             ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
         ))
     }
@@ -566,18 +556,13 @@ impl Alert {
 encoding::encoder_newtype_exact! {
     /// The encoder type for an [`Alert`] message.
     #[derive(Debug, Clone)]
-    pub struct AlertEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct AlertEncoder<'e>(PrefixedBytesEncoder<'e>);
 }
 
 impl encoding::Encode for Alert {
     type Encoder<'e> = AlertEncoder<'e>;
 
-    fn encoder(&self) -> Self::Encoder<'_> {
-        AlertEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.0.len()),
-            BytesEncoder::without_length_prefix(&self.0),
-        ))
-    }
+    fn encoder(&self) -> Self::Encoder<'_> { AlertEncoder::new(PrefixedBytesEncoder::new(&self.0)) }
 }
 
 type AlertInnerDecoder = ByteVecDecoder;

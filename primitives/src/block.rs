@@ -15,7 +15,7 @@ use core::marker::PhantomData;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ArrayDecoder, Decoder6};
 #[cfg(feature = "alloc")]
-use encoding::{CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{Decoder2, Encoder2, PrefixedSliceEncoder, VecDecoder};
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use hashes::HashEngine as _;
@@ -336,10 +336,7 @@ where
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockEncoder::new(Encoder2::new(
             self.header.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.transactions.len()),
-                SliceEncoder::without_length_prefix(&self.transactions),
-            ),
+            PrefixedSliceEncoder::new(&self.transactions),
         ))
     }
 }
@@ -354,7 +351,7 @@ encoding::encoder_newtype! {
     /// The encoder for the [`Block`] type.
     #[derive(Debug, Clone)]
     pub struct BlockEncoder<'e>(
-        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+        Encoder2<HeaderEncoder<'e>, PrefixedSliceEncoder<'e, Transaction>>
     );
 }
 

@@ -9,8 +9,8 @@ use alloc::vec::Vec;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2,
-    Decoder3, Decoder4, Encoder2, Encoder3, Encoder4, SliceEncoder, VecDecoder,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decoder2, Decoder3, Decoder4, Encoder2, Encoder3,
+    Encoder4, PrefixedBytesEncoder, PrefixedSliceEncoder, VecDecoder,
 };
 use hashes::{sha256d, HashEngine};
 use primitives::block::{BlockHashDecoder, BlockHashEncoder};
@@ -191,7 +191,7 @@ encoding::encoder_newtype_exact! {
         Encoder3<
             ArrayEncoder<1>,
             BlockHashEncoder<'e>,
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            PrefixedBytesEncoder<'e>,
         >
     );
 }
@@ -206,10 +206,7 @@ impl encoding::Encode for CFilter {
         CFilterEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.block_hash.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.filter.len()),
-                BytesEncoder::without_length_prefix(&self.filter),
-            ),
+            PrefixedBytesEncoder::new(&self.filter),
         ))
     }
 }
@@ -302,7 +299,7 @@ encoding::encoder_newtype! {
             ArrayEncoder<1>,
             BlockHashEncoder<'e>,
             FilterHeaderEncoder<'e>,
-            Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHash>>
+            PrefixedSliceEncoder<'e, FilterHash>
         >
     );
 }
@@ -315,10 +312,7 @@ impl encoding::Encode for CFHeaders {
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.stop_hash.encoder(),
             self.previous_filter_header.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.filter_hashes.len()),
-                SliceEncoder::without_length_prefix(&self.filter_hashes),
-            ),
+            PrefixedSliceEncoder::new(&self.filter_hashes),
         ))
     }
 }
@@ -415,7 +409,7 @@ encoding::encoder_newtype! {
         Encoder3<
             ArrayEncoder<1>,
             BlockHashEncoder<'e>,
-            Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHeader>>
+            PrefixedSliceEncoder<'e, FilterHeader>
         >
     );
 }
@@ -430,10 +424,7 @@ impl encoding::Encode for CFCheckpt {
         CFCheckptEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.stop_hash.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.filter_headers.len()),
-                SliceEncoder::without_length_prefix(&self.filter_headers),
-            ),
+            PrefixedSliceEncoder::new(&self.filter_headers),
         ))
     }
 }

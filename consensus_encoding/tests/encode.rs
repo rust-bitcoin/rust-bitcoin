@@ -8,7 +8,7 @@ use std::io::{Cursor, Write};
 use bitcoin_consensus_encoding::{
     self as encoding, check_encode, check_encoder, ArrayEncoder, ArrayRefEncoder, BytesEncoder,
     Encode, Encoder, Encoder2, Encoder3, Encoder4, Encoder6, EncoderByteIter, ExactSizeEncoder,
-    SliceEncoder,
+    PrefixedBytesEncoder, PrefixedSliceEncoder, SliceEncoder,
 };
 
 struct TestBytes<'a>(&'a [u8]);
@@ -274,6 +274,39 @@ fn encode_empty_byte_slice_without_prefix() {
 }
 
 #[test]
+fn encode_byte_slice_with_prefix() {
+    // Should have the length prefix chunk, then the byte data, then exhausted.
+    let obj = [1u8, 2, 3];
+    let mut encoder = PrefixedBytesEncoder::new(&obj);
+
+    assert_eq!(encoder.len(), 4);
+    check_encoder(&mut encoder, &[3, 1, 2, 3]);
+}
+
+#[test]
+fn encode_empty_byte_slice_with_prefix() {
+    // Should have a single zero length prefix chunk, then exhausted.
+    let obj = [];
+    let mut encoder = PrefixedBytesEncoder::new(&obj);
+
+    assert_eq!(encoder.len(), 1);
+    check_encoder(&mut encoder, &[0]);
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn encode_byte_slice_with_multi_byte_prefix() {
+    // A slice longer than 0xFC bytes takes a 3-byte compact size prefix.
+    let obj = vec![7u8; 0xFD];
+    let mut encoder = PrefixedBytesEncoder::new(&obj);
+
+    assert_eq!(encoder.len(), 3 + 0xFD);
+    let mut expected = vec![0xFD, 0xFD, 0x00];
+    expected.extend_from_slice(&obj);
+    check_encoder(&mut encoder, &expected);
+}
+
+#[test]
 fn encode_slice_with_elements() {
     // Should have the element chunks, then exhausted.
     let slice = &[TestArray([0x34, 0x12, 0x00, 0x00]), TestArray([0x78, 0x56, 0x00, 0x00])];
@@ -298,6 +331,33 @@ fn encode_slice_with_zero_sized_arrays() {
     let mut encoder = SliceEncoder::without_length_prefix(slice);
 
     check_encoder(&mut encoder, &[]);
+}
+
+#[test]
+fn encode_slice_with_prefix() {
+    // Should have the length prefix chunk, then the element chunks, then exhausted.
+    let slice = &[TestArray([0x34, 0x12, 0x00, 0x00]), TestArray([0x78, 0x56, 0x00, 0x00])];
+    let mut encoder = PrefixedSliceEncoder::new(slice);
+
+    check_encoder(&mut encoder, &[0x02, 0x34, 0x12, 0x00, 0x00, 0x78, 0x56, 0x00, 0x00]);
+}
+
+#[test]
+fn encode_empty_slice_with_prefix() {
+    // Should have a single zero length prefix chunk, then exhausted.
+    let slice: &[TestArray<4>] = &[];
+    let mut encoder = PrefixedSliceEncoder::new(slice);
+
+    check_encoder(&mut encoder, &[0x00]);
+}
+
+#[test]
+fn encode_slice_with_prefix_and_zero_sized_arrays() {
+    // The prefix counts elements, not bytes, even when elements encode to nothing.
+    let slice = &[TestArray([]), TestArray([])];
+    let mut encoder = PrefixedSliceEncoder::new(slice);
+
+    check_encoder(&mut encoder, &[0x02]);
 }
 
 #[test]

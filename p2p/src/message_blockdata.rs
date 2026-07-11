@@ -10,8 +10,8 @@ use alloc::vec::Vec;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3,
-    SliceEncoder, VecDecoder,
+    ArrayDecoder, ArrayEncoder, Decoder2, Decoder3, Encoder2, Encoder3, PrefixedSliceEncoder,
+    VecDecoder,
 };
 use primitives::block::{BlockHashDecoder, BlockHashEncoder};
 use primitives::transaction::{Txid, Wtxid};
@@ -179,7 +179,7 @@ impl From<BlockLocator> for Vec<BlockHash> {
     fn from(locator: BlockLocator) -> Self { locator.0 }
 }
 
-type BlockLocatorInnerEncoder<'e> = Encoder2<CompactSizeEncoder, SliceEncoder<'e, BlockHash>>;
+type BlockLocatorInnerEncoder<'e> = PrefixedSliceEncoder<'e, BlockHash>;
 
 encoding::encoder_newtype! {
     /// The encoder for [`BlockLocator`].
@@ -191,10 +191,7 @@ impl encoding::Encode for BlockLocator {
     type Encoder<'e> = BlockLocatorEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockLocatorEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.0.len()),
-            SliceEncoder::without_length_prefix(&self.0),
-        ))
+        BlockLocatorEncoder::new(PrefixedSliceEncoder::new(&self.0))
     }
 }
 

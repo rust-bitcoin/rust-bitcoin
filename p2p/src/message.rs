@@ -13,8 +13,8 @@ use core::{fmt, mem};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    self, ArrayDecoder, ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, Encoder2,
-    EncoderStatus, SliceEncoder, VecDecoder, VecDecoderError,
+    self, ArrayDecoder, ArrayEncoder, BytesEncoder, Decoder2, Encoder2, EncoderStatus,
+    PrefixedSliceEncoder, VecDecoder, VecDecoderError,
 };
 use hashes::{sha256d, HashEngine};
 use primitives::block::{self, Header, HeaderDecoder, HeaderEncoder};
@@ -298,20 +298,17 @@ pub struct InventoryPayload(pub Vec<message_blockdata::Inventory>);
 encoding::encoder_newtype! {
     /// The encoder for an [`InventoryPayload`].
     #[derive(Debug, Clone)]
-    pub struct InventoryPayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, message_blockdata::Inventory>>);
+    pub struct InventoryPayloadEncoder<'e>(PrefixedSliceEncoder<'e, message_blockdata::Inventory>);
 }
 
 impl encoding::Encode for InventoryPayload {
     type Encoder<'e>
-        = Encoder2<CompactSizeEncoder, SliceEncoder<'e, message_blockdata::Inventory>>
+        = InventoryPayloadEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder2::new(
-            CompactSizeEncoder::new(self.0.len()),
-            SliceEncoder::without_length_prefix(&self.0),
-        )
+        InventoryPayloadEncoder::new(PrefixedSliceEncoder::new(&self.0))
     }
 }
 
@@ -340,17 +337,14 @@ pub struct AddrPayload(pub Vec<AddrV1Message>);
 encoding::encoder_newtype! {
     /// The encoder for an [`AddrPayload`].
     #[derive(Debug, Clone)]
-    pub struct AddrPayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, AddrV1Message>>);
+    pub struct AddrPayloadEncoder<'e>(PrefixedSliceEncoder<'e, AddrV1Message>);
 }
 
 impl encoding::Encode for AddrPayload {
     type Encoder<'e> = AddrPayloadEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        AddrPayloadEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.0.len()),
-            SliceEncoder::without_length_prefix(&self.0),
-        ))
+        AddrPayloadEncoder::new(PrefixedSliceEncoder::new(&self.0))
     }
 }
 
@@ -379,20 +373,17 @@ pub struct AddrV2Payload(pub Vec<AddrV2Message>);
 encoding::encoder_newtype! {
     /// The encoder for an [`AddrV2Payload`].
     #[derive(Debug, Clone)]
-    pub struct AddrV2PayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, AddrV2Message>>);
+    pub struct AddrV2PayloadEncoder<'e>(PrefixedSliceEncoder<'e, AddrV2Message>);
 }
 
 impl encoding::Encode for AddrV2Payload {
     type Encoder<'e>
-        = Encoder2<CompactSizeEncoder, SliceEncoder<'e, AddrV2Message>>
+        = AddrV2PayloadEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder2::new(
-            CompactSizeEncoder::new(self.0.len()),
-            SliceEncoder::without_length_prefix(&self.0),
-        )
+        AddrV2PayloadEncoder::new(PrefixedSliceEncoder::new(&self.0))
     }
 }
 
@@ -1603,17 +1594,14 @@ impl HeadersMessage {
 encoding::encoder_newtype! {
     /// The encoder type for a [`HeadersMessage`].
     #[derive(Debug, Clone)]
-    pub struct HeadersMessageEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, NetworkHeader>>);
+    pub struct HeadersMessageEncoder<'e>(PrefixedSliceEncoder<'e, NetworkHeader>);
 }
 
 impl encoding::Encode for HeadersMessage {
     type Encoder<'e> = HeadersMessageEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        HeadersMessageEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.0.len()),
-            SliceEncoder::without_length_prefix(&self.0),
-        ))
+        HeadersMessageEncoder::new(PrefixedSliceEncoder::new(&self.0))
     }
 }
 

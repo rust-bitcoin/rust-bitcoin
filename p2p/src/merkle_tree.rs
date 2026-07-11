@@ -16,7 +16,7 @@ use alloc::vec::Vec;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2,
-    Encoder3, EncoderStatus, SliceEncoder, VecDecoder,
+    Encoder3, EncoderStatus, PrefixedSliceEncoder, VecDecoder,
 };
 use primitives::block::{self, Block, Checked, Header, HeaderDecoder, HeaderEncoder};
 use primitives::merkle_tree::TxMerkleNode;
@@ -473,7 +473,7 @@ encoding::encoder_newtype! {
     pub struct PartialMerkleTreeEncoder<'e>(
         Encoder3<
             ArrayEncoder<4>,
-            Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxMerkleNode>>,
+            PrefixedSliceEncoder<'e, TxMerkleNode>,
             Encoder2<CompactSizeEncoder, BitVecEncoder>,
         >
     );
@@ -485,10 +485,7 @@ impl encoding::Encode for PartialMerkleTree {
     fn encoder(&self) -> Self::Encoder<'_> {
         PartialMerkleTreeEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.num_transactions.to_le_bytes()),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.hashes.len()),
-                SliceEncoder::without_length_prefix(&self.hashes),
-            ),
+            PrefixedSliceEncoder::new(&self.hashes),
             Encoder2::new(
                 CompactSizeEncoder::new(self.bits.len().div_ceil(8)),
                 BitVecEncoder::new(&self.bits),
