@@ -25,7 +25,32 @@ pub struct SendCmpct {
     /// Compact Blocks protocol version number.
     pub version: u64,
 }
-impl_consensus_encoding!(SendCmpct, send_compact, version);
+
+impl crate::consensus::Encodable for SendCmpct {
+    #[inline]
+    fn consensus_encode<R: crate::io::Write + ?Sized>(
+        &self,
+        r: &mut R,
+    ) -> core::result::Result<usize, crate::io::Error> {
+        let mut len = 0;
+        len += self.send_compact.consensus_encode(r)?;
+        len += self.version.consensus_encode(r)?;
+        Ok(len)
+    }
+}
+
+impl crate::consensus::Decodable for SendCmpct {
+    #[inline]
+    fn consensus_decode<R: crate::io::Read + ?Sized>(
+        r: &mut R,
+    ) -> core::result::Result<Self, crate::consensus::encode::Error> {
+        let mut r = r.take(crate::consensus::encode::MAX_VEC_SIZE as u64);
+        Ok(Self {
+            send_compact: crate::consensus::Decodable::consensus_decode(&mut r)?,
+            version: crate::consensus::Decodable::consensus_decode(&mut r)?,
+        })
+    }
+}
 
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
