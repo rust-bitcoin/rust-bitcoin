@@ -63,3 +63,16 @@ fn deserialize_hex_json_into_array() {
         WithConsensus(TestArray([0xef, 0xbe, 0xad, 0xde]))
     );
 }
+
+#[test]
+fn deserialize_invalid_hex_json() {
+    let json = "\"zzbeadde\"";
+
+    let err = serde_json::from_str::<WithConsensus>(json).unwrap_err();
+
+    assert!(
+        err.to_string().contains("hex")
+            || err.to_string().contains("decode")
+            || err.to_string().contains("invalid")
+    );
+}
