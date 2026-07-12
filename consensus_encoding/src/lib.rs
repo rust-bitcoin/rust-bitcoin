@@ -93,9 +93,6 @@ pub mod serde_as_consensus;
 
 #[doc(inline)]
 pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSizeU64Decoder};
-#[cfg(feature = "hex")]
-#[doc(inline)]
-pub use self::decode::{decode_from_hex, decode_from_hex_with_decoder};
 #[doc(inline)]
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
@@ -107,6 +104,9 @@ pub use self::decode::{
     decode_from_slice_unbounded_with_decoder, decode_from_slice_with_decoder, Decode, Decoder,
     DecoderStatus,
 };
+#[cfg(feature = "hex")]
+#[doc(inline)]
+pub use self::decode::{decode_from_hex, decode_from_hex_with_decoder};
 #[cfg(feature = "std")]
 #[doc(inline)]
 pub use self::decode::{

@@ -7,12 +7,12 @@ use hex::hex;
 use super::*;
 use crate::crypto::key::{FullPublicKey, LegacyPublicKey, XOnlyPublicKey};
 use crate::encoding::{decode_from_slice, encode_to_vec};
+use crate::prelude::Vec;
 use crate::script::borrowed::{ScriptPubKeyExt as _, ScriptPubKeyExtPriv as _, TapScriptExt as _};
 use crate::script::owned::ScriptSigBufExt as _;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::{opcodes, Amount, FeeRate};
-use crate::prelude::Vec;
 
 // Tests should compile and pass no matter what these are.
 type Tag = primitives::script::ScriptSigTag;

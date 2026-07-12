@@ -1386,12 +1386,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                 .map_err(V1NetworkMessageDecoderErrorInner::Header)
                 .map_err(V1NetworkMessageDecoderError)
                 .expect_err("push_bytes() moves to ReadingPayload on header_decoder completion")),
-            DecoderState::ReadingPayload {
-                magic,
-                checksum,
-                payload_decoder,
-                checksum_engine,
-            } => {
+            DecoderState::ReadingPayload { magic, checksum, payload_decoder, checksum_engine } => {
                 let payload = payload_decoder.end()?;
 
                 let hash_bytes = checksum_engine.finalize().to_byte_array();
