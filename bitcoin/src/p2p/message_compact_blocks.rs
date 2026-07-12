@@ -34,11 +34,15 @@ impl crate::consensus::Decodable for SendCmpct {
     fn consensus_decode<R: crate::io::Read + ?Sized>(
         r: &mut R,
     ) -> core::result::Result<Self, crate::consensus::encode::Error> {
-        let mut r = r.take(crate::consensus::encode::MAX_VEC_SIZE as u64);
-        Ok(Self {
-            send_compact: crate::consensus::Decodable::consensus_decode(&mut r)?,
-            version: crate::consensus::Decodable::consensus_decode(&mut r)?,
-        })
+        let send_compact: u8 = crate::consensus::Decodable::consensus_decode(r)?;
+        let version = crate::consensus::Decodable::consensus_decode(r)?;
+
+        if send_compact == 1 || send_compact == 0 {
+            let send_compact = send_compact != 0;
+            Ok(SendCmpct { send_compact, version })
+        } else {
+            Err(crate::consensus::encode::Error::ParseFailed("first byte was not 0 or 1"))
+        }
     }
 }
 
