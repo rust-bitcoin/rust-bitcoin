@@ -31,9 +31,9 @@ pub mod taproot;
 #[doc(inline)]
 pub use self::key::{FullPublicKey, Keypair, LegacyPublicKey, PrivateKey, XOnlyPublicKey};
 
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/../include/newtype.rs")); // Explained in `REPO_DIR/docs/README.md`.
 #[cfg(feature = "alloc")]
-include!("../include/asref_push_bytes.rs");
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/../include/asref_push_bytes.rs"));
 
 // Encapsulation module for the `PushBytes` code to be removed before 1.0.
 #[cfg(feature = "alloc")]

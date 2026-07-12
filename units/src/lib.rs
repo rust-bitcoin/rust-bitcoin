@@ -85,4 +85,4 @@ pub type BlockInterval = BlockHeightInterval;
 
 // decoder_newtype! macro
 #[cfg(feature = "encoding")]
-include!("../include/decoder_newtype.rs");
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/../include/decoder_newtype.rs"));

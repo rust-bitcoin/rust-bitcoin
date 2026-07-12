@@ -412,7 +412,7 @@ impl U256Wrapper for Work {
     fn from_inner(inner: U256) -> Self { Self::from_le_bytes(inner.to_le_bytes()) }
 }
 
-include!("../include/u256.rs");
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/../include/u256.rs"));
 
 macro_rules! impl_hex {
     ($hex:path, $case:expr) => {

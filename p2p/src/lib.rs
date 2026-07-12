@@ -494,7 +494,7 @@ impl<'a> Arbitrary<'a> for Magic {
 }
 
 // decoder_newtype! macro
-include!("../include/decoder_newtype.rs");
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/../include/decoder_newtype.rs"));
 
 #[cfg(test)]
 mod tests {
