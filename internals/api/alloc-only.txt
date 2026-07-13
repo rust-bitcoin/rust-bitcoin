@@ -9,21 +9,22 @@ pub fn bitcoin_internals::array::ArrayExt::split_first<const RIGHT: usize>(&self
 pub fn bitcoin_internals::array::ArrayExt::split_last<const LEFT: usize>(&self) -> (&Self::Item, &[Self::Item; LEFT])
 pub fn bitcoin_internals::array::ArrayExt::sub_array<const OFFSET: usize, const LEN: usize>(&self) -> &[Self::Item; LEN]
 impl<const N: usize, T> bitcoin_internals::array::ArrayExt for [T; N]
-pub type [T; N]::Item = T
-pub fn [T; N]::split_array<const LEFT: usize, const RIGHT: usize>(&self) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT])
-pub fn [T; N]::sub_array<const OFFSET: usize, const LEN: usize>(&self) -> &[Self::Item; LEN]
+  pub type [T; N]::Item = T [impl: impl<const N: usize, T> bitcoin_internals::array::ArrayExt for [T; N]]
+  pub fn [T; N]::split_array<const LEFT: usize, const RIGHT: usize>(&self) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT]) [impl: impl<const N: usize, T> bitcoin_internals::array::ArrayExt for [T; N]]
+  pub fn [T; N]::sub_array<const OFFSET: usize, const LEN: usize>(&self) -> &[Self::Item; LEN] [impl: impl<const N: usize, T> bitcoin_internals::array::ArrayExt for [T; N]]
 pub mod bitcoin_internals::array_vec
 pub mod bitcoin_internals::array_vec::error
 pub enum bitcoin_internals::array_vec::error::Error
 pub bitcoin_internals::array_vec::error::Error::CapacityExceeded(usize)
 impl core::clone::Clone for bitcoin_internals::array_vec::error::Error
-pub fn bitcoin_internals::array_vec::error::Error::clone(&self) -> bitcoin_internals::array_vec::error::Error
+  pub fn bitcoin_internals::array_vec::error::Error::clone(&self) -> bitcoin_internals::array_vec::error::Error [impl: impl core::clone::Clone for bitcoin_internals::array_vec::error::Error]
 impl core::cmp::Eq for bitcoin_internals::array_vec::error::Error
 impl core::cmp::PartialEq for bitcoin_internals::array_vec::error::Error
-pub fn bitcoin_internals::array_vec::error::Error::eq(&self, other: &bitcoin_internals::array_vec::error::Error) -> bool
+  pub fn bitcoin_internals::array_vec::error::Error::eq(&self, other: &bitcoin_internals::array_vec::error::Error) -> bool [impl: impl core::cmp::PartialEq for bitcoin_internals::array_vec::error::Error]
 impl core::fmt::Debug for bitcoin_internals::array_vec::error::Error
-pub fn bitcoin_internals::array_vec::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_internals::array_vec::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_internals::array_vec::error::Error]
 impl core::fmt::Display for bitcoin_internals::array_vec::error::Error
+  pub fn bitcoin_internals::array_vec::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_internals::array_vec::error::Error]
 impl core::marker::Copy for bitcoin_internals::array_vec::error::Error
 impl core::marker::StructuralPartialEq for bitcoin_internals::array_vec::error::Error
 impl core::marker::Freeze for bitcoin_internals::array_vec::error::Error
@@ -34,29 +35,29 @@ impl core::marker::UnsafeUnpin for bitcoin_internals::array_vec::error::Error
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::array_vec::error::Error
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_internals::array_vec::error::Error
 impl<T, U> core::convert::Into<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::From<T>
-pub fn bitcoin_internals::array_vec::error::Error::into(self) -> U
+  pub fn bitcoin_internals::array_vec::error::Error::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::Into<T>
-pub type bitcoin_internals::array_vec::error::Error::Error = core::convert::Infallible
-pub fn bitcoin_internals::array_vec::error::Error::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_internals::array_vec::error::Error::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::Into<T>]
+  pub fn bitcoin_internals::array_vec::error::Error::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::array_vec::error::Error::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::array_vec::error::Error::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_internals::array_vec::error::Error::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_internals::array_vec::error::Error::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::TryFrom<T>]
 impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::error::Error where T: core::clone::Clone
-pub type bitcoin_internals::array_vec::error::Error::Owned = T
-pub fn bitcoin_internals::array_vec::error::Error::clone_into(&self, target: &mut T)
-pub fn bitcoin_internals::array_vec::error::Error::to_owned(&self) -> T
+  pub type bitcoin_internals::array_vec::error::Error::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::error::Error where T: core::clone::Clone]
+  pub fn bitcoin_internals::array_vec::error::Error::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::error::Error where T: core::clone::Clone]
+  pub fn bitcoin_internals::array_vec::error::Error::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::error::Error where T: core::clone::Clone]
 impl<T> alloc::string::ToString for bitcoin_internals::array_vec::error::Error where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_internals::array_vec::error::Error::to_string(&self) -> alloc::string::String
+  pub fn bitcoin_internals::array_vec::error::Error::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_internals::array_vec::error::Error where T: core::fmt::Display + ?core::marker::Sized]
 impl<T> core::any::Any for bitcoin_internals::array_vec::error::Error where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::array_vec::error::Error::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_internals::array_vec::error::Error::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_internals::array_vec::error::Error where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_internals::array_vec::error::Error where T: ?core::marker::Sized
-pub fn bitcoin_internals::array_vec::error::Error::borrow(&self) -> &T
+  pub fn bitcoin_internals::array_vec::error::Error::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_internals::array_vec::error::Error where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::array_vec::error::Error where T: ?core::marker::Sized
-pub fn bitcoin_internals::array_vec::error::Error::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_internals::array_vec::error::Error::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::array_vec::error::Error where T: ?core::marker::Sized]
 impl<T> core::clone::CloneToUninit for bitcoin_internals::array_vec::error::Error where T: core::clone::Clone
-pub unsafe fn bitcoin_internals::array_vec::error::Error::clone_to_uninit(&self, dest: *mut u8)
+  pub unsafe fn bitcoin_internals::array_vec::error::Error::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_internals::array_vec::error::Error where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_internals::array_vec::error::Error
-pub fn bitcoin_internals::array_vec::error::Error::from(t: T) -> T
+  pub fn bitcoin_internals::array_vec::error::Error::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_internals::array_vec::error::Error]
 pub struct bitcoin_internals::array_vec::ArrayVec<T: core::marker::Copy, const CAP: usize>
 impl<T: core::marker::Copy, const CAP: usize> bitcoin_internals::array_vec::ArrayVec<T, CAP>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::as_mut_slice(&mut self) -> &mut [T]
@@ -65,39 +66,40 @@ pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::from_slice(slice: &
 pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::new() -> Self
 pub unsafe fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::set_len(&mut self, new_len: usize)
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::spare_capacity_mut(&mut self) -> &mut [core::mem::maybe_uninit::MaybeUninit<T>]
+impl<T: core::marker::Copy, const CAP: usize> bitcoin_internals::array_vec::ArrayVec<T, CAP>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::extend_from_slice(&mut self, slice: &[T])
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::pop(&mut self) -> core::option::Option<T>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::push(&mut self, element: T)
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::try_push(&mut self, element: T) -> core::result::Result<(), bitcoin_internals::array_vec::error::Error>
 impl<T: core::marker::Copy + core::cmp::Eq, const CAP: usize> core::cmp::Eq for bitcoin_internals::array_vec::ArrayVec<T, CAP>
 impl<T: core::marker::Copy + core::cmp::Ord, const CAP: usize> core::cmp::Ord for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::cmp(&self, other: &Self) -> core::cmp::Ordering
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::cmp(&self, other: &Self) -> core::cmp::Ordering [impl: impl<T: core::marker::Copy + core::cmp::Ord, const CAP: usize> core::cmp::Ord for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP1: usize, const CAP2: usize> core::cmp::PartialEq<bitcoin_internals::array_vec::ArrayVec<T, CAP2>> for bitcoin_internals::array_vec::ArrayVec<T, CAP1>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP1>::eq(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP2>) -> bool
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP1>::eq(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP2>) -> bool [impl: impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP1: usize, const CAP2: usize> core::cmp::PartialEq<bitcoin_internals::array_vec::ArrayVec<T, CAP2>> for bitcoin_internals::array_vec::ArrayVec<T, CAP1>]
 impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP: usize, const LEN: usize> core::cmp::PartialEq<[T; LEN]> for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::eq(&self, other: &[T; LEN]) -> bool
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::eq(&self, other: &[T; LEN]) -> bool [impl: impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP: usize, const LEN: usize> core::cmp::PartialEq<[T; LEN]> for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP: usize, const LEN: usize> core::cmp::PartialEq<bitcoin_internals::array_vec::ArrayVec<T, CAP>> for [T; LEN]
-pub fn [T; LEN]::eq(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP>) -> bool
+  pub fn [T; LEN]::eq(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP>) -> bool [impl: impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP: usize, const LEN: usize> core::cmp::PartialEq<bitcoin_internals::array_vec::ArrayVec<T, CAP>> for [T; LEN]]
 impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP: usize> core::cmp::PartialEq<[T]> for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::eq(&self, other: &[T]) -> bool
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::eq(&self, other: &[T]) -> bool [impl: impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP: usize> core::cmp::PartialEq<[T]> for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP: usize> core::cmp::PartialEq<bitcoin_internals::array_vec::ArrayVec<T, CAP>> for [T]
-pub fn [T]::eq(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP>) -> bool
+  pub fn [T]::eq(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP>) -> bool [impl: impl<T: core::marker::Copy + core::cmp::PartialEq, const CAP: usize> core::cmp::PartialEq<bitcoin_internals::array_vec::ArrayVec<T, CAP>> for [T]]
 impl<T: core::marker::Copy + core::cmp::PartialOrd, const CAP1: usize, const CAP2: usize> core::cmp::PartialOrd<bitcoin_internals::array_vec::ArrayVec<T, CAP2>> for bitcoin_internals::array_vec::ArrayVec<T, CAP1>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP1>::partial_cmp(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP2>) -> core::option::Option<core::cmp::Ordering>
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP1>::partial_cmp(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP2>) -> core::option::Option<core::cmp::Ordering> [impl: impl<T: core::marker::Copy + core::cmp::PartialOrd, const CAP1: usize, const CAP2: usize> core::cmp::PartialOrd<bitcoin_internals::array_vec::ArrayVec<T, CAP2>> for bitcoin_internals::array_vec::ArrayVec<T, CAP1>]
 impl<T: core::marker::Copy + core::fmt::Debug, const CAP: usize> core::fmt::Debug for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<T: core::marker::Copy + core::fmt::Debug, const CAP: usize> core::fmt::Debug for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T: core::marker::Copy + core::hash::Hash, const CAP: usize> core::hash::Hash for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::hash<H: core::hash::Hasher>(&self, state: &mut H)
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::hash<H: core::hash::Hasher>(&self, state: &mut H) [impl: impl<T: core::marker::Copy + core::hash::Hash, const CAP: usize> core::hash::Hash for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T: core::marker::Copy + core::marker::Copy, const CAP: usize> core::marker::Copy for bitcoin_internals::array_vec::ArrayVec<T, CAP>
 impl<T: core::marker::Copy, const CAP: usize> core::clone::Clone for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::clone(&self) -> Self
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::clone(&self) -> Self [impl: impl<T: core::marker::Copy, const CAP: usize> core::clone::Clone for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T: core::marker::Copy, const CAP: usize> core::default::Default for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::default() -> Self
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::default() -> Self [impl: impl<T: core::marker::Copy, const CAP: usize> core::default::Default for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T: core::marker::Copy, const CAP: usize> core::ops::deref::Deref for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Target = [T]
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::deref(&self) -> &Self::Target
+  pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Target = [T] [impl: impl<T: core::marker::Copy, const CAP: usize> core::ops::deref::Deref for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::deref(&self) -> &Self::Target [impl: impl<T: core::marker::Copy, const CAP: usize> core::ops::deref::Deref for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T: core::marker::Copy, const CAP: usize> core::ops::deref::DerefMut for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::deref_mut(&mut self) -> &mut Self::Target
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::deref_mut(&mut self) -> &mut Self::Target [impl: impl<T: core::marker::Copy, const CAP: usize> core::ops::deref::DerefMut for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 impl<T, const CAP: usize> core::marker::Freeze for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::marker::Freeze
 impl<T, const CAP: usize> core::marker::Send for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::marker::Send
 impl<T, const CAP: usize> core::marker::Sync for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::marker::Sync
@@ -106,29 +108,29 @@ impl<T, const CAP: usize> core::marker::UnsafeUnpin for bitcoin_internals::array
 impl<T, const CAP: usize> core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, const CAP: usize> core::panic::unwind_safe::UnwindSafe for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::panic::unwind_safe::UnwindSafe
 impl<P, T> core::ops::deref::Receiver for bitcoin_internals::array_vec::ArrayVec<T, CAP> where P: core::ops::deref::Deref<Target = T> + ?core::marker::Sized, T: ?core::marker::Sized
-pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Target = T
+  pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Target = T [impl: impl<P, T> core::ops::deref::Receiver for bitcoin_internals::array_vec::ArrayVec<T, CAP> where P: core::ops::deref::Deref<Target = T> + ?core::marker::Sized, T: ?core::marker::Sized]
 impl<T, U> core::convert::Into<U> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where U: core::convert::From<T>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::into(self) -> U
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where U: core::convert::Into<T>
-pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Error = core::convert::Infallible
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where U: core::convert::Into<T>]
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where U: core::convert::TryFrom<T>]
 impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::clone::Clone
-pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Owned = T
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::clone_into(&self, target: &mut T)
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::to_owned(&self) -> T
+  pub type bitcoin_internals::array_vec::ArrayVec<T, CAP>::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::clone::Clone]
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::clone::Clone]
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::clone::Clone]
 impl<T> core::any::Any for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: ?core::marker::Sized
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::borrow(&self) -> &T
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: ?core::marker::Sized
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: ?core::marker::Sized]
 impl<T> core::clone::CloneToUninit for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::clone::Clone
-pub unsafe fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::clone_to_uninit(&self, dest: *mut u8)
+  pub unsafe fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_internals::array_vec::ArrayVec<T, CAP>
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::from(t: T) -> T
+  pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_internals::array_vec::ArrayVec<T, CAP>]
 pub mod bitcoin_internals::const_casts
 pub const fn bitcoin_internals::const_casts::i16_to_i64(value: i16) -> i64
 pub const fn bitcoin_internals::const_casts::u16_to_u32(value: u16) -> u32
@@ -142,7 +144,7 @@ pub mod bitcoin_internals::error
 pub mod bitcoin_internals::error::input_string
 pub struct bitcoin_internals::error::input_string::CannotParse<'a, T: core::fmt::Display + ?core::marker::Sized>
 impl<T: core::fmt::Display + ?core::marker::Sized> core::fmt::Display for bitcoin_internals::error::input_string::CannotParse<'_, T>
-pub fn bitcoin_internals::error::input_string::CannotParse<'_, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_internals::error::input_string::CannotParse<'_, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<T: core::fmt::Display + ?core::marker::Sized> core::fmt::Display for bitcoin_internals::error::input_string::CannotParse<'_, T>]
 impl<'a, T> core::marker::Freeze for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: ?core::marker::Sized
 impl<'a, T> core::marker::Send for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::marker::Sync + ?core::marker::Sized
 impl<'a, T> core::marker::Sync for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::marker::Sync + ?core::marker::Sized
@@ -151,48 +153,48 @@ impl<'a, T> core::marker::UnsafeUnpin for bitcoin_internals::error::input_string
 impl<'a, T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::panic::unwind_safe::RefUnwindSafe + ?core::marker::Sized
 impl<'a, T> core::panic::unwind_safe::UnwindSafe for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::panic::unwind_safe::RefUnwindSafe + ?core::marker::Sized
 impl<T, U> core::convert::Into<U> for bitcoin_internals::error::input_string::CannotParse<'a, T> where U: core::convert::From<T>
-pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::into(self) -> U
+  pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_internals::error::input_string::CannotParse<'a, T> where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::CannotParse<'a, T> where U: core::convert::Into<T>
-pub type bitcoin_internals::error::input_string::CannotParse<'a, T>::Error = core::convert::Infallible
-pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_internals::error::input_string::CannotParse<'a, T>::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::CannotParse<'a, T> where U: core::convert::Into<T>]
+  pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::CannotParse<'a, T> where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::CannotParse<'a, T> where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::error::input_string::CannotParse<'a, T>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_internals::error::input_string::CannotParse<'a, T>::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::CannotParse<'a, T> where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::CannotParse<'a, T> where U: core::convert::TryFrom<T>]
 impl<T> alloc::string::ToString for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::to_string(&self) -> alloc::string::String
+  pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::fmt::Display + ?core::marker::Sized]
 impl<T> core::any::Any for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::borrow(&self) -> &T
+  pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: ?core::marker::Sized]
 impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::CannotParse<'a, T>
-pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::from(t: T) -> T
+  pub fn bitcoin_internals::error::input_string::CannotParse<'a, T>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::CannotParse<'a, T>]
 pub struct bitcoin_internals::error::input_string::InputString(_)
 impl bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::display_cannot_parse<'a, T>(&'a self, what: &'a T) -> bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::fmt::Display + ?core::marker::Sized
 pub fn bitcoin_internals::error::input_string::InputString::unknown_variant<T>(&self, what: &T, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result where T: core::fmt::Display + ?core::marker::Sized
 impl core::clone::Clone for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::clone(&self) -> bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::clone(&self) -> bitcoin_internals::error::input_string::InputString [impl: impl core::clone::Clone for bitcoin_internals::error::input_string::InputString]
 impl core::cmp::Eq for bitcoin_internals::error::input_string::InputString
 impl core::cmp::Ord for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::cmp::Ordering
+  pub fn bitcoin_internals::error::input_string::InputString::cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::cmp::Ordering [impl: impl core::cmp::Ord for bitcoin_internals::error::input_string::InputString]
 impl core::cmp::PartialEq for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::eq(&self, other: &bitcoin_internals::error::input_string::InputString) -> bool
+  pub fn bitcoin_internals::error::input_string::InputString::eq(&self, other: &bitcoin_internals::error::input_string::InputString) -> bool [impl: impl core::cmp::PartialEq for bitcoin_internals::error::input_string::InputString]
 impl core::cmp::PartialOrd for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::partial_cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::option::Option<core::cmp::Ordering>
+  pub fn bitcoin_internals::error::input_string::InputString::partial_cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::option::Option<core::cmp::Ordering> [impl: impl core::cmp::PartialOrd for bitcoin_internals::error::input_string::InputString]
 impl core::convert::From<&str> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(input: &str) -> Self
+  pub fn bitcoin_internals::error::input_string::InputString::from(input: &str) -> Self [impl: impl core::convert::From<&str> for bitcoin_internals::error::input_string::InputString]
 impl core::convert::From<alloc::borrow::Cow<'_, str>> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::borrow::Cow<'_, str>) -> Self
+  pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::borrow::Cow<'_, str>) -> Self [impl: impl core::convert::From<alloc::borrow::Cow<'_, str>> for bitcoin_internals::error::input_string::InputString]
 impl core::convert::From<alloc::boxed::Box<str>> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::boxed::Box<str>) -> Self
+  pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::boxed::Box<str>) -> Self [impl: impl core::convert::From<alloc::boxed::Box<str>> for bitcoin_internals::error::input_string::InputString]
 impl core::convert::From<alloc::string::String> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::string::String) -> Self
+  pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::string::String) -> Self [impl: impl core::convert::From<alloc::string::String> for bitcoin_internals::error::input_string::InputString]
 impl core::fmt::Debug for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_internals::error::input_string::InputString::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_internals::error::input_string::InputString]
 impl core::hash::Hash for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+  pub fn bitcoin_internals::error::input_string::InputString::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl core::hash::Hash for bitcoin_internals::error::input_string::InputString]
 impl core::marker::StructuralPartialEq for bitcoin_internals::error::input_string::InputString
 impl core::marker::Freeze for bitcoin_internals::error::input_string::InputString
 impl core::marker::Send for bitcoin_internals::error::input_string::InputString
@@ -202,28 +204,82 @@ impl core::marker::UnsafeUnpin for bitcoin_internals::error::input_string::Input
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::error::input_string::InputString
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_internals::error::input_string::InputString
 impl<T, U> core::convert::Into<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::From<T>
-pub fn bitcoin_internals::error::input_string::InputString::into(self) -> U
+  pub fn bitcoin_internals::error::input_string::InputString::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::Into<T>
-pub type bitcoin_internals::error::input_string::InputString::Error = core::convert::Infallible
-pub fn bitcoin_internals::error::input_string::InputString::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_internals::error::input_string::InputString::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::Into<T>]
+  pub fn bitcoin_internals::error::input_string::InputString::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::error::input_string::InputString::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::error::input_string::InputString::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_internals::error::input_string::InputString::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_internals::error::input_string::InputString::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::TryFrom<T>]
 impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone
-pub type bitcoin_internals::error::input_string::InputString::Owned = T
-pub fn bitcoin_internals::error::input_string::InputString::clone_into(&self, target: &mut T)
-pub fn bitcoin_internals::error::input_string::InputString::to_owned(&self) -> T
+  pub type bitcoin_internals::error::input_string::InputString::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone]
+  pub fn bitcoin_internals::error::input_string::InputString::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone]
+  pub fn bitcoin_internals::error::input_string::InputString::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone]
 impl<T> core::any::Any for bitcoin_internals::error::input_string::InputString where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::InputString::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_internals::error::input_string::InputString::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_internals::error::input_string::InputString where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::InputString::borrow(&self) -> &T
+  pub fn bitcoin_internals::error::input_string::InputString::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::InputString::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_internals::error::input_string::InputString::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized]
 impl<T> core::clone::CloneToUninit for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone
-pub unsafe fn bitcoin_internals::error::input_string::InputString::clone_to_uninit(&self, dest: *mut u8)
+  pub unsafe fn bitcoin_internals::error::input_string::InputString::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(t: T) -> T
+  pub fn bitcoin_internals::error::input_string::InputString::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::InputString]
 pub struct bitcoin_internals::error::InputString(_)
+impl bitcoin_internals::error::input_string::InputString
+pub fn bitcoin_internals::error::input_string::InputString::display_cannot_parse<'a, T>(&'a self, what: &'a T) -> bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin_internals::error::input_string::InputString::unknown_variant<T>(&self, what: &T, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result where T: core::fmt::Display + ?core::marker::Sized
+impl core::clone::Clone for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::clone(&self) -> bitcoin_internals::error::input_string::InputString [impl: impl core::clone::Clone for bitcoin_internals::error::input_string::InputString]
+impl core::cmp::Eq for bitcoin_internals::error::input_string::InputString
+impl core::cmp::Ord for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::cmp::Ordering [impl: impl core::cmp::Ord for bitcoin_internals::error::input_string::InputString]
+impl core::cmp::PartialEq for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::eq(&self, other: &bitcoin_internals::error::input_string::InputString) -> bool [impl: impl core::cmp::PartialEq for bitcoin_internals::error::input_string::InputString]
+impl core::cmp::PartialOrd for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::partial_cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::option::Option<core::cmp::Ordering> [impl: impl core::cmp::PartialOrd for bitcoin_internals::error::input_string::InputString]
+impl core::convert::From<&str> for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::from(input: &str) -> Self [impl: impl core::convert::From<&str> for bitcoin_internals::error::input_string::InputString]
+impl core::convert::From<alloc::borrow::Cow<'_, str>> for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::borrow::Cow<'_, str>) -> Self [impl: impl core::convert::From<alloc::borrow::Cow<'_, str>> for bitcoin_internals::error::input_string::InputString]
+impl core::convert::From<alloc::boxed::Box<str>> for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::boxed::Box<str>) -> Self [impl: impl core::convert::From<alloc::boxed::Box<str>> for bitcoin_internals::error::input_string::InputString]
+impl core::convert::From<alloc::string::String> for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::string::String) -> Self [impl: impl core::convert::From<alloc::string::String> for bitcoin_internals::error::input_string::InputString]
+impl core::fmt::Debug for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_internals::error::input_string::InputString]
+impl core::hash::Hash for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl core::hash::Hash for bitcoin_internals::error::input_string::InputString]
+impl core::marker::StructuralPartialEq for bitcoin_internals::error::input_string::InputString
+impl core::marker::Freeze for bitcoin_internals::error::input_string::InputString
+impl core::marker::Send for bitcoin_internals::error::input_string::InputString
+impl core::marker::Sync for bitcoin_internals::error::input_string::InputString
+impl core::marker::Unpin for bitcoin_internals::error::input_string::InputString
+impl core::marker::UnsafeUnpin for bitcoin_internals::error::input_string::InputString
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::error::input_string::InputString
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_internals::error::input_string::InputString
+impl<T, U> core::convert::Into<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::From<T>
+  pub fn bitcoin_internals::error::input_string::InputString::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::Into<T>
+  pub type bitcoin_internals::error::input_string::InputString::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::Into<T>]
+  pub fn bitcoin_internals::error::input_string::InputString::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::TryFrom<T>
+  pub type bitcoin_internals::error::input_string::InputString::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_internals::error::input_string::InputString::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone
+  pub type bitcoin_internals::error::input_string::InputString::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone]
+  pub fn bitcoin_internals::error::input_string::InputString::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone]
+  pub fn bitcoin_internals::error::input_string::InputString::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone]
+impl<T> core::any::Any for bitcoin_internals::error::input_string::InputString where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_internals::error::input_string::InputString::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_internals::error::input_string::InputString where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized
+  pub fn bitcoin_internals::error::input_string::InputString::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized
+  pub fn bitcoin_internals::error::input_string::InputString::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone
+  pub unsafe fn bitcoin_internals::error::input_string::InputString::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::InputString
+  pub fn bitcoin_internals::error::input_string::InputString::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::InputString]
 pub mod bitcoin_internals::macros
 pub mod bitcoin_internals::script
 pub enum bitcoin_internals::script::PushDataLenLen
@@ -231,18 +287,18 @@ pub bitcoin_internals::script::PushDataLenLen::Four = 4
 pub bitcoin_internals::script::PushDataLenLen::One = 1
 pub bitcoin_internals::script::PushDataLenLen::Two = 2
 impl core::clone::Clone for bitcoin_internals::script::PushDataLenLen
-pub fn bitcoin_internals::script::PushDataLenLen::clone(&self) -> bitcoin_internals::script::PushDataLenLen
+  pub fn bitcoin_internals::script::PushDataLenLen::clone(&self) -> bitcoin_internals::script::PushDataLenLen [impl: impl core::clone::Clone for bitcoin_internals::script::PushDataLenLen]
 impl core::cmp::Eq for bitcoin_internals::script::PushDataLenLen
 impl core::cmp::Ord for bitcoin_internals::script::PushDataLenLen
-pub fn bitcoin_internals::script::PushDataLenLen::cmp(&self, other: &bitcoin_internals::script::PushDataLenLen) -> core::cmp::Ordering
+  pub fn bitcoin_internals::script::PushDataLenLen::cmp(&self, other: &bitcoin_internals::script::PushDataLenLen) -> core::cmp::Ordering [impl: impl core::cmp::Ord for bitcoin_internals::script::PushDataLenLen]
 impl core::cmp::PartialEq for bitcoin_internals::script::PushDataLenLen
-pub fn bitcoin_internals::script::PushDataLenLen::eq(&self, other: &bitcoin_internals::script::PushDataLenLen) -> bool
+  pub fn bitcoin_internals::script::PushDataLenLen::eq(&self, other: &bitcoin_internals::script::PushDataLenLen) -> bool [impl: impl core::cmp::PartialEq for bitcoin_internals::script::PushDataLenLen]
 impl core::cmp::PartialOrd for bitcoin_internals::script::PushDataLenLen
-pub fn bitcoin_internals::script::PushDataLenLen::partial_cmp(&self, other: &bitcoin_internals::script::PushDataLenLen) -> core::option::Option<core::cmp::Ordering>
+  pub fn bitcoin_internals::script::PushDataLenLen::partial_cmp(&self, other: &bitcoin_internals::script::PushDataLenLen) -> core::option::Option<core::cmp::Ordering> [impl: impl core::cmp::PartialOrd for bitcoin_internals::script::PushDataLenLen]
 impl core::fmt::Debug for bitcoin_internals::script::PushDataLenLen
-pub fn bitcoin_internals::script::PushDataLenLen::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_internals::script::PushDataLenLen::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_internals::script::PushDataLenLen]
 impl core::hash::Hash for bitcoin_internals::script::PushDataLenLen
-pub fn bitcoin_internals::script::PushDataLenLen::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+  pub fn bitcoin_internals::script::PushDataLenLen::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl core::hash::Hash for bitcoin_internals::script::PushDataLenLen]
 impl core::marker::Copy for bitcoin_internals::script::PushDataLenLen
 impl core::marker::StructuralPartialEq for bitcoin_internals::script::PushDataLenLen
 impl core::marker::Freeze for bitcoin_internals::script::PushDataLenLen
@@ -253,30 +309,30 @@ impl core::marker::UnsafeUnpin for bitcoin_internals::script::PushDataLenLen
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::script::PushDataLenLen
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_internals::script::PushDataLenLen
 impl<T, U> core::convert::Into<U> for bitcoin_internals::script::PushDataLenLen where U: core::convert::From<T>
-pub fn bitcoin_internals::script::PushDataLenLen::into(self) -> U
+  pub fn bitcoin_internals::script::PushDataLenLen::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_internals::script::PushDataLenLen where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::script::PushDataLenLen where U: core::convert::Into<T>
-pub type bitcoin_internals::script::PushDataLenLen::Error = core::convert::Infallible
-pub fn bitcoin_internals::script::PushDataLenLen::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_internals::script::PushDataLenLen::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::script::PushDataLenLen where U: core::convert::Into<T>]
+  pub fn bitcoin_internals::script::PushDataLenLen::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::script::PushDataLenLen where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_internals::script::PushDataLenLen where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::script::PushDataLenLen::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::script::PushDataLenLen::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_internals::script::PushDataLenLen::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::script::PushDataLenLen where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_internals::script::PushDataLenLen::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::script::PushDataLenLen where U: core::convert::TryFrom<T>]
 impl<T> alloc::borrow::ToOwned for bitcoin_internals::script::PushDataLenLen where T: core::clone::Clone
-pub type bitcoin_internals::script::PushDataLenLen::Owned = T
-pub fn bitcoin_internals::script::PushDataLenLen::clone_into(&self, target: &mut T)
-pub fn bitcoin_internals::script::PushDataLenLen::to_owned(&self) -> T
+  pub type bitcoin_internals::script::PushDataLenLen::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::script::PushDataLenLen where T: core::clone::Clone]
+  pub fn bitcoin_internals::script::PushDataLenLen::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::script::PushDataLenLen where T: core::clone::Clone]
+  pub fn bitcoin_internals::script::PushDataLenLen::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_internals::script::PushDataLenLen where T: core::clone::Clone]
 impl<T> core::any::Any for bitcoin_internals::script::PushDataLenLen where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::script::PushDataLenLen::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_internals::script::PushDataLenLen::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_internals::script::PushDataLenLen where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_internals::script::PushDataLenLen where T: ?core::marker::Sized
-pub fn bitcoin_internals::script::PushDataLenLen::borrow(&self) -> &T
+  pub fn bitcoin_internals::script::PushDataLenLen::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_internals::script::PushDataLenLen where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::script::PushDataLenLen where T: ?core::marker::Sized
-pub fn bitcoin_internals::script::PushDataLenLen::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_internals::script::PushDataLenLen::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::script::PushDataLenLen where T: ?core::marker::Sized]
 impl<T> core::clone::CloneToUninit for bitcoin_internals::script::PushDataLenLen where T: core::clone::Clone
-pub unsafe fn bitcoin_internals::script::PushDataLenLen::clone_to_uninit(&self, dest: *mut u8)
+  pub unsafe fn bitcoin_internals::script::PushDataLenLen::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_internals::script::PushDataLenLen where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_internals::script::PushDataLenLen
-pub fn bitcoin_internals::script::PushDataLenLen::from(t: T) -> T
+  pub fn bitcoin_internals::script::PushDataLenLen::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_internals::script::PushDataLenLen]
 pub struct bitcoin_internals::script::EarlyEndOfScriptError
 impl core::fmt::Debug for bitcoin_internals::script::EarlyEndOfScriptError
-pub fn bitcoin_internals::script::EarlyEndOfScriptError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_internals::script::EarlyEndOfScriptError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_internals::script::EarlyEndOfScriptError]
 impl core::marker::Freeze for bitcoin_internals::script::EarlyEndOfScriptError
 impl core::marker::Send for bitcoin_internals::script::EarlyEndOfScriptError
 impl core::marker::Sync for bitcoin_internals::script::EarlyEndOfScriptError
@@ -285,21 +341,21 @@ impl core::marker::UnsafeUnpin for bitcoin_internals::script::EarlyEndOfScriptEr
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::script::EarlyEndOfScriptError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_internals::script::EarlyEndOfScriptError
 impl<T, U> core::convert::Into<U> for bitcoin_internals::script::EarlyEndOfScriptError where U: core::convert::From<T>
-pub fn bitcoin_internals::script::EarlyEndOfScriptError::into(self) -> U
+  pub fn bitcoin_internals::script::EarlyEndOfScriptError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_internals::script::EarlyEndOfScriptError where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::script::EarlyEndOfScriptError where U: core::convert::Into<T>
-pub type bitcoin_internals::script::EarlyEndOfScriptError::Error = core::convert::Infallible
-pub fn bitcoin_internals::script::EarlyEndOfScriptError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_internals::script::EarlyEndOfScriptError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::script::EarlyEndOfScriptError where U: core::convert::Into<T>]
+  pub fn bitcoin_internals::script::EarlyEndOfScriptError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::script::EarlyEndOfScriptError where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_internals::script::EarlyEndOfScriptError where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::script::EarlyEndOfScriptError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::script::EarlyEndOfScriptError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_internals::script::EarlyEndOfScriptError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::script::EarlyEndOfScriptError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_internals::script::EarlyEndOfScriptError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::script::EarlyEndOfScriptError where U: core::convert::TryFrom<T>]
 impl<T> core::any::Any for bitcoin_internals::script::EarlyEndOfScriptError where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::script::EarlyEndOfScriptError::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_internals::script::EarlyEndOfScriptError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_internals::script::EarlyEndOfScriptError where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_internals::script::EarlyEndOfScriptError where T: ?core::marker::Sized
-pub fn bitcoin_internals::script::EarlyEndOfScriptError::borrow(&self) -> &T
+  pub fn bitcoin_internals::script::EarlyEndOfScriptError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_internals::script::EarlyEndOfScriptError where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::script::EarlyEndOfScriptError where T: ?core::marker::Sized
-pub fn bitcoin_internals::script::EarlyEndOfScriptError::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_internals::script::EarlyEndOfScriptError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::script::EarlyEndOfScriptError where T: ?core::marker::Sized]
 impl<T> core::convert::From<T> for bitcoin_internals::script::EarlyEndOfScriptError
-pub fn bitcoin_internals::script::EarlyEndOfScriptError::from(t: T) -> T
+  pub fn bitcoin_internals::script::EarlyEndOfScriptError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_internals::script::EarlyEndOfScriptError]
 pub fn bitcoin_internals::script::read_push_data_len(data: &mut core::slice::iter::Iter<'_, u8>, size: bitcoin_internals::script::PushDataLenLen) -> core::result::Result<usize, bitcoin_internals::script::EarlyEndOfScriptError>
 pub mod bitcoin_internals::slice
 pub trait bitcoin_internals::slice::SliceExt
@@ -310,16 +366,16 @@ pub fn bitcoin_internals::slice::SliceExt::get_array<const ARRAY_LEN: usize>(&se
 pub fn bitcoin_internals::slice::SliceExt::split_first_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item; ARRAY_LEN], &[Self::Item])>
 pub fn bitcoin_internals::slice::SliceExt::split_last_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item], &[Self::Item; ARRAY_LEN])>
 impl<T> bitcoin_internals::slice::SliceExt for [T]
-pub type [T]::Item = T
-pub fn [T]::bitcoin_as_chunks<const N: usize>(&self) -> (&[[Self::Item; N]], &[Self::Item])
-pub fn [T]::bitcoin_as_chunks_mut<const N: usize>(&mut self) -> (&mut [[Self::Item; N]], &mut [Self::Item])
-pub fn [T]::get_array<const ARRAY_LEN: usize>(&self, offset: usize) -> core::option::Option<&[Self::Item; ARRAY_LEN]>
-pub fn [T]::split_first_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item; ARRAY_LEN], &[Self::Item])>
-pub fn [T]::split_last_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item], &[Self::Item; ARRAY_LEN])>
+  pub type [T]::Item = T [impl: impl<T> bitcoin_internals::slice::SliceExt for [T]]
+  pub fn [T]::bitcoin_as_chunks<const N: usize>(&self) -> (&[[Self::Item; N]], &[Self::Item]) [impl: impl<T> bitcoin_internals::slice::SliceExt for [T]]
+  pub fn [T]::bitcoin_as_chunks_mut<const N: usize>(&mut self) -> (&mut [[Self::Item; N]], &mut [Self::Item]) [impl: impl<T> bitcoin_internals::slice::SliceExt for [T]]
+  pub fn [T]::get_array<const ARRAY_LEN: usize>(&self, offset: usize) -> core::option::Option<&[Self::Item; ARRAY_LEN]> [impl: impl<T> bitcoin_internals::slice::SliceExt for [T]]
+  pub fn [T]::split_first_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item; ARRAY_LEN], &[Self::Item])> [impl: impl<T> bitcoin_internals::slice::SliceExt for [T]]
+  pub fn [T]::split_last_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item], &[Self::Item; ARRAY_LEN])> [impl: impl<T> bitcoin_internals::slice::SliceExt for [T]]
 pub mod bitcoin_internals::wrap_debug
 pub struct bitcoin_internals::wrap_debug::WrapDebug<F: core::ops::function::Fn(&mut core::fmt::Formatter<'_>) -> core::fmt::Result>(pub F)
 impl<F: core::ops::function::Fn(&mut core::fmt::Formatter<'_>) -> core::fmt::Result> core::fmt::Debug for bitcoin_internals::wrap_debug::WrapDebug<F>
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+  pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<F: core::ops::function::Fn(&mut core::fmt::Formatter<'_>) -> core::fmt::Result> core::fmt::Debug for bitcoin_internals::wrap_debug::WrapDebug<F>]
 impl<F> core::marker::Freeze for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Freeze
 impl<F> core::marker::Send for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Send
 impl<F> core::marker::Sync for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Sync
@@ -328,21 +384,21 @@ impl<F> core::marker::UnsafeUnpin for bitcoin_internals::wrap_debug::WrapDebug<F
 impl<F> core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::panic::unwind_safe::RefUnwindSafe
 impl<F> core::panic::unwind_safe::UnwindSafe for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::From<T>
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::into(self) -> U
+  pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::From<T>]
 impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::Into<T>
-pub type bitcoin_internals::wrap_debug::WrapDebug<F>::Error = core::convert::Infallible
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+  pub type bitcoin_internals::wrap_debug::WrapDebug<F>::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::Into<T>]
+  pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::Into<T>]
 impl<T, U> core::convert::TryInto<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::wrap_debug::WrapDebug<F>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+  pub type bitcoin_internals::wrap_debug::WrapDebug<F>::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::TryFrom<T>]
 impl<T> core::any::Any for bitcoin_internals::wrap_debug::WrapDebug<F> where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::type_id(&self) -> core::any::TypeId
+  pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_internals::wrap_debug::WrapDebug<F> where T: 'static + ?core::marker::Sized]
 impl<T> core::borrow::Borrow<T> for bitcoin_internals::wrap_debug::WrapDebug<F> where T: ?core::marker::Sized
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::borrow(&self) -> &T
+  pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_internals::wrap_debug::WrapDebug<F> where T: ?core::marker::Sized]
 impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::wrap_debug::WrapDebug<F> where T: ?core::marker::Sized
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::borrow_mut(&mut self) -> &mut T
+  pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::wrap_debug::WrapDebug<F> where T: ?core::marker::Sized]
 impl<T> core::convert::From<T> for bitcoin_internals::wrap_debug::WrapDebug<F>
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::from(t: T) -> T
+  pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_internals::wrap_debug::WrapDebug<F>]
 pub macro bitcoin_internals::concat_bytes_to_arr!
 pub macro bitcoin_internals::cond_const!
 pub macro bitcoin_internals::const_assert!
@@ -358,12 +414,12 @@ pub macro bitcoin_internals::write_err!
 pub trait bitcoin_internals::ToU64
 pub fn bitcoin_internals::ToU64::to_u64(self) -> u64
 impl bitcoin_internals::ToU64 for u16
-pub fn u16::to_u64(self) -> u64
+  pub fn u16::to_u64(self) -> u64 [impl: impl bitcoin_internals::ToU64 for u16]
 impl bitcoin_internals::ToU64 for u32
-pub fn u32::to_u64(self) -> u64
+  pub fn u32::to_u64(self) -> u64 [impl: impl bitcoin_internals::ToU64 for u32]
 impl bitcoin_internals::ToU64 for u64
-pub fn u64::to_u64(self) -> u64
+  pub fn u64::to_u64(self) -> u64 [impl: impl bitcoin_internals::ToU64 for u64]
 impl bitcoin_internals::ToU64 for u8
-pub fn u8::to_u64(self) -> u64
+  pub fn u8::to_u64(self) -> u64 [impl: impl bitcoin_internals::ToU64 for u8]
 impl bitcoin_internals::ToU64 for usize
-pub fn usize::to_u64(self) -> u64
+  pub fn usize::to_u64(self) -> u64 [impl: impl bitcoin_internals::ToU64 for usize]
