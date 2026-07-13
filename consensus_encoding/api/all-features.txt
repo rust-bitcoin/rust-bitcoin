@@ -980,6 +980,7 @@ impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_e
   pub type bitcoin_consensus_encoding::ArrayDecoder<N>::Error = bitcoin_consensus_encoding::error::UnexpectedEofError [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
   pub type bitcoin_consensus_encoding::ArrayDecoder<N>::Output = [u8; N] [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
   pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::end(self) -> core::result::Result<Self::Output, Self::Error> [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
+  pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::end_early(self) -> Self::Error [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
   pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
   pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::read_limit(&self) -> usize [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
 impl<const N: usize> core::clone::Clone for bitcoin_consensus_encoding::ArrayDecoder<N>
@@ -2197,6 +2198,7 @@ pub trait bitcoin_consensus_encoding::Decoder: core::marker::Sized
 pub type bitcoin_consensus_encoding::Decoder::Error
 pub type bitcoin_consensus_encoding::Decoder::Output
 pub fn bitcoin_consensus_encoding::Decoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin_consensus_encoding::Decoder::end_early(self) -> Self::Error
 pub fn bitcoin_consensus_encoding::Decoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error>
 pub fn bitcoin_consensus_encoding::Decoder::read_limit(&self) -> usize
 impl bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ByteVecDecoder
@@ -2251,6 +2253,7 @@ impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_e
   pub type bitcoin_consensus_encoding::ArrayDecoder<N>::Error = bitcoin_consensus_encoding::error::UnexpectedEofError [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
   pub type bitcoin_consensus_encoding::ArrayDecoder<N>::Output = [u8; N] [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
   pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::end(self) -> core::result::Result<Self::Output, Self::Error> [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
+  pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::end_early(self) -> Self::Error [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
   pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
   pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::read_limit(&self) -> usize [impl: impl<const N: usize> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ArrayDecoder<N>]
 pub trait bitcoin_consensus_encoding::Encode
