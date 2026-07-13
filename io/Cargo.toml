@@ -22,6 +22,7 @@ std = ["alloc", "encoding?/std"]
 alloc = ["encoding?/alloc"]
 
 [dependencies]
+# Raises the MSRV to 1.74.0.
 encoding = { package = "bitcoin-consensus-encoding", version = "1.0", default-features = false, optional = true }
 
 [package.metadata.docs.rs]
