@@ -27,7 +27,7 @@ cargo-fuzz = true
 # choke on it otherwise. See https://github.com/nix-community/crate2nix/issues/373
 bitcoin = { path = "../bitcoin", version = "0.33.0-beta", features = [ "serde", "arbitrary" ] }
 old_bitcoin = { version = "0.32.9", package = "bitcoin" }
-bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
+bitcoin_consensus_encoding = { version = "1.0.0", package = "bitcoin-consensus-encoding" }
 p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
 
 arbitrary = { version = "1.4.1" }

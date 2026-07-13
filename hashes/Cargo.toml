@@ -24,7 +24,7 @@ small-hash = []
 
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0" }
-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0", default-features = false }
+encoding = { package = "bitcoin-consensus-encoding", version = "1.0.0", default-features = false }
 
 arbitrary = { version = "1.4.1", optional = true}
 hex = { package = "hex-conservative", version = "1.1.0", default-features = false, optional = true }
@@ -59,6 +59,8 @@ exact_features = [
 [package.metadata.rbmt.lint]
 allowed_duplicates = [
     "hex-conservative",
+    "bitcoin-units",
+    "bitcoin-internals",
 ]
 
 [package.metadata.rbmt.prerelease]

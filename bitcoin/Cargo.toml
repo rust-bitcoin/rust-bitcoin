@@ -31,7 +31,7 @@ bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.2.0", default-features = false, features = ["alloc"] }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.21.0", default-features = false, features = ["alloc", "hex"] }
 key-expression = { package = "bitcoin-key-expression", path = "../key_expression", version = "0.0.0", default-features = false, features = ["alloc"] }
-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0", default-features = false, features = ["alloc"] }
+encoding = { package = "bitcoin-consensus-encoding", version = "1.0.0", default-features = false, features = ["alloc"] }
 hex = { package = "hex-conservative", version = "1.1.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["alloc", "hex"] }
 io = { package = "bitcoin-io", path = "../io", version = "0.5.0", default-features = false, features = ["alloc", "hashes"] }
@@ -106,6 +106,12 @@ examples = [
 exact_features = [
     ["bitcoinconsensus", "secp-recovery", "base64", "serde"],
     ["std", "bitcoinconsensus", "secp-recovery", "base64", "serde"],
+]
+
+[package.metadata.rbmt.lint]
+allowed_duplicates = [
+    "bitcoin-units",
+    "bitcoin-internals",
 ]
 
 [package.metadata.rbmt.prerelease]
