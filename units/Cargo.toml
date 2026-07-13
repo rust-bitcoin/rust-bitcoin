@@ -26,6 +26,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 arbitrary = { version = "1.0.1", optional = true }
+# Raises the MSRV to 1.74.0.
 encoding = { package = "bitcoin-consensus-encoding", version = "1.0", default-features = false, optional = true }
 serde = { version = "1.0.130", default-features = false, features = ["derive"], optional = true }
 
