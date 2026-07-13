@@ -82,6 +82,30 @@ pub trait Decoder: Sized {
     #[track_caller]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error>;
 
+    /// Consumes a decoder, assuming that it is incomplete, returning the error that
+    /// would have been returned by an early call to [`Self::end`].
+    ///
+    /// The default implementation is equivalent to `self.end().unwrap_err()`, and
+    /// this implementation should be sufficient for almost all implementors. It must
+    /// be overridden if `self.end()` would succeed even without a call to `psuh_bytes`
+    /// yielding `DecoderStatus::Ready`. An example of such a decoder is `ArrayDecoder::<0>`.
+    ///
+    /// # Panics
+    ///
+    /// May panic if [`Self::push_bytes`] has previously been called, and the most recent
+    /// call returned `Ok(DecoderStatus::Ready)`. (In this case, the caller should call
+    /// [`Self::end`] instead, and handle the correctly-decoded object if one exists.)
+    ///
+    /// May panic if any other method on this trait has previously been called, and an
+    /// error returned.
+    #[track_caller]
+    fn end_early(self) -> Self::Error {
+        match self.end() {
+            Ok(_) => panic!("Decoder::end() suceeded without Decoder::push_bytes returning Ready"),
+            Err(e) => e,
+        }
+    }
+
     /// Completes the decoding process and returns the final result.
     ///
     /// This consumes the decoder and should be called when no more input data is available.
@@ -90,6 +114,8 @@ pub trait Decoder: Sized {
     ///
     /// Returns an error if the decoder has not received sufficient data to complete decoding, or if
     /// the accumulated data is invalid when considered as a complete object.
+    ///
+    /// If [`Self::push_bytes`] has been called 
     ///
     /// # Panics
     ///

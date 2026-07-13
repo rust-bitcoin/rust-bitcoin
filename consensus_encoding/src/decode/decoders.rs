@@ -354,6 +354,14 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
     }
 
     #[inline]
+    fn end_early(self) -> Self::Error {
+        // We must explicitly implement this method because in the case that N == 0,
+        // Self::end() will always succeed, even before any calls to `push_bytes`.
+        // This would cause the default self.end().unwrap() implementation to panic.
+        UnexpectedEofError { missing: N - self.bytes_written }
+    }
+
+    #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         if self.bytes_written == N {
             Ok(self.buffer)
