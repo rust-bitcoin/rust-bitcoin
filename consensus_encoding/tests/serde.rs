@@ -76,3 +76,16 @@ fn deserialize_invalid_hex_json() {
             || err.to_string().contains("invalid")
     );
 }
+
+#[test]
+fn deserialize_odd_length_hex_json() {
+    let json = "\"efbeadd\"";
+
+    let err = serde_json::from_str::<WithConsensus>(json).unwrap_err();
+
+    assert!(
+        err.to_string().contains("odd")
+            || err.to_string().contains("length")
+            || err.to_string().contains("hex")
+    );
+}
