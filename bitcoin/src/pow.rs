@@ -27,7 +27,7 @@ pub use self::error::CompactTargetDecoderError;
 
 /// Extension functionality for the [`Work`] type.
 // This can't be defined with the extension trait macro because it ignores the feature gate.
-pub trait WorkExt {
+pub trait WorkExt: sealed::Sealed {
     /// Returns log2 of this work.
     ///
     /// The result inherently suffers from a loss of precision and is, therefore, meant to be
@@ -40,6 +40,7 @@ pub trait WorkExt {
     #[deprecated(since = "0.33.0", note = "use `format!(\"{var:x}\")` instead")]
     fn to_hex(&self) -> String;
 }
+
 impl WorkExt for Work {
     #[cfg(feature = "std")]
     fn log2(self) -> f64 { self.to_inner().to_f64().log2() }
