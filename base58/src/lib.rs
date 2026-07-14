@@ -260,6 +260,23 @@ impl Base58CkString {
     /// If the `alloc` feature is disabled and `data` encodes to more than 128 base58 characters.
     /// With `alloc` enabled this function is infallible. If you will only be using this with `alloc`,
     /// you can alternatively call [`Self::encode_unbounded`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use base58ck::Base58CkString;
+    ///
+    /// let wif_key: [u8; 33] = [
+    ///     0x80,
+    ///     0x0c, 0x28, 0xfc, 0xa3, 0x86, 0xc7, 0xa2, 0x27, 0x60, 0x0b, 0x2f, 0xe5, 0x0b, 0x7c,
+    ///     0xae, 0x11, 0xec, 0x86, 0xd3, 0xbf, 0x1f, 0xbe, 0x47, 0x1b, 0xe8, 0x98, 0x27, 0xe1,
+    ///     0x9d, 0x72, 0xaa, 0x1d,
+    /// ];
+    ///
+    /// let wif = Base58CkString::encode(&wif_key)?;
+    /// assert_eq!(wif.as_str(), "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ");
+    /// # Ok::<_, base58ck::InputTooLongError>(())
+    /// ```
     pub fn encode(data: &[u8]) -> Result<Self, InputTooLongError> {
         #[cfg(feature = "alloc")]
         {
@@ -278,6 +295,16 @@ impl Base58CkString {
     }
 
     /// Encodes `data` of any length as a base58check string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use base58ck::Base58CkString;
+    ///
+    /// let payload = [0x2a; 200]; // Too long to encode without allocating.
+    /// let encoded = Base58CkString::encode_unbounded(&payload);
+    /// assert_eq!(base58ck::decode_check(encoded.as_str()), Ok(payload.to_vec()));
+    /// ```
     #[allow(clippy::missing_panics_doc)] // encode_to_buffer is infallible in both cases
     #[cfg(feature = "alloc")]
     pub fn encode_unbounded(data: &[u8]) -> Self {
@@ -297,12 +324,33 @@ impl Base58CkString {
     }
 
     /// Returns the base58check-encoded string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use base58ck::Base58CkString;
+    ///
+    /// let address = Base58CkString::encode(&[0u8; 21])?;
+    /// let uri = format!("bitcoin:{}", address);
+    /// assert_eq!(uri, "bitcoin:1111111111111111111114oLvT2");
+    /// # Ok::<_, base58ck::InputTooLongError>(())
+    /// ```
     #[allow(clippy::missing_panics_doc)] // Base58 characters are always valid ASCII.
     pub fn as_str(&self) -> &str {
         core::str::from_utf8(self.as_bytes()).expect("base58 characters are valid ASCII")
     }
 
     /// Returns the base58check-encoded string as ASCII bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use base58ck::Base58CkString;
+    ///
+    /// let encoded = Base58CkString::encode(&[13, 36])?;
+    /// assert_eq!(encoded.as_bytes(), b"7YY3x3vS");
+    /// # Ok::<_, base58ck::InputTooLongError>(())
+    /// ```
     pub fn as_bytes(&self) -> &[u8] {
         match self.0 {
             Base58CkInner::Small(ref data) => data.slice(),
