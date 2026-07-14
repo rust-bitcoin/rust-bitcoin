@@ -15,7 +15,36 @@ pub struct SendCmpct {
     /// Compact Blocks protocol version number.
     pub version: u64,
 }
-impl_consensus_encoding!(SendCmpct, send_compact, version);
+
+impl crate::consensus::Encodable for SendCmpct {
+    #[inline]
+    fn consensus_encode<R: crate::io::Write + ?Sized>(
+        &self,
+        r: &mut R,
+    ) -> core::result::Result<usize, crate::io::Error> {
+        let mut len = 0;
+        len += self.send_compact.consensus_encode(r)?;
+        len += self.version.consensus_encode(r)?;
+        Ok(len)
+    }
+}
+
+impl crate::consensus::Decodable for SendCmpct {
+    #[inline]
+    fn consensus_decode<R: crate::io::Read + ?Sized>(
+        r: &mut R,
+    ) -> core::result::Result<Self, crate::consensus::encode::Error> {
+        let send_compact: u8 = crate::consensus::Decodable::consensus_decode(r)?;
+        let version = crate::consensus::Decodable::consensus_decode(r)?;
+
+        if send_compact == 1 || send_compact == 0 {
+            let send_compact = send_compact != 0;
+            Ok(SendCmpct { send_compact, version })
+        } else {
+            Err(crate::consensus::encode::Error::ParseFailed("first byte was not 0 or 1"))
+        }
+    }
+}
 
 /// cmpctblock message
 ///
