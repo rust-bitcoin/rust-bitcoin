@@ -266,7 +266,7 @@ pub mod amount {
 ///
 /// This trait exists because [`usize`] doesn't implement `Into<u64>`. We only support 32 and 64 bit
 /// architectures because of consensus code so we can infallibly do the conversion.
-pub trait ToU64 {
+pub(crate) trait ToU64 {
     /// Converts unsigned integer type to a [`u64`].
     fn to_u64(self) -> u64;
 }
