@@ -1,6 +1,5 @@
 # 0.32.10 - 2026-04-23
 
-
 - Fix bug in `LeafVerison::Future`'s `Display` output [#6208](https://github.com/rust-bitcoin/rust-bitcoin/pull/6208)
 - Manually revert `VarInt` range check [#6182](https://github.com/rust-bitcoin/rust-bitcoin/pull/6182)
 - Backport - p2p: Add a hash value to `Inventory`'s `Error` variant [#6147](https://github.com/rust-bitcoin/rust-bitcoin/pull/6147)
