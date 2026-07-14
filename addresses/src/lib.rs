@@ -26,7 +26,7 @@ extern crate std;
 pub mod witness_program;
 
 #[cfg(feature = "alloc")]
-use crypto::key::{LegacyPublicKey, UntweakedPublicKey, TweakedPublicKey, PubkeyHash};
+use crypto::key::{LegacyPublicKey, PubkeyHash, TweakedPublicKey, UntweakedPublicKey};
 #[cfg(feature = "alloc")]
 use primitives::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
 #[cfg(feature = "alloc")]
@@ -35,7 +35,6 @@ use primitives::script::{Builder, PushBytes, ScriptBuf, ScriptPubKeyBuf};
 use primitives::witness_version::WitnessVersion;
 #[cfg(feature = "alloc")]
 use taproot_primitives::{TapNodeHash, TapTweak as _};
-
 #[cfg(feature = "alloc")]
 use witness_program::WitnessProgram;
 
@@ -74,10 +73,7 @@ pub trait ScriptPubKeyBufExt: sealed::Sealed {
 #[cfg(feature = "alloc")]
 impl ScriptPubKeyBufExt for ScriptPubKeyBuf {
     fn new_p2pk(pubkey: LegacyPublicKey) -> Self {
-        Builder::new()
-            .push_slice(pubkey.serialize())
-            .push_opcode(OP_CHECKSIG)
-            .into_script()
+        Builder::new().push_slice(pubkey.serialize()).push_opcode(OP_CHECKSIG).into_script()
     }
 
     fn new_p2pkh(pubkey_hash: PubkeyHash) -> Self {

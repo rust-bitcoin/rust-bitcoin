@@ -28,7 +28,7 @@
 ///     const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag(b"foo");
 /// }
 /// ```
-/// 
+///
 /// The macro's three constructors map to these `MIDSTATE` expressions:
 ///
 /// - `hash_str("foo")` becomes `sha256::Midstate::hash_tag("foo".as_bytes())`
