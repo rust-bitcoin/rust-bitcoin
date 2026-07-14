@@ -16,8 +16,9 @@ use std::error;
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 #[cfg(feature = "encoding")]
 use encoding::{
-    ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Decoder4,
-    Encoder2, Encoder4, SliceEncoder, VecDecoder,
+    ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder,
+    CompactSizeU64Decoder, Decoder, Decoder2, Decoder4, DecoderStatus, Encoder2, Encoder4,
+    EncoderStatus, SliceEncoder, VecDecoder,
 };
 use hashes::{sha256, siphash24, Hash};
 use io::{Read, Write};
@@ -583,6 +584,344 @@ impl Decodable for BlockTransactionsRequest {
                 indexes
             },
         })
+    }
+}
+
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+struct BlockTransactionsRequestIndexesEncoder<'e> {
+    len: Option<CompactSizeEncoder>,
+    indexes: &'e [u64],
+    pos: usize,
+    last_idx: u64,
+    current: Option<CompactSizeEncoder>,
+}
+
+#[cfg(feature = "encoding")]
+impl<'e> BlockTransactionsRequestIndexesEncoder<'e> {
+    fn new(indexes: &'e [u64]) -> Self {
+        Self {
+            len: Some(CompactSizeEncoder::new(indexes.len())),
+            indexes,
+            pos: 0,
+            last_idx: 0,
+            current: None,
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encoder for BlockTransactionsRequestIndexesEncoder<'_> {
+    fn current_chunk(&self) -> &[u8] {
+        if let Some(enc) = &self.len {
+            enc.current_chunk()
+        } else if let Some(enc) = &self.current {
+            enc.current_chunk()
+        } else {
+            &[]
+        }
+    }
+
+    fn advance(&mut self) -> EncoderStatus {
+        loop {
+            if let Some(enc) = self.len.as_mut() {
+                if enc.advance().has_more() {
+                    return EncoderStatus::HasMore;
+                }
+                self.len = None;
+            } else if let Some(enc) = self.current.as_mut() {
+                if enc.advance().has_more() {
+                    return EncoderStatus::HasMore;
+                }
+                self.current = None;
+            } else if let Some(idx) = self.indexes.get(self.pos) {
+                let offset = *idx - self.last_idx;
+                self.last_idx = *idx + 1;
+                self.pos += 1;
+                self.current = Some(CompactSizeEncoder::new_u64(offset));
+            } else {
+                return EncoderStatus::Finished;
+            }
+
+            if !self.current_chunk().is_empty() {
+                return EncoderStatus::HasMore;
+            }
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+pub(crate) struct BlockTransactionsRequestIndexesDecoder {
+    len: Option<CompactSizeDecoder>,
+    remaining: Option<usize>,
+    current: Option<CompactSizeU64Decoder>,
+    indexes: Vec<u64>,
+    last_index: u64,
+}
+
+#[cfg(feature = "encoding")]
+impl BlockTransactionsRequestIndexesDecoder {
+    const fn new() -> Self {
+        Self {
+            len: Some(CompactSizeDecoder::new()),
+            remaining: None,
+            current: None,
+            indexes: Vec::new(),
+            last_index: 0,
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for BlockTransactionsRequestIndexesDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for BlockTransactionsRequestIndexesDecoder {
+    type Output = Vec<u64>;
+    type Error = IndexesDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
+        loop {
+            if let Some(decoder) = self.len.as_mut() {
+                if decoder.push_bytes(bytes).map_err(IndexesDecoderError::Length)?.needs_more() {
+                    return Ok(DecoderStatus::NeedsMore);
+                }
+                let len = self
+                    .len
+                    .take()
+                    .expect("len decoder present")
+                    .end()
+                    .map_err(IndexesDecoderError::Length)?;
+                let byte_size = len
+                    .checked_mul(mem::size_of::<Transaction>())
+                    .ok_or(IndexesDecoderError::InvalidLength)?;
+                if byte_size > encode::MAX_VEC_SIZE {
+                    return Err(IndexesDecoderError::OversizedVectorAllocation {
+                        requested: byte_size,
+                        max: encode::MAX_VEC_SIZE,
+                    });
+                }
+                self.remaining = Some(len);
+                self.indexes = Vec::with_capacity(len);
+                if len == 0 {
+                    return Ok(DecoderStatus::Ready);
+                }
+            }
+
+            if self.remaining == Some(0) {
+                return Ok(DecoderStatus::Ready);
+            }
+
+            if self.current.is_none() {
+                self.current = Some(CompactSizeU64Decoder::new());
+            }
+
+            let decoder = self.current.as_mut().expect("current decoder present");
+            if decoder.push_bytes(bytes).map_err(IndexesDecoderError::Offset)?.needs_more() {
+                return Ok(DecoderStatus::NeedsMore);
+            }
+            let differential = self
+                .current
+                .take()
+                .expect("current decoder present")
+                .end()
+                .map_err(IndexesDecoderError::Offset)?;
+            self.last_index = self
+                .last_index
+                .checked_add(differential)
+                .ok_or(IndexesDecoderError::IndexOverflow)?;
+            self.indexes.push(self.last_index);
+            self.last_index =
+                self.last_index.checked_add(1).ok_or(IndexesDecoderError::IndexOverflow)?;
+            *self.remaining.as_mut().expect("remaining present") -= 1;
+        }
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        if self.len.is_some() {
+            return Err(IndexesDecoderError::EarlyEndLength);
+        }
+        if self.current.is_some() {
+            return Err(IndexesDecoderError::EarlyEndOffset);
+        }
+        if self.remaining.unwrap_or(0) != 0 {
+            unreachable!("current decoder missing with remaining indexes")
+        }
+        Ok(self.indexes)
+    }
+
+    fn read_limit(&self) -> usize {
+        let mut limit = self.len.as_ref().map_or(0, Decoder::read_limit);
+        if let Some(decoder) = &self.current {
+            limit += decoder.read_limit();
+        }
+        limit
+    }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// Encoder type for a [`BlockTransactionsRequest`].
+    #[derive(Debug, Clone)]
+    pub struct BlockTransactionsRequestEncoder<'e>(
+        Encoder2<
+            crate::blockdata::block::BlockHashEncoder<'e>,
+            BlockTransactionsRequestIndexesEncoder<'e>
+        >
+    );
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for BlockTransactionsRequest {
+    type Encoder<'e> = BlockTransactionsRequestEncoder<'e>;
+
+    /// # Panics
+    ///
+    /// Panics if the index overflows [`u64::MAX`]. This happens when
+    /// [`BlockTransactionsRequest::indexes`] contains an entry with the value
+    /// [`u64::MAX`] as `u64` overflows during differential encoding.
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BlockTransactionsRequestEncoder::new(Encoder2::new(
+            self.block_hash.encoder(),
+            BlockTransactionsRequestIndexesEncoder::new(&self.indexes),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+type BlockTransactionsRequestInnerDecoder = Decoder2<
+    crate::blockdata::block::BlockHashDecoder,
+    BlockTransactionsRequestIndexesDecoder,
+>;
+
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+/// Decoder type for a [`BlockTransactionsRequest`].
+pub struct BlockTransactionsRequestDecoder(BlockTransactionsRequestInnerDecoder);
+
+#[cfg(feature = "encoding")]
+impl BlockTransactionsRequestDecoder {
+    /// Constructs a new [`BlockTransactionsRequest`] decoder.
+    pub const fn new() -> Self {
+        Self(Decoder2::new(
+            crate::blockdata::block::BlockHashDecoder::new(),
+            BlockTransactionsRequestIndexesDecoder::new(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for BlockTransactionsRequestDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for BlockTransactionsRequestDecoder {
+    type Output = BlockTransactionsRequest;
+    type Error = BlockTransactionsRequestDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
+        self.0.push_bytes(bytes).map_err(BlockTransactionsRequestDecoderError)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (block_hash, indexes) = self.0.end().map_err(BlockTransactionsRequestDecoderError)?;
+        Ok(BlockTransactionsRequest { block_hash, indexes })
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for BlockTransactionsRequest {
+    type Decoder = BlockTransactionsRequestDecoder;
+}
+
+/// Errors occurring when decoding a [`BlockTransactionsRequest`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockTransactionsRequestDecoderError(
+    pub(crate) <BlockTransactionsRequestInnerDecoder as encoding::Decoder>::Error,
+);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for BlockTransactionsRequestDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+/// Errors occurring when decoding differentially encoded block transaction indexes.
+pub enum IndexesDecoderError {
+    /// Input ended before the length decoder completed.
+    EarlyEndLength,
+    /// Input ended before an offset decoder completed.
+    EarlyEndOffset,
+    /// Length decoder error.
+    Length(CompactSizeDecoderError),
+    /// Offset decoder error.
+    Offset(CompactSizeDecoderError),
+    /// Invalid length.
+    InvalidLength,
+    /// Oversized vector allocation.
+    OversizedVectorAllocation {
+        /// Requested allocation size.
+        requested: usize,
+        /// Maximum permitted allocation size.
+        max: usize,
+    },
+    /// Differentially encoded block index overflowed.
+    IndexOverflow,
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for IndexesDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl Display for BlockTransactionsRequestDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "blocktxnrequest error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for BlockTransactionsRequestDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+#[cfg(feature = "encoding")]
+impl Display for IndexesDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EarlyEndLength => write!(f, "unexpected end while decoding length"),
+            Self::EarlyEndOffset => write!(f, "unexpected end while decoding offset"),
+            Self::Length(d) => write_err!(f, "block transactions request length decoder error"; d),
+            Self::Offset(d) => write_err!(f, "block transactions request offset decoder error"; d),
+            Self::InvalidLength => write!(f, "invalid length"),
+            Self::OversizedVectorAllocation { requested, max } => {
+                write!(f, "oversized vector allocation: requested {}, max {}", requested, max)
+            }
+            Self::IndexOverflow => write!(f, "block index overflow"),
+        }
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for IndexesDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::EarlyEndLength | Self::EarlyEndOffset => None,
+            Self::Length(d) => Some(d),
+            Self::Offset(d) => Some(d),
+            Self::InvalidLength | Self::OversizedVectorAllocation { .. } | Self::IndexOverflow =>
+                None,
+        }
     }
 }
 
