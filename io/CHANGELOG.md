@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-14
+
+* Introduce `encode_to_writer` for bitcoin io `Write` trait [#5214](https://github.com/rust-bitcoin/rust-bitcoin/pull/5214)
+* Fix buffer bug in `decode_from_read_unbuffered_with` [#6379](https://github.com/rust-bitcoin/rust-bitcoin/pull/6379)
+* Introduce functions to decode from `Decoder` types [#6213](https://github.com/rust-bitcoin/rust-bitcoin/pull/6213)
+* Replace gated `no_std` with blanket `no_std` [#5665](https://github.com/rust-bitcoin/rust-bitcoin/pull/5665)
+* Upgrade to `consensus-encoding 1.0.0` [#5999](https://github.com/rust-bitcoin/rust-bitcoin/pull/5999)
+* Upgrade to `bitcoin_hashes 1.0.0` [#6229](https://github.com/rust-bitcoin/rust-bitcoin/pull/6229)
+
 ## [0.5.0] - 2026-01-08
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
@@ -80,7 +89,8 @@ Types:
 
 Empty crate to reserve the name on crates.io
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-io-0.5.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-io-0.6.0...HEAD
+[0.6.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-io-0.5.0...bitcoin-io-0.6.0
 [0.5.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-io-0.4.0-rc.0...bitcoin-io-0.5.0
 [0.4.0-rc.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-io-0.3.0...bitcoin-io-0.4.0-rc.0
 [0.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/io-0.2.0...bitcoin-io-0.3.0
