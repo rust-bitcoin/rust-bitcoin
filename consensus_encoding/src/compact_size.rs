@@ -278,14 +278,16 @@ fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDeco
     use CompactSizeDecoderErrorInner as E;
 
     fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
-        slice.try_into().map_err(|_| {
-            CompactSizeDecoderError(E::UnexpectedEof { required: N, received: slice.len() })
-        })
+        slice
+            .try_into()
+            .map_err(|_| E::UnexpectedEof { required: N, received: slice.len() })
+            .map_err(CompactSizeDecoderError)
     }
 
     let (first, payload) = buf
         .split_first()
-        .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
+        .ok_or(E::UnexpectedEof { required: 1, received: 0 })
+        .map_err(CompactSizeDecoderError)?;
 
     match *first {
         PREFIX_U64 => {
