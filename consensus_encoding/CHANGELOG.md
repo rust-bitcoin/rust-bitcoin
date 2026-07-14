@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-14
+
+- Add `PrefixedBytesEncoder` and `PrefixedSliceEncoder` [#6476](https://github.com/rust-bitcoin/rust-bitcoin/pull/6476)
+- Introduce functions to decode from `Decoder` types [#6213](https://github.com/rust-bitcoin/rust-bitcoin/pull/6213)
+- Rename `_with` decoder functions [#6477](https://github.com/rust-bitcoin/rust-bitcoin/pull/6477)
+- Add `ExactSizeEncoder` impl for `Option<T: ExactSizeEncoder>` [#6422](https://github.com/rust-bitcoin/rust-bitcoin/pull/6422)
+- Add hex encoding/decoding support [#6296](https://github.com/rust-bitcoin/rust-bitcoin/pull/6296)
+  - Add `decode_from_hex_with` [#6454](https://github.com/rust-bitcoin/rust-bitcoin/pull/6454)
+- Move `serde_as_consensus` to `consensus_encoding` [#6395](https://github.com/rust-bitcoin/rust-bitcoin/pull/6395)
+  - Clean up `serde_as_consensus` docs [#6453](https://github.com/rust-bitcoin/rust-bitcoin/pull/6453)
+  - Adjust `ConsensusHex` impl in `serde_as_consensus` [#6438](https://github.com/rust-bitcoin/rust-bitcoin/pull/6438)
+- Always enable `alloc` for `serde` [#6415](https://github.com/rust-bitcoin/rust-bitcoin/pull/6415)
+- Fix buffer bug in `decode_from_read_unbuffered_with` [#6380](https://github.com/rust-bitcoin/rust-bitcoin/pull/6380)
+
 ## [1.0.0] - 2026-05-22
 
 Props to the team, our first `1.0` release from this repository. That
@@ -81,6 +95,7 @@ around but the work got done. Props to him for many of the ideas.
 
 Empty crate to reserve the name on crates.io
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.0.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.1.0...HEAD
+[1.1.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.0.0...bitcoin-consensus-encoding-1.1.0
 [1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.2.0...bitcoin-consensus-encoding-1.0.0
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.1.0...bitcoin-consensus-encoding-0.2.0
