@@ -173,22 +173,13 @@ impl Decoder for CompactSizeDecoder {
 
         let dec_value = compact_size_decode_u64(&self.buf)?;
 
-        // This error is returned if dec_value is outside of the usize range, or
-        // if it is above the given limit.
-        let make_err = || {
-            CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
-                value: dec_value,
+        match usize::try_from(dec_value) {
+            Ok(nsize) if nsize <= self.limit => Ok(nsize),
+            _ => Err(CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
                 limit: self.limit,
-            }))
-        };
-
-        usize::try_from(dec_value).map_err(|_| make_err()).and_then(|nsize| {
-            if nsize > self.limit {
-                Err(make_err())
-            } else {
-                Ok(nsize)
-            }
-        })
+                value: dec_value,
+            }))),
+        }
     }
 
     fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
