@@ -12,8 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(doc)]
 use encoding::Decoder4;
 use encoding::{
-    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, DecoderStatus,
-    Encoder2,
+    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, DecoderStatus, Encoder2,
 };
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
@@ -659,30 +658,8 @@ impl<'a> IntoIterator for &'a Witness {
 
 impl<T: AsRef<[u8]>> FromIterator<T> for Witness {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        let mut decoder = WitnessDecoder::new();
-
-        // We can't count the number of witness elements without consuming the iterator.
-        // So instead, we build up the full push_bytes buffer and then push it all at once.
-        // We'll start with a 256 byte buffer to double the initial WitnessDecoder size.
-        let mut buffer = Vec::with_capacity(256);
-        let mut witness_elements = 0;
-
-        // For each witness element, the decoder expects an element length, followed by
-        // the data itself. The iterator's yielded elements do not include the length prefix,
-        // so we add them.
-        for elem in iter {
-            let encoded = crate::compact_size_encode(elem.as_ref().len());
-            buffer.extend_from_slice(encoded.as_slice());
-            buffer.extend_from_slice(elem.as_ref());
-            witness_elements += 1;
-        }
-
-        let witness_count = crate::compact_size_encode(witness_elements);
-        let _ = decoder.push_bytes(&mut witness_count.as_slice());
-
-        let _ = decoder.push_bytes(&mut buffer.as_slice());
-
-        decoder.end().expect("witness_elements in decoder is equal to number of provided elements")
+        let v: Vec<T> = iter.into_iter().collect();
+        Self::from_slice(&v)
     }
 }
 
@@ -1013,7 +990,7 @@ mod test {
 
     use encoding::check_encode;
     #[cfg(feature = "alloc")]
-    use encoding::Decode as _;
+    use encoding::{Decode as _, Decoder as _};
 
     use super::*;
 
