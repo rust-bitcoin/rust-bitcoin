@@ -69,21 +69,20 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-consensus-encoding"
-version = "1.0.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2d6094e2a1ba3c93b5a596fe5a10d1a10c3c6e06785cde89f693a044c01aa40"
+checksum = "207311705279250ba465076a1bac4b1ac982855fff73fc5f67e22158ac58cdc9"
 dependencies = [
  "bitcoin-internals",
+ "hex-conservative 1.1.0",
+ "serde",
 ]
 
 [[package]]
 name = "bitcoin-internals"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a30a22d1f112dde8e16be7b45c63645dc165cef254f835b3e1e9553e485cfa64"
-dependencies = [
- "hex-conservative 0.3.0",
-]
+checksum = "d573f4cf32996a8dce612e4348cece65a241f1882ed594047c9ba348e8869fa5"
 
 [[package]]
 name = "bitcoin-io"
@@ -170,9 +169,9 @@ dependencies = [
 
 [[package]]
 name = "hex-conservative"
-version = "0.3.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4afe881d0527571892c4034822e59bb10c6c991cce6abe8199b6f5cf10766f55"
+checksum = "a7289f6b628ce69fb1a371d0fdcf8ff38cd93ec00e3010eb055d1e044998c8d1"
 dependencies = [
  "arrayvec",
 ]
