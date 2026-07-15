@@ -2,7 +2,39 @@
 
 //! # Bitcoin Base58 Encoding and Decoding
 //!
-//! This crate can be used in a no-std environment but requires an allocator for decoding.
+//! This crate can be used in a no-std environment for base58 encoding and decoding.
+//!
+//! Encoding is done with [`Base58CkString`], which produces a base58check string.
+//! [`Base58CkString::encode`] works with or without the `alloc` feature, returning an error
+//! if the result exceeds 128 characters and `alloc` is disabled. With the `alloc` feature
+//! enabled, [`Base58CkString::encode_unbounded`] encodes data of any length infallibly.
+//!
+//! Decoding can be done with [`decode_check_to_array`] or [`decode_check`], both of which verify
+//! the checksum. [`decode_check_to_array`] decodes into a fixed-size array, but only accepts
+//! inputs of at most 128 characters. The expected decoded length must be specified by the generic
+//! `usize`. With the `alloc` feature enabled, [`decode_check`] decodes strings of any length into
+//! a `Vec<u8>`.
+//!
+//! # Examples
+//!
+//! Encoding and decoding a legacy address:
+//!
+//! ```rust
+//! use base58ck::{decode_check_to_array, Base58CkString};
+//!
+//! // A legacy address payload: a version byte followed by a 20 byte public key hash.
+//! let payload: [u8; 21] = [
+//!     0x00,
+//!     0xf8, 0x91, 0x73, 0x03, 0xbf, 0xa8, 0xef, 0x24, 0xf2, 0x92,
+//!     0xe8, 0xfa, 0x14, 0x19, 0xb2, 0x04, 0x60, 0xba, 0x06, 0x4d,
+//! ];
+//!
+//! let address = Base58CkString::encode(&payload)?;
+//! assert_eq!(address.as_str(), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
+//!
+//! assert_eq!(decode_check_to_array::<21>(address.as_str()), Ok(payload));
+//! # Ok::<_, base58ck::InputTooLongError>(())
+//! ```
 
 #![no_std]
 // Experimental features we need.
