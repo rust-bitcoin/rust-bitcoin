@@ -3,7 +3,7 @@ name = "bitcoin"
 # We jumped to `v0.32.100` when doing the MSRV bump to Rust `1.74`
 # leaving room for a bunch of secuity releases upto this number if
 # needed.
-version = "0.32.101"
+version = "0.32.102"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
