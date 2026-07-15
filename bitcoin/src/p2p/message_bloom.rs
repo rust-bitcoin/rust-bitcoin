@@ -9,12 +9,11 @@
 use core::convert::Infallible;
 #[cfg(feature = "encoding")]
 use core::fmt;
+
 #[cfg(feature = "encoding")]
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4,
-    Encoder2, Encoder3,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decoder4, Encoder2, Encoder3, PrefixedBytesEncoder,
 };
-
 use io::{Read, Write};
 
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
@@ -43,7 +42,7 @@ encoding::encoder_newtype! {
     #[derive(Debug, Clone)]
     pub struct FilterLoadEncoder<'e>(
         Encoder2<
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            PrefixedBytesEncoder<'e>,
             Encoder3<
                 ArrayEncoder<4>,
                 ArrayEncoder<4>,
@@ -59,10 +58,7 @@ impl encoding::Encode for FilterLoad {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         FilterLoadEncoder::new(Encoder2::new(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.filter.len()),
-                BytesEncoder::without_length_prefix(&self.filter),
-            ),
+            PrefixedBytesEncoder::new(&self.filter),
             Encoder3::new(
                 ArrayEncoder::without_length_prefix(self.hash_funcs.to_le_bytes()),
                 ArrayEncoder::without_length_prefix(self.tweak.to_le_bytes()),
@@ -261,7 +257,7 @@ impl_consensus_encoding!(FilterAdd, data);
 encoding::encoder_newtype_exact! {
     /// The encoder of the [`FilterAdd`] message.
     #[derive(Debug, Clone)]
-    pub struct FilterAddEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct FilterAddEncoder<'e>(PrefixedBytesEncoder<'e>);
 }
 
 #[cfg(feature = "encoding")]
@@ -269,10 +265,7 @@ impl encoding::Encode for FilterAdd {
     type Encoder<'e> = FilterAddEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterAddEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.data.len()),
-            BytesEncoder::without_length_prefix(&self.data),
-        ))
+        FilterAddEncoder::new(PrefixedBytesEncoder::new(&self.data))
     }
 }
 
