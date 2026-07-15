@@ -686,6 +686,12 @@ impl<T: AsRef<[u8]>> FromIterator<T> for Witness {
     }
 }
 
+impl<T: AsRef<[u8]>> Extend<T> for Witness {
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        iter.into_iter().for_each(|elem| self.push(elem));
+    }
+}
+
 // Serde keep backward compatibility with old Vec<Vec<u8>> format
 #[cfg(feature = "serde")]
 impl serde::Serialize for Witness {
@@ -1319,6 +1325,13 @@ mod test {
         for item in &data {
             witness2.push(item);
         }
+        assert_eq!(witness1, witness2);
+        assert_eq!(witness1.len(), witness2.len());
+        assert_eq!(witness1.to_vec(), witness2.to_vec());
+
+        // Test that extend works the same as manually pushing
+        let mut witness2 = Witness::new();
+        witness2.extend(&data);
         assert_eq!(witness1, witness2);
         assert_eq!(witness1.len(), witness2.len());
         assert_eq!(witness1.to_vec(), witness2.to_vec());
