@@ -474,26 +474,13 @@ pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) 
 }
 
 impl<T: Encoder> Encoder for Option<T> {
-    fn current_chunk(&self) -> &[u8] {
-        match self {
-            Some(encoder) => encoder.current_chunk(),
-            None => &[],
-        }
-    }
+    fn current_chunk(&self) -> &[u8] { self.as_ref().map_or(&[], Encoder::current_chunk) }
 
     fn advance(&mut self) -> EncoderStatus {
-        match self {
-            Some(encoder) => encoder.advance(),
-            None => EncoderStatus::Finished,
-        }
+        self.as_mut().map_or(EncoderStatus::Finished, Encoder::advance)
     }
 }
 
 impl<T: ExactSizeEncoder> ExactSizeEncoder for Option<T> {
-    fn len(&self) -> usize {
-        match self {
-            Some(encoder) => encoder.len(),
-            None => 0,
-        }
-    }
+    fn len(&self) -> usize { self.as_ref().map_or(0, T::len) }
 }

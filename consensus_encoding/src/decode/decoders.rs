@@ -123,19 +123,15 @@ impl Decoder for ByteVecDecoder {
         use ByteVecDecoderError as E;
         use ByteVecDecoderErrorInner as Inner;
 
-        if let Some(ref prefix_decoder) = self.prefix_decoder {
-            return Err(E(Inner::UnexpectedEof(UnexpectedEofError {
-                missing: prefix_decoder.read_limit(),
-            })));
-        }
-
-        if self.bytes_written == self.bytes_expected {
-            Ok(self.buffer)
+        let missing = if let Some(ref prefix_decoder) = self.prefix_decoder {
+            prefix_decoder.read_limit()
+        } else if self.bytes_written != self.bytes_expected {
+            self.bytes_expected - self.bytes_written
         } else {
-            Err(E(Inner::UnexpectedEof(UnexpectedEofError {
-                missing: self.bytes_expected - self.bytes_written,
-            })))
-        }
+            return Ok(self.buffer);
+        };
+
+        Err(E(Inner::UnexpectedEof(UnexpectedEofError { missing })))
     }
 
     fn read_limit(&self) -> usize {
@@ -284,19 +280,16 @@ impl<T: Decode> Decoder for VecDecoder<T> {
     fn end(self) -> Result<Self::Output, Self::Error> {
         use VecDecoderErrorInner as E;
 
-        if let Some(ref prefix_decoder) = self.prefix_decoder {
-            return Err(VecDecoderError(E::UnexpectedEof(UnexpectedEofError {
-                missing: prefix_decoder.read_limit(),
-            })));
-        }
-
-        if self.buffer.len() == self.length {
-            Ok(self.buffer)
+        let len = self.buffer.len();
+        let missing = if let Some(prefix_decoder) = self.prefix_decoder {
+            prefix_decoder.read_limit()
+        } else if len != self.length {
+            self.length - len
         } else {
-            Err(VecDecoderError(E::UnexpectedEof(UnexpectedEofError {
-                missing: self.length - self.buffer.len(),
-            })))
-        }
+            return Ok(self.buffer);
+        };
+
+        Err(VecDecoderError(E::UnexpectedEof(UnexpectedEofError { missing })))
     }
 
     fn read_limit(&self) -> usize {

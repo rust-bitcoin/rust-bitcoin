@@ -173,22 +173,13 @@ impl Decoder for CompactSizeDecoder {
 
         let dec_value = compact_size_decode_u64(&self.buf)?;
 
-        // This error is returned if dec_value is outside of the usize range, or
-        // if it is above the given limit.
-        let make_err = || {
-            CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
-                value: dec_value,
+        match usize::try_from(dec_value) {
+            Ok(nsize) if nsize <= self.limit => Ok(nsize),
+            _ => Err(CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
                 limit: self.limit,
-            }))
-        };
-
-        usize::try_from(dec_value).map_err(|_| make_err()).and_then(|nsize| {
-            if nsize > self.limit {
-                Err(make_err())
-            } else {
-                Ok(nsize)
-            }
-        })
+                value: dec_value,
+            }))),
+        }
     }
 
     fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
@@ -287,14 +278,16 @@ fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDeco
     use CompactSizeDecoderErrorInner as E;
 
     fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
-        slice.try_into().map_err(|_| {
-            CompactSizeDecoderError(E::UnexpectedEof { required: N, received: slice.len() })
-        })
+        slice
+            .try_into()
+            .map_err(|_| E::UnexpectedEof { required: N, received: slice.len() })
+            .map_err(CompactSizeDecoderError)
     }
 
     let (first, payload) = buf
         .split_first()
-        .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
+        .ok_or(E::UnexpectedEof { required: 1, received: 0 })
+        .map_err(CompactSizeDecoderError)?;
 
     match *first {
         PREFIX_U64 => {

@@ -166,6 +166,7 @@ pub fn decode_from_hex_with_decoder<D: Decoder + Default>(
 }
 
 #[cfg(feature = "hex")]
+#[allow(clippy::unnecessary_map_on_constructor)]
 fn decode_from_hex_internal<D: Decoder>(
     hex: &str,
     mut decoder: D,
@@ -187,12 +188,15 @@ fn decode_from_hex_internal<D: Decoder>(
             while !to_flush.is_empty() {
                 if decoder
                     .push_bytes(&mut to_flush)
-                    .map_err(|e| FromHexError(FromHexErrorInner::Decode(DecodeError::Parse(e))))?
+                    .map_err(DecodeError::Parse)
+                    .map_err(FromHexErrorInner::Decode)
+                    .map_err(FromHexError)?
                     .is_ready()
                 {
-                    return Err(FromHexError(FromHexErrorInner::Decode(DecodeError::Unconsumed(
-                        UnconsumedError(),
-                    ))));
+                    return Err(UnconsumedError())
+                        .map_err(DecodeError::Unconsumed)
+                        .map_err(FromHexErrorInner::Decode)
+                        .map_err(FromHexError);
                 }
             }
             index = 0;
@@ -205,7 +209,9 @@ fn decode_from_hex_internal<D: Decoder>(
     while !to_flush.is_empty() {
         if decoder
             .push_bytes(&mut to_flush)
-            .map_err(|e| FromHexError(FromHexErrorInner::Decode(DecodeError::Parse(e))))?
+            .map_err(DecodeError::Parse)
+            .map_err(FromHexErrorInner::Decode)
+            .map_err(FromHexError)?
             .is_ready()
         {
             break;
@@ -213,9 +219,16 @@ fn decode_from_hex_internal<D: Decoder>(
     }
 
     if to_flush.is_empty() {
-        decoder.end().map_err(|e| FromHexError(FromHexErrorInner::Decode(DecodeError::Parse(e))))
+        decoder
+            .end()
+            .map_err(DecodeError::Parse)
+            .map_err(FromHexErrorInner::Decode)
+            .map_err(FromHexError)
     } else {
-        Err(FromHexError(FromHexErrorInner::Decode(DecodeError::Unconsumed(UnconsumedError()))))
+        Err(UnconsumedError())
+            .map_err(DecodeError::Unconsumed)
+            .map_err(FromHexErrorInner::Decode)
+            .map_err(FromHexError)
     }
 }
 
