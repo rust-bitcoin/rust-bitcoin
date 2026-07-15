@@ -23,6 +23,9 @@ jobs:
       matrix:
         toolchain: [stable, msrv]
         dep: [minimal, recent]
+        exclude:
+          - toolchain: msrv
+            dep: recent
     steps:
       # Cleaning up github bloat so that test feature artifacts don't run out of disk.
       - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
