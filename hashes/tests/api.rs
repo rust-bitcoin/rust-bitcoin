@@ -8,7 +8,7 @@
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
-#![allow(deprecated_in_future)]
+#![allow(deprecated)]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 

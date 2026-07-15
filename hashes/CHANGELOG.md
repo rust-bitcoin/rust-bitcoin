@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-15
+
+* Add `with_input` method to `HashEngine` for convenient one-shot hashing [#6411](https://github.com/rust-bitcoin/rust-bitcoin/pull/6411)
+* Add `drain_to_hash` and `encode_to_hash` helper functions [#6456](https://github.com/rust-bitcoin/rust-bitcoin/pull/6456)
+* Deprecate `sha256t_tag` macro in favor of direct `sha256t::Tag` implementation [#6465](https://github.com/rust-bitcoin/rust-bitcoin/pull/6465)
+* Fix unusable `HKDF` alias [#6466](https://github.com/rust-bitcoin/rust-bitcoin/pull/6466)
+
 # 1.0.0 - 2026-06-01
 
 * No changes since `v0.21.0`.
@@ -366,7 +373,8 @@ Note that we have stopped re-exporting the `core` crate when compiling without `
 
 * Initial release
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-1.0.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-1.1.0...HEAD
+[1.1.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-1.0.0...bitcoin_hashes-1.1.0
 [1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.21.0...bitcoin_hashes-1.0.0
 [0.21.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.20.0...bitcoin_hashes-0.21.0
 [0.20.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.19.0...bitcoin_hashes-0.20.0
