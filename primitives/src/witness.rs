@@ -1315,6 +1315,17 @@ mod test {
     }
 
     #[test]
+    fn from_iter_does_not_silently_lose_elements() {
+        let n: usize = 4_000_001;
+        let witness: Witness = core::iter::repeat(&[0u8; 0]).take(n).collect();
+        let len = witness.len();
+        assert_eq!(
+            len, n,
+            "from_iter silently produced a witness with {len} elements (expected {n})"
+        );
+    }
+
+    #[test]
     #[cfg(feature = "hex")]
     fn test_from_hex() {
         let hex_strings = [
