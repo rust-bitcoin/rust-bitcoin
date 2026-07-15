@@ -37,7 +37,7 @@
 ///
 /// This macro dates to a time before SHA256 could be computed in a `const` context.
 #[macro_export]
-#[deprecated(since = "TBD", note = "use `sha256t::Tag` instead")]
+#[deprecated(since = "1.1.0", note = "use `sha256t::Tag` instead")]
 macro_rules! sha256t_tag {
     ($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+);) => {
         $crate::sha256t_tag_struct!($tag_vis, $tag, stringify!($tag), $(#[$($tag_attr)*])*);
@@ -576,7 +576,7 @@ macro_rules! impl_serde_traits(
 
 #[cfg(test)]
 mod test {
-    #![allow(deprecated_in_future)]
+    #![allow(deprecated)]
 
     use crate::sha256;
 

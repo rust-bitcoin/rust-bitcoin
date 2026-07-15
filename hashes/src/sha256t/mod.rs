@@ -192,7 +192,7 @@ macro_rules! sha256t_tag_constructor {
 
 #[cfg(test)]
 mod tests {
-    #![allow(deprecated_in_future)]
+    #![allow(deprecated)]
 
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
