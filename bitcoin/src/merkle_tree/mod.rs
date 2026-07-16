@@ -18,4 +18,10 @@
 #[doc(inline)]
 pub use primitives::merkle_tree::{TxMerkleNodeDecoder, TxMerkleNodeEncoder, TxMerkleNode, WitnessMerkleNode};
 #[doc(no_inline)]
-pub use primitives::merkle_tree::TxMerkleNodeDecoderError;
+pub use self::error::TxMerkleNodeDecoderError;
+
+/// Error types for the merkle tree module.
+pub mod error {
+    #[doc(inline)]
+    pub use primitives::merkle_tree::TxMerkleNodeDecoderError;
+}
