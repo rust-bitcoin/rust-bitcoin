@@ -16,10 +16,11 @@ use hashes::{sha256d, HashEngine};
 #[cfg(not(feature = "alloc"))]
 use internals::array_vec::ArrayVec;
 
+#[doc(no_inline)]
+pub use self::error::TxMerkleNodeDecoderError;
 #[doc(inline)]
 pub use crate::hash_types::{
-    TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
-    WitnessMerkleNode,
+    TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeEncoder, WitnessMerkleNode,
 };
 use crate::hash_types::{Txid, Wtxid};
 use crate::transaction::TxIdentifier;
@@ -192,6 +193,12 @@ impl MerkleNode for WitnessMerkleNode {
         let nodes: Vec<[u8; 32]> = iter.map(Wtxid::to_byte_array).collect();
         calculate_root_batched(nodes).map(Self::from_byte_array)
     }
+}
+
+/// Error types for the merkle tree module.
+pub mod error {
+    #[doc(inline)]
+    pub use crate::hash_types::TxMerkleNodeDecoderError;
 }
 
 #[cfg(test)]
