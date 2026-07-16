@@ -79,7 +79,9 @@ impl<T> fmt::Display for Builder<T> {
 }
 
 impl<T> fmt::Debug for Builder<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("Builder").field(&self.0).finish()
+    }
 }
 
 #[cfg(test)]
