@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [api, lint, docs, docsrs]
+        task: [lint, docs]
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -45,6 +45,19 @@ jobs:
       - uses: ./.github/actions/setup-rbmt
       - name: "Run ${{ matrix.task }}"
         run: cargo rbmt ${{ matrix.task }}
+
+  Generate-API:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # History required for API diff.
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Run API check"
+        run: cargo rbmt api --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
 
   Bench:
     runs-on: ubuntu-24.04
