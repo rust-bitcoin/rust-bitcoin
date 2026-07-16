@@ -21,8 +21,7 @@ jobs:
         with:
           ref: ${{ matrix.branch }}
           persist-credentials: false
-      - name: Install cargo-rbmt
-        run: cargo install --git https://github.com/rust-bitcoin/rust-bitcoin-maintainer-tools.git --rev $(cat rbmt-version) cargo-rbmt
+      - uses: ./.github/actions/setup-rbmt
       - name: Update nightly toolchain in Cargo.toml
         run: |
           cargo rbmt toolchains --update-nightly

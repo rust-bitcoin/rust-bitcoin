@@ -8,10 +8,8 @@ runs:
       shell: bash
       run: |
         cargo install \
-          --git https://git.rust-bitcoin.org/rust-bitcoin/rust-bitcoin-maintainer-tools \
-          --rev "$(cat rbmt-version)" \
-          cargo-rbmt \
-          --locked
+          --locked \
+          cargo-rbmt@$(grep "^rbmt.version" Cargo.toml | cut -d'"' -f2)
 
     - name: "Install Rust toolchains via cargo-rbmt"
       shell: bash
