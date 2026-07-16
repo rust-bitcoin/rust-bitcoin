@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Test the API surface of `primitives`.
+//! Test the API surface (not functionality) of `bitcoin-primitives`.
 //!
-//! The point of these tests is to check the API surface as opposed to test the API functionality.
-//!
-//! ref: <https://rust-lang.github.io/api-guidelines/about.html>
+//! See [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/about.html) and the [rust-bitcoin policies](../../docs/policy.md).
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
@@ -198,7 +196,7 @@ struct Default {
 }
 
 /// A struct that includes all public decoder types.
-#[derive(Default)] // All decoders implement `Default`.
+#[derive(Default)] // All decoders implement `Default` (P-DECODERS).
 struct Decoders {
     a: block::BlockDecoder,
     b: block::BlockHashDecoder,
@@ -228,107 +226,9 @@ struct Errors {
     g: script::WitnessScriptSizeError,
 }
 
+/// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
-fn api_can_use_units_modules_from_crate_root() {
-    use bitcoin_primitives::{amount, block, fee_rate, locktime, weight};
-}
-
-#[test]
-fn api_can_use_units_types_from_crate_root() {
-    use bitcoin_primitives::{
-        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
-        NumOpResult, Sequence, SignedAmount, Weight,
-    };
-}
-
-#[test]
-fn api_can_use_all_units_types_from_module_amount() {
-    use bitcoin_primitives::amount::{
-        Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
-        ParseError, SignedAmount,
-    };
-}
-
-#[test]
-fn api_can_use_all_units_types_from_module_amount_error() {
-    use bitcoin_primitives::amount::error::{
-        InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
-    };
-}
-
-#[test]
-fn api_can_use_modules_from_crate_root() {
-    use bitcoin_primitives::{
-        amount, block, fee_rate, locktime, merkle_tree, parse_int, pow, result, script, sequence,
-        time, transaction, weight, witness,
-    };
-}
-
-#[test]
-fn api_can_use_types_from_crate_root() {
-    use bitcoin_primitives::{
-        Block, BlockChecked, BlockHash, BlockHeader, BlockUnchecked, BlockValidation, BlockVersion,
-        CompactTarget, OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf,
-        ScriptSig, ScriptSigBuf, Sequence, TapScript, TapScriptBuf, Transaction,
-        TransactionVersion, TxIn, TxOut, Txid, Witness, WitnessCommitment, WitnessScript,
-        WitnessScriptBuf, Wtxid,
-    };
-}
-
-#[test]
-fn api_can_use_all_types_from_module_locktime() {
-    use bitcoin_primitives::locktime::relative::error::{
-        DisabledLockTimeError, InvalidHeightError, InvalidTimeError,
-    };
-    use bitcoin_primitives::locktime::relative::LockTime;
-    use bitcoin_primitives::locktime::{absolute, relative};
-}
-
-#[test]
-fn api_can_use_all_types_from_module_script() {
-    use bitcoin_primitives::script::{
-        RedeemScriptSizeError, ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash,
-        ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, WScriptHash,
-        WitnessScriptSizeError,
-    };
-}
-
-#[test]
-fn api_can_use_all_types_from_module_block() {
-    use bitcoin_primitives::block::{
-        BlockDecoder, BlockDecoderError, BlockEncoder, BlockHashDecoder, BlockHashDecoderError,
-        BlockHashEncoder, HeaderDecoder, HeaderEncoder, VersionDecoder, VersionDecoderError,
-        VersionEncoder,
-    };
-}
-
-#[test]
-fn api_can_use_all_types_from_module_merkle_tree() {
-    use bitcoin_primitives::merkle_tree::{
-        TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
-    };
-}
-
-#[test]
-fn api_can_use_all_types_from_module_transaction() {
-    use bitcoin_primitives::transaction::{
-        OutPointDecoder, OutPointDecoderError, OutPointEncoder, TransactionDecoder,
-        TransactionDecoderError, TransactionEncoder, TxInDecoder, TxInDecoderError, TxInEncoder,
-        TxOutDecoder, TxOutDecoderError, TxOutEncoder, VersionDecoder, VersionDecoderError,
-        VersionEncoder,
-    };
-}
-
-#[test]
-fn api_can_use_all_types_from_module_witness() {
-    use bitcoin_primitives::witness::{WitnessDecoder, WitnessDecoderError, WitnessEncoder};
-}
-
-// `Debug` representation is never empty (C-DEBUG-NONEMPTY).
-#[test]
-fn api_all_non_error_types_have_non_empty_debug() {
+fn c_debug_nonempty() {
     macro_rules! check_debug {
         ($($t:expr);* $(;)?) => {
             $(
@@ -386,8 +286,9 @@ fn api_all_non_error_types_have_non_empty_debug() {
     };
 }
 
+/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
 #[test]
-fn all_types_implement_send_sync() {
+fn c_send_sync() {
     fn assert_send<T: Send>() {}
     fn assert_sync<T: Sync>() {}
 
@@ -402,8 +303,47 @@ fn all_types_implement_send_sync() {
     assert_sync::<Errors>();
 }
 
+/// C-OBJECT: Tests that traits are object-safe where appropriate.
 #[test]
-fn regression_default() {
+fn c_object() {
+    // If this builds then traits are dyn compatible.
+    struct Traits {
+        // These traits are explicitly not dyn compatible.
+        // a: Box<dyn block::Validation>,
+    }
+}
+
+/// C-GOOD-ERR: Tests that all public error types implement Display.
+#[test]
+fn c_good_err_display() {
+    use core::fmt;
+
+    fn assert_display<T: fmt::Display>() {}
+
+    assert_display::<transaction::ParseOutPointError>();
+    assert_display::<relative::error::DisabledLockTimeError>();
+    assert_display::<relative::error::IsSatisfiedByError>();
+    assert_display::<relative::error::IsSatisfiedByHeightError>();
+    assert_display::<relative::error::IsSatisfiedByTimeError>();
+    assert_display::<script::RedeemScriptSizeError>();
+    assert_display::<script::WitnessScriptSizeError>();
+}
+
+/// C-SERDE: Tests that serde traits are implemented where expected.
+#[test]
+#[cfg(feature = "serde")]
+fn c_serde() {
+    fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
+
+    assert_serde::<block::Version>();
+    assert_serde::<transaction::Version>();
+    assert_serde::<OutPoint>();
+    assert_serde::<Witness>();
+}
+
+/// P-DEFAULT-CHANGE: Tests regression for Default implementation values.
+#[test]
+fn p_default_change() {
     let got: Default = Default::default();
     let want = Default {
         a: block::Version::NO_SOFT_FORK_SIGNALLING,
@@ -423,11 +363,9 @@ fn regression_default() {
     assert_eq!(got, want);
 }
 
+/// P-DECODERS: Tests that decoders implement a constructor method.
 #[test]
-fn decoders_implement_default() { let _ = Decoders::default(); }
-
-#[test]
-fn decoders_implement_new() {
+fn p_decoders_implement_new() {
     let _ = block::BlockDecoder::new();
     let _ = block::BlockHashDecoder::new();
     let _ = block::HeaderDecoder::new();
@@ -443,6 +381,112 @@ fn decoders_implement_new() {
     let _ = witness::WitnessDecoder::new();
 }
 
+/// P-CONSISTENT-EXPORTS: Tests that units modules can be used from the crate root.
 #[test]
-// The only trait in this crate is `block::Validation` and it is not dyn compatible.
-fn dyn_compatible() {}
+fn p_consistent_exports_units_modules() {
+    use bitcoin_primitives::{amount, block, fee_rate, locktime, weight};
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that units type aliases can be used from the crate root.
+#[test]
+fn p_consistent_exports_units_types() {
+    use bitcoin_primitives::{
+        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
+        NumOpResult, Sequence, SignedAmount, Weight,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all units types can be imported from the `amount` module.
+#[test]
+fn p_consistent_exports_units_amount() {
+    use bitcoin_primitives::amount::{
+        Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
+        ParseError, SignedAmount,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all units types can be imported from the `amount::error` module.
+#[test]
+fn p_consistent_exports_units_amount_error() {
+    use bitcoin_primitives::amount::error::{
+        InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
+        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that modules can be used from the crate root.
+#[test]
+fn p_consistent_exports_crate_modules() {
+    use bitcoin_primitives::{
+        amount, block, fee_rate, locktime, merkle_tree, parse_int, pow, result, script, sequence,
+        time, transaction, weight, witness,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that type aliases can be used from the crate root.
+#[test]
+fn p_consistent_exports_crate_types() {
+    use bitcoin_primitives::{
+        Block, BlockChecked, BlockHash, BlockHeader, BlockUnchecked, BlockValidation, BlockVersion,
+        CompactTarget, OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf,
+        ScriptSig, ScriptSigBuf, Sequence, TapScript, TapScriptBuf, Transaction,
+        TransactionVersion, TxIn, TxOut, Txid, Witness, WitnessCommitment, WitnessScript,
+        WitnessScriptBuf, Wtxid,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `locktime` module.
+#[test]
+fn p_consistent_exports_locktime() {
+    use bitcoin_primitives::locktime::relative::error::{
+        DisabledLockTimeError, InvalidHeightError, InvalidTimeError,
+    };
+    use bitcoin_primitives::locktime::relative::LockTime;
+    use bitcoin_primitives::locktime::{absolute, relative};
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `script` module.
+#[test]
+fn p_consistent_exports_script() {
+    use bitcoin_primitives::script::{
+        RedeemScriptSizeError, ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash,
+        ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, WScriptHash,
+        WitnessScriptSizeError,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `block` module.
+#[test]
+fn p_consistent_exports_block() {
+    use bitcoin_primitives::block::{
+        BlockDecoder, BlockDecoderError, BlockEncoder, BlockHashDecoder, BlockHashDecoderError,
+        BlockHashEncoder, HeaderDecoder, HeaderEncoder, VersionDecoder, VersionDecoderError,
+        VersionEncoder,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `merkle_tree` module.
+#[test]
+fn p_consistent_exports_merkle_tree() {
+    use bitcoin_primitives::merkle_tree::{
+        TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `transaction` module.
+#[test]
+fn p_consistent_exports_transaction() {
+    use bitcoin_primitives::transaction::{
+        OutPointDecoder, OutPointDecoderError, OutPointEncoder, TransactionDecoder,
+        TransactionDecoderError, TransactionEncoder, TxInDecoder, TxInDecoderError, TxInEncoder,
+        TxOutDecoder, TxOutDecoderError, TxOutEncoder, VersionDecoder, VersionDecoderError,
+        VersionEncoder,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `witness` module.
+#[test]
+fn p_consistent_exports_witness() {
+    use bitcoin_primitives::witness::{WitnessDecoder, WitnessDecoderError, WitnessEncoder};
+}
