@@ -612,7 +612,7 @@ impl fmt::UpperHex for Witness {
 }
 
 /// An iterator returning individual witness elements.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Iter<'a> {
     inner: &'a [u8],
     indices_start: usize,
