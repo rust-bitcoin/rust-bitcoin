@@ -20,14 +20,20 @@ default = ["std"]
 std = ["alloc", "encoding?/std"]
 alloc = ["encoding?/alloc"]
 
+# Raises the MSRV to 1.74.0.
+compat = ["dep:bitcoin-units-stable", "encoding"]
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 arbitrary = { version = "1.0.1", optional = true }
+# Raises the MSRV to 1.74.0.
 encoding = { package = "bitcoin-consensus-encoding", version = "1.0", default-features = false, optional = true }
 serde = { version = "1.0.130", default-features = false, features = ["derive"], optional = true }
+# 1.0.0 release tracking PR: https://github.com/rust-bitcoin/rust-bitcoin/pull/6248
+bitcoin-units-stable = { package = "bitcoin-units", git = "https://github.com/tcharding/rust-bitcoin", branch = "push-puzmtlnlttlr", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0.19"
@@ -41,10 +47,16 @@ enabled = true
 features = [["alloc"]]
 
 [package.metadata.rbmt.test]
-msrv_overrides = { "encoding" = "1.74.0" }
+msrv_overrides = { "compat" = "1.74.0", "encoding" = "1.74.0" }
 exact_features = [
     ["alloc", "serde"],
     ["std", "serde"],
+]
+
+[package.metadata.rbmt.lint]
+allowed_duplicates = [
+    "bitcoin-units",
+    "bitcoin-internals",
 ]
 
 [package.metadata.rbmt.prerelease]

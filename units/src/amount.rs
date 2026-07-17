@@ -18,6 +18,8 @@ use core::{default, fmt, ops};
 use ::serde::{Deserialize, Serialize};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 
 use crate::input_string::InputString;
 use crate::internal_macros::write_err;
@@ -1104,6 +1106,23 @@ impl Amount {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
         }
     }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the unstable amount is outside the range of the stable amount type
+    /// ([`stable::Amount::MAX_MONEY`]).
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> Result<stable::Amount, stable::amount::OutOfRangeError> {
+        stable::Amount::from_sat(self.to_sat())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Amount) -> Self {
+        Self::from_sat(stable.to_sat())
+    }
 }
 
 impl default::Default for Amount {
@@ -1564,6 +1583,23 @@ impl SignedAmount {
         } else {
             Ok(Amount::from_sat(self.to_sat() as u64))
         }
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the unstable amount is outside the range of the stable amount type
+    /// ([`stable::SignedAmount::MAX`]).
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> Result<stable::SignedAmount, stable::amount::OutOfRangeError> {
+        stable::SignedAmount::from_sat(self.to_sat())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::SignedAmount) -> Self {
+        Self::from_sat(stable.to_sat())
     }
 }
 
