@@ -151,7 +151,7 @@ impl<E: fmt::Debug> std::error::Error for DecodeError<E> {
         match *self {
             TooManyBytes => None,
             Consensus(ref e) => Some(e),
-            Other(_) => None, // TODO: Is this correct?
+            Other(_) => None,
         }
     }
 }
