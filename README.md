@@ -123,7 +123,7 @@ Release notes are done per crate, see:
 - [`bitcoin-network-kind`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/network/CHANGELOG.md)
 - [`bitcoin-p2p-messages`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/p2p/CHANGELOG.md)
 - [`bitcoin-primitives`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
-- [`bitcoin-taproot-primitives`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/taproot-primitives/CHANGELOG.md)
+- [`bitcoin-taproot-primitives`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/taproot_primitives/CHANGELOG.md)
 - [`bitcoin-units`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md)
 - [`bitcoin_hashes`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
 - [`chacha20-poly1305`](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/chacha20_poly1305/CHANGELOG.md)
