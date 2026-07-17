@@ -6,6 +6,11 @@ use core::borrow::{Borrow, BorrowMut};
 use core::convert::Infallible;
 use core::ops::{Deref, DerefMut};
 
+#[cfg(feature = "alloc")]
+use alloc::borrow::ToOwned as _;
+#[cfg(feature = "alloc")]
+use alloc::boxed::Box;
+
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 // This is not the usual re-export, `primitive` here is a code audit thing.
@@ -55,6 +60,11 @@ mod primitive {
             ///
             /// The caller is responsible for checking that the length is less than the 2^32.
             fn from_mut_slice_unchecked(bytes: &mut _) -> &mut Self;
+
+            /// Converts a `Box<[u8]>` into a `Box<PushBytes>` without checking the length.
+            ///
+            /// The caller is responsible for checking that the length is less than 2^32.
+            pub(super) fn from_boxed_slice_unchecked(bytes: Box<_>) -> Box<Self>;
         }
     }
 
@@ -282,6 +292,15 @@ mod primitive {
         type Owned = PushBytesBuf;
 
         fn to_owned(&self) -> Self::Owned { PushBytesBuf(self.0.to_owned()) }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Clone for Box<PushBytes> {
+    #[inline]
+    fn clone(&self) -> Self {
+        // The invariant (length < 2^32) is maintained because we clone from a valid `PushBytes`.
+        PushBytes::from_boxed_slice_unchecked(self.as_bytes().to_owned().into_boxed_slice())
     }
 }
 

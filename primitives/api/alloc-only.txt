@@ -2168,6 +2168,8 @@ impl core::borrow::Borrow<bitcoin_primitives::script::PushBytes> for bitcoin_pri
   pub fn bitcoin_primitives::script::PushBytesBuf::borrow(&self) -> &bitcoin_primitives::script::PushBytes [impl: impl core::borrow::Borrow<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf]
 impl core::borrow::BorrowMut<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
   pub fn bitcoin_primitives::script::PushBytesBuf::borrow_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes [impl: impl core::borrow::BorrowMut<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf]
+impl core::clone::Clone for alloc::boxed::Box<bitcoin_primitives::script::PushBytes>
+  pub fn alloc::boxed::Box<bitcoin_primitives::script::PushBytes>::clone(&self) -> Self [impl: impl core::clone::Clone for alloc::boxed::Box<bitcoin_primitives::script::PushBytes>]
 impl core::cmp::Eq for bitcoin_primitives::script::PushBytes
 impl core::cmp::Ord for bitcoin_primitives::script::PushBytes
   pub fn bitcoin_primitives::script::PushBytes::cmp(&self, other: &bitcoin_primitives::script::PushBytes) -> core::cmp::Ordering [impl: impl core::cmp::Ord for bitcoin_primitives::script::PushBytes]
@@ -3453,6 +3455,8 @@ impl<T> core::borrow::Borrow<bitcoin_primitives::script::Script<T>> for bitcoin_
   pub fn bitcoin_primitives::script::ScriptBuf<T>::borrow(&self) -> &bitcoin_primitives::script::Script<T> [impl: impl<T> core::borrow::Borrow<bitcoin_primitives::script::Script<T>> for bitcoin_primitives::script::ScriptBuf<T>]
 impl<T> core::borrow::BorrowMut<bitcoin_primitives::script::Script<T>> for bitcoin_primitives::script::ScriptBuf<T>
   pub fn bitcoin_primitives::script::ScriptBuf<T>::borrow_mut(&mut self) -> &mut bitcoin_primitives::script::Script<T> [impl: impl<T> core::borrow::BorrowMut<bitcoin_primitives::script::Script<T>> for bitcoin_primitives::script::ScriptBuf<T>]
+impl<T> core::clone::Clone for alloc::boxed::Box<bitcoin_primitives::script::Script<T>>
+  pub fn alloc::boxed::Box<bitcoin_primitives::script::Script<T>>::clone(&self) -> Self [impl: impl<T> core::clone::Clone for alloc::boxed::Box<bitcoin_primitives::script::Script<T>>]
 impl<T> core::convert::AsMut<[u8]> for bitcoin_primitives::script::Script<T>
   pub fn bitcoin_primitives::script::Script<T>::as_mut(&mut self) -> &mut [u8] [impl: impl<T> core::convert::AsMut<[u8]> for bitcoin_primitives::script::Script<T>]
 impl<T> core::convert::AsMut<bitcoin_primitives::script::Script<T>> for bitcoin_primitives::script::Script<T>

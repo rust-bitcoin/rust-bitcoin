@@ -105,6 +105,14 @@ impl<T> ToOwned for Script<T> {
     fn to_owned(&self) -> Self::Owned { ScriptBuf::from_bytes(self.to_vec()) }
 }
 
+#[cfg(feature = "alloc")]
+impl<T> Clone for Box<Script<T>> {
+    #[inline]
+    fn clone(&self) -> Self {
+        Script::from_boxed_bytes(self.as_bytes().to_owned().into_boxed_slice())
+    }
+}
+
 impl<T> Script<T> {
     /// Constructs a new empty script.
     #[inline]
