@@ -18,7 +18,6 @@ changes to this document in a pull request.
   * [Building](#building)
 - [Development Tools](#development-tools)
   * [Just](#just)
-  * [Githooks](#githooks)
   * [Building the docs](#building-the-docs)
 - [Contribution workflow](#contribution-workflow)
   * [Preparing PRs](#preparing-prs)
@@ -115,11 +114,6 @@ detailed instructions.
 
 We support [`just`](https://just.systems/man/en/) for running dev workflow commands. Run `just` from
 your shell to see a list of available sub-commands.
-
-### Githooks
-
-To assist devs in catching errors _before_ running CI we provide some githooks. Copy the hooks in `githooks/`
-to your githooks folder or run `just githooks-install` to copy them all.
 
 ### Building the docs
 
