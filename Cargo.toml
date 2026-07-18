@@ -3,7 +3,7 @@ members = ["bitcoin", "hashes", "io", "units", "base58"]
 resolver = "2"
 
 [workspace.metadata.rbmt.toolchains]
-nightly = "nightly-2026-03-27"
+nightly = "nightly-2026-07-17"
 stable = "1.91.1"
 
 # Patch secp256k1's dependency on bitcoin_hashes to use our local workspace version.
