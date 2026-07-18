@@ -4,5 +4,5 @@ resolver = "2"
 
 [workspace.metadata]
 rbmt.version = "0.5.1"
-rbmt.toolchains.nightly = "nightly-2026-03-27"
+rbmt.toolchains.nightly = "nightly-2026-07-17"
 rbmt.toolchains.stable = "1.97.1"
