@@ -2859,6 +2859,22 @@ mod test {
     }
 
     #[test]
+    #[rustfmt::skip]
+    fn sendcmpct_v1_network_message_with_invalid_mode_bit() {
+        // Wire data has a non-canonical `send_compact` (0x12 instead of 0x01 or 0).
+        let raw_msg = [
+            0xf9, 0xbe, 0xb4, 0xd9,
+            0x73, 0x65, 0x6e, 0x64, 0x63, 0x6d, 0x70, 0x63, 0x74, 0x00, 0x00, 0x00, 
+            0x09, 0x00, 0x00, 0x00, 
+            0xf9, 0x9c, 0x95, 0x43,                                                 
+            0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x0c, // Mode byte (0x12)
+        ];
+
+        let msg = encoding::decode_from_slice::<V1NetworkMessage>(&raw_msg);
+        assert!(msg.is_err());
+    }
+
+    #[test]
     #[rustfmt::skip] // Keep readable byte layout with comments.
     fn v1_message_rejects_invalid_checksum_with_noncanonical_encoding() {
         // Derived from a fuzzer crash case, a SendCmpct message with a non-canonical

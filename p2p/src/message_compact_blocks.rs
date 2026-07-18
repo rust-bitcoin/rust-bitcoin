@@ -44,12 +44,21 @@ crate::decoder_newtype! {
     #[derive(Debug, Default, Clone)]
     pub struct SendCmpctDecoder(SendCmpctInnerDecoder);
 
+    fn map_push_bytes_err(e: <SendCmpctInnerDecoder as encoding::Decoder>::Error) -> SendCmpctDecoderError {
+        SendCmpctDecoderError::eof(e)
+    }
+
     fn end(
         result: Result<([u8; 1], [u8; 8]), <SendCmpctInnerDecoder as encoding::Decoder>::Error>
     ) -> Result<SendCmpct, SendCmpctDecoderError> {
-        let (send_cmpct, version) = result.map_err(SendCmpctDecoderError)?;
-        let send_compact = u8::from_le_bytes(send_cmpct) != 0;
-        Ok(SendCmpct { send_compact, version: u64::from_le_bytes(version) })
+        let (send_cmpct, version) = result.map_err(SendCmpctDecoderError::eof)?;
+
+        if send_cmpct[0] == 1 || send_cmpct[0] == 0 {
+            let send_compact = u8::from_le_bytes(send_cmpct) != 0;
+            Ok(SendCmpct { send_compact, version: u64::from_le_bytes(version) })
+        } else {
+            Err(SendCmpctDecoderError::invalid_mode())
+        }
     }
 }
 
@@ -64,13 +73,35 @@ pub mod error {
 
     use internals::write_err;
 
+    use crate::message_compact_blocks::SendCmpctInnerDecoder;
+
     /// Errors occurring when decoding a [`SendCmpct`] message.
     ///
     /// [`SendCmpct`]: super::SendCmpct
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct SendCmpctDecoderError(
-        pub(super) <super::SendCmpctInnerDecoder as encoding::Decoder>::Error,
-    );
+    pub struct SendCmpctDecoderError(pub(super) SendCmpctDecoderErrorInner);
+
+    impl SendCmpctDecoderError {
+        /// Constructs an EOF error.
+        #[inline]
+        pub(super) fn eof(e: <SendCmpctInnerDecoder as encoding::Decoder>::Error) -> Self {
+            Self(SendCmpctDecoderErrorInner::UnexpectedEof(e))
+        }
+        /// Constructs an invalid mode error.
+        #[inline]
+        pub(super) fn invalid_mode() -> Self { Self(SendCmpctDecoderErrorInner::InvalidMode) }
+    }
+
+    /// Errors occuring when decoding a [`SendCmpct`] message.
+    ///
+    /// [`SendCmpct`]: super::SendCmpct
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(super) enum SendCmpctDecoderErrorInner {
+        /// First byte was not a boolean value (0 or 1).
+        InvalidMode,
+        /// `UnexpectedEofError` Error by way of associated type on `ArrayDecoder<N>`.
+        UnexpectedEof(<super::SendCmpctInnerDecoder as encoding::Decoder>::Error),
+    }
 
     impl From<Infallible> for SendCmpctDecoderError {
         fn from(never: Infallible) -> Self { match never {} }
@@ -78,13 +109,18 @@ pub mod error {
 
     impl fmt::Display for SendCmpctDecoderError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write_err!(f, "sendcmpct error"; self.0)
+            write_err!(f, "sendcmpct error"; self)
         }
     }
 
     #[cfg(feature = "std")]
     impl std::error::Error for SendCmpctDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self.0 {
+                SendCmpctDecoderErrorInner::InvalidMode => None,
+                SendCmpctDecoderErrorInner::UnexpectedEof(ref e) => Some(e),
+            }
+        }
     }
 }
 
