@@ -6,7 +6,7 @@ resolver = "2"
 rbmt.version = "0.5.1"
 
 [workspace.metadata.rbmt.toolchains]
-nightly = "nightly-2026-03-27"
+nightly = "nightly-2026-07-17"
 stable = "1.97.1"
 
 # Patch secp256k1's dependency on bitcoin_hashes to use our local workspace version.
