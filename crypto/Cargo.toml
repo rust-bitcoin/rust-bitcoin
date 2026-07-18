@@ -28,7 +28,7 @@ hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.0.0", de
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
 network = { package = "bitcoin-network-kind", path = "../network", version = "1.0.0", default-features = false }
 # This is a temporary dep for the sake of PushBytes impls. This should not be retained for crypto 1.0.
-primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.102.0", default-features = false, features = [] }
+primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.103.0", default-features = false, features = [] }
 secp256k1 = { version = "0.32.0-beta.2", default-features = false }
 
 arbitrary = { version = "1.4.1", optional = true }
