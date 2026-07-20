@@ -31,16 +31,6 @@ check-api: (rbmt "api")
 @query-api crate command:
  {{justfile_directory()}}/contrib/api.sh $1 $2
 
-# Install githooks.
-[group('scripts')]
-githooks-install:
- {{justfile_directory()}}/contrib/copy-githooks.sh
-
-# Remove githooks.
-[group('scripts')]
-githooks-remove:
- {{justfile_directory()}}/contrib/copy-githooks.sh -r
-
 # Generate a dependency tree for workspace crates.
 [group('scripts')]
 gen-dep-tree:
