@@ -2,6 +2,9 @@
 members = ["bitcoin", "hashes", "io", "units", "base58"]
 resolver = "2"
 
+[workspace.metadata]
+rbmt.version = "0.5.1"
+
 [workspace.metadata.rbmt.toolchains]
 nightly = "nightly-2026-03-27"
 stable = "1.97.1"
