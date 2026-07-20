@@ -574,8 +574,9 @@ impl Height {
     #[inline]
     pub fn is_satisfied_by(self, height: Self) -> bool {
         // Use u64 so that there can be no overflow.
+        // The next block will have a height chain tip + 1
         let next_block_height = u64::from(height.to_u32()) + 1;
-        u64::from(self.to_u32()) <= next_block_height
+        u64::from(self.to_u32()) < next_block_height
     }
 }
 
@@ -1035,14 +1036,14 @@ mod tests {
     fn height_is_satisfied_by() {
         let chain_tip = Height::from_u32(100).unwrap();
 
-        // lock is satisfied if transaction can go in the next block (height <= chain_tip + 1).
-        let locktime = Height::from_u32(100).unwrap();
+        // lock is satisfied if transaction can go in the next block (height < chain_tip + 1).
+        let locktime = Height::from_u32(99).unwrap();
         assert!(locktime.is_satisfied_by(chain_tip));
-        let locktime = Height::from_u32(101).unwrap();
+        let locktime = Height::from_u32(100).unwrap();
         assert!(locktime.is_satisfied_by(chain_tip));
 
         // It is not satisfied if the lock height is after the next block.
-        let locktime = Height::from_u32(102).unwrap();
+        let locktime = Height::from_u32(101).unwrap();
         assert!(!locktime.is_satisfied_by(chain_tip));
     }
 
