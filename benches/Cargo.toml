@@ -9,7 +9,7 @@ edition = "2021"
 bitcoin = { path = "../bitcoin", default-features = false, features = ["std"] }
 bitcoin_hashes = { path = "../hashes" }
 chacha20-poly1305 = { path = "../chacha20_poly1305" }
-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding" }
+encoding = { package = "bitcoin-consensus-encoding", version = "1.0.0" }
 
 criterion = "0.7"
 hex = { package = "hex-conservative", version = "1.1.0" }
