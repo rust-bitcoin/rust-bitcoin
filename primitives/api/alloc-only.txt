@@ -5588,6 +5588,8 @@ pub struct bitcoin_primitives::witness::Iter<'a>
 impl core::iter::traits::exact_size::ExactSizeIterator for bitcoin_primitives::witness::Iter<'_>
 impl<'a> core::clone::Clone for bitcoin_primitives::witness::Iter<'a>
   pub fn bitcoin_primitives::witness::Iter<'a>::clone(&self) -> bitcoin_primitives::witness::Iter<'a> [impl: impl<'a> core::clone::Clone for bitcoin_primitives::witness::Iter<'a>]
+impl<'a> core::fmt::Debug for bitcoin_primitives::witness::Iter<'a>
+  pub fn bitcoin_primitives::witness::Iter<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<'a> core::fmt::Debug for bitcoin_primitives::witness::Iter<'a>]
 impl<'a> core::iter::traits::iterator::Iterator for bitcoin_primitives::witness::Iter<'a>
   pub type bitcoin_primitives::witness::Iter<'a>::Item = &'a [u8] [impl: impl<'a> core::iter::traits::iterator::Iterator for bitcoin_primitives::witness::Iter<'a>]
   pub fn bitcoin_primitives::witness::Iter<'a>::next(&mut self) -> core::option::Option<Self::Item> [impl: impl<'a> core::iter::traits::iterator::Iterator for bitcoin_primitives::witness::Iter<'a>]
