@@ -15,11 +15,6 @@ pub struct WitnessCommitment(sha256d::Hash);
 
 super::impl_debug!(WitnessCommitment);
 
-impl WitnessCommitment {
-    /// Dummy hash used as the previous blockhash of the genesis block.
-    pub const GENESIS_PREVIOUS_BLOCK_HASH: Self = Self::from_byte_array([0; 32]);
-}
-
 // The new hash wrapper type.
 type HashType = WitnessCommitment;
 // The inner hash type from `hashes`.
