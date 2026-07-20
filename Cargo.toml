@@ -4,7 +4,7 @@ exclude = ["benches"]
 resolver = "2"
 
 [workspace.metadata.rbmt.toolchains]
-nightly = "nightly-2026-07-02"
+nightly = "nightly-2026-07-17"
 stable = "1.96.0"
 
 [workspace.lints.rust]
