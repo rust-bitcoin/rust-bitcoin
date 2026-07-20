@@ -5745,6 +5745,8 @@ impl<T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<bitcoin_primitives::wit
   pub fn alloc::sync::Arc<[T]>::eq(&self, rhs: &bitcoin_primitives::witness::Witness) -> bool [impl: impl<T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<bitcoin_primitives::witness::Witness> for alloc::sync::Arc<[T]>]
 impl<T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<bitcoin_primitives::witness::Witness> for alloc::vec::Vec<T>
   pub fn alloc::vec::Vec<T>::eq(&self, rhs: &bitcoin_primitives::witness::Witness) -> bool [impl: impl<T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<bitcoin_primitives::witness::Witness> for alloc::vec::Vec<T>]
+impl<T: core::convert::AsRef<[u8]>> core::iter::traits::collect::Extend<T> for bitcoin_primitives::witness::Witness
+  pub fn bitcoin_primitives::witness::Witness::extend<I: core::iter::traits::collect::IntoIterator<Item = T>>(&mut self, iter: I) [impl: impl<T: core::convert::AsRef<[u8]>> core::iter::traits::collect::Extend<T> for bitcoin_primitives::witness::Witness]
 impl<T: core::convert::AsRef<[u8]>> core::iter::traits::collect::FromIterator<T> for bitcoin_primitives::witness::Witness
   pub fn bitcoin_primitives::witness::Witness::from_iter<I: core::iter::traits::collect::IntoIterator<Item = T>>(iter: I) -> Self [impl: impl<T: core::convert::AsRef<[u8]>> core::iter::traits::collect::FromIterator<T> for bitcoin_primitives::witness::Witness]
 impl<const N: usize, T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<&[T; N]> for bitcoin_primitives::witness::Witness
@@ -6984,6 +6986,8 @@ impl<T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<bitcoin_primitives::wit
   pub fn alloc::sync::Arc<[T]>::eq(&self, rhs: &bitcoin_primitives::witness::Witness) -> bool [impl: impl<T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<bitcoin_primitives::witness::Witness> for alloc::sync::Arc<[T]>]
 impl<T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<bitcoin_primitives::witness::Witness> for alloc::vec::Vec<T>
   pub fn alloc::vec::Vec<T>::eq(&self, rhs: &bitcoin_primitives::witness::Witness) -> bool [impl: impl<T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<bitcoin_primitives::witness::Witness> for alloc::vec::Vec<T>]
+impl<T: core::convert::AsRef<[u8]>> core::iter::traits::collect::Extend<T> for bitcoin_primitives::witness::Witness
+  pub fn bitcoin_primitives::witness::Witness::extend<I: core::iter::traits::collect::IntoIterator<Item = T>>(&mut self, iter: I) [impl: impl<T: core::convert::AsRef<[u8]>> core::iter::traits::collect::Extend<T> for bitcoin_primitives::witness::Witness]
 impl<T: core::convert::AsRef<[u8]>> core::iter::traits::collect::FromIterator<T> for bitcoin_primitives::witness::Witness
   pub fn bitcoin_primitives::witness::Witness::from_iter<I: core::iter::traits::collect::IntoIterator<Item = T>>(iter: I) -> Self [impl: impl<T: core::convert::AsRef<[u8]>> core::iter::traits::collect::FromIterator<T> for bitcoin_primitives::witness::Witness]
 impl<const N: usize, T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<&[T; N]> for bitcoin_primitives::witness::Witness
