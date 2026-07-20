@@ -19,7 +19,7 @@ use crate::opcodes::{Opcode, OP_PUSHBYTES_0};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(no_inline)]
-pub use self::error::{FromStrError, TryFromError};
+pub use self::error::{ParseWitnessVersionError, InvalidWitnessVersionError};
 
 /// Version of the segregated witness program.
 ///
@@ -82,16 +82,16 @@ impl fmt::Display for WitnessVersion {
 }
 
 impl FromStr for WitnessVersion {
-    type Err = FromStrError;
+    type Err = ParseWitnessVersionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = parse_int::int_from_str(s).map_err(FromStrError::Unparsable)?;
-        Self::try_from(version).map_err(FromStrError::Invalid)
+        let version: u8 = parse_int::int_from_str(s).map_err(ParseWitnessVersionError::Unparsable)?;
+        Self::try_from(version).map_err(ParseWitnessVersionError::Invalid)
     }
 }
 
 impl TryFrom<u8> for WitnessVersion {
-    type Error = TryFromError;
+    type Error = InvalidWitnessVersionError;
 
     fn try_from(no: u8) -> Result<Self, Self::Error> {
         Ok(match no {
@@ -112,20 +112,20 @@ impl TryFrom<u8> for WitnessVersion {
             14 => Self::V14,
             15 => Self::V15,
             16 => Self::V16,
-            invalid => return Err(TryFromError { invalid }),
+            invalid => return Err(InvalidWitnessVersionError { invalid }),
         })
     }
 }
 
 impl TryFrom<Opcode> for WitnessVersion {
-    type Error = TryFromError;
+    type Error = InvalidWitnessVersionError;
 
     fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
         match opcode.to_u8() {
             0 => Ok(Self::V0),
             version if version >= OP_1.to_u8() && version <= OP_16.to_u8() =>
                 Self::try_from(version - OP_1.to_u8() + 1),
-            invalid => Err(TryFromError { invalid }),
+            invalid => Err(InvalidWitnessVersionError { invalid }),
         }
     }
 }
@@ -152,18 +152,18 @@ pub mod error {
     /// [`WitnessVersion`]: super::WitnessVersion
     #[derive(Clone, Debug, PartialEq, Eq)]
     #[non_exhaustive]
-    pub enum FromStrError {
+    pub enum ParseWitnessVersionError {
         /// Unable to parse integer from string.
         Unparsable(ParseIntError),
         /// String contained an invalid witness version number.
-        Invalid(TryFromError),
+        Invalid(InvalidWitnessVersionError),
     }
 
-    impl From<Infallible> for FromStrError {
+    impl From<Infallible> for ParseWitnessVersionError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for FromStrError {
+    impl fmt::Display for ParseWitnessVersionError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 Self::Unparsable(ref e) => write_err!(f, "integer parse error"; e),
@@ -173,7 +173,7 @@ pub mod error {
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for FromStrError {
+    impl std::error::Error for ParseWitnessVersionError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match *self {
                 Self::Unparsable(ref e) => Some(e),
@@ -185,24 +185,24 @@ pub mod error {
     ///
     /// [`WitnessVersion`]: super::WitnessVersion
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct TryFromError {
+    pub struct InvalidWitnessVersionError {
         /// The invalid non-witness version integer.
         pub(super) invalid: u8,
     }
 
-    impl TryFromError {
+    impl InvalidWitnessVersionError {
         /// Returns the invalid non-witness version integer.
         pub fn invalid_version(&self) -> u8 { self.invalid }
     }
 
-    impl fmt::Display for TryFromError {
+    impl fmt::Display for InvalidWitnessVersionError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "invalid witness script version: {}", self.invalid)
         }
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for TryFromError {
+    impl std::error::Error for InvalidWitnessVersionError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self { invalid: _ } = self;
             None
