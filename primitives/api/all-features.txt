@@ -1786,7 +1786,7 @@ impl core::convert::From<bitcoin_primitives::witness_version::WitnessVersion> fo
 impl core::convert::From<u8> for bitcoin_primitives::opcodes::Opcode
   pub fn bitcoin_primitives::opcodes::Opcode::from(b: u8) -> Self [impl: impl core::convert::From<u8> for bitcoin_primitives::opcodes::Opcode]
 impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_primitives::witness_version::WitnessVersion
-  pub type bitcoin_primitives::witness_version::WitnessVersion::Error = bitcoin_primitives::witness_version::error::TryFromError [impl: impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_primitives::witness_version::WitnessVersion]
+  pub type bitcoin_primitives::witness_version::WitnessVersion::Error = bitcoin_primitives::witness_version::error::InvalidWitnessVersionError [impl: impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_primitives::witness_version::WitnessVersion]
   pub fn bitcoin_primitives::witness_version::WitnessVersion::try_from(opcode: bitcoin_primitives::opcodes::Opcode) -> core::result::Result<Self, Self::Error> [impl: impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::fmt::Debug for bitcoin_primitives::opcodes::Opcode
   pub fn bitcoin_primitives::opcodes::Opcode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::opcodes::Opcode]
@@ -6374,148 +6374,148 @@ impl<T> core::convert::From<T> for bitcoin_primitives::witness::WitnessEncoder<'
   pub fn bitcoin_primitives::witness::WitnessEncoder<'e>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness::WitnessEncoder<'e>]
 pub mod bitcoin_primitives::witness_version
 pub mod bitcoin_primitives::witness_version::error
-#[non_exhaustive] pub enum bitcoin_primitives::witness_version::error::FromStrError
-pub bitcoin_primitives::witness_version::error::FromStrError::Invalid(bitcoin_primitives::witness_version::error::TryFromError)
-pub bitcoin_primitives::witness_version::error::FromStrError::Unparsable(bitcoin_units::parse_int::error::ParseIntError)
-impl core::clone::Clone for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::clone(&self) -> bitcoin_primitives::witness_version::error::FromStrError [impl: impl core::clone::Clone for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::cmp::Eq for bitcoin_primitives::witness_version::error::FromStrError
-impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::eq(&self, other: &bitcoin_primitives::witness_version::error::FromStrError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::from(never: core::convert::Infallible) -> Self [impl: impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::error::Error for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::fmt::Debug for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::fmt::Display for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::Freeze for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::Send for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::Sync for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::Unpin for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::UnsafeUnpin for bitcoin_primitives::witness_version::error::FromStrError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness_version::error::FromStrError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness_version::error::FromStrError
-impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::From<T>
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::From<T>]
-impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::Into<T>
-  pub type bitcoin_primitives::witness_version::error::FromStrError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::Into<T>]
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::Into<T>]
-impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::TryFrom<T>
-  pub type bitcoin_primitives::witness_version::error::FromStrError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::TryFrom<T>]
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::TryFrom<T>]
-impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone
-  pub type bitcoin_primitives::witness_version::error::FromStrError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone]
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone]
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone]
-impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::FromStrError where T: core::fmt::Display + ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::FromStrError where T: core::fmt::Display + ?core::marker::Sized]
-impl<T> core::any::Any for bitcoin_primitives::witness_version::error::FromStrError where T: 'static + ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_primitives::witness_version::error::FromStrError where T: 'static + ?core::marker::Sized]
-impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::FromStrError where T: ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::FromStrError where T: ?core::marker::Sized]
-impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::FromStrError where T: ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::FromStrError where T: ?core::marker::Sized]
-impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone
-  pub unsafe fn bitcoin_primitives::witness_version::error::FromStrError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone]
-impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::FromStrError]
-pub struct bitcoin_primitives::witness_version::error::TryFromError
-impl bitcoin_primitives::witness_version::error::TryFromError
-pub fn bitcoin_primitives::witness_version::error::TryFromError::invalid_version(&self) -> u8
-impl core::clone::Clone for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::clone(&self) -> bitcoin_primitives::witness_version::error::TryFromError [impl: impl core::clone::Clone for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::cmp::Eq for bitcoin_primitives::witness_version::error::TryFromError
-impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::eq(&self, other: &bitcoin_primitives::witness_version::error::TryFromError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::error::Error for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::fmt::Debug for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::fmt::Display for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::Freeze for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::Send for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::Sync for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::Unpin for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::UnsafeUnpin for bitcoin_primitives::witness_version::error::TryFromError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness_version::error::TryFromError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness_version::error::TryFromError
-impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::From<T>
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::From<T>]
-impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::Into<T>
-  pub type bitcoin_primitives::witness_version::error::TryFromError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::Into<T>]
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::Into<T>]
-impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::TryFrom<T>
-  pub type bitcoin_primitives::witness_version::error::TryFromError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::TryFrom<T>]
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::TryFrom<T>]
-impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone
-  pub type bitcoin_primitives::witness_version::error::TryFromError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone]
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone]
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone]
-impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::TryFromError where T: core::fmt::Display + ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::TryFromError where T: core::fmt::Display + ?core::marker::Sized]
-impl<T> core::any::Any for bitcoin_primitives::witness_version::error::TryFromError where T: 'static + ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_primitives::witness_version::error::TryFromError where T: 'static + ?core::marker::Sized]
-impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::TryFromError where T: ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::TryFromError where T: ?core::marker::Sized]
-impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::TryFromError where T: ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::TryFromError where T: ?core::marker::Sized]
-impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone
-  pub unsafe fn bitcoin_primitives::witness_version::error::TryFromError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone]
-impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::TryFromError]
-#[non_exhaustive] pub enum bitcoin_primitives::witness_version::FromStrError
-pub bitcoin_primitives::witness_version::FromStrError::Invalid(bitcoin_primitives::witness_version::error::TryFromError)
-pub bitcoin_primitives::witness_version::FromStrError::Unparsable(bitcoin_units::parse_int::error::ParseIntError)
-impl core::clone::Clone for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::clone(&self) -> bitcoin_primitives::witness_version::error::FromStrError [impl: impl core::clone::Clone for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::cmp::Eq for bitcoin_primitives::witness_version::error::FromStrError
-impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::eq(&self, other: &bitcoin_primitives::witness_version::error::FromStrError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::from(never: core::convert::Infallible) -> Self [impl: impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::error::Error for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::fmt::Debug for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::fmt::Display for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::error::FromStrError]
-impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::Freeze for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::Send for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::Sync for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::Unpin for bitcoin_primitives::witness_version::error::FromStrError
-impl core::marker::UnsafeUnpin for bitcoin_primitives::witness_version::error::FromStrError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness_version::error::FromStrError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness_version::error::FromStrError
-impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::From<T>
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::From<T>]
-impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::Into<T>
-  pub type bitcoin_primitives::witness_version::error::FromStrError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::Into<T>]
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::Into<T>]
-impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::TryFrom<T>
-  pub type bitcoin_primitives::witness_version::error::FromStrError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::TryFrom<T>]
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::FromStrError where U: core::convert::TryFrom<T>]
-impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone
-  pub type bitcoin_primitives::witness_version::error::FromStrError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone]
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone]
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone]
-impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::FromStrError where T: core::fmt::Display + ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::FromStrError where T: core::fmt::Display + ?core::marker::Sized]
-impl<T> core::any::Any for bitcoin_primitives::witness_version::error::FromStrError where T: 'static + ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_primitives::witness_version::error::FromStrError where T: 'static + ?core::marker::Sized]
-impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::FromStrError where T: ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::FromStrError where T: ?core::marker::Sized]
-impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::FromStrError where T: ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::FromStrError where T: ?core::marker::Sized]
-impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone
-  pub unsafe fn bitcoin_primitives::witness_version::error::FromStrError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::FromStrError where T: core::clone::Clone]
-impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::FromStrError
-  pub fn bitcoin_primitives::witness_version::error::FromStrError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::FromStrError]
+#[non_exhaustive] pub enum bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+pub bitcoin_primitives::witness_version::error::ParseWitnessVersionError::Invalid(bitcoin_primitives::witness_version::error::InvalidWitnessVersionError)
+pub bitcoin_primitives::witness_version::error::ParseWitnessVersionError::Unparsable(bitcoin_units::parse_int::error::ParseIntError)
+impl core::clone::Clone for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::clone(&self) -> bitcoin_primitives::witness_version::error::ParseWitnessVersionError [impl: impl core::clone::Clone for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::cmp::Eq for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::eq(&self, other: &bitcoin_primitives::witness_version::error::ParseWitnessVersionError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::from(never: core::convert::Infallible) -> Self [impl: impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::error::Error for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::fmt::Debug for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::fmt::Display for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::Freeze for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::Send for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::Sync for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::Unpin for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::From<T>
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::Into<T>
+  pub type bitcoin_primitives::witness_version::error::ParseWitnessVersionError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::Into<T>]
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::TryFrom<T>
+  pub type bitcoin_primitives::witness_version::error::ParseWitnessVersionError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone
+  pub type bitcoin_primitives::witness_version::error::ParseWitnessVersionError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone]
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone]
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone]
+impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::fmt::Display + ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::fmt::Display + ?core::marker::Sized]
+impl<T> core::any::Any for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone
+  pub unsafe fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+pub struct bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::invalid_version(&self) -> u8
+impl core::clone::Clone for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::clone(&self) -> bitcoin_primitives::witness_version::error::InvalidWitnessVersionError [impl: impl core::clone::Clone for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::cmp::Eq for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::eq(&self, other: &bitcoin_primitives::witness_version::error::InvalidWitnessVersionError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::error::Error for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::fmt::Debug for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::fmt::Display for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::Freeze for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::Send for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::Sync for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::Unpin for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::From<T>
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::Into<T>
+  pub type bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::Into<T>]
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::TryFrom<T>
+  pub type bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone
+  pub type bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone]
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone]
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone]
+impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::fmt::Display + ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::fmt::Display + ?core::marker::Sized]
+impl<T> core::any::Any for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone
+  pub unsafe fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+#[non_exhaustive] pub enum bitcoin_primitives::witness_version::ParseWitnessVersionError
+pub bitcoin_primitives::witness_version::ParseWitnessVersionError::Invalid(bitcoin_primitives::witness_version::error::InvalidWitnessVersionError)
+pub bitcoin_primitives::witness_version::ParseWitnessVersionError::Unparsable(bitcoin_units::parse_int::error::ParseIntError)
+impl core::clone::Clone for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::clone(&self) -> bitcoin_primitives::witness_version::error::ParseWitnessVersionError [impl: impl core::clone::Clone for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::cmp::Eq for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::eq(&self, other: &bitcoin_primitives::witness_version::error::ParseWitnessVersionError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::from(never: core::convert::Infallible) -> Self [impl: impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::error::Error for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::fmt::Debug for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::fmt::Display for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
+impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::Freeze for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::Send for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::Sync for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::Unpin for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::From<T>
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::Into<T>
+  pub type bitcoin_primitives::witness_version::error::ParseWitnessVersionError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::Into<T>]
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::TryFrom<T>
+  pub type bitcoin_primitives::witness_version::error::ParseWitnessVersionError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone
+  pub type bitcoin_primitives::witness_version::error::ParseWitnessVersionError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone]
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone]
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone]
+impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::fmt::Display + ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::fmt::Display + ?core::marker::Sized]
+impl<T> core::any::Any for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone
+  pub unsafe fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::ParseWitnessVersionError where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::ParseWitnessVersionError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::ParseWitnessVersionError]
 #[repr(u8)] pub enum bitcoin_primitives::witness_version::WitnessVersion
 pub bitcoin_primitives::witness_version::WitnessVersion::V0 = 0
 pub bitcoin_primitives::witness_version::WitnessVersion::V1 = 1
@@ -6548,10 +6548,10 @@ impl core::cmp::PartialOrd for bitcoin_primitives::witness_version::WitnessVersi
 impl core::convert::From<bitcoin_primitives::witness_version::WitnessVersion> for bitcoin_primitives::opcodes::Opcode
   pub fn bitcoin_primitives::opcodes::Opcode::from(version: bitcoin_primitives::witness_version::WitnessVersion) -> Self [impl: impl core::convert::From<bitcoin_primitives::witness_version::WitnessVersion> for bitcoin_primitives::opcodes::Opcode]
 impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_primitives::witness_version::WitnessVersion
-  pub type bitcoin_primitives::witness_version::WitnessVersion::Error = bitcoin_primitives::witness_version::error::TryFromError [impl: impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_primitives::witness_version::WitnessVersion]
+  pub type bitcoin_primitives::witness_version::WitnessVersion::Error = bitcoin_primitives::witness_version::error::InvalidWitnessVersionError [impl: impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_primitives::witness_version::WitnessVersion]
   pub fn bitcoin_primitives::witness_version::WitnessVersion::try_from(opcode: bitcoin_primitives::opcodes::Opcode) -> core::result::Result<Self, Self::Error> [impl: impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::convert::TryFrom<u8> for bitcoin_primitives::witness_version::WitnessVersion
-  pub type bitcoin_primitives::witness_version::WitnessVersion::Error = bitcoin_primitives::witness_version::error::TryFromError [impl: impl core::convert::TryFrom<u8> for bitcoin_primitives::witness_version::WitnessVersion]
+  pub type bitcoin_primitives::witness_version::WitnessVersion::Error = bitcoin_primitives::witness_version::error::InvalidWitnessVersionError [impl: impl core::convert::TryFrom<u8> for bitcoin_primitives::witness_version::WitnessVersion]
   pub fn bitcoin_primitives::witness_version::WitnessVersion::try_from(no: u8) -> core::result::Result<Self, Self::Error> [impl: impl core::convert::TryFrom<u8> for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::fmt::Debug for bitcoin_primitives::witness_version::WitnessVersion
   pub fn bitcoin_primitives::witness_version::WitnessVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::WitnessVersion]
@@ -6562,7 +6562,7 @@ impl core::hash::Hash for bitcoin_primitives::witness_version::WitnessVersion
 impl core::marker::Copy for bitcoin_primitives::witness_version::WitnessVersion
 impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::WitnessVersion
 impl core::str::traits::FromStr for bitcoin_primitives::witness_version::WitnessVersion
-  pub type bitcoin_primitives::witness_version::WitnessVersion::Err = bitcoin_primitives::witness_version::error::FromStrError [impl: impl core::str::traits::FromStr for bitcoin_primitives::witness_version::WitnessVersion]
+  pub type bitcoin_primitives::witness_version::WitnessVersion::Err = bitcoin_primitives::witness_version::error::ParseWitnessVersionError [impl: impl core::str::traits::FromStr for bitcoin_primitives::witness_version::WitnessVersion]
   pub fn bitcoin_primitives::witness_version::WitnessVersion::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::marker::Freeze for bitcoin_primitives::witness_version::WitnessVersion
 impl core::marker::Send for bitcoin_primitives::witness_version::WitnessVersion
@@ -6595,52 +6595,52 @@ impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::Witn
   pub unsafe fn bitcoin_primitives::witness_version::WitnessVersion::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::WitnessVersion where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::WitnessVersion
   pub fn bitcoin_primitives::witness_version::WitnessVersion::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::WitnessVersion]
-pub struct bitcoin_primitives::witness_version::TryFromError
-impl bitcoin_primitives::witness_version::error::TryFromError
-pub fn bitcoin_primitives::witness_version::error::TryFromError::invalid_version(&self) -> u8
-impl core::clone::Clone for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::clone(&self) -> bitcoin_primitives::witness_version::error::TryFromError [impl: impl core::clone::Clone for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::cmp::Eq for bitcoin_primitives::witness_version::error::TryFromError
-impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::eq(&self, other: &bitcoin_primitives::witness_version::error::TryFromError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::error::Error for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::fmt::Debug for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::fmt::Display for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::error::TryFromError]
-impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::Freeze for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::Send for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::Sync for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::Unpin for bitcoin_primitives::witness_version::error::TryFromError
-impl core::marker::UnsafeUnpin for bitcoin_primitives::witness_version::error::TryFromError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness_version::error::TryFromError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness_version::error::TryFromError
-impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::From<T>
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::From<T>]
-impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::Into<T>
-  pub type bitcoin_primitives::witness_version::error::TryFromError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::Into<T>]
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::Into<T>]
-impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::TryFrom<T>
-  pub type bitcoin_primitives::witness_version::error::TryFromError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::TryFrom<T>]
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::TryFromError where U: core::convert::TryFrom<T>]
-impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone
-  pub type bitcoin_primitives::witness_version::error::TryFromError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone]
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone]
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone]
-impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::TryFromError where T: core::fmt::Display + ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::TryFromError where T: core::fmt::Display + ?core::marker::Sized]
-impl<T> core::any::Any for bitcoin_primitives::witness_version::error::TryFromError where T: 'static + ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_primitives::witness_version::error::TryFromError where T: 'static + ?core::marker::Sized]
-impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::TryFromError where T: ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::TryFromError where T: ?core::marker::Sized]
-impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::TryFromError where T: ?core::marker::Sized
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::TryFromError where T: ?core::marker::Sized]
-impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone
-  pub unsafe fn bitcoin_primitives::witness_version::error::TryFromError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::TryFromError where T: core::clone::Clone]
-impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::TryFromError
-  pub fn bitcoin_primitives::witness_version::error::TryFromError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::TryFromError]
+pub struct bitcoin_primitives::witness_version::InvalidWitnessVersionError
+impl bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::invalid_version(&self) -> u8
+impl core::clone::Clone for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::clone(&self) -> bitcoin_primitives::witness_version::error::InvalidWitnessVersionError [impl: impl core::clone::Clone for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::cmp::Eq for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::eq(&self, other: &bitcoin_primitives::witness_version::error::InvalidWitnessVersionError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::error::Error for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::fmt::Debug for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::fmt::Display for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
+impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::Freeze for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::Send for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::Sync for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::Unpin for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::From<T>
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::Into<T>
+  pub type bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::Into<T>]
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::TryFrom<T>
+  pub type bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone
+  pub type bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone]
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone]
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone]
+impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::fmt::Display + ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::fmt::Display + ?core::marker::Sized]
+impl<T> core::any::Any for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: ?core::marker::Sized
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone
+  pub unsafe fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
+  pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::error::InvalidWitnessVersionError]
 pub enum bitcoin_primitives::BlockChecked
 impl bitcoin_primitives::block::Validation for bitcoin_primitives::block::Checked
   pub const bitcoin_primitives::block::Checked::IS_CHECKED: bool [impl: impl bitcoin_primitives::block::Validation for bitcoin_primitives::block::Checked]
