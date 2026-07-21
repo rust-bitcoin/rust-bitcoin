@@ -554,6 +554,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "bitcoin_encoding_roundtrip_taproot_primitives_tap_leaf_hash"
+path = "fuzz_targets/bitcoin/encoding_roundtrip/taproot_primitives_tap_leaf_hash.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "bitcoin_encoding_roundtrip_transaction"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/transaction.rs"
 test = false
