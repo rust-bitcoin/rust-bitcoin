@@ -50,6 +50,10 @@ jobs:
       - name: "Run ${{ matrix.task }}"
         run: cargo rbmt ${{ matrix.task }}
 
+  # On an API diff detection, a label is added to the pull request. This job
+  # uploads an artifact flag which a job on the default branch (`master`) picks
+  # up and does the labelling. This follows best security practices.
+  # https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
   API:
     runs-on: ubuntu-24.04
     permissions:
@@ -61,7 +65,23 @@ jobs:
           fetch-depth: 0 # History required for API diff.
       - uses: ./.github/actions/setup-rbmt
       - name: "Run API check"
+        id: api_check
+        continue-on-error: true
         run: cargo rbmt api --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
+      - name: "Save API diff state"
+        if: github.event_name == 'pull_request'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXIT_CODE: ${{ steps.api_check.exit_code }}
+        run: |
+          echo "$PR_NUMBER" > api-diff
+          echo "$EXIT_CODE" >> api-diff
+      - name: "Upload API diff state"
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: api-diff
+          path: api-diff
 
   Prerelease:
     runs-on: ubuntu-24.04
