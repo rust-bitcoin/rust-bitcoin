@@ -1,3 +1,6 @@
+# This workflow has increased permissions in order to label
+# pull requests. That should be the limit of its scopes.
+# https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
 name: Manage PR
 on:
   - pull_request_target
@@ -19,7 +22,7 @@ jobs:
           path: merge
           ref: "refs/pull/${{ github.event.number }}/merge"
       - name: Generate label config
-        run: cd master && SCAN_DIR=../merge ./contrib/gen_label_config.sh
+        run: cd master && SCAN_DIR=../merge ./.github/gen_label_config.sh
       - name: Update labels
         uses: actions/labeler@v5
         with:
