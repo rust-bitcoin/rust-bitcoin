@@ -1,5 +1,8 @@
-# 0.32.10 - 2026-04-23
+# 0.32.11 - 2026-07-14
 
+- Backport: Make `SendCmpct` idempotent [#6527](https://github.com/rust-bitcoin/rust-bitcoin/pull/6527)
+
+# 0.32.10 - 2026-04-23
 
 - Fix bug in `LeafVerison::Future`'s `Display` output [#6208](https://github.com/rust-bitcoin/rust-bitcoin/pull/6208)
 - Manually revert `VarInt` range check [#6182](https://github.com/rust-bitcoin/rust-bitcoin/pull/6182)
