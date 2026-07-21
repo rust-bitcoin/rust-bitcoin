@@ -173,6 +173,7 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, bitcoin::absolute::LockTime, bitcoin_0_32::absolute::LockTime);
     compare_encoding!(data, bitcoin::block::Version, bitcoin_0_32::block::Version);
     compare_encoding!(data, bitcoin::transaction::Version, bitcoin_0_32::transaction::Version);
+    compare_encoding!(data, bitcoin::taproot_primitives::TapLeafHash, bitcoin_0_32::TapLeafHash);
 
     // P2P types
     compare_encoding!(data, p2p::ServiceFlags, bitcoin_0_32::p2p::ServiceFlags);

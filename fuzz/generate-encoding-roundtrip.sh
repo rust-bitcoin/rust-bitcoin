@@ -33,6 +33,7 @@ ROUNDTRIP_TYPES=(
     "bitcoin::block::Header"
     "bitcoin::block::Version"
     "bitcoin::transaction::Version"
+    "bitcoin::taproot_primitives::TapLeafHash"
     "p2p::Magic"
     "p2p::ProtocolVersion"
     "p2p::ServiceFlags"

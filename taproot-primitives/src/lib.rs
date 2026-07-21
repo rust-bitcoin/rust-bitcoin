@@ -21,7 +21,7 @@ extern crate std;
 
 #[cfg(feature = "arbitrary")]
 pub extern crate arbitrary;
-
+pub extern crate encoding;
 pub extern crate hashes;
 pub extern crate secp256k1;
 
@@ -30,7 +30,7 @@ pub extern crate serde;
 
 #[rustfmt::skip] // Keep pub re-exports separate
 #[doc(no_inline)]
-pub use self::error::InvalidTaprootLeafVersionError;
+pub use self::error::{InvalidTaprootLeafVersionError, TapLeafHashDecoderError};
 
 #[cfg(feature = "alloc")]
 use alloc::string::String;
@@ -86,6 +86,38 @@ hashes::impl_hex_for_newtype!(TapLeafHash);
 #[cfg(feature = "serde")]
 #[cfg(feature = "hex")]
 hashes::impl_serde_for_newtype!(TapLeafHash);
+
+impl encoding::Encode for TapLeafHash {
+    type Encoder<'e> = TapLeafHashEncoder<'e>;
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        TapLeafHashEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
+    }
+}
+
+impl encoding::Decode for TapLeafHash {
+    type Decoder = TapLeafHashDecoder;
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TapLeafHash`] type.
+    #[derive(Debug, Clone)]
+    pub struct TapLeafHashEncoder<'e>(encoding::ArrayEncoder<32>);
+}
+
+crate::decoder_newtype! {
+    /// The decoder for the [`TapLeafHash`] type.
+    #[derive(Debug, Clone)]
+    pub struct TapLeafHashDecoder(encoding::ArrayDecoder<32>);
+
+    /// Constructs a new [`TapLeafHash`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<TapLeafHash, TapLeafHashDecoderError> {
+        let array = result.map_err(TapLeafHashDecoderError)?;
+        Ok(TapLeafHash::from_byte_array(array))
+    }
+}
 
 /// The tag used for [`TapNodeHash`].
 #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
@@ -410,6 +442,8 @@ pub mod error {
     use core::convert::Infallible;
     use core::fmt;
 
+    use internals::write_err;
+
     /// The last bit of tapleaf version must be zero.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct InvalidTaprootLeafVersionError(pub(super) u8);
@@ -435,6 +469,26 @@ pub mod error {
             let Self(_) = self;
             None
         }
+    }
+
+    /// An error consensus decoding a `TapLeafHash`.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct TapLeafHashDecoderError(pub(super) encoding::UnexpectedEofError);
+
+    impl From<Infallible> for TapLeafHashDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for TapLeafHashDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write_err!(f, "tapleaf hash decoder error"; self.0)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for TapLeafHashDecoderError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 }
 
@@ -471,6 +525,9 @@ impl<'a> Arbitrary<'a> for LeafVersion {
         }
     }
 }
+
+// decoder_newtype! macro
+include!("../include/decoder_newtype.rs");
 
 #[cfg(test)]
 #[cfg(feature = "alloc")]

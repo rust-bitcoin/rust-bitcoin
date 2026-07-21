@@ -95,6 +95,7 @@ jobs:
           bitcoin_encoding_roundtrip_script_sig_buf,
           bitcoin_encoding_roundtrip_sequence,
           bitcoin_encoding_roundtrip_tap_script_buf,
+          bitcoin_encoding_roundtrip_taproot_primitives_tap_leaf_hash,
           bitcoin_encoding_roundtrip_transaction,
           bitcoin_encoding_roundtrip_transaction_version,
           bitcoin_encoding_roundtrip_tx_in,
