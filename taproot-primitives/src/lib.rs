@@ -21,7 +21,7 @@ extern crate std;
 
 #[cfg(feature = "arbitrary")]
 pub extern crate arbitrary;
-
+pub extern crate encoding;
 pub extern crate hashes;
 pub extern crate secp256k1;
 

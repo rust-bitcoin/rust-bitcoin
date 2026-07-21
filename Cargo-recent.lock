@@ -263,6 +263,7 @@ name = "bitcoin-taproot-primitives"
 version = "0.1.0"
 dependencies = [
  "arbitrary",
+ "bitcoin-consensus-encoding 1.1.0",
  "bitcoin-crypto",
  "bitcoin-internals 0.6.0",
  "bitcoin_hashes 1.1.0",
