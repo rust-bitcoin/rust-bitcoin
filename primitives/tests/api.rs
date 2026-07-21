@@ -16,12 +16,15 @@
 use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{
-    self, ScriptHash, ScriptPubKeyBufDecoder, ScriptSigBufDecoder, WScriptHash,
+    self, Builder, PushBytes, PushBytesBuf, RedeemScriptTag, ScriptHash, ScriptPubKeyBufDecoder,
+    ScriptPubKeyTag, ScriptSigBufDecoder, ScriptSigTag, SignetBlockScriptTag, TapScriptTag,
+    WScriptHash, WitnessScriptTag,
 };
 use bitcoin_primitives::{
-    absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
-    RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, TapScript,
-    TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
+    absolute, block, merkle_tree, opcodes, pow, relative, transaction, witness, witness_version,
+    OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig,
+    ScriptSigBuf, Sequence, SignetBlockScript, SignetBlockScriptBuf, TapScript, TapScriptBuf,
+    Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
 };
 use hashes::sha256t;
 
@@ -32,6 +35,13 @@ struct Enums {
     b: block::Unchecked,
     c: absolute::LockTime,
     d: relative::LockTime,
+    e: script::RedeemScriptTag, // Script tags are empty enums.
+    f: script::ScriptPubKeyTag,
+    g: script::ScriptSigTag,
+    h: script::SignetBlockScriptTag,
+    i: script::TapScriptTag,
+    j: script::WitnessScriptTag,
+    k: witness_version::WitnessVersion,
 }
 
 /// A struct that includes all public non-error structs.
@@ -45,19 +55,23 @@ struct Structs<'a> {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
+    i1: pow::CompactTarget,
+    i2: pow::Target,
+    i3: pow::Work,
     j1: &'a RedeemScript,
     j2: &'a ScriptPubKey,
     j3: &'a ScriptSig,
-    j4: &'a TapScript,
-    j5: &'a WitnessScript,
+    j4: &'a SignetBlockScript,
+    j5: &'a TapScript,
+    j6: &'a WitnessScript,
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
-    m4: TapScriptBuf,
-    m5: WitnessScriptBuf,
+    m4: SignetBlockScriptBuf,
+    m5: TapScriptBuf,
+    m6: WitnessScriptBuf,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -68,14 +82,20 @@ struct Structs<'a> {
     u: transaction::Ntxid,
     v: transaction::Version,
     w: Witness,
-    // x: witness::Iter<'a>,
+    x: witness::Iter<'a>,
+    y: Builder<ScriptSigTag>,
+    z1: &'a PushBytes,
+    z2: PushBytesBuf,
+    aa: opcodes::Opcode,
 }
 
 static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
 static SCRIPT_SIG: ScriptSigBuf = ScriptSigBuf::new();
 static SCRIPT_PUB_KEY: ScriptPubKeyBuf = ScriptPubKeyBuf::new();
+static SIGNET_BLOCK_SCRIPT: SignetBlockScriptBuf = SignetBlockScriptBuf::new();
 static TAP_SCRIPT: TapScriptBuf = TapScriptBuf::new();
 static WITNESS_SCRIPT: WitnessScriptBuf = WitnessScriptBuf::new();
+static PUSH_BYTES: PushBytesBuf = PushBytesBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
 
 /// Public structs that derive common traits.
@@ -90,15 +110,18 @@ struct CommonTraits {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
+    i1: pow::CompactTarget,
+    i2: pow::Target,
+    i3: pow::Work,
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
-    m4: TapScriptBuf,
-    m5: WitnessScriptBuf,
+    m4: SignetBlockScriptBuf,
+    m5: TapScriptBuf,
+    m6: WitnessScriptBuf,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -110,6 +133,9 @@ struct CommonTraits {
     v: transaction::Version,
     w: Witness,
     // x: witness::Iter<'a>,
+    y: Builder<ScriptSigTag>,
+    z: PushBytesBuf,
+    aa: opcodes::Opcode,
 }
 
 /// A struct that includes all types that implement `Clone`.
@@ -123,15 +149,18 @@ struct Clone<'a> {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
+    i1: pow::CompactTarget,
+    i2: pow::Target,
+    i3: pow::Work,
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
-    m4: TapScriptBuf,
-    m5: WitnessScriptBuf,
+    m4: SignetBlockScriptBuf,
+    m5: TapScriptBuf,
+    m6: WitnessScriptBuf,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -143,6 +172,9 @@ struct Clone<'a> {
     v: transaction::Version,
     w: Witness,
     x: witness::Iter<'a>,
+    y: Builder<ScriptSigTag>,
+    z: PushBytesBuf,
+    aa: opcodes::Opcode,
 }
 
 /// Public structs that derive common traits.
@@ -157,15 +189,18 @@ struct Ord {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
+    i1: pow::CompactTarget,
+    i2: pow::Target,
+    i3: pow::Work,
     // j: &'a Script,  // Doesn't implement `Clone`.
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
-    m4: TapScriptBuf,
-    m5: WitnessScriptBuf,
+    m4: SignetBlockScriptBuf,
+    m5: TapScriptBuf,
+    m6: WitnessScriptBuf,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -177,6 +212,9 @@ struct Ord {
     v: transaction::Version,
     w: Witness,
     // x: witness::Iter<'a>,
+    // y: Builder<ScriptSigTag>, // Doesn't implement `Ord` or `Hash`.
+    z: PushBytesBuf,
+    // aa: opcodes::Opcode, // Deliberately does not implement `Ord` (see type docs).
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -186,15 +224,19 @@ struct Default {
     b1: &'static RedeemScript,
     b2: &'static ScriptPubKey,
     b3: &'static ScriptSig,
-    b4: &'static TapScript,
-    b5: &'static WitnessScript,
+    b4: &'static SignetBlockScript,
+    b5: &'static TapScript,
+    b6: &'static WitnessScript,
     c1: RedeemScriptBuf,
     c2: ScriptPubKeyBuf,
     c3: ScriptSigBuf,
-    c4: TapScriptBuf,
-    c5: WitnessScriptBuf,
+    c4: SignetBlockScriptBuf,
+    c5: TapScriptBuf,
+    c6: WitnessScriptBuf,
     d: Sequence,
     e: Witness,
+    f: Builder<ScriptSigTag>,
+    g: PushBytesBuf,
 }
 
 /// A struct that includes all public decoder types.
@@ -226,6 +268,25 @@ struct Errors {
     e: relative::error::IsSatisfiedByTimeError,
     f: script::RedeemScriptSizeError,
     g: script::WitnessScriptSizeError,
+    h: script::PushBytesError,
+    i: script::ScriptBufDecoderError,
+    j: block::BlockDecoderError,
+    k: block::HeaderDecoderError,
+    l: block::VersionDecoderError,
+    m: block::InvalidBlockError,
+    n: block::BlockHashDecoderError,
+    o: block::BlockHeightDecoderError,
+    p: block::TooBigForRelativeHeightError,
+    q: merkle_tree::TxMerkleNodeDecoderError,
+    r: transaction::TransactionDecoderError,
+    s: transaction::TxInDecoderError,
+    t: transaction::TxOutDecoderError,
+    u: transaction::OutPointDecoderError,
+    v: transaction::VersionDecoderError,
+    w: witness::WitnessDecoderError,
+    x: witness::UnexpectedEofError,
+    y: witness_version::ParseWitnessVersionError,
+    z: witness_version::InvalidWitnessVersionError,
 }
 
 #[test]
@@ -259,10 +320,15 @@ fn api_can_use_all_units_types_from_module_amount_error() {
 }
 
 #[test]
+fn api_can_use_all_units_types_from_module_pow() {
+    use bitcoin_primitives::pow::{CompactTarget, CompactTargetDecoderError, Target, Work};
+}
+
+#[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_primitives::{
-        amount, block, fee_rate, locktime, merkle_tree, parse_int, pow, result, script, sequence,
-        time, transaction, weight, witness,
+        amount, block, fee_rate, locktime, merkle_tree, opcodes, parse_int, pow, result, script,
+        sequence, time, transaction, weight, witness, witness_version,
     };
 }
 
@@ -271,9 +337,9 @@ fn api_can_use_types_from_crate_root() {
     use bitcoin_primitives::{
         Block, BlockChecked, BlockHash, BlockHeader, BlockUnchecked, BlockValidation, BlockVersion,
         CompactTarget, OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf,
-        ScriptSig, ScriptSigBuf, Sequence, TapScript, TapScriptBuf, Transaction,
-        TransactionVersion, TxIn, TxOut, Txid, Witness, WitnessCommitment, WitnessScript,
-        WitnessScriptBuf, Wtxid,
+        ScriptSig, ScriptSigBuf, Sequence, SignetBlockScript, SignetBlockScriptBuf, TapScript,
+        TapScriptBuf, Target, Transaction, TransactionVersion, TxIn, TxOut, Txid, Witness,
+        WitnessCommitment, WitnessScript, WitnessScriptBuf, Work, Wtxid,
     };
 }
 
@@ -288,42 +354,75 @@ fn api_can_use_all_types_from_module_locktime() {
 
 #[test]
 fn api_can_use_all_types_from_module_script() {
+    // Aliased with `_` because the same types are imported from `script` below.
+    use bitcoin_primitives::script::error::{
+        PushBytesError as _, RedeemScriptSizeError as _, ScriptBufDecoderError as _,
+        WitnessScriptSizeError as _,
+    };
     use bitcoin_primitives::script::{
-        RedeemScriptSizeError, ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash,
-        ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, WScriptHash,
-        WitnessScriptSizeError,
+        Builder, PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, RedeemScript,
+        RedeemScriptBuf, RedeemScriptSizeError, RedeemScriptTag, Script, ScriptBuf,
+        ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash, ScriptHashableTag,
+        ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufDecoder, ScriptPubKeyTag, ScriptSig,
+        ScriptSigBuf, ScriptSigBufDecoder, ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf,
+        SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash,
+        WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
+        MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE,
     };
 }
 
 #[test]
 fn api_can_use_all_types_from_module_block() {
+    // Aliased with `_` because the same types are imported from `block` below.
+    use bitcoin_primitives::block::error::{
+        BlockHashDecoderError as _, BlockHeightDecoderError as _, TooBigForRelativeHeightError as _,
+    };
     use bitcoin_primitives::block::{
-        BlockDecoder, BlockDecoderError, BlockEncoder, BlockHashDecoder, BlockHashDecoderError,
-        BlockHashEncoder, HeaderDecoder, HeaderEncoder, VersionDecoder, VersionDecoderError,
-        VersionEncoder,
+        Block, BlockDecoder, BlockDecoderError, BlockEncoder, BlockHash, BlockHashDecoder,
+        BlockHashDecoderError, BlockHashEncoder, BlockHeight, BlockHeightDecoder,
+        BlockHeightDecoderError, BlockHeightEncoder, BlockHeightInterval, BlockMtp,
+        BlockMtpInterval, Checked, Header, HeaderDecoder, HeaderDecoderError, HeaderEncoder,
+        InvalidBlockError, TooBigForRelativeHeightError, Unchecked, Validation, Version,
+        VersionDecoder, VersionDecoderError, VersionEncoder, WitnessCommitment,
     };
 }
 
 #[test]
 fn api_can_use_all_types_from_module_merkle_tree() {
     use bitcoin_primitives::merkle_tree::{
-        TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
+        TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
+        WitnessMerkleNode,
     };
+}
+
+#[test]
+fn api_can_use_all_types_from_module_opcodes() {
+    use bitcoin_primitives::opcodes::all::*;
+    use bitcoin_primitives::opcodes::{all, Opcode};
 }
 
 #[test]
 fn api_can_use_all_types_from_module_transaction() {
     use bitcoin_primitives::transaction::{
-        OutPointDecoder, OutPointDecoderError, OutPointEncoder, TransactionDecoder,
-        TransactionDecoderError, TransactionEncoder, TxInDecoder, TxInDecoderError, TxInEncoder,
-        TxOutDecoder, TxOutDecoderError, TxOutEncoder, VersionDecoder, VersionDecoderError,
-        VersionEncoder,
+        BlockHashDecoder, BlockHashDecoderError, Ntxid, OutPoint, OutPointDecoder,
+        OutPointDecoderError, OutPointEncoder, ParseOutPointError, Transaction, TransactionDecoder,
+        TransactionDecoderError, TransactionEncoder, TxIn, TxInDecoder, TxInDecoderError,
+        TxInEncoder, TxOut, TxOutDecoder, TxOutDecoderError, TxOutEncoder, Txid, Version,
+        VersionDecoder, VersionDecoderError, VersionEncoder, Wtxid,
     };
 }
 
 #[test]
 fn api_can_use_all_types_from_module_witness() {
-    use bitcoin_primitives::witness::{WitnessDecoder, WitnessDecoderError, WitnessEncoder};
+    use bitcoin_primitives::witness::{
+        Iter, UnexpectedEofError, Witness, WitnessDecoder, WitnessDecoderError, WitnessEncoder,
+    };
+}
+
+#[test]
+fn api_can_use_all_types_from_module_witness_version() {
+    use bitcoin_primitives::witness_version::error::{ParseWitnessVersionError, InvalidWitnessVersionError};
+    use bitcoin_primitives::witness_version::WitnessVersion;
 }
 
 // `Debug` representation is never empty (C-DEBUG-NONEMPTY).
@@ -341,7 +440,8 @@ fn api_all_non_error_types_have_non_empty_debug() {
     // All the enums.
     check_debug! {
         absolute::LockTime::ZERO;
-        relative::LockTime::ZERO
+        relative::LockTime::ZERO;
+        witness_version::WitnessVersion::V0
     };
 
     // We abuse `Arbitrary` here to get a quick and dirty instance.
@@ -360,9 +460,12 @@ fn api_all_non_error_types_have_non_empty_debug() {
         merkle_tree::TxMerkleNode::from_byte_array(BYTES);
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
         pow::CompactTarget::arbitrary(&mut u).unwrap();
+        pow::Target::MAX;
+        pow::Target::MAX.to_work();
         REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
         SCRIPT_PUB_KEY.as_script();
+        SIGNET_BLOCK_SCRIPT.as_script();
         TAP_SCRIPT.as_script();
         WITNESS_SCRIPT.as_script();
         ScriptHash::from_script(&REDEEM_SCRIPT).unwrap();
@@ -370,6 +473,7 @@ fn api_all_non_error_types_have_non_empty_debug() {
         REDEEM_SCRIPT.clone();
         SCRIPT_SIG.clone();
         SCRIPT_PUB_KEY.clone();
+        SIGNET_BLOCK_SCRIPT.clone();
         TAP_SCRIPT.clone();
         WITNESS_SCRIPT.clone();
         Sequence::arbitrary(&mut u).unwrap();
@@ -382,7 +486,11 @@ fn api_all_non_error_types_have_non_empty_debug() {
         transaction.compute_ntxid();
         transaction.version;
         Witness::arbitrary(&mut u).unwrap();
-        // ad: witness::Iter<'a>,
+        Witness::arbitrary(&mut u).unwrap().iter();
+        Builder::<ScriptSigTag>::new();
+        PUSH_BYTES.as_push_bytes();
+        PUSH_BYTES.clone();
+        opcodes::Opcode::from_u8(0x51);
     };
 }
 
@@ -410,15 +518,19 @@ fn regression_default() {
         b1: RedeemScript::from_bytes(&[]),
         b2: ScriptPubKey::from_bytes(&[]),
         b3: ScriptSig::from_bytes(&[]),
-        b4: TapScript::from_bytes(&[]),
-        b5: WitnessScript::from_bytes(&[]),
+        b4: SignetBlockScript::from_bytes(&[]),
+        b5: TapScript::from_bytes(&[]),
+        b6: WitnessScript::from_bytes(&[]),
         c1: RedeemScriptBuf::from_bytes(Vec::new()),
         c2: ScriptPubKeyBuf::from_bytes(Vec::new()),
         c3: ScriptSigBuf::from_bytes(Vec::new()),
-        c4: TapScriptBuf::from_bytes(Vec::new()),
-        c5: WitnessScriptBuf::from_bytes(Vec::new()),
+        c4: SignetBlockScriptBuf::from_bytes(Vec::new()),
+        c5: TapScriptBuf::from_bytes(Vec::new()),
+        c6: WitnessScriptBuf::from_bytes(Vec::new()),
         d: Sequence::MAX,
         e: Witness::new(),
+        f: Builder::new(),
+        g: PushBytesBuf::new(),
     };
     assert_eq!(got, want);
 }
@@ -444,5 +556,12 @@ fn decoders_implement_new() {
 }
 
 #[test]
-// The only trait in this crate is `block::Validation` and it is not dyn compatible.
-fn dyn_compatible() {}
+// The traits in this crate are `block::Validation`, `script::Tag`, `script::ScriptHashableTag`,
+// and `script::PushBytesErrorReport`. `block::Validation` is not dyn compatible.
+fn dyn_compatible() {
+    struct DynCompatible<'a> {
+        a: Box<dyn script::Tag>,
+        b: Box<dyn script::ScriptHashableTag>,
+        c: &'a dyn script::PushBytesErrorReport,
+    }
+}
