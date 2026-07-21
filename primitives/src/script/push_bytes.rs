@@ -358,7 +358,7 @@ crate::impl_asref_push_bytes! {
 ///
 /// This should not be needed by general public, except as an additional bound on `TryFrom` when
 /// converting to `WitnessProgram`.
-pub trait PushBytesErrorReport {
+pub trait PushBytesErrorReport: sealed::Sealed {
     /// How many bytes the input had.
     fn input_len(&self) -> usize;
 }
@@ -366,6 +366,12 @@ pub trait PushBytesErrorReport {
 impl PushBytesErrorReport for core::convert::Infallible {
     #[inline]
     fn input_len(&self) -> usize { match *self {} }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::PushBytesError {}
+    impl Sealed for core::convert::Infallible {}
 }
 
 #[doc(no_inline)]
