@@ -18,7 +18,7 @@ use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use encoding::{
     ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder,
     CompactSizeU64Decoder, Decoder, Decoder2, Decoder4, DecoderStatus, Encoder2, Encoder4,
-    EncoderStatus, SliceEncoder, VecDecoder,
+    EncoderStatus, PrefixedSliceEncoder, VecDecoder,
 };
 use hashes::{sha256, siphash24, Hash};
 use io::{Read, Write};
@@ -332,8 +332,8 @@ impl_consensus_encoding!(HeaderAndShortIds, header, nonce, short_ids, prefilled_
 type HeaderAndShortIdsInnerEncoder<'e> = Encoder4<
     HeaderEncoder<'e>,
     ArrayEncoder<8>,
-    Encoder2<CompactSizeEncoder, SliceEncoder<'e, ShortId>>,
-    Encoder2<CompactSizeEncoder, SliceEncoder<'e, PrefilledTransaction>>,
+    PrefixedSliceEncoder<'e, ShortId>,
+    PrefixedSliceEncoder<'e, PrefilledTransaction>,
 >;
 
 #[cfg(feature = "encoding")]
@@ -353,14 +353,8 @@ impl encoding::Encode for HeaderAndShortIds {
         HeaderAndShortIdsEncoder::new(Encoder4::new(
             self.header.encoder(),
             ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.short_ids.len()),
-                SliceEncoder::without_length_prefix(&self.short_ids),
-            ),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.prefilled_txs.len()),
-                SliceEncoder::without_length_prefix(&self.prefilled_txs),
-            ),
+            PrefixedSliceEncoder::new(&self.short_ids),
+            PrefixedSliceEncoder::new(&self.prefilled_txs),
         ))
     }
 }
@@ -965,7 +959,7 @@ encoding::encoder_newtype! {
     pub struct BlockTransactionsEncoder<'e>(
         Encoder2<
             crate::blockdata::block::BlockHashEncoder<'e>,
-            Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>
+            PrefixedSliceEncoder<'e, Transaction>
         >
     );
 }
@@ -977,10 +971,7 @@ impl encoding::Encode for BlockTransactions {
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockTransactionsEncoder::new(Encoder2::new(
             self.block_hash.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.transactions.len()),
-                SliceEncoder::without_length_prefix(&self.transactions),
-            ),
+            PrefixedSliceEncoder::new(&self.transactions),
         ))
     }
 }

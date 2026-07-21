@@ -9,6 +9,11 @@
 #[cfg(feature = "encoding")]
 use core::convert::Infallible;
 
+#[cfg(feature = "encoding")]
+use encoding::{
+    ArrayDecoder, ArrayEncoder, Decoder2, Decoder3, Encoder2, Encoder3, PrefixedSliceEncoder,
+    VecDecoder,
+};
 use hashes::{sha256d, Hash as _};
 use io::{Read, Write};
 
@@ -17,11 +22,6 @@ use crate::blockdata::block::BlockHash;
 use crate::blockdata::block::{BlockHashDecoder, BlockHashEncoder};
 use crate::blockdata::transaction::{Txid, Wtxid};
 use crate::consensus::encode::{self, Decodable, Encodable};
-#[cfg(feature = "encoding")]
-use encoding::{
-    ArrayDecoder, ArrayEncoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3,
-    SliceEncoder, VecDecoder,
-};
 use crate::internal_macros::impl_consensus_encoding;
 #[cfg(feature = "encoding")]
 use crate::internal_macros::write_err;
@@ -260,7 +260,7 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(feature = "encoding")]
 type GetBlocksOrHeadersInnerEncoder<'e> =
-    Encoder3<ArrayEncoder<4>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, BlockHash>>, BlockHashEncoder<'e>>;
+    Encoder3<ArrayEncoder<4>, PrefixedSliceEncoder<'e, BlockHash>, BlockHashEncoder<'e>>;
 
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype! {
@@ -283,10 +283,7 @@ impl encoding::Encode for GetHeadersMessage {
     fn encoder(&self) -> Self::Encoder<'_> {
         GetHeadersEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.version.to_le_bytes()),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.locator_hashes.len()),
-                SliceEncoder::without_length_prefix(&self.locator_hashes),
-            ),
+            PrefixedSliceEncoder::new(&self.locator_hashes),
             self.stop_hash.encoder(),
         ))
     }
@@ -299,10 +296,7 @@ impl encoding::Encode for GetBlocksMessage {
     fn encoder(&self) -> Self::Encoder<'_> {
         GetBlocksEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.version.to_le_bytes()),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.locator_hashes.len()),
-                SliceEncoder::without_length_prefix(&self.locator_hashes),
-            ),
+            PrefixedSliceEncoder::new(&self.locator_hashes),
             self.stop_hash.encoder(),
         ))
     }
