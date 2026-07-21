@@ -73,6 +73,7 @@ pub extern crate hex;
 pub extern crate io;
 pub extern crate primitives;
 pub extern crate secp256k1;
+pub extern crate taproot_primitives;
 
 #[cfg(feature = "serde")]
 #[macro_use]
