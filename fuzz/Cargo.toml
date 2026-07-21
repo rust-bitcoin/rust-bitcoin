@@ -1,3 +1,6 @@
+# The fuzz target [[bin]]s in this manifest are managed
+# by the ./generate-files.sh script.
+
 [package]
 name = "bitcoin-fuzz"
 edition = "2021"
@@ -55,749 +58,642 @@ path = "fuzz_targets/bitcoin/arbitrary_block.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_arbitrary_script"
 path = "fuzz_targets/bitcoin/arbitrary_script.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_arbitrary_transaction"
 path = "fuzz_targets/bitcoin/arbitrary_transaction.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_arbitrary_witness"
 path = "fuzz_targets/bitcoin/arbitrary_witness.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_compare_consensus_encoding"
 path = "fuzz_targets/bitcoin/compare_consensus_encoding.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_deserialize_block"
 path = "fuzz_targets/bitcoin/deserialize_block.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_deserialize_prefilled_transaction"
 path = "fuzz_targets/bitcoin/deserialize_prefilled_transaction.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_deserialize_script"
 path = "fuzz_targets/bitcoin/deserialize_script.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_deserialize_transaction"
 path = "fuzz_targets/bitcoin/deserialize_transaction.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_deserialize_witness"
 path = "fuzz_targets/bitcoin/deserialize_witness.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_absolute_lock_time"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/absolute_lock_time.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_amount"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/amount.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_block"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/block.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_block_hash"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/block_hash.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_block_header"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/block_header.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_block_height"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/block_height.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_block_time"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/block_time.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_block_version"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/block_version.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_compact_target"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/compact_target.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_out_point"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/out_point.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_address_addr_v1_message"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_address_addr_v1_message.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_address_addr_v2"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_address_addr_v2.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_address_addr_v2_message"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_address_addr_v2_message.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_address_address"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_address_address.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_bip152_block_transactions"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_bip152_block_transactions.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_bip152_block_transactions_request"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_bip152_block_transactions_request.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_bip152_header_and_short_ids"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_bip152_header_and_short_ids.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_bip152_prefilled_transaction"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_bip152_prefilled_transaction.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_bip152_short_id"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_bip152_short_id.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_magic"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_magic.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_merkle_tree_merkle_block"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_merkle_tree_merkle_block.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_merkle_tree_partial_merkle_tree"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_merkle_tree_partial_merkle_tree.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_addr_payload"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_addr_payload.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_addr_v2_payload"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_addr_v2_payload.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_blockdata_block_locator"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_blockdata_block_locator.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_blockdata_get_blocks_message"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_blockdata_get_blocks_message.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_blockdata_get_headers_message"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_blockdata_get_headers_message.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_blockdata_inventory"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_blockdata_inventory.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_bloom_bloom_flags"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_bloom_bloom_flags.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_bloom_filter_add"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_bloom_filter_add.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_bloom_filter_load"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_bloom_filter_load.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_command_string"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_command_string.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_compact_blocks_send_cmpct"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_compact_blocks_send_cmpct.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_erlay_send_tx_rcn_cl"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_erlay_send_tx_rcn_cl.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_fee_filter"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_fee_filter.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_filter_c_f_checkpt"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_filter_c_f_checkpt.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_filter_c_f_headers"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_filter_c_f_headers.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_filter_c_filter"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_filter_c_filter.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_filter_filter_hash"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_filter_filter_hash.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_filter_filter_header"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_filter_filter_header.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_filter_get_c_f_checkpt"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_filter_get_c_f_checkpt.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_filter_get_c_f_headers"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_filter_get_c_f_headers.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_filter_get_c_filters"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_filter_get_c_filters.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_headers_message"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_headers_message.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_inventory_payload"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_inventory_payload.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_network_alert"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_network_alert.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_network_header"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_network_header.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_network_reject"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_network_reject.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_network_reject_reason"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_network_reject_reason.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_network_user_agent"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_network_user_agent.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_network_version_message"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_network_version_message.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_ping"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_ping.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_pong"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_pong.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_v1_message_header"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_v1_message_header.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_message_v1_network_message"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_message_v1_network_message.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_protocol_version"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_protocol_version.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_p2p_service_flags"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/p2p_service_flags.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_redeem_script_buf"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/redeem_script_buf.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_script_pub_key_buf"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/script_pub_key_buf.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_script_sig_buf"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/script_sig_buf.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_sequence"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/sequence.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_tap_script_buf"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/tap_script_buf.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_transaction"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/transaction.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_transaction_version"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/transaction_version.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_tx_in"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/tx_in.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_tx_merkle_node"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/tx_merkle_node.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_tx_out"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/tx_out.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_witness"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/witness.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_witness_merkle_node"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/witness_merkle_node.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_encoding_roundtrip_witness_script_buf"
 path = "fuzz_targets/bitcoin/encoding_roundtrip/witness_script_buf.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_parse_address"
 path = "fuzz_targets/bitcoin/parse_address.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_parse_outpoint"
 path = "fuzz_targets/bitcoin/parse_outpoint.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_script_bytes_to_asm_fmt"
 path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_0_32_compare_consensus_encoding"
 path = "fuzz_targets/bitcoin_0_32/compare_consensus_encoding.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_0_32_deser_net_msg"
 path = "fuzz_targets/bitcoin_0_32/deser_net_msg.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_0_32_deserialize_address"
 path = "fuzz_targets/bitcoin_0_32/deserialize_address.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_0_32_deserialize_psbt"
 path = "fuzz_targets/bitcoin_0_32/deserialize_psbt.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "bitcoin_0_32_outpoint_string"
 path = "fuzz_targets/bitcoin_0_32/outpoint_string.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "consensus_encoding_decode_array"
 path = "fuzz_targets/consensus_encoding/decode_array.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "consensus_encoding_decode_byte_vec"
 path = "fuzz_targets/consensus_encoding/decode_byte_vec.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "consensus_encoding_decode_compact_size"
 path = "fuzz_targets/consensus_encoding/decode_compact_size.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "consensus_encoding_decode_decoder2"
 path = "fuzz_targets/consensus_encoding/decode_decoder2.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "hashes_arbitrary_json"
 path = "fuzz_targets/hashes/arbitrary_json.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "hashes_json"
 path = "fuzz_targets/hashes/json.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "hashes_ripemd160"
 path = "fuzz_targets/hashes/ripemd160.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "hashes_sha1"
 path = "fuzz_targets/hashes/sha1.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "hashes_sha256"
 path = "fuzz_targets/hashes/sha256.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "hashes_sha512"
 path = "fuzz_targets/hashes/sha512.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "hashes_sha512_256"
 path = "fuzz_targets/hashes/sha512_256.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "hashes_0_32_cbor"
 path = "fuzz_targets/hashes_0_32/cbor.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "p2p_arbitrary_addrv2"
 path = "fuzz_targets/p2p/arbitrary_addrv2.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "p2p_deserialize_addrv2"
 path = "fuzz_targets/p2p/deserialize_addrv2.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "p2p_deserialize_raw_net_msg"
 path = "fuzz_targets/p2p/deserialize_raw_net_msg.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "units_arbitrary_weight"
 path = "fuzz_targets/units/arbitrary_weight.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "units_parse_amount"
 path = "fuzz_targets/units/parse_amount.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "units_parse_int"
 path = "fuzz_targets/units/parse_int.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "units_standard_checks"
 path = "fuzz_targets/units/standard_checks.rs"
 test = false
 doc = false
 bench = false
-
 [[bin]]
 name = "units_0_32_deserialize_amount"
 path = "fuzz_targets/units_0_32/deserialize_amount.rs"
