@@ -39,7 +39,7 @@ io = { package = "bitcoin-io", path = "../io", version = "0.6.0", default-featur
 network = { package = "bitcoin-network-kind", path = "../network", version = "1.0.0", default-features = false, features = ["alloc"]}
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.103.0", default-features = false, features = ["alloc", "hex"] }
 secp256k1 = { version = "0.32.0-beta.2", default-features = false, features = ["alloc"] }
-taproot-primitives = { package = "bitcoin-taproot-primitives", path = "../taproot-primitives", version = "0.1.0", default-features = false, features = ["alloc", "hex"] }
+taproot-primitives = { package = "bitcoin-taproot-primitives", path = "../taproot_primitives", version = "0.1.0", default-features = false, features = ["alloc", "hex"] }
 units = { package = "bitcoin-units", path = "../units", version = "0.5.0", default-features = false, features = ["alloc"] }
 
 arbitrary = { version = "1.4.1", optional = true }
