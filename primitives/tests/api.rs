@@ -13,10 +13,12 @@
 #![cfg(feature = "hex")]
 #![cfg(feature = "arbitrary")]
 
+extern crate alloc;
+
 use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{
-    self, ScriptHash, ScriptPubKeyBufDecoder, ScriptSigBufDecoder, WScriptHash,
+    self, PushBytes, ScriptHash, ScriptPubKeyBufDecoder, ScriptSigBufDecoder, WScriptHash,
 };
 use bitcoin_primitives::{
     absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
@@ -125,6 +127,18 @@ struct Clone<'a> {
     h: merkle_tree::WitnessMerkleNode,
     i: pow::CompactTarget,
     // j: &'a Script,
+    #[cfg(feature = "alloc")]
+    j0: alloc::boxed::Box<PushBytes>,
+    #[cfg(feature = "alloc")]
+    j1: alloc::boxed::Box<RedeemScript>,
+    #[cfg(feature = "alloc")]
+    j2: alloc::boxed::Box<ScriptPubKey>,
+    #[cfg(feature = "alloc")]
+    j3: alloc::boxed::Box<ScriptSig>,
+    #[cfg(feature = "alloc")]
+    j4: alloc::boxed::Box<TapScript>,
+    #[cfg(feature = "alloc")]
+    j5: alloc::boxed::Box<WitnessScript>,
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
