@@ -65,7 +65,7 @@ you will need to implement a custom harness.
 To run a single fuzztest indefinitely, run
 
 ```bash
-cargo +nightly fuzz run "<target>" 
+cargo +nightly fuzz run "<target>"
 ```
 
 ## Adding fuzz tests
@@ -77,14 +77,11 @@ function to do what you want.
 If your test clearly belongs to a specific crate, please put it in that
 crate's directory. Otherwise, you can put it directly in `fuzz_target/`.
 
-If you need to add dependencies, edit the file `generate-files.sh` to add
-it to the generated `Cargo.toml`.
-
-Once you've added a fuzztest, regenerate the `Cargo.toml` and CI job by
-running
+Once you've added a fuzztest, regenerate the `[[bins]]` section in the
+`Cargo.toml` manifest by running
 
 ```bash
-./generate-files.sh
+./generate-bins.sh
 ```
 
 Then to test your fuzztest, run

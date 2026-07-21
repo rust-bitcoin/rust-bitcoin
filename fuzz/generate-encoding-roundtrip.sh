@@ -3,7 +3,7 @@
 # Generates one fuzz target file per Encodable/Decodable type under
 # fuzz_targets/bitcoin/encoding_roundtrip/.
 #
-# After running this script, re-run fuzz/generate-files.sh to update Cargo.toml
+# After running this script, re-run fuzz/generate-bins.sh to update Cargo.toml
 # and the fuzz CI workflow.
 
 set -euo pipefail
