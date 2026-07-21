@@ -1263,8 +1263,6 @@ impl<T> core::convert::From<T> for bitcoin_primitives::block::VersionEncoder<'e>
   pub fn bitcoin_primitives::block::VersionEncoder<'e>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::block::VersionEncoder<'e>]
 pub struct bitcoin_primitives::block::WitnessCommitment(_)
 impl bitcoin_primitives::WitnessCommitment
-pub const bitcoin_primitives::WitnessCommitment::GENESIS_PREVIOUS_BLOCK_HASH: Self
-impl bitcoin_primitives::WitnessCommitment
 pub const fn bitcoin_primitives::WitnessCommitment::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_primitives::WitnessCommitment::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_primitives::WitnessCommitment::to_byte_array(self) -> [u8; 32]
@@ -7622,8 +7620,6 @@ impl<T> core::convert::From<T> for bitcoin_primitives::witness::Witness
   pub fn bitcoin_primitives::witness::Witness::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness::Witness]
 impl<T> serde::de::DeserializeOwned for bitcoin_primitives::witness::Witness where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_primitives::WitnessCommitment(_)
-impl bitcoin_primitives::WitnessCommitment
-pub const bitcoin_primitives::WitnessCommitment::GENESIS_PREVIOUS_BLOCK_HASH: Self
 impl bitcoin_primitives::WitnessCommitment
 pub const fn bitcoin_primitives::WitnessCommitment::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_primitives::WitnessCommitment::from_byte_array(bytes: [u8; 32]) -> Self
