@@ -3,6 +3,9 @@ members = ["addresses", "base58", "bip158", "bitcoin", "chacha20_poly1305", "con
 exclude = ["benches"]
 resolver = "2"
 
+[workspace.metadata]
+rbmt.version = "0.5.1"
+
 [workspace.metadata.rbmt.toolchains]
 nightly = "nightly-2026-07-02"
 stable = "1.97.1"

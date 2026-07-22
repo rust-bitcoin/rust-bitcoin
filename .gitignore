@@ -17,6 +17,9 @@ bitcoin/dep_test
 mutants.out*
 fuzz/coverage
 
+# Generated API snapshot files
+*/api/
+
 # Local tooling
 .maintainer-tools
 Cargo.lock.backup

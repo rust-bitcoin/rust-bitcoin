@@ -76,7 +76,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue_number,
-              body: ':rotating_light: API BREAKING CHANGE DETECTED\n\nTo see the changes click details on "Continuous integration / Check (api)" job then expand "Run api" and scroll to the end of the section.'
+              body: ':rotating_light: API BREAKING CHANGE DETECTED\n\nTo see the changes click details on "Continuous integration / API" job then expand "Run API check" and scroll to the end of the section.'
             });
 
             // add the label to the PR

@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [api, lint, docs, docsrs]
+        task: [lint, docs]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -49,6 +49,19 @@ jobs:
       - uses: ./.github/actions/setup-rbmt
       - name: "Run ${{ matrix.task }}"
         run: cargo rbmt ${{ matrix.task }}
+
+  API:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # History required for API diff.
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Run API check"
+        run: cargo rbmt api --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
 
   Bench:
     runs-on: ubuntu-24.04
@@ -237,7 +250,7 @@ jobs:
         run: ./contrib/check-for-policy-violations.sh
 
   Re-exports:
-    name: Check re-exports - stable toolchain
+    name: Check re-exports
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -248,8 +261,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Generate API files"
+        run: cargo rbmt api --snapshot > /dev/null
       - name: "Run primitives API checker script"
         run: |
           contrib/generate-primitives-re-export-test.sh && (cd ./primitives && cargo test --all-features)

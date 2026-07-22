@@ -74,7 +74,12 @@ main() {
     esac
 
     crate=$_crate
-    file="./api/$crate/all-features.txt"
+    file="./$crate/api/all-features.txt"
+
+    if [ ! -f "$file" ]; then
+        err "missing $file, generate the API snapshot files with: cargo rbmt api --snapshot"
+    fi
+
 
     verbose_say "Running command '$_cmd' on crate '$crate'"
 

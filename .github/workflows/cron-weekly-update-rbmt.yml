@@ -21,15 +21,14 @@ jobs:
           git clone --filter=blob:none --no-checkout \
             https://github.com/rust-bitcoin/rust-bitcoin-maintainer-tools.git /tmp/rbmt
           LATEST_TAG=$(git -C /tmp/rbmt tag --sort=-version:refname | grep '^cargo-rbmt-' | head -1)
-          LATEST_HASH=$(git -C /tmp/rbmt rev-parse "${LATEST_TAG}^{}")
-          CURRENT_HASH=$(cat rbmt-version)
-          if [ -n "${LATEST_HASH}" ] && [ "${LATEST_HASH}" != "${CURRENT_HASH}" ]; then
-            echo "${LATEST_HASH}" > rbmt-version
-            echo "rbmt_hash=${LATEST_HASH}" >> "${GITHUB_ENV}"
-            echo "rbmt_semver=${LATEST_TAG#cargo-rbmt-}" >> "${GITHUB_ENV}"
+          LATEST_VERSION=${LATEST_TAG#cargo-rbmt-}
+          CURRENT_VERSION=$(grep "^rbmt.version" Cargo.toml | cut -d'"' -f2)
+          if [ -n "${LATEST_VERSION}" ] && [ "${LATEST_VERSION}" != "${CURRENT_VERSION}" ]; then
+            sed -i "s/^rbmt.version = \"${CURRENT_VERSION}\"/rbmt.version = \"${LATEST_VERSION}\"/" Cargo.toml
+            echo "rbmt_semver=${LATEST_VERSION}" >> "${GITHUB_ENV}"
             echo "changes_made=true" >> "${GITHUB_ENV}"
           else
-            echo "rbmt-version is already at the latest release. Not opening any PR."
+            echo "rbmt version is already at the latest release. Not opening any PR."
             echo "changes_made=false" >> "${GITHUB_ENV}"
           fi
       - name: Create Pull Request
@@ -41,6 +40,6 @@ jobs:
           committer: Update RBMT Bot <bot@example.com>
           title: Automated weekly update to cargo-rbmt (to ${{ env.rbmt_semver }})
           body: |
-            Automated update to rbmt-version by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
+            Automated update to Cargo.toml workspace metadata by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
           commit-message: Automated update to cargo-rbmt-${{ env.rbmt_semver }}
           branch: create-pull-request/weekly-rbmt-update
