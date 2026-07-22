@@ -58,7 +58,7 @@ impl ChainCode {
 
     /// Copies the underlying bytes into a new `Vec`.
     #[inline]
-    #[deprecated(since = "TBD", note = "use to_vec instead")]
+    #[deprecated(since = "0.2.0", note = "use to_vec instead")]
     pub fn to_bytes(self) -> alloc::vec::Vec<u8> { self.to_vec() }
 }
 
@@ -875,7 +875,7 @@ impl Xpriv {
     }
 
     /// Constructs a new ECDSA compressed private key matching internal secret key representation.
-    #[deprecated(since = "TBD", note = "use `to_private_key()` instead")]
+    #[deprecated(since = "0.2.0", note = "use `to_private_key()` instead")]
     pub fn to_priv(self) -> PrivateKey { self.to_private_key() }
 
     /// Constructs a new ECDSA compressed private key matching internal secret key representation.
@@ -1062,7 +1062,7 @@ impl Xpub {
     pub fn chain_code(&self) -> &ChainCode { &self.chain_code }
 
     /// Constructs a new extended public key from an extended private key.
-    #[deprecated(since = "TBD", note = "use `from_xpriv()` instead")]
+    #[deprecated(since = "0.2.0", note = "use `from_xpriv()` instead")]
     pub fn from_priv(sk: &Xpriv) -> Self { Self::from_xpriv(sk) }
 
     /// Constructs a new extended public key from an extended private key.
@@ -1078,7 +1078,7 @@ impl Xpub {
     }
 
     /// Constructs a new ECDSA compressed public key matching internal public key representation.
-    #[deprecated(since = "TBD", note = "use `to_public_key()` instead")]
+    #[deprecated(since = "0.2.0", note = "use `to_public_key()` instead")]
     pub fn to_pub(self) -> FullPublicKey { self.to_public_key() }
 
     /// Constructs a new ECDSA compressed public key matching internal public key representation.
@@ -1086,7 +1086,7 @@ impl Xpub {
 
     /// Constructs a new BIP-0340 x-only public key for BIP-0340 signatures and Taproot use matching
     /// the internal public key representation.
-    #[deprecated(since = "TBD", note = "use `to_x_only_public_key()` instead")]
+    #[deprecated(since = "0.2.0", note = "use `to_x_only_public_key()` instead")]
     pub fn to_x_only_pub(self) -> XOnlyPublicKey { self.to_x_only_public_key() }
 
     /// Constructs a new BIP-0340 x-only public key for BIP-0340 signatures and Taproot use matching
