@@ -231,7 +231,7 @@ impl LeafVersion {
 
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "0.2.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
@@ -333,7 +333,7 @@ impl FutureLeafVersion {
 
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "0.2.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
