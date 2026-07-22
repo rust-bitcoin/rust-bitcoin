@@ -267,7 +267,7 @@ checksum = "73290177011694f38ec25e165d0387ab7ea749a4b81cd4c80dae5988229f7a57"
 
 [[package]]
 name = "bitcoin-taproot-primitives"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arbitrary",
  "bitcoin-crypto",
