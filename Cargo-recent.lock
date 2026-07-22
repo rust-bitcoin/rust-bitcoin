@@ -134,7 +134,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-crypto"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "arbitrary",
  "base58ck 0.4.0",
