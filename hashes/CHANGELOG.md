@@ -1,3 +1,10 @@
+# 0.13.2 - 2026-07-23
+
+This version is now End-of-Life (EOL).
+
+In order to publish this release we had to remove the `core2`
+dependency because `core2` has been yanked from `crates.io`.
+
 # 0.13.1 - 2026-04-02
 
 * Remove `doc_auto_cfg` [#5651](https://github.com/rust-bitcoin/rust-bitcoin/pull/5651)

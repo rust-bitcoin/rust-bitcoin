@@ -18,6 +18,9 @@
   </p>
 </div>
 
+This version (`v0.31.x`) is End-of-Life. Consider using a more recent version. If for some
+reason you are stuck on this version please raise an issue.
+
 [Documentation](https://docs.rs/bitcoin/)
 
 Supports (or should support)
@@ -103,6 +106,9 @@ both must be enabled.
 Enabling the `no-std` feature does not disable `std`. To disable the `std` feature you must disable
 default features. The `no-std` feature only enables additional features required for this crate to
 be usable without `std`. Both can be enabled without conflict.
+
+NB: The `no-std` feature was removed in the EOL point release `0.31.2`. If you are using it please
+pin to `0.31.1` but we doubt you are since `core2` has been yanked from `crates.io`.
 
 The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
 

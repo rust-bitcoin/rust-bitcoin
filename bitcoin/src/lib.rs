@@ -2,6 +2,9 @@
 
 //! # Rust Bitcoin Library
 //!
+//! This version (`v0.31.x`) is End-of-Life. Consider using a more recent version. If for some
+//! reason you are stuck on this version please raise an issue.
+//!
 //! This is a library that supports the Bitcoin network protocol and associated
 //! primitives. It is designed for Rust programs built to work with the Bitcoin
 //! network.
@@ -21,8 +24,6 @@
 //! * `rand` - (dependency), makes it more convenient to generate random values.
 //! * `serde` - (dependency), implements `serde`-based serialization and deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
-//! * `no-std` - enables additional features required for this crate to be usable without std. Does
-//!   **not** disable `std`. Depends on `core2`.
 //! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it to this crate
 //!   so it knows how to implement `std::error::Error`. At this time there's a hack to achieve the
 //!   same without this feature but it could happen the implementations diverge one day.
@@ -38,8 +39,8 @@
 // Exclude clippy lints we don't think are valuable
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 
-#[cfg(not(any(feature = "std", feature = "no-std")))]
-compile_error!("at least one of the `std` or `no-std` features must be enabled");
+#[cfg(not(feature = "std"))]
+compile_error!("The `std` feature must be enabled");
 
 // Disable 16-bit support at least for now as we can't guarantee it yet.
 #[cfg(target_pointer_width = "16")]
@@ -64,9 +65,6 @@ pub extern crate bech32;
 #[cfg(feature = "bitcoinconsensus")]
 /// Bitcoin's libbitcoinconsensus with Rust binding.
 pub extern crate bitcoinconsensus;
-
-#[cfg(not(feature = "std"))]
-extern crate core2;
 
 /// Rust implementation of cryptographic hash function algorithems.
 pub extern crate hashes;
@@ -120,12 +118,6 @@ use std::error::Error as StdError;
 #[cfg(feature = "std")]
 use std::io;
 
-#[allow(unused)]
-#[cfg(not(feature = "std"))]
-use core2::error::Error as StdError;
-#[cfg(not(feature = "std"))]
-use core2::io;
-
 pub use crate::address::{Address, AddressType};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
 pub use crate::bip32::XKeyIdentifier;
@@ -167,14 +159,6 @@ mod io_extras {
 
     /// Creates an instance of a writer which will successfully consume all data.
     pub const fn sink() -> Sink { Sink { _priv: () } }
-
-    impl core2::io::Write for Sink {
-        #[inline]
-        fn write(&mut self, buf: &[u8]) -> core2::io::Result<usize> { Ok(buf.len()) }
-
-        #[inline]
-        fn flush(&mut self) -> core2::io::Result<()> { Ok(()) }
-    }
 }
 
 #[rustfmt::skip]
