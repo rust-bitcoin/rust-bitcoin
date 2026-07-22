@@ -70,7 +70,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.13.1"
+version = "0.13.2"
 dependencies = [
  "hex-conservative",
  "schemars",
