@@ -23,7 +23,6 @@ jobs:
           DO_COV: true
           DO_LINT: true
           AS_DEPENDENCY: false
-          DO_NO_STD: true
           DO_DOCS: true
           DO_FEATURE_MATRIX: true
           DO_SCHEMARS_TESTS: true # Currently only used in hashes crate.
@@ -42,7 +41,6 @@ jobs:
       - name: Running test script
         env:
           AS_DEPENDENCY: false
-          DO_NO_STD: true
         run: ./contrib/test.sh
 
   Nightly:
@@ -60,7 +58,6 @@ jobs:
           DO_FMT: false
           DO_BENCH: true
           AS_DEPENDENCY: false
-          DO_NO_STD: true
           DO_DOCSRS: true
         run: ./contrib/test.sh
 
@@ -79,7 +76,6 @@ jobs:
       - name: Running test script
         env:
           DO_FEATURE_MATRIX: true
-          DO_NO_STD: true
         run: ./contrib/test.sh
 
   Arch32bit:
@@ -114,29 +110,6 @@ jobs:
         run: cargo install cross --locked
       - name: run cross test
         run: cross test --target s390x-unknown-linux-gnu
-
-  Embedded:
-    runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: "-C link-arg=-Tlink.x"
-      CARGO_TARGET_THUMBV7M_NONE_EABI_RUNNER: "qemu-system-arm -cpu cortex-m3 -machine mps2-an385 -nographic -semihosting-config enable=on,target=native -kernel"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up QEMU
-        run: sudo apt update && sudo apt install -y qemu-system-arm gcc-arm-none-eabi
-      - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          targets: thumbv7m-none-eabi
-      - name: Install src
-        run: rustup component add rust-src
-      - name: Run bitcoin/embedded
-        run: cd bitcoin/embedded && cargo run --target thumbv7m-none-eabi
-      - name: Run hashes/embedded no alloc
-        run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi
-      - name: Run hashes/embedded with alloc
-        run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc
 
   ASAN:
     name: Address sanitizer     # hashes crate only.

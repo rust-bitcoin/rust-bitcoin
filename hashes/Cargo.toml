@@ -17,10 +17,13 @@ default = ["std"]
 std = ["alloc", "hex/std"]
 alloc = ["hex/alloc"]
 serde-std = ["serde/std"]
-# If you want I/O you must enable either "std" or "core2".
-core2 = ["actual-core2", "hex/core2"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []
+
+# The core2 feature was removed in a point release in order to publish an EOL release. The EOL
+# release should have been a README change only but core2 has been yanked so we could not publish
+# and still have a core2 dependency.
+# core2 = ["actual-core2", "hex/core2"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -32,9 +35,6 @@ hex = { package = "hex-conservative", version = "0.1.1", default-features = fals
 schemars = { version = "0.8.3", optional = true }
 # Only enable this if you explicitly do not want to use "std", otherwise enable "serde-std".
 serde = { version = "1.0", default-features = false, optional = true }
-
-# Do NOT use this feature! Use the "core2" feature instead.
-actual-core2 = { package = "core2", version = "0.3.2", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0"
