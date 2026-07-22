@@ -14,11 +14,11 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std", "hex"]
-std = ["alloc", "hashes/std", "internals/std", "serde?/std", "secp256k1/std"]
-alloc = ["hashes/alloc", "internals/alloc", "secp256k1/alloc"]
-serde = ["dep:serde", "hashes/serde", "internals/serde", "secp256k1/serde"]
-arbitrary = ["dep:arbitrary", "secp256k1/arbitrary"]
-hex = ["hashes/hex"]
+std = ["alloc", "crypto/std", "hashes/std", "internals/std", "serde?/std", "secp256k1/std"]
+alloc = ["crypto/alloc", "hashes/alloc", "internals/alloc", "secp256k1/alloc"]
+serde = ["dep:serde", "crypto/serde", "hashes/serde", "internals/serde", "secp256k1/serde"]
+arbitrary = ["dep:arbitrary", "crypto/arbitrary", "secp256k1/arbitrary"]
+hex = ["crypto/hex", "hashes/hex"]
 
 [dependencies]
 crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.2.0", default-features = false }
