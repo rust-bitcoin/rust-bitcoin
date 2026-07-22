@@ -18,7 +18,7 @@ then
 	exit 1
 fi
 
-excluded_crates="fuzz|dep_test"
+excluded_crates="fuzz"
 
 CRATES="$(cd "$SCAN_DIR" && cargo metadata --no-deps --format-version 1 | jq -j -r '.packages | map(.manifest_path | rtrimstr("/Cargo.toml") | ltrimstr("'"$PWD"'/")) | join(" ")')"
 
