@@ -36,17 +36,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
         with:
           toolchain: '1.74.0'
-      - run: cargo install --locked --version 0.12.0 cargo-fuzz
       - name: Fuzz shard ${{ matrix.shard_id }}
+        working-directory: fuzz
         run: |
           shard_targets=($(cargo fuzz list | sort | awk -v shard=${{ matrix.shard_id }} 'BEGIN{i=0} {if (i++ % 16 == shard) print}'))
           for target in "${shard_targets[@]}"; do
-            if [[ "$target" =~ ^bitcoin ]]; then
-              export RUSTFLAGS='--cfg=hashes_fuzz --cfg=secp256k1_fuzz'
-            else
-              unset RUSTFLAGS
-            fi
-            echo "Using RUSTFLAGS: ${RUSTFLAGS:-<empty>}"
-            cd fuzz && ./fuzz.sh "$target"
-            cd ..
+            ./fuzz.sh "$target"
           done
