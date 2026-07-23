@@ -218,7 +218,7 @@ mod tests {
     #[test]
     fn tx_merkle_node_single_leaf() {
         let (leaf, node) = make_leaf_node(1);
-        let root = TxMerkleNode::calculate_root([leaf].into_iter());
+        let root = TxMerkleNode::calculate_root([leaf]);
         assert!(root.is_some(), "Root should exist for a single leaf");
         assert_eq!(root.unwrap(), node, "Root should equal the leaf node");
     }
@@ -229,7 +229,7 @@ mod tests {
         let (leaf2, node2) = make_leaf_node(2);
         let combined = node1.combine(&node2);
 
-        let root = TxMerkleNode::calculate_root([leaf1, leaf2].into_iter());
+        let root = TxMerkleNode::calculate_root([leaf1, leaf2]);
         assert_eq!(
             root.unwrap(),
             combined,
@@ -241,7 +241,7 @@ mod tests {
     fn tx_merkle_node_duplicate_leaves() {
         let leaf = Txid::from_byte_array([3; 32]);
         // Duplicate transaction list should be rejected (CVE 2012‑2459).
-        let root = TxMerkleNode::calculate_root([leaf, leaf].into_iter());
+        let root = TxMerkleNode::calculate_root([leaf, leaf]);
         assert!(root.is_none(), "Duplicate leaves should return None");
     }
 
@@ -275,9 +275,7 @@ mod tests {
         let subtree_cd = subtree_c.combine(&subtree_d);
         let expected = subtree_ab.combine(&subtree_cd);
 
-        let root = TxMerkleNode::calculate_root(
-            [leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7].into_iter(),
-        );
+        let root = TxMerkleNode::calculate_root([leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7]);
         assert_eq!(root, Some(expected));
     }
 
@@ -299,7 +297,7 @@ mod tests {
         // Take the final node, which should be the root of the full tree.
         let expected = level.pop().unwrap();
 
-        let root = TxMerkleNode::calculate_root(leaves.into_iter());
+        let root = TxMerkleNode::calculate_root(leaves);
         assert_eq!(root, Some(expected));
     }
 
@@ -386,7 +384,7 @@ mod tests {
     #[test]
     fn witness_merkle_node_single_leaf() {
         let leaf = Wtxid::from_byte_array([1; 32]);
-        let root = WitnessMerkleNode::calculate_root([leaf].into_iter());
+        let root = WitnessMerkleNode::calculate_root([leaf]);
         assert!(root.is_some(), "Root should exist for a single witness leaf");
         let node = WitnessMerkleNode::from_leaf(leaf);
         assert_eq!(root.unwrap(), node, "Root should equal the leaf node");
@@ -395,7 +393,7 @@ mod tests {
     #[test]
     fn witness_merkle_node_duplicate_leaves() {
         let leaf = Wtxid::from_byte_array([2; 32]);
-        let root = WitnessMerkleNode::calculate_root([leaf, leaf].into_iter());
+        let root = WitnessMerkleNode::calculate_root([leaf, leaf]);
         assert!(root.is_none(), "Duplicate witness leaves should return None");
     }
 
