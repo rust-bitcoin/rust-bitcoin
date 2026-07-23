@@ -185,7 +185,13 @@ impl Block<Unchecked> {
     }
 
     /// Checks if witness commitment in coinbase matches the transaction list.
-    // Returns the Merkle root if it was computed (so it can be cached in `assume_checked`).
+    ///
+    /// # Returns
+    ///
+    /// Returns the Merkle root if it was computed. This can then be passed into [`assume_checked`] to
+    /// save re-calculating it.
+    ///
+    /// [`assume_checked`]: Block<Unchecked>::assume_checked
     pub fn check_witness_commitment(&self) -> (bool, Option<WitnessMerkleNode>) {
         if self.transactions.is_empty() {
             return (false, None);
