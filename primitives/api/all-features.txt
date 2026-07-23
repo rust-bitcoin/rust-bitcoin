@@ -4213,7 +4213,7 @@ impl<T> core::convert::From<T> for bitcoin_primitives::script::WitnessScriptSize
   pub fn bitcoin_primitives::script::WitnessScriptSizeError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::script::WitnessScriptSizeError]
 pub const bitcoin_primitives::script::MAX_REDEEM_SCRIPT_SIZE: usize
 pub const bitcoin_primitives::script::MAX_WITNESS_SCRIPT_SIZE: usize
-pub trait bitcoin_primitives::script::PushBytesErrorReport
+pub trait bitcoin_primitives::script::PushBytesErrorReport: bitcoin_primitives::script::push_bytes::sealed::Sealed
 pub fn bitcoin_primitives::script::PushBytesErrorReport::input_len(&self) -> usize
 impl bitcoin_primitives::script::PushBytesErrorReport for bitcoin_primitives::script::PushBytesError
   pub fn bitcoin_primitives::script::PushBytesError::input_len(&self) -> usize [impl: impl bitcoin_primitives::script::PushBytesErrorReport for bitcoin_primitives::script::PushBytesError]
