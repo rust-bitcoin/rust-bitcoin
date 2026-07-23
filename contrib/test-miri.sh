@@ -4,7 +4,7 @@ set -euox pipefail
 
 cd "$(dirname "$0")/.."
 
-. contrib/test_vars.sh
+CRATES="$(cargo metadata --no-deps --format-version 1 | jq -j -r '.packages | map(.manifest_path | rtrimstr("/Cargo.toml") | ltrimstr("'"$PWD"'/")) | join(" ")')"
 
 target_features="$(rustc --print target-features | awk '{ if ($1 == "") { exit 0 } if (NR != 1 && $1 != "crt-static" && $1 != "soft-float") { if (NR == 2) { printf "+%s", $1 } else { printf ",+%s", $1 } } }')"
 

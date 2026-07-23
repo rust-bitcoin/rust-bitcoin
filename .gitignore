@@ -13,7 +13,6 @@ bitcoin/target
 hashes/target
 
 # Test artifacts
-bitcoin/dep_test
 mutants.out*
 fuzz/coverage
 
