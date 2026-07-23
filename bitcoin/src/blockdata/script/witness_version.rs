@@ -11,7 +11,7 @@ use crate::script::Instruction;
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(no_inline)]
-pub use self::error::{FromStrError, TryFromInstructionError, TryFromError};
+pub use self::error::{ParseWitnessVersionError, TryFromInstructionError, InvalidWitnessVersionError};
 
 #[doc(inline)]
 pub use primitives::witness_version::WitnessVersion;
@@ -37,7 +37,7 @@ pub mod error {
 
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[doc(no_inline)]
-    pub use primitives::witness_version::error::{FromStrError, TryFromError};
+    pub use primitives::witness_version::error::{ParseWitnessVersionError, InvalidWitnessVersionError};
 
     /// Error attempting to create a [`WitnessVersion`] from an [`Instruction`]
     ///
@@ -47,7 +47,7 @@ pub mod error {
     #[non_exhaustive]
     pub enum TryFromInstructionError {
         /// Cannot convert OP to a witness version.
-        TryFrom(TryFromError),
+        TryFrom(InvalidWitnessVersionError),
         /// Cannot create a witness version from non-zero data push.
         DataPush,
     }
@@ -76,7 +76,7 @@ pub mod error {
         }
     }
 
-    impl From<TryFromError> for TryFromInstructionError {
-        fn from(e: TryFromError) -> Self { Self::TryFrom(e) }
+    impl From<InvalidWitnessVersionError> for TryFromInstructionError {
+        fn from(e: InvalidWitnessVersionError) -> Self { Self::TryFrom(e) }
     }
 }

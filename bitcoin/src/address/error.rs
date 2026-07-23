@@ -19,7 +19,7 @@ pub enum FromScriptError {
     /// A witness program error.
     WitnessProgram(witness_program::Error),
     /// A witness version construction error.
-    WitnessVersion(witness_version::TryFromError),
+    WitnessVersion(witness_version::InvalidWitnessVersionError),
 }
 
 impl From<Infallible> for FromScriptError {
@@ -51,8 +51,8 @@ impl From<witness_program::Error> for FromScriptError {
     fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
 }
 
-impl From<witness_version::TryFromError> for FromScriptError {
-    fn from(e: witness_version::TryFromError) -> Self { Self::WitnessVersion(e) }
+impl From<witness_version::InvalidWitnessVersionError> for FromScriptError {
+    fn from(e: witness_version::InvalidWitnessVersionError) -> Self { Self::WitnessVersion(e) }
 }
 
 /// Address type is either invalid or not supported in rust-bitcoin.
@@ -176,7 +176,7 @@ pub enum Bech32Error {
     /// Parse SegWit Bech32 error.
     ParseBech32(ParseBech32Error),
     /// A witness version conversion/parsing error.
-    WitnessVersion(witness_version::TryFromError),
+    WitnessVersion(witness_version::InvalidWitnessVersionError),
     /// A witness program error.
     WitnessProgram(witness_program::Error),
     /// Tried to parse an unknown HRP.
@@ -211,8 +211,8 @@ impl std::error::Error for Bech32Error {
     }
 }
 
-impl From<witness_version::TryFromError> for Bech32Error {
-    fn from(e: witness_version::TryFromError) -> Self { Self::WitnessVersion(e) }
+impl From<witness_version::InvalidWitnessVersionError> for Bech32Error {
+    fn from(e: witness_version::InvalidWitnessVersionError) -> Self { Self::WitnessVersion(e) }
 }
 
 impl From<witness_program::Error> for Bech32Error {
