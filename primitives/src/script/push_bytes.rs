@@ -4,7 +4,6 @@
 
 use core::borrow::{Borrow, BorrowMut};
 use core::convert::Infallible;
-use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "alloc")]
 use alloc::borrow::ToOwned as _;
@@ -331,16 +330,6 @@ impl AsMut<[u8]> for PushBytes {
     fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
 }
 
-impl Deref for PushBytesBuf {
-    type Target = PushBytes;
-
-    fn deref(&self) -> &Self::Target { self.as_push_bytes() }
-}
-
-impl DerefMut for PushBytesBuf {
-    fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_push_bytes() }
-}
-
 impl AsRef<Self> for PushBytes {
     fn as_ref(&self) -> &Self { self }
 }
@@ -477,12 +466,12 @@ mod tests {
         let pb = PushBytesBuf::new();
         assert!(pb.is_empty());
         assert_eq!(pb.len(), 0);
-        assert_eq!(pb.as_bytes(), &[0u8; 0]);
+        assert_eq!(pb.as_ref().as_bytes(), &[0u8; 0]);
 
         let pb = PushBytesBuf::default();
         assert!(pb.is_empty());
         assert_eq!(pb.len(), 0);
-        assert_eq!(pb.as_bytes(), &[0u8; 0]);
+        assert_eq!(pb.as_ref().as_bytes(), &[0u8; 0]);
     }
 
     #[test]
@@ -571,7 +560,7 @@ mod tests {
     fn push_bytes_buf_extend_from_slice() {
         let mut buf = PushBytesBuf::new();
         buf.extend_from_slice(&[0x01, 0x02, 0x03]).unwrap();
-        assert_eq!(buf.as_bytes(), &[0x01, 0x02, 0x03]);
+        assert_eq!(buf.as_ref().as_bytes(), &[0x01, 0x02, 0x03]);
     }
 
     #[test]
@@ -587,7 +576,7 @@ mod tests {
         let mut buf = PushBytesBuf::new();
         buf.extend_from_slice(&[0x01, 0x02, 0x03, 0x04]).unwrap();
         buf.truncate(2);
-        assert_eq!(buf.as_bytes(), &[0x01, 0x02]);
+        assert_eq!(buf.as_ref().as_bytes(), &[0x01, 0x02]);
     }
 
     #[test]
@@ -596,20 +585,20 @@ mod tests {
         buf.extend_from_slice(&[0x01, 0x02, 0x03]).unwrap();
         let removed = buf.remove(1);
         assert_eq!(removed, 0x02);
-        assert_eq!(buf.as_bytes(), &[0x01, 0x03]);
+        assert_eq!(buf.as_ref().as_bytes(), &[0x01, 0x03]);
     }
 
     #[test]
     fn push_bytes_buf_from_array() {
         let buf = PushBytesBuf::from([0x01, 0x02, 0x03]);
-        assert_eq!(buf.as_bytes(), &[0x01, 0x02, 0x03]);
+        assert_eq!(buf.as_ref().as_bytes(), &[0x01, 0x02, 0x03]);
     }
 
     #[test]
     fn push_bytes_buf_try_from_vec() {
         let vec = vec![0x01, 0x02, 0x03];
         let buf = PushBytesBuf::try_from(vec.clone()).unwrap();
-        assert_eq!(buf.as_bytes(), &vec[..]);
+        assert_eq!(buf.as_ref().as_bytes(), &vec[..]);
     }
 
     #[test]
@@ -627,18 +616,11 @@ mod tests {
     }
 
     #[test]
-    fn push_bytes_buf_deref() {
-        let buf = PushBytesBuf::from([0x01, 0x02]);
-        let pb: &PushBytes = &buf;
-        assert_eq!(pb.as_bytes(), buf.as_bytes());
-    }
-
-    #[test]
     fn push_bytes_buf_to_owned() {
         use alloc::borrow::ToOwned;
         let data = [0x01, 0x02, 0x03];
         let pb: &PushBytes = (&data).into();
         let owned: PushBytesBuf = pb.to_owned();
-        assert_eq!(owned.as_bytes(), pb.as_bytes());
+        assert_eq!(owned.as_ref().as_bytes(), pb.as_bytes());
     }
 }
