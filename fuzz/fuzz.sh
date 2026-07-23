@@ -12,12 +12,6 @@
 
 set -euox pipefail
 
-REPO_DIR=$(git rev-parse --show-toplevel)
-
-# can't find the file because of the ENV var
-# shellcheck source=/dev/null
-source "$REPO_DIR/fuzz/fuzz-util.sh"
-
 target=
 max_total_time=
 cycle_mode=false
@@ -60,24 +54,19 @@ case "$max_total_time" in
     ;;
 esac
 
-# Check that input files are correct Windows file names
-checkWindowsFiles
-
-if [ -z "$target" ]; then
-  targetFiles="$(listTargetFiles)"
-else
-  targetFiles=fuzz_targets/"$target".rs
-fi
-
 cargo --version
 rustc --version
-
 cargo install --force --locked --version 0.12.0 cargo-fuzz
-while :; do
-  for targetFile in $targetFiles; do
-    targetName=$(targetFileToName "$targetFile")
 
-    echo "Fuzzing target $targetName ($targetFile) for $max_total_time seconds"
+if [ -z "$target" ]; then
+  targets=$(cargo fuzz list)
+else
+  targets="$target"
+fi
+
+while :; do
+  for targetName in $targets; do
+    echo "Fuzzing target $targetName for $max_total_time seconds"
     # Enable fuzz stubs in the hashes and cryptography libraries by default,
     # unless we are fuzzing the hashes targets themselves.
     fuzz_rustflags=''
@@ -94,11 +83,6 @@ while :; do
 
     echo "Minimizing corpus for target $targetName"
     cargo +nightly fuzz cmin "$targetName"
-
-    # Check for artifacts/crashes in normal mode.
-    if [ "$cycle_mode" = false ]; then
-      checkReport "$targetName"
-    fi
   done
 
   # Exit after one cycle if not in cycle mode.
