@@ -930,7 +930,7 @@ fn instruction_script_num_parse() {
         (Instruction::Op(opcodes::all::OP_NOP), None),
     ];
     for (input, expected) in &push_bytes {
-        assert_eq!(Instruction::PushBytes(input).script_num(), *expected);
+        assert_eq!(Instruction::PushBytes(input.as_ref()).script_num(), *expected);
     }
     for (input, expected) in &ops {
         assert_eq!(input.script_num(), *expected);
