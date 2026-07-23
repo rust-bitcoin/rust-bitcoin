@@ -192,8 +192,8 @@ impl Block<Unchecked> {
         }
 
         if self.transactions[0].is_coinbase() {
-            let coinbase = self.transactions[0].clone();
-            if let Some(commitment) = witness_commitment_from_coinbase(&coinbase) {
+            let coinbase = &self.transactions[0];
+            if let Some(commitment) = witness_commitment_from_coinbase(coinbase) {
                 // Witness reserved value is in coinbase input witness.
                 let witness_vec: Vec<_> = coinbase.inputs[0].witness.iter().collect();
                 if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
