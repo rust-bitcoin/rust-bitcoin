@@ -25,5 +25,8 @@ rustdoc-args = ["--cfg", "docsrs"]
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_63)', 'cfg(rust_v_1_72)', 'cfg(rust_v_1_73)', 'cfg(rust_v_1_75)', 'cfg(rust_v_1_78)'] }
 
+[package.metadata.rbmt.api]
+enabled = true
+
 [package.metadata.rbmt.prerelease]
 enabled = true
