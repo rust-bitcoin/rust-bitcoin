@@ -104,10 +104,16 @@ dependencies = [
 name = "bitcoin-addresses"
 version = "0.0.0"
 dependencies = [
+ "base58ck 0.4.0",
+ "bech32",
  "bitcoin-crypto",
  "bitcoin-internals 0.6.0",
+ "bitcoin-network-kind",
  "bitcoin-primitives",
  "bitcoin-taproot-primitives",
+ "bitcoin_hashes 1.1.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -260,6 +266,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-private"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73290177011694f38ec25e165d0387ab7ea749a4b81cd4c80dae5988229f7a57"
+
+[[package]]
 name = "bitcoin-taproot-primitives"
 version = "0.1.0"
 dependencies = [
@@ -292,6 +304,15 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_test",
+]
+
+[[package]]
+name = "bitcoin_hashes"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d7066118b13d4b20b23645932dfb3a81ce7e29f95726c2036fa33cd7b092501"
+dependencies = [
+ "bitcoin-private",
 ]
 
 [[package]]
@@ -507,7 +528,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e0cc0f1cf93f4969faf3ea1c7d8a9faed25918d96affa959720823dfe86d4f3"
 dependencies = [
- "bitcoin_hashes 0.14.101",
+ "bitcoin_hashes 0.12.0",
  "secp256k1-sys 0.10.0",
  "serde",
 ]

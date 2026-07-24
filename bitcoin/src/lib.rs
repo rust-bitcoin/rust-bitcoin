@@ -102,6 +102,7 @@ pub mod ext {
     //! ```
     #[rustfmt::skip] // Use terse custom grouping.
     pub use crate::{
+        address::AddressExt as _,
         block::{BlockCheckedExt as _, HeaderExt as _},
         key::{FullPublicKeyExt as _, LegacyPublicKeyExt as _},
         network::NetworkExt as _,
