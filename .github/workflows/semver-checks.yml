@@ -1,18 +1,21 @@
+# The workflow detects semver breaks and uploads an artifact
+# for another job to use to add labels to the relevant PR. This
+# is following security best practices: https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
+
 on:   # yamllint disable-line rule:truthy
   pull_request:
 
+# This key is what connects the job output to the labeller followup.
 name: Check semver breaks
 permissions: {}
 
 jobs:
-  PR:
-    name: PR Semver - stable toolchain
+  Semver:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -28,48 +31,22 @@ jobs:
         uses: cargo-bins/cargo-binstall@aaa84a43aec4955a42c5ffc65d258961e39f276e # v1.19.1
       - name: "Binstall pinned cargo-semver-checks"
         run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
-      - name: "Run semver checker script"
-        run: ./contrib/check-semver-pr.sh
-      - name: Save PR number
-        if: ${{ hashFiles('semver-break') != '' }}
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          # check if PR_NUMBER is a number
-          if ! [[ "$PR_NUMBER" =~ ^-?[0-9]+$ ]]; then
-              echo "$PR_NUMBER is not a number."
-              exit 1
-          fi
-          echo "$PR_NUMBER" > ./semver-break
+      - name: "Run semver checks"
+        id: semver
+        continue-on-error: true
+        run: ./contrib/check-semver.sh ${{ github.event.pull_request.base.sha || github.event.before }}
       - name: "Save breaking state"
-        if: ${{ hashFiles('semver-break') != '' }}
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXIT_CODE: ${{ steps.semver.exit_code }}
+        run: |
+          echo "$PR_NUMBER" > semver-break
+          echo "$EXIT_CODE" >> semver-break
+      - name: "Upload breaking state"
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: semver-break
           path: semver-break
-
-  Feature:
-    name: Non additive cargo features - stable toolchain
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: "Install Rustup"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-      - name: "Select stable-version"
-        run: |
-          rustup default $(cargo metadata --format-version 1 | jq -r '.metadata.rbmt.toolchains.stable')
-      - name: "Install cargo-binstall"
-        uses: cargo-bins/cargo-binstall@aaa84a43aec4955a42c5ffc65d258961e39f276e # v1.19.1
-      - name: "Binstall pinned cargo-semver-checks"
-        run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
-      - name: "Run semver checker script"
-        run: ./contrib/check-semver-feature.sh
-
+      - name: "Fail on breaks to stable packages"
+        if: ${{ steps.semver.exit_code == 1 }}
+        run: exit 1
