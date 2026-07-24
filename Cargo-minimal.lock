@@ -102,7 +102,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-addresses"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bitcoin-crypto",
  "bitcoin-internals 0.6.0",
