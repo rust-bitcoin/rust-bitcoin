@@ -22,7 +22,7 @@ jobs:
           ref: "refs/pull/${{ github.event.number }}/merge"
           persist-credentials: false
       - name: Generate label config
-        run: cd master && SCAN_DIR=../merge ./contrib/gen_label_config.sh
+        run: cd master && SCAN_DIR=../merge ./.github/gen_label_config.sh
       - name: Update labels
         uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
         with:
