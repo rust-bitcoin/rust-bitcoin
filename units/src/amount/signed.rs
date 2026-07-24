@@ -434,14 +434,9 @@ impl SignedAmount {
     #[inline]
     #[must_use]
     pub const fn checked_add(self, rhs: Self) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat().checked_add(rhs.to_sat()) {
-            Some(res) => match Self::from_sat(res) {
-                Ok(amount) => Some(amount),
-                Err(_) => None,
-            },
-            None => None,
-        }
+        let Some(sat) = self.to_sat().checked_add(rhs.to_sat()) else { return None };
+        let Ok(amount) = Self::from_sat(sat) else { return None };
+        Some(amount)
     }
 
     /// Checked subtraction.
@@ -451,14 +446,9 @@ impl SignedAmount {
     #[inline]
     #[must_use]
     pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat().checked_sub(rhs.to_sat()) {
-            Some(res) => match Self::from_sat(res) {
-                Ok(amount) => Some(amount),
-                Err(_) => None,
-            },
-            None => None,
-        }
+        let Some(sat) = self.to_sat().checked_sub(rhs.to_sat()) else { return None };
+        let Ok(amount) = Self::from_sat(sat) else { return None };
+        Some(amount)
     }
 
     /// Checked multiplication.
@@ -468,14 +458,9 @@ impl SignedAmount {
     #[inline]
     #[must_use]
     pub const fn checked_mul(self, rhs: i64) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat().checked_mul(rhs) {
-            Some(res) => match Self::from_sat(res) {
-                Ok(amount) => Some(amount),
-                Err(_) => None,
-            },
-            None => None,
-        }
+        let Some(sat) = self.to_sat().checked_mul(rhs) else { return None };
+        let Ok(amount) = Self::from_sat(sat) else { return None };
+        Some(amount)
     }
 
     /// Checked integer division.
@@ -486,14 +471,9 @@ impl SignedAmount {
     #[inline]
     #[must_use]
     pub const fn checked_div(self, rhs: i64) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat().checked_div(rhs) {
-            Some(res) => match Self::from_sat(res) {
-                Ok(amount) => Some(amount),
-                Err(_) => None, // Unreachable because of checked_div above.
-            },
-            None => None,
-        }
+        let Some(sat) = self.to_sat().checked_div(rhs) else { return None };
+        let Ok(amount) = Self::from_sat(sat) else { return None };
+        Some(amount)
     }
 
     /// Checked remainder.
@@ -502,14 +482,9 @@ impl SignedAmount {
     #[inline]
     #[must_use]
     pub const fn checked_rem(self, rhs: i64) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat().checked_rem(rhs) {
-            Some(res) => match Self::from_sat(res) {
-                Ok(amount) => Some(amount),
-                Err(_) => None, // Unreachable because of checked_rem above.
-            },
-            None => None,
-        }
+        let Some(sat) = self.to_sat().checked_rem(rhs) else { return None };
+        let Ok(amount) = Self::from_sat(sat) else { return None };
+        Some(amount)
     }
 
     /// Subtraction that doesn't allow negative [`SignedAmount`]s.

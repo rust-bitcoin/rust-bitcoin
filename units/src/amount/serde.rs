@@ -94,7 +94,7 @@ pub mod as_sat {
         use core::fmt;
         use core::marker::PhantomData;
 
-        use serde::{de, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serialize, Serializer};
 
         use crate::SignedAmount;
 
@@ -104,13 +104,7 @@ pub mod as_sat {
         where
             A: Into<SignedAmount> + Copy,
         {
-            match *a {
-                Some(a) => {
-                    let amount: SignedAmount = a.into();
-                    s.serialize_some(&amount.to_sat())
-                }
-                None => s.serialize_none(),
-            }
+            a.map(Into::into).map(SignedAmount::to_sat).serialize(s)
         }
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Option<A>, D::Error>
@@ -171,10 +165,7 @@ pub mod as_sat {
         where
             A: Into<SignedAmount> + Copy,
         {
-            s.collect_seq(a.iter().map(|amount| {
-                let signed_amount: SignedAmount = (*amount).into();
-                signed_amount.to_sat()
-            }))
+            s.collect_seq(a.iter().map(|&amount| amount.into()).map(SignedAmount::to_sat))
         }
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Vec<A>, D::Error>
@@ -272,11 +263,8 @@ pub mod as_btc {
         where
             A: Into<SignedAmount> + Copy,
         {
-            match *a {
-                Some(a) => {
-                    let amount: SignedAmount = a.into();
-                    f64::serialize(&amount.to_float_in(Denomination::Bitcoin), s)
-                }
+            match a.map(Into::into).map(|amt| amt.to_float_in(Denomination::Bitcoin)) {
+                Some(a) => f64::serialize(&a, s),
                 None => s.serialize_none(),
             }
         }
@@ -441,11 +429,8 @@ pub mod as_str {
         where
             A: Into<SignedAmount> + Copy,
         {
-            match *a {
-                Some(a) => {
-                    let amount: SignedAmount = a.into();
-                    str::serialize(&amount.to_string_in(Denomination::Bitcoin), s)
-                }
+            match a.map(Into::into).map(|amt| amt.to_string_in(Denomination::Bitcoin)) {
+                Some(a) => str::serialize(&a, s),
                 None => s.serialize_none(),
             }
         }
