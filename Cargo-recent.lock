@@ -73,7 +73,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin"
-version = "0.33.0-beta"
+version = "0.34.0-beta"
 dependencies = [
  "arbitrary",
  "base58ck 0.4.0",
@@ -101,7 +101,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-addresses"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bitcoin-crypto",
  "bitcoin-internals 0.6.0",
@@ -154,7 +154,7 @@ version = "0.0.1"
 dependencies = [
  "arbitrary",
  "bitcoin 0.32.102",
- "bitcoin 0.33.0-beta",
+ "bitcoin 0.34.0-beta",
  "bitcoin-consensus-encoding 1.1.0",
  "bitcoin-p2p-messages",
  "libfuzzer-sys",
