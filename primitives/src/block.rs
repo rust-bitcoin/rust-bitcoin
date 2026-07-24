@@ -7,6 +7,8 @@
 //! module describes structures and functions needed to describe
 //! these blocks and the blockchain.
 
+#[cfg(feature = "alloc")]
+use core::borrow::Borrow;
 use core::fmt;
 #[cfg(feature = "alloc")]
 use core::marker::PhantomData;
@@ -391,8 +393,12 @@ crate::decoder_newtype! {
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
 /// you should not unwrap the `Option` returned by this method!
 #[cfg(feature = "alloc")]
-pub fn compute_merkle_root(transactions: &[Transaction]) -> Option<TxMerkleNode> {
-    let hashes = transactions.iter().map(Transaction::compute_txid);
+pub fn compute_merkle_root<T>(transactions: T) -> Option<TxMerkleNode>
+where
+    T: IntoIterator,
+    T::Item: Borrow<Transaction>,
+{
+    let hashes = transactions.into_iter().map(|t| t.borrow().compute_txid());
     TxMerkleNode::calculate_root(hashes)
 }
 
@@ -406,13 +412,17 @@ pub fn compute_merkle_root(transactions: &[Transaction]) -> Option<TxMerkleNode>
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
 /// you should not unwrap the `Option` returned by this method!
 #[cfg(feature = "alloc")]
-pub fn compute_witness_root(transactions: &[Transaction]) -> Option<WitnessMerkleNode> {
-    let hashes = transactions.iter().enumerate().map(|(i, t)| {
+pub fn compute_witness_root<T>(transactions: T) -> Option<WitnessMerkleNode>
+where
+    T: IntoIterator,
+    T::Item: Borrow<Transaction>,
+{
+    let hashes = transactions.into_iter().enumerate().map(|(i, t)| {
         if i == 0 {
             // Replace the first hash with zeroes.
             Wtxid::COINBASE
         } else {
-            t.compute_wtxid()
+            t.borrow().compute_wtxid()
         }
     });
     WitnessMerkleNode::calculate_root(hashes)
