@@ -36,7 +36,7 @@ hex = { package = "hex-conservative", version = "0.2.2", default-features = fals
 bitcoin-io = { path = "../io", version = "0.1.101", default-features = false, optional = true }
 # Do NOT use this as a feature! Use the `schemars` feature instead.
 actual-schemars = { package = "schemars", version = "0.8.3", default-features = false, optional = true }
-serde = { version = "1.0.130", default-features = false, optional = true }
+serde = { version = "1.0.195", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0.19"

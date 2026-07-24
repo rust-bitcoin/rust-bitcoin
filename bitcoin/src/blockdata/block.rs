@@ -14,9 +14,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 #[cfg(feature = "encoding")]
-use encoding::{
-    ArrayDecoder, CompactSizeEncoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
-};
+use encoding::{ArrayDecoder, Decoder2, Decoder6, Encoder2, PrefixedSliceEncoder, VecDecoder};
 use hashes::{sha256d, Hash, HashEngine};
 use io::{Read, Write};
 
@@ -790,17 +788,13 @@ impl Block {
 
 #[cfg(feature = "encoding")]
 impl encoding::Encode for Block {
-    type Encoder<'e> =
-        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>;
+    type Encoder<'e> = BlockEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder2::new(
+        BlockEncoder::new(Encoder2::new(
             self.header.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.txdata.len()),
-                SliceEncoder::without_length_prefix(&self.txdata),
-            ),
-        )
+            PrefixedSliceEncoder::new(&self.txdata),
+        ))
     }
 }
 
@@ -814,7 +808,7 @@ encoding::encoder_newtype! {
     /// The encoder for the [`Block`] type.
     #[derive(Debug, Clone)]
     pub struct BlockEncoder<'e>(
-        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+        Encoder2<HeaderEncoder<'e>, PrefixedSliceEncoder<'e, Transaction>>
     );
 }
 

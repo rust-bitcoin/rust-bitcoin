@@ -19,8 +19,8 @@ use core::{cmp, fmt};
 
 #[cfg(feature = "encoding")]
 use encoding::{
-    ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _,
-    Encoder2, Encoder3, Encoder6, EncoderStatus, SliceEncoder, VecDecoder,
+    ArrayEncoder, BytesEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder2, Encoder3,
+    Encoder6, EncoderStatus, PrefixedSliceEncoder, VecDecoder,
 };
 use hashes::{sha256d, Hash};
 use io::{Read, Write};
@@ -1709,14 +1709,8 @@ impl encoding::Encode for Transaction {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let version = self.version.encoder();
-        let inputs = Encoder2::new(
-            CompactSizeEncoder::new(self.input.len()),
-            SliceEncoder::without_length_prefix(self.input.as_ref()),
-        );
-        let outputs = Encoder2::new(
-            CompactSizeEncoder::new(self.output.len()),
-            SliceEncoder::without_length_prefix(self.output.as_ref()),
-        );
+        let inputs = PrefixedSliceEncoder::new(self.input.as_ref());
+        let outputs = PrefixedSliceEncoder::new(self.output.as_ref());
         let lock_time = self.lock_time.encoder();
 
         if self.uses_segwit_serialization() {
@@ -1745,8 +1739,8 @@ impl encoding::Decode for Transaction {
 type TransactionEncoderInner<'e> = Encoder6<
     VersionEncoder<'e>,
     Option<ArrayEncoder<2>>,
-    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
-    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
+    PrefixedSliceEncoder<'e, TxIn>,
+    PrefixedSliceEncoder<'e, TxOut>,
     Option<WitnessesEncoder<'e>>,
     LockTimeEncoder<'e>,
 >;
