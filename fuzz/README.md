@@ -52,20 +52,24 @@ To see the full list of targets, the most straightforward way is to run
 cargo fuzz list
 ```
 
-To run each of them for an hour, run
+To run continuous fuzzing, use the `-cycle` flag:
 
 ```bash
-./cycle.sh
+./fuzz.sh -cycle
 ```
-This script uses the `chrt` utility to try to reduce the priority of the
-jobs. If you would like to run for longer, the most straightforward way
-is to edit `cycle.sh` before starting. To run the fuzz-tests in parallel,
-you will need to implement a custom harness.
+
+This will loop through each target indefinitely, running each for 1 hour
+by default. The fuzzer will run at low process priority (using `chrt`) to
+avoid blocking other work. Pass `-max_total_time` to customize the duration:
+
+```bash
+./fuzz.sh -cycle -max_total_time=7200
+```
 
 To run a single fuzztest indefinitely, run
 
 ```bash
-cargo +nightly fuzz run "<target>"
+./fuzz.sh -cycle <target>
 ```
 
 ## Adding fuzz tests

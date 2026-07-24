@@ -7,9 +7,27 @@ set -euo pipefail
 
 REPO_DIR=$(git rev-parse --show-toplevel)
 
-# can't find the file because of the ENV var
-# shellcheck source=/dev/null
-source "$REPO_DIR/fuzz/fuzz-util.sh"
+# Sort order is affected by locale. See `man sort`.
+# > Set LC_ALL=C to get the traditional sort order that uses native byte values.
+export LC_ALL=C
+
+# List all fuzz target files.
+listTargetFiles() {
+  pushd "$REPO_DIR/fuzz" > /dev/null || exit 1
+  find fuzz_targets/ -type f -name "*.rs" | sort
+  popd > /dev/null || exit 1
+}
+
+# Convert fuzz target file path to target name
+# Example: fuzz_targets/bitcoin/deserialize_block.rs -> bitcoin_deserialize_block
+targetFileToName() {
+  echo "$1" \
+    | sed 's/^fuzz_targets\///' \
+    | sed 's/\.rs$//' \
+    | sed 's/\//_/g' \
+    | sed 's/^_//g'
+}
+
 source "$REPO_DIR/fuzz/generate-encoding-roundtrip.sh"
 
 CARGO_TOML="$REPO_DIR/fuzz/Cargo.toml"
