@@ -105,7 +105,8 @@ check_non_additive_features() {
     local has_non_additive=false
 
     for pkg_id in $(get_workspace_packages); do
-        local pkg_name=$(get_package_name "$pkg_id")
+        local pkg_name
+        pkg_name=$(get_package_name "$pkg_id")
 
         echo "Checking $pkg_name for non-additive features..."
         local current_features=""
@@ -121,7 +122,7 @@ check_non_additive_features() {
             --only-explicit-features \
             --baseline-root "$WORKSPACE_ROOT" \
             --baseline-features "" \
-            $current_features; then
+            "$current_features"; then
             echo "Non-additive cargo features found in $pkg_name"
             has_non_additive=true
         fi
@@ -144,15 +145,17 @@ check_semver_breaks() {
     # flag, but it doesn't work with the symlinks of the include
     # system in rust-bitcoin's repo. Using a worktree ensures symlinks
     # work correctly while keeping the baseline repo lightweight.
-    local baseline_dir=$(mktemp -d)
-    trap "git -C '$WORKSPACE_ROOT' worktree remove '$baseline_dir'" RETURN
+    local baseline_dir
+    baseline_dir=$(mktemp -d)
+    trap 'git -C "$WORKSPACE_ROOT" worktree remove "$baseline_dir"' RETURN
     git -C "$WORKSPACE_ROOT" worktree add "$baseline_dir" "$BASELINE_COMMIT"
 
     local has_breaks=false
     local has_hard_fails=false
 
     for pkg_id in $(get_workspace_packages); do
-        local pkg_name=$(get_package_name "$pkg_id")
+        local pkg_name
+        pkg_name=$(get_package_name "$pkg_id")
 
         for variant in $(get_package_variants "$pkg_id"); do
             echo "Checking $pkg_name ($variant)..."
@@ -175,7 +178,7 @@ check_semver_breaks() {
                 -p "$pkg_name" \
                 --release-type minor \
                 --baseline-root "$baseline_dir" \
-                $features_args; then
+                "$features_args"; then
                 echo "Breaking changes found in $pkg_name ($variant)"
                 has_breaks=true
 
