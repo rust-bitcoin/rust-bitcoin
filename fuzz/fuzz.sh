@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# This script is used to briefly fuzz every target when no target is provided. Otherwise, it will briefly fuzz the
-# provided target
+
+# Briefly fuzz the provided target, or all targets if none provided.
+#
+# Usage: fuzz.sh [TARGET] [-max_total_time=SECONDS]
 
 set -euox pipefail
 
@@ -55,8 +57,15 @@ rustc --version
 cargo install --force --locked --version 0.12.0 cargo-fuzz
 for targetFile in $targetFiles; do
   targetName=$(targetFileToName "$targetFile")
+
   echo "Fuzzing target $targetName ($targetFile) for $max_total_time seconds"
+  # Enable fuzz stubs in the hashes and cryptography libraries by default,
+  # unless we are fuzzing the hashes targets themselves.
+  fuzz_rustflags=''
+  if [[ ! "$targetName" =~ ^hashes_ ]]; then
+    fuzz_rustflags='--cfg=hashes_fuzz --cfg=secp256k1_fuzz'
+  fi
   # cargo-fuzz will check for the corpus at fuzz/corpus/<target>
-  cargo +nightly fuzz run "$targetName" -- -max_total_time="$max_total_time"
+  RUSTFLAGS="$RUSTFLAGS $fuzz_rustflags" cargo +nightly fuzz run "$targetName" -- -max_total_time="$max_total_time"
   checkReport "$targetName"
 done
