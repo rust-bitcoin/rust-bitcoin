@@ -248,7 +248,7 @@ impl std::error::Error for ParseBech32Error {
 #[non_exhaustive]
 pub enum Base58Error {
     /// Parse legacy Base58 error.
-    ParseBase58(base58::Error),
+    ParseBase58(base58::DecodeCheckError),
     /// Legacy address is too long.
     LegacyAddressTooLong(LegacyAddressTooLongError),
     /// Invalid base58 payload data length for legacy address.
@@ -285,8 +285,8 @@ impl std::error::Error for Base58Error {
     }
 }
 
-impl From<base58::Error> for Base58Error {
-    fn from(e: base58::Error) -> Self { Self::ParseBase58(e) }
+impl From<base58::DecodeCheckError> for Base58Error {
+    fn from(e: base58::DecodeCheckError) -> Self { Self::ParseBase58(e) }
 }
 
 impl From<LegacyAddressTooLongError> for Base58Error {

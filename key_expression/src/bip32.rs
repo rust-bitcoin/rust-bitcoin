@@ -1296,7 +1296,7 @@ pub mod error {
     #[non_exhaustive]
     pub enum ParseXprivError {
         /// Base58 encoding error.
-        Base58(base58::Error),
+        Base58(base58::DecodeCheckError),
         /// Base58 decoded data was an invalid length.
         InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Binary xpriv decode error.
@@ -1328,8 +1328,8 @@ pub mod error {
         }
     }
 
-    impl From<base58::Error> for ParseXprivError {
-        fn from(e: base58::Error) -> Self { Self::Base58(e) }
+    impl From<base58::DecodeCheckError> for ParseXprivError {
+        fn from(e: base58::DecodeCheckError) -> Self { Self::Base58(e) }
     }
 
     /// Error parsing a base58check BIP-0032 xpub string.
@@ -1337,7 +1337,7 @@ pub mod error {
     #[non_exhaustive]
     pub enum ParseXpubError {
         /// Base58 encoding error.
-        Base58(base58::Error),
+        Base58(base58::DecodeCheckError),
         /// Base58 decoded data was an invalid length.
         InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Binary xpub decode error.
@@ -1369,8 +1369,8 @@ pub mod error {
         }
     }
 
-    impl From<base58::Error> for ParseXpubError {
-        fn from(e: base58::Error) -> Self { Self::Base58(e) }
+    impl From<base58::DecodeCheckError> for ParseXpubError {
+        fn from(e: base58::DecodeCheckError) -> Self { Self::Base58(e) }
     }
 
     /// Attempted to derive a child of depth 256 or higher.

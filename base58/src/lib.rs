@@ -40,27 +40,26 @@ use core::fmt;
 pub use std::{string::String, vec::Vec};
 
 use hashes::sha256d;
-#[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 #[allow(unused)] // MSRV polyfill
-#[cfg(feature = "alloc")]
 use internals::slice::SliceExt;
 
+use crate::error::{
+    Base256Error, DecodeCheckArrayErrorInner, IncorrectChecksumError, TooShortError,
+    UnexpectedLengthError,
+};
 #[cfg(not(feature = "alloc"))]
-use crate::error::InputTooLongErrorInner;
-#[cfg(feature = "alloc")]
-use crate::error::{IncorrectChecksumError, TooShortError};
+use crate::error::{DecodeCheckError, InputTooLongErrorInner, InvalidCharacterError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
-pub use self::error::{Error, InvalidCharacterError};
+pub use self::error::{DecodeCheckError, InvalidCharacterError};
 #[doc(no_inline)]
-pub use self::error::InputTooLongError;
+pub use self::error::{DecodeCheckArrayError, InputTooLongError};
 
 #[rustfmt::skip]
-#[cfg(feature = "alloc")]
 static BASE58_DIGITS: [Option<u8>; 128] = [
     None,     None,     None,     None,     None,     None,     None,     None,     // 0-7
     None,     None,     None,     None,     None,     None,     None,     None,     // 8-15
@@ -80,47 +79,59 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
     Some(55), Some(56), Some(57), None,     None,     None,     None,     None,     // 120-127
 ];
 
+/// Builds the little-endian base-256 representation of base58 `data` into `scratch`.
+///
+/// The padding zero bytes are not decoded, so the big-endian decoded value is directly read
+/// back to front.
+///
+/// # Errors
+///
+/// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
+fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Error<T::Err>> {
+    // Build in base 256
+    for d58 in data.bytes() {
+        // Compute "X = X * 58 + next_digit" in base 256
+        if usize::from(d58) >= BASE58_DIGITS.len() {
+            return Err(Base256Error::InvalidChar(InvalidCharacterError::new(d58)));
+        }
+        let mut carry = match BASE58_DIGITS[usize::from(d58)] {
+            Some(d58) => u32::from(d58),
+            None => {
+                return Err(Base256Error::InvalidChar(InvalidCharacterError::new(d58)));
+            }
+        };
+        for d256 in scratch.slice_mut() {
+            carry += u32::from(*d256) * 58;
+            *d256 = carry as u8; // cast loses data intentionally
+            carry /= 256;
+        }
+        while carry > 0 {
+            // This function (build_base256) is only ever called with a Vec (infallible) or an ArrayVec with a pre-checked size.
+            scratch.try_push(carry as u8).map_err(Base256Error::Buffer)?; // cast loses data intentionally
+            carry /= 256;
+        }
+    }
+    Ok(())
+}
+
 /// Decodes a base58-encoded string into a byte vector.
 ///
 /// # Errors
 ///
 /// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
-#[allow(clippy::missing_panics_doc)] // Internal assertion, not user-controllable.
 #[cfg(feature = "alloc")]
 pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     // 11/15 is just over log_256(58)
     let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
-    // Build in base 256
-    for d58 in data.bytes() {
-        // Compute "X = X * 58 + next_digit" in base 256
-        if usize::from(d58) >= BASE58_DIGITS.len() {
-            return Err(InvalidCharacterError::new(d58));
-        }
-        let mut carry = match BASE58_DIGITS[usize::from(d58)] {
-            Some(d58) => u32::from(d58),
-            None => {
-                return Err(InvalidCharacterError::new(d58));
-            }
-        };
-        if scratch.is_empty() {
-            for _ in 0..scratch.capacity() {
-                scratch.push(carry as u8);
-                carry /= 256;
-            }
-        } else {
-            for d256 in &mut scratch {
-                carry += u32::from(*d256) * 58;
-                *d256 = carry as u8; // cast loses data intentionally
-                carry /= 256;
-            }
-        }
-        assert_eq!(carry, 0);
-    }
+    build_base256(data, &mut scratch).map_err(|e| match e {
+        Base256Error::Buffer(_) => unreachable!("Vec cannot fail try_push"),
+        Base256Error::InvalidChar(err) => err,
+    })?;
 
     // Copy leading zeroes directly
     let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).map(|_| 0).collect();
     // Copy rest of string
-    ret.extend(scratch.into_iter().rev().skip_while(|&x| x == 0));
+    ret.extend(scratch.into_iter().rev());
     Ok(ret)
 }
 
@@ -132,7 +143,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 /// * The decoded data is less than 4 bytes (too short for checksum verification).
 /// * The checksum does not match the expected value.
 #[cfg(feature = "alloc")]
-pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
+pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     let mut ret: Vec<u8> = decode(data)?;
     let (remaining, &data_check) =
         ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
@@ -148,6 +159,76 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
 
     ret.truncate(remaining.len());
     Ok(ret)
+}
+
+/// Decodes a base58check-encoded string into a fixed-size array, verifying the checksum.
+///
+/// This does not require `alloc`, but it only works for inputs up to 128 characters long. `N` is
+/// the expected length of the decoded payload (excluding the 4 byte checksum). Decoding will fail if
+/// the payload is any other length.
+///
+/// # Errors
+///
+/// * The input contains an invalid base58 character.
+/// * The decoded data is less than 4 bytes (too short for checksum verification).
+/// * The checksum does not match the expected value.
+/// * The input is longer than 128 characters.
+/// * The decoded payload length is not exactly `N` bytes.
+#[allow(clippy::missing_panics_doc)] // payload length is checked before cast unwrap
+pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
+    // 11/15 is just over log_256(58), so the decoded length never exceeds the input length.
+    let mut scratch = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+    build_base256(data, &mut scratch)
+        .map_err(|e| match e {
+            // Too long to decode within the fixed buffer. Report an approximate decoded length.
+            Base256Error::Buffer(_) =>
+                DecodeCheckArrayErrorInner::UnexpectedLength(UnexpectedLengthError {
+                    expected: N,
+                    actual: data.len() * 11 / 15,
+                }),
+            Base256Error::InvalidChar(err) =>
+                DecodeCheckArrayErrorInner::Decode(DecodeCheckError::from(err)),
+        })
+        .map_err(DecodeCheckArrayError)?;
+
+    let leading_zeros = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).count();
+    let decoded_len = leading_zeros + scratch.len();
+
+    let mut decoded = [0u8; SHORT_OPT_BUFFER_LEN];
+    scratch.as_mut_slice().reverse();
+
+    // Copy the scratch into a subslice, erroring if out of range.
+    let write_slice = decoded
+        .get_mut(leading_zeros..decoded_len)
+        .ok_or(UnexpectedLengthError { expected: N, actual: data.len() * 11 / 15 })
+        .map_err(DecodeCheckArrayErrorInner::UnexpectedLength)
+        .map_err(DecodeCheckArrayError)?;
+    write_slice.copy_from_slice(&scratch);
+    let decoded = &decoded[..decoded_len];
+
+    let (payload, &data_check) = decoded.split_last_chunk::<4>().ok_or_else(|| {
+        DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(DecodeCheckError::from(
+            TooShortError { length: decoded_len },
+        )))
+    })?;
+
+    if payload.len() != N {
+        return Err(DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
+            UnexpectedLengthError { expected: N, actual: payload.len() },
+        )));
+    }
+
+    let hash_check = *sha256d::Hash::hash(payload).as_byte_array().sub_array::<0, 4>();
+    let expected = u32::from_le_bytes(hash_check);
+    let actual = u32::from_le_bytes(data_check);
+
+    if actual != expected {
+        return Err(DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(
+            DecodeCheckError::from(IncorrectChecksumError { incorrect: actual, expected }),
+        )));
+    }
+
+    Ok(payload.try_into().expect("payload length checked to equal N"))
 }
 
 const SHORT_OPT_BUFFER_LEN: usize = 128;
@@ -333,8 +414,8 @@ fn encode_to_buffer<I: Iterator<Item = u8>, T: Buffer>(data: I, buf: &mut T) -> 
 }
 
 #[cfg(test)]
-#[cfg(feature = "alloc")]
 mod tests {
+    #[cfg(feature = "alloc")]
     use alloc::vec;
 
     use hex::hex;
@@ -342,6 +423,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn base58_encode() {
         // Basics
         assert_eq!(Base58CkString::encode_unbounded(&[13, 36][..]).as_str(), "7YY3x3vS");
@@ -374,6 +456,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn base58_decode() {
         // Basics
         assert_eq!(decode("1").ok(), Some(vec![0u8]));
@@ -395,6 +478,75 @@ mod tests {
     }
 
     #[test]
+    fn decode_check_to_array_roundtrip() {
+        let addr = hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d");
+        let encoded = Base58CkString::encode(&addr).unwrap();
+
+        let decoded = decode_check_to_array::<21>(encoded.as_str()).unwrap();
+        assert_eq!(decoded, addr);
+        #[cfg(feature = "alloc")]
+        assert_eq!(decoded.as_slice(), decode_check(encoded.as_str()).unwrap().as_slice());
+    }
+
+    #[test]
+    fn decode_check_to_array_errors() {
+        use crate::error::DecodeCheckArrayErrorInner;
+
+        const STRING_LEN: usize = SHORT_OPT_BUFFER_LEN + 1;
+        const APPROX_LEN: usize = STRING_LEN * 11 / 15;
+
+        let encoded = "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"; // 21 byte payload
+
+        let err = decode_check_to_array::<20>(encoded).unwrap_err();
+        assert_eq!(
+            err,
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
+                crate::error::UnexpectedLengthError { expected: 20, actual: 21 }
+            ))
+        );
+
+        assert!(matches!(
+            decode_check_to_array::<21>("¢").unwrap_err(),
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(_))
+        ));
+
+        assert!(matches!(
+            decode_check_to_array::<21>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHG").unwrap_err(),
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(_))
+        ));
+
+        let long = "1".repeat(STRING_LEN);
+        assert!(matches!(
+            decode_check_to_array::<21>(&long).unwrap_err(),
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
+                crate::UnexpectedLengthError { expected: 21, actual: APPROX_LEN }
+            ))
+        ));
+    }
+
+    #[test]
+    fn decode_check_to_array_at_input_length_limit() {
+        let encoded = "22UzJUbV3TnAhvzqfW411nkMuSfpgxfYfuuCyNPtrA9EQTViEdsmiBAqEyGP4EGFHb1c7XKWFmjWj9uzBdg8kpCVXAaWVGQmovSTnFjSjEEa9sAZqKUYrvnvgVtPVTuj";
+        let want = [0xFFu8; 89];
+        assert_eq!(encoded.len(), SHORT_OPT_BUFFER_LEN);
+        assert_eq!(decode_check_to_array::<89>(encoded).unwrap(), want);
+
+        let encoded = "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111DH4Svg";
+        let mut want = [0u8; 123];
+        want[122] = 0x01;
+        assert_eq!(encoded.len(), SHORT_OPT_BUFFER_LEN);
+        assert_eq!(decode_check_to_array::<123>(encoded).unwrap(), want);
+    }
+
+    #[test]
+    fn decode_check_to_array_leading_zeros() {
+        let data = [0u8, 0, 1, 2, 3];
+        let encoded = Base58CkString::encode(&data).unwrap();
+        assert_eq!(decode_check_to_array::<5>(encoded.as_str()).unwrap(), data);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn base58_roundtrip() {
         let s = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs";
         let v: Vec<u8> = decode_check(s).unwrap();
