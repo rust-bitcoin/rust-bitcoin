@@ -80,6 +80,9 @@ ROUNDTRIP_TYPES=(
     "p2p::message_network::UserAgent"
     "p2p::message_network::VersionMessage"
     "p2p::message_erlay::SendTxRcnCl"
+    "p2p::bip434::Feature"
+    "p2p::bip434::FeatureId"
+    "p2p::bip434::FeatureData"
 )
 
 # Types tested with check_script_roundtrip (Buf types that Deref to their Encodable target).
