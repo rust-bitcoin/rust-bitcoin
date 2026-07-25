@@ -30,7 +30,7 @@ fn main() {
 
     // derive child xpub
     let path = "84h/0h/0h".parse::<RelativeDerivationPath>().unwrap();
-    let child = root.derive_xpriv(&path).expect("only deriving three steps");
+    let child = root.derive_from_path(&path).expect("only deriving three steps");
     println!("Child at {path}: {child}");
     let xpub = Xpub::from_xpriv(&child);
     println!("Public key at {path}: {xpub}");
@@ -38,7 +38,7 @@ fn main() {
     // generate first receiving address at m/0/0
     // manually creating indexes this time
     let zero = ChildNumber::ZERO_NORMAL;
-    let public_key = xpub.derive_xpub([zero, zero]).unwrap().public_key;
+    let public_key = xpub.derive_from_path([zero, zero]).unwrap().public_key;
     let address = Address::p2wpkh(FullPublicKey::from_secp(public_key), KnownHrp::Mainnet);
     println!("First receiving address: {address}");
 }
