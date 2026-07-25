@@ -440,17 +440,9 @@ impl NumberOfBlocks {
         chain_tip: crate::BlockHeight,
         utxo_mined_at: crate::BlockHeight,
     ) -> Result<bool, InvalidHeightError> {
-        match chain_tip.checked_sub(utxo_mined_at) {
-            Some(diff) => {
-                if diff.to_u32() == u32::MAX {
-                    // Weird but ok none the less - protects against overflow below.
-                    return Ok(true);
-                }
-                // +1 because the next block will have height 1 higher than `chain_tip`.
-                Ok(u32::from(self.to_height()) <= diff.to_u32() + 1)
-            }
-            None => Err(InvalidHeightError { chain_tip, utxo_mined_at }),
-        }
+        chain_tip.checked_sub(utxo_mined_at)
+            .ok_or(InvalidHeightError { chain_tip, utxo_mined_at })
+            .map(|diff| u32::from(self.to_height()) <= diff.to_u32())
     }
 }
 
@@ -857,7 +849,7 @@ mod tests {
         let lock1 = LockTime::Blocks(NumberOfBlocks::from(10));
         assert!(lock1.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
-        let lock2 = LockTime::Blocks(NumberOfBlocks::from(21));
+        let lock2 = LockTime::Blocks(NumberOfBlocks::from(20));
         assert!(lock2.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
         let lock3 = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(10));
@@ -1018,12 +1010,12 @@ mod tests {
         let height_lock = LockTime::Blocks(NumberOfBlocks(10));
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
-        let chain_state1 = BlockHeight::from_u32(89);
+        let chain_state1 = BlockHeight::from_u32(90);
         let utxo_state1 = BlockHeight::from_u32(80);
         assert!(height_lock.is_satisfied_by_height(chain_state1, utxo_state1).unwrap());
 
         // Test case 2: Not satisfied (current_height < utxo_height + required)
-        let chain_state2 = BlockHeight::from_u32(88);
+        let chain_state2 = BlockHeight::from_u32(89);
         let utxo_state2 = BlockHeight::from_u32(80);
         assert!(!height_lock.is_satisfied_by_height(chain_state2, utxo_state2).unwrap());
 
