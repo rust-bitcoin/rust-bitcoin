@@ -229,6 +229,12 @@ impl Base58CkString {
             Base58CkInner::Large(ref data) => data.slice(),
         }
     }
+
+    /// Returns the number of bytes/ASCII chars in the base58check-encoded string.
+    pub fn len(&self) -> usize { self.as_bytes().len() }
+
+    /// Returns true if the base58check-encoded string is empty.
+    pub fn is_empty(&self) -> bool { self.len() == 0 }
 }
 
 impl AsRef<str> for Base58CkString {
