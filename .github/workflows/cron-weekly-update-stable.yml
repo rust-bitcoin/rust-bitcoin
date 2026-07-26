@@ -12,6 +12,7 @@ jobs:
       contents: write
       pull-requests: write
     strategy:
+      fail-fast: false
       matrix:
         # Update toolchain on master and LTS branches.
         branch: [master, 0.32.xxx, 0.32.xx]
