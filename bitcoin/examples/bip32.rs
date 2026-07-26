@@ -20,7 +20,7 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("not enough arguments. usage: {} <hex-encoded 32-byte seed>", &args[0]);
+        eprintln!("not enough arguments. usage: {} <hex-encoded 32-byte seed>", args[0]);
         process::exit(1);
     }
 
