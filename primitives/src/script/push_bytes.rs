@@ -2,14 +2,13 @@
 
 //! Contains `PushBytes` & co
 
-use core::borrow::{Borrow, BorrowMut};
-use core::convert::Infallible;
-use core::ops::{Deref, DerefMut};
-
 #[cfg(feature = "alloc")]
 use alloc::borrow::ToOwned as _;
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
+use core::borrow::{Borrow, BorrowMut};
+use core::convert::Infallible;
+use core::ops::{Deref, DerefMut};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
