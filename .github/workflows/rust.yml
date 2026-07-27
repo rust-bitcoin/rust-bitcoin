@@ -23,6 +23,9 @@ jobs:
       matrix:
         toolchain: [stable, msrv]
         dep: [minimal, recent]
+        exclude:
+          - toolchain: msrv
+            dep: recent
     steps:
       # Cleaning up github bloat so that test feature artifacts don't run out of disk.
       - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
@@ -40,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [api, lint, docs, docsrs]
+        task: [lint, docs]
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -48,6 +51,19 @@ jobs:
       - uses: ./.github/actions/setup-rbmt
       - name: "Run ${{ matrix.task }}"
         run: cargo rbmt ${{ matrix.task }}
+
+  API:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # History required for API diff.
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Run API check"
+        run: cargo rbmt api --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
 
   Prerelease:
     runs-on: ubuntu-24.04
@@ -129,7 +145,7 @@ jobs:
       - name: "Install target"
         run: rustup target add ${{ matrix.target }}
       - name: "Install cross"
-        run: cargo install cross --locked
+        run: cargo install cross --locked --git https://github.com/cross-rs/cross --rev 64b5bb4d3d34de062552b9a2093affe77b4ad16a
       - name: "Set dependencies"
         run: cp Cargo-recent.lock Cargo.lock
       - name: "Run cross test"
