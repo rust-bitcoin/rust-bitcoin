@@ -81,7 +81,7 @@ pub trait Validation: sealed::Validation + Sync + Send + Sized + Unpin {
 ///
 /// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
 #[cfg(feature = "alloc")]
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Block<V = Unchecked>
 where
     V: Validation,
@@ -251,6 +251,16 @@ impl<V: Validation> Block<V> {
     #[inline]
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
 }
+
+#[cfg(feature = "alloc")]
+impl<V: Validation> PartialEq for Block<V> {
+    fn eq(&self, other: &Self) -> bool {
+        self.header == other.header && self.transactions == other.transactions
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<V: Validation> Eq for Block<V> {}
 
 #[cfg(feature = "alloc")]
 impl From<Block> for BlockHash {
@@ -1712,6 +1722,38 @@ mod tests {
         .unwrap();
         let expected = WitnessMerkleNode::from_byte_array(exp_bytes);
         assert_eq!(result, (true, Some(expected)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_eq() {
+        let coinbase = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn::EMPTY_COINBASE],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::script::ScriptBuf::new(),
+            }],
+        };
+
+        let header = dummy_header();
+        let other_header = Header { nonce: header.nonce + 1, ..header };
+
+        assert_eq!(
+            Block::new_unchecked(header, vec![coinbase.clone()]),
+            Block::new_unchecked(header, vec![coinbase.clone()]),
+        );
+
+        assert_ne!(
+            Block::new_unchecked(header, vec![coinbase.clone()]),
+            Block::new_unchecked(other_header, vec![coinbase.clone()]),
+        );
+
+        assert_ne!(
+            Block::new_unchecked(header, vec![coinbase.clone()]),
+            Block::new_unchecked(header, vec![coinbase.clone(), coinbase]),
+        );
     }
 
     #[test]
