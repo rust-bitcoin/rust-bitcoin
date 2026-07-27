@@ -2,7 +2,7 @@
 on:   # yamllint disable-line rule:truthy
   push:
     branches:
-      - 0.32.x
+      - 0.32.xxx
   pull_request:
 
 name: Continuous integration
