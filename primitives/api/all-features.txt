@@ -501,6 +501,9 @@ impl core::str::traits::FromStr for bitcoin_primitives::block::Block<bitcoin_pri
   pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked> where Self: bitcoin_consensus_encoding::decode::Decode]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::block::Block
   pub fn bitcoin_primitives::block::Block::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::block::Block]
+impl<V: bitcoin_primitives::block::Validation> core::cmp::Eq for bitcoin_primitives::block::Block<V>
+impl<V: bitcoin_primitives::block::Validation> core::cmp::PartialEq for bitcoin_primitives::block::Block<V>
+  pub fn bitcoin_primitives::block::Block<V>::eq(&self, other: &Self) -> bool [impl: impl<V: bitcoin_primitives::block::Validation> core::cmp::PartialEq for bitcoin_primitives::block::Block<V>]
 impl<V: bitcoin_primitives::block::Validation> core::fmt::Display for bitcoin_primitives::block::Block<V> where Self: bitcoin_consensus_encoding::encode::Encode
   pub fn bitcoin_primitives::block::Block<V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<V: bitcoin_primitives::block::Validation> core::fmt::Display for bitcoin_primitives::block::Block<V> where Self: bitcoin_consensus_encoding::encode::Encode]
 impl<V: bitcoin_primitives::block::Validation> core::fmt::LowerHex for bitcoin_primitives::block::Block<V>
@@ -512,12 +515,8 @@ impl<V> bitcoin_consensus_encoding::encode::Encode for bitcoin_primitives::block
   pub fn bitcoin_primitives::block::Block<V>::encoder(&self) -> Self::Encoder [impl: impl<V> bitcoin_consensus_encoding::encode::Encode for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation]
 impl<V> core::clone::Clone for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::clone::Clone
   pub fn bitcoin_primitives::block::Block<V>::clone(&self) -> bitcoin_primitives::block::Block<V> [impl: impl<V> core::clone::Clone for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::clone::Clone]
-impl<V> core::cmp::Eq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::Eq
-impl<V> core::cmp::PartialEq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::PartialEq
-  pub fn bitcoin_primitives::block::Block<V>::eq(&self, other: &bitcoin_primitives::block::Block<V>) -> bool [impl: impl<V> core::cmp::PartialEq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::PartialEq]
 impl<V> core::fmt::Debug for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::fmt::Debug
   pub fn bitcoin_primitives::block::Block<V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<V> core::fmt::Debug for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::fmt::Debug]
-impl<V> core::marker::StructuralPartialEq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::PartialEq
 impl<V> core::marker::Freeze for bitcoin_primitives::block::Block<V>
 impl<V> core::marker::Send for bitcoin_primitives::block::Block<V>
 impl<V> core::marker::Sync for bitcoin_primitives::block::Block<V>
@@ -6766,6 +6765,9 @@ impl core::str::traits::FromStr for bitcoin_primitives::block::Block<bitcoin_pri
   pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked> where Self: bitcoin_consensus_encoding::decode::Decode]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::block::Block
   pub fn bitcoin_primitives::block::Block::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::block::Block]
+impl<V: bitcoin_primitives::block::Validation> core::cmp::Eq for bitcoin_primitives::block::Block<V>
+impl<V: bitcoin_primitives::block::Validation> core::cmp::PartialEq for bitcoin_primitives::block::Block<V>
+  pub fn bitcoin_primitives::block::Block<V>::eq(&self, other: &Self) -> bool [impl: impl<V: bitcoin_primitives::block::Validation> core::cmp::PartialEq for bitcoin_primitives::block::Block<V>]
 impl<V: bitcoin_primitives::block::Validation> core::fmt::Display for bitcoin_primitives::block::Block<V> where Self: bitcoin_consensus_encoding::encode::Encode
   pub fn bitcoin_primitives::block::Block<V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<V: bitcoin_primitives::block::Validation> core::fmt::Display for bitcoin_primitives::block::Block<V> where Self: bitcoin_consensus_encoding::encode::Encode]
 impl<V: bitcoin_primitives::block::Validation> core::fmt::LowerHex for bitcoin_primitives::block::Block<V>
@@ -6777,12 +6779,8 @@ impl<V> bitcoin_consensus_encoding::encode::Encode for bitcoin_primitives::block
   pub fn bitcoin_primitives::block::Block<V>::encoder(&self) -> Self::Encoder [impl: impl<V> bitcoin_consensus_encoding::encode::Encode for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation]
 impl<V> core::clone::Clone for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::clone::Clone
   pub fn bitcoin_primitives::block::Block<V>::clone(&self) -> bitcoin_primitives::block::Block<V> [impl: impl<V> core::clone::Clone for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::clone::Clone]
-impl<V> core::cmp::Eq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::Eq
-impl<V> core::cmp::PartialEq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::PartialEq
-  pub fn bitcoin_primitives::block::Block<V>::eq(&self, other: &bitcoin_primitives::block::Block<V>) -> bool [impl: impl<V> core::cmp::PartialEq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::PartialEq]
 impl<V> core::fmt::Debug for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::fmt::Debug
   pub fn bitcoin_primitives::block::Block<V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<V> core::fmt::Debug for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::fmt::Debug]
-impl<V> core::marker::StructuralPartialEq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::PartialEq
 impl<V> core::marker::Freeze for bitcoin_primitives::block::Block<V>
 impl<V> core::marker::Send for bitcoin_primitives::block::Block<V>
 impl<V> core::marker::Sync for bitcoin_primitives::block::Block<V>
