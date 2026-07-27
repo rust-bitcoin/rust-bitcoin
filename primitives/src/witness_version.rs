@@ -81,6 +81,26 @@ impl fmt::Display for WitnessVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", *self as u8) }
 }
 
+impl fmt::LowerHex for WitnessVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.to_num(), f) }
+}
+
+impl fmt::UpperHex for WitnessVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.to_num(), f) }
+}
+
+impl fmt::Octal for WitnessVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Octal::fmt(&self.to_num(), f) }
+}
+
+impl fmt::Binary for WitnessVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Binary::fmt(&self.to_num(), f) }
+}
+
 impl FromStr for WitnessVersion {
     type Err = ParseWitnessVersionError;
 
