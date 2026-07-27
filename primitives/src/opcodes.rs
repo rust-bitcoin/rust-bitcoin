@@ -22,7 +22,7 @@ use core::fmt;
 ///   Bitcoin Core's `IsPushOnly` considers `OP_RESERVED` to be a "push code", allowing this opcode
 ///   in contexts where only pushes are supposed to be allowed.
 /// </details>
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Opcode {
     code: u8,
 }
