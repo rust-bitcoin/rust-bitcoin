@@ -6559,10 +6559,18 @@ impl core::convert::TryFrom<bitcoin_primitives::opcodes::Opcode> for bitcoin_pri
 impl core::convert::TryFrom<u8> for bitcoin_primitives::witness_version::WitnessVersion
   pub type bitcoin_primitives::witness_version::WitnessVersion::Error = bitcoin_primitives::witness_version::error::InvalidWitnessVersionError [impl: impl core::convert::TryFrom<u8> for bitcoin_primitives::witness_version::WitnessVersion]
   pub fn bitcoin_primitives::witness_version::WitnessVersion::try_from(no: u8) -> core::result::Result<Self, Self::Error> [impl: impl core::convert::TryFrom<u8> for bitcoin_primitives::witness_version::WitnessVersion]
+impl core::fmt::Binary for bitcoin_primitives::witness_version::WitnessVersion
+  pub fn bitcoin_primitives::witness_version::WitnessVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Binary for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::fmt::Debug for bitcoin_primitives::witness_version::WitnessVersion
   pub fn bitcoin_primitives::witness_version::WitnessVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::fmt::Display for bitcoin_primitives::witness_version::WitnessVersion
   pub fn bitcoin_primitives::witness_version::WitnessVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_primitives::witness_version::WitnessVersion]
+impl core::fmt::LowerHex for bitcoin_primitives::witness_version::WitnessVersion
+  pub fn bitcoin_primitives::witness_version::WitnessVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::LowerHex for bitcoin_primitives::witness_version::WitnessVersion]
+impl core::fmt::Octal for bitcoin_primitives::witness_version::WitnessVersion
+  pub fn bitcoin_primitives::witness_version::WitnessVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Octal for bitcoin_primitives::witness_version::WitnessVersion]
+impl core::fmt::UpperHex for bitcoin_primitives::witness_version::WitnessVersion
+  pub fn bitcoin_primitives::witness_version::WitnessVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::UpperHex for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::hash::Hash for bitcoin_primitives::witness_version::WitnessVersion
   pub fn bitcoin_primitives::witness_version::WitnessVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl core::hash::Hash for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::marker::Copy for bitcoin_primitives::witness_version::WitnessVersion
