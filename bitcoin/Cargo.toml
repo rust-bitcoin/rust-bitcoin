@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin"
-version = "0.31.3"
+version = "0.31.4"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -27,7 +27,10 @@ bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
 std = ["secp256k1/std", "hashes/std", "bech32/std", "internals/std", "hex/std"]
-no-std = ["core2", "hashes/alloc", "hashes/core2", "bech32/alloc", "secp256k1/alloc", "hex/alloc", "hex/core2"]
+# The no-std feature was removed in a point release in order to publish an EOL release. The EOL
+# release should have been a README change only but core2 has been yanked so we could not publish
+# and still have a core2 dependency.
+# no-std = ["core2", "hashes/alloc", "hashes/core2", "bech32/alloc", "secp256k1/alloc", "hex/alloc", "hex/core2"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -45,8 +48,6 @@ base64 = { version = "0.21.3", optional = true }
 # Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.
 bitcoinconsensus = { version = "0.20.2-0.5.0", default-features = false, optional = true }
 
-# There is no reason to use this dependency directly, it is activated by the "no-std" feature.
-core2 = { version = "0.3.2", default-features = false, features = ["alloc"], optional = true }
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
