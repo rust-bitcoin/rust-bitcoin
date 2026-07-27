@@ -89,7 +89,7 @@ dependencies = [
  "bitcoin-network-kind",
  "bitcoin-primitives",
  "bitcoin-taproot-primitives",
- "bitcoin-units 0.4.0",
+ "bitcoin-units 0.4.1",
  "bitcoin_hashes 0.21.0",
  "bitcoinconsensus",
  "hex-conservative 1.1.0",
@@ -234,7 +234,7 @@ dependencies = [
  "bitcoin-internals 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitcoin-network-kind",
  "bitcoin-primitives",
- "bitcoin-units 0.4.0",
+ "bitcoin-units 0.4.1",
  "bitcoin_hashes 0.21.0",
  "hex-conservative 1.1.0",
  "serde",
@@ -248,7 +248,7 @@ dependencies = [
  "bincode",
  "bitcoin-consensus-encoding 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitcoin-internals 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bitcoin-units 0.4.0",
+ "bitcoin-units 0.4.1",
  "bitcoin_hashes 0.21.0",
  "hex-conservative 1.1.0",
  "serde",
@@ -283,15 +283,28 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-units"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "arbitrary",
  "bincode",
  "bitcoin-consensus-encoding 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bitcoin-internals 0.5.0",
+ "bitcoin-internals 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin-units 0.5.0",
  "serde",
  "serde_json",
  "serde_test",
+]
+
+[[package]]
+name = "bitcoin-units"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ae6dcb008158c2bdbe698470280439844be5f640310e4f5d6ef0a0209e066c2"
+dependencies = [
+ "arbitrary",
+ "bitcoin-consensus-encoding 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin-internals 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde",
 ]
 
 [[package]]
