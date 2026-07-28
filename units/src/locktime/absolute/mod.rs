@@ -13,6 +13,8 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::error::InputString;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use self::error::ParseError;
 #[cfg(doc)]
@@ -589,6 +591,28 @@ impl fmt::Display for Height {
 
 parse_int::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
 
+#[cfg(feature = "serde")]
+impl Serialize for Height {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u32::serialize(&self.to_u32(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Height {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Self::from_u32(u32::deserialize(d)?).map_err(serde::de::Error::custom)
+    }
+}
+
 /// The median timestamp of 11 consecutive blocks, representing "the timestamp" of the
 /// final block for locktime-checking purposes.
 ///
@@ -717,6 +741,28 @@ where
         let n = s.as_ref().parse::<i64>().map_err(ParseError::invalid_int(s))?;
         let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
         f(n).map_err(ParseError::from).map_err(Into::into)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for MedianTimePast {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u32::serialize(&self.to_u32(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for MedianTimePast {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Self::from_u32(u32::deserialize(d)?).map_err(serde::de::Error::custom)
     }
 }
 
