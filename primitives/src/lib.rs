@@ -10,6 +10,25 @@
 //! This crate can be used in a no-std environment but a lot of the functionality requires an
 //! allocator i.e., requires the `alloc` feature to be enabled.
 //!
+//! ### serde
+//!
+//! The consensus encodable types (`Block`, `block::Header`, `Transaction`, `TxIn`, and `TxOut`)
+//! deliberately do not implement serde traits. Instead, they can be de/serialized with the
+//! `bitcoin_consensus_encoding::serde_as_consensus` module.
+//!
+//! ```rust
+//! # #[cfg(feature = "serde")] {
+//! use serde::{Deserialize, Serialize};
+//! use bitcoin_primitives::Transaction;
+//!
+//! #[derive(Serialize, Deserialize)]
+//! struct Foo {
+//!    #[serde(with = "bitcoin_primitives::encoding::serde_as_consensus")]
+//!    tx: Transaction,
+//! }
+//! # }
+//! ```
+//!
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin/rust-bitcoin>
 
 #![no_std]
