@@ -1,12 +1,12 @@
 name: Update Rust Bitcoin Maintainer Tools
 on:
   schedule:
-    - cron: "10 0 * * 6" # Saturday at 00:10
+    - cron: "10 0 1 * *" # 1st of every month at 00:10
   workflow_dispatch: # allows manual triggering
 permissions: {}
 jobs:
-  format:
-    name: Update cargo rbmt
+  update-rbmt:
+    name: Update cargo-rbmt
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -39,8 +39,8 @@ jobs:
           token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
           author: Update RBMT Bot <bot@example.com>
           committer: Update RBMT Bot <bot@example.com>
-          title: Automated weekly update to cargo-rbmt (to ${{ env.rbmt_semver }})
+          title: Automated update to cargo-rbmt (to ${{ env.rbmt_semver }})
           body: |
             Automated update to rbmt-version by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
           commit-message: Automated update to cargo-rbmt-${{ env.rbmt_semver }}
-          branch: create-pull-request/weekly-rbmt-update
+          branch: create-pull-request/auto-rbmt-update
