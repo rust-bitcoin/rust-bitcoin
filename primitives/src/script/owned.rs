@@ -294,7 +294,7 @@ impl<T: ScriptHashableTag> ScriptBuf<T> {
 
 // Cannot derive due to generics.
 impl<T> Default for ScriptBuf<T> {
-    fn default() -> Self { Self(PhantomData, Vec::new()) }
+    fn default() -> Self { Self::new() }
 }
 
 impl<T> Deref for ScriptBuf<T> {
