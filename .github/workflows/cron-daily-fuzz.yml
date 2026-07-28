@@ -36,8 +36,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
         with:
           toolchain: '1.74.0'
+      - name: Install cargo-fuzz
+        run: cargo install --locked --version 0.12.0 cargo-fuzz
       - name: Fuzz shard ${{ matrix.shard_id }}
         working-directory: fuzz
+        shell: bash
         run: |
           shard_targets=($(cargo fuzz list | sort | awk -v shard=${{ matrix.shard_id }} 'BEGIN{i=0} {if (i++ % 16 == shard) print}'))
           for target in "${shard_targets[@]}"; do
