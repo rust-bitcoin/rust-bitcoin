@@ -440,9 +440,10 @@ impl NumberOfBlocks {
         chain_tip: crate::BlockHeight,
         utxo_mined_at: crate::BlockHeight,
     ) -> Result<bool, InvalidHeightError> {
-        chain_tip.checked_sub(utxo_mined_at)
+        chain_tip
+            .checked_sub(utxo_mined_at)
             .ok_or(InvalidHeightError { chain_tip, utxo_mined_at })
-            .map(|diff| u32::from(self.to_height()) <= diff.to_u32())
+            .map(|diff| u32::from(self.to_height()).saturating_sub(1) <= diff.to_u32())
     }
 }
 
@@ -849,7 +850,7 @@ mod tests {
         let lock1 = LockTime::Blocks(NumberOfBlocks::from(10));
         assert!(lock1.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
-        let lock2 = LockTime::Blocks(NumberOfBlocks::from(20));
+        let lock2 = LockTime::Blocks(NumberOfBlocks::from(21));
         assert!(lock2.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
         let lock3 = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(10));
@@ -1010,12 +1011,12 @@ mod tests {
         let height_lock = LockTime::Blocks(NumberOfBlocks(10));
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
-        let chain_state1 = BlockHeight::from_u32(90);
+        let chain_state1 = BlockHeight::from_u32(89);
         let utxo_state1 = BlockHeight::from_u32(80);
         assert!(height_lock.is_satisfied_by_height(chain_state1, utxo_state1).unwrap());
 
         // Test case 2: Not satisfied (current_height < utxo_height + required)
-        let chain_state2 = BlockHeight::from_u32(89);
+        let chain_state2 = BlockHeight::from_u32(88);
         let utxo_state2 = BlockHeight::from_u32(80);
         assert!(!height_lock.is_satisfied_by_height(chain_state2, utxo_state2).unwrap());
 
@@ -1024,6 +1025,28 @@ mod tests {
         let chain_state3 = BlockHeight::from_u32(1000);
         let utxo_state3 = BlockHeight::from_u32(80);
         assert!(!max_height_lock.is_satisfied_by_height(chain_state3, utxo_state3).unwrap());
+    }
+
+    #[test]
+    fn satisfied_by_height_boundary() {
+        for n in [0, 2, 5, 9, 20, u16::MAX] {
+            let lock = NumberOfBlocks::from_height(n);
+            let mined_at = BlockHeight::from_u32(100);
+
+            let first_spendable_tip = BlockHeight::from_u32(100 + u32::from(n).saturating_sub(1));
+            assert!(
+                lock.is_satisfied_by(first_spendable_tip, mined_at).unwrap(),
+                "n={n} must be satisfied at tip {first_spendable_tip} ({n} confirmations)"
+            );
+
+            if n > 1 {
+                let too_early = BlockHeight::from_u32(100 + u32::from(n) - 2);
+                assert!(
+                    !lock.is_satisfied_by(too_early, mined_at).unwrap(),
+                    "n={n} must not be satisfied at tip {too_early}"
+                );
+            }
+        }
     }
 
     #[test]
