@@ -289,10 +289,21 @@ fn c_object() {
 fn c_serde() {
     fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
 
+    // assert_serde::<amount::Denomination>();
+    assert_serde::<absolute::LockTime>();
+    assert_serde::<relative::LockTime>();
+    // assert_serde::<result::MathOp>();
+    // assert_serde::<result::NumOpResult<Amount>>();
     assert_serde::<BlockHeight>();
     assert_serde::<BlockHeightInterval>();
     assert_serde::<BlockMtp>();
     assert_serde::<BlockMtpInterval>();
+    assert_serde::<locktime::absolute::Height>();
+    assert_serde::<locktime::absolute::MedianTimePast>();
+    assert_serde::<locktime::relative::NumberOf512Seconds>();
+    assert_serde::<locktime::relative::NumberOfBlocks>();
+    assert_serde::<pow::CompactTarget>();
+    assert_serde::<BlockTime>();
     assert_serde::<Weight>();
     assert_serde::<Sequence>();
 }
