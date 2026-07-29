@@ -2,54 +2,13 @@
 
 //! Parsing utilities.
 
-use core::convert::Infallible;
-use core::fmt;
 use core::str::FromStr;
 
 use internals::error::InputString;
-use internals::write_err;
 
-/// Error with rich context returned when a string can't be parsed as an integer.
-///
-/// This is an extension of [`core::num::ParseIntError`], which carries the input that failed to
-/// parse as well as type information. As a result it provides very informative error messages that
-/// make it easier to understand the problem and correct mistakes.
-///
-/// Note that this is larger than the type from `core` so if it's passed through a deep call stack
-/// in a performance-critical application you may want to box it or throw away the context by
-/// converting to `core` type.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct ParseIntError {
-    pub(crate) input: InputString,
-    // for displaying - see Display impl with nice error message below
-    pub(crate) bits: u8,
-    // We could represent this as a single bit, but it wouldn't actually decrease the cost of moving
-    // the struct because String contains pointers so there will be padding of bits at least
-    // pointer_size - 1 bytes: min 1B in practice.
-    pub(crate) is_signed: bool,
-    pub(crate) source: core::num::ParseIntError,
-}
-
-impl fmt::Display for ParseIntError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let signed = if self.is_signed { "signed" } else { "unsigned" };
-        write_err!(f, "{} ({}, {}-bit)", self.input.display_cannot_parse("integer"), signed, self.bits; self.source)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for ParseIntError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.source) }
-}
-
-impl From<ParseIntError> for core::num::ParseIntError {
-    fn from(value: ParseIntError) -> Self { value.source }
-}
-
-impl AsRef<core::num::ParseIntError> for ParseIntError {
-    fn as_ref(&self) -> &core::num::ParseIntError { &self.source }
-}
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::{ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 /// Not strictly necessary but serves as a lint - avoids weird behavior if someone accidentally
 /// passes non-integer to the `parse()` function.
@@ -91,6 +50,7 @@ mod sealed {
 /// # Errors
 ///
 /// On error this function allocates to copy the input string into the error return.
+#[inline]
 pub fn int_from_str<T: Integer>(s: &str) -> Result<T, ParseIntError> { int(s) }
 
 /// Parses the input string as an integer returning an error carrying rich context.
@@ -98,6 +58,7 @@ pub fn int_from_str<T: Integer>(s: &str) -> Result<T, ParseIntError> { int(s) }
 /// # Errors
 ///
 /// On error the input string is moved into the error return without allocating.
+#[inline]
 #[cfg(feature = "alloc")]
 pub fn int_from_string<T: Integer>(s: alloc::string::String) -> Result<T, ParseIntError> { int(s) }
 
@@ -106,6 +67,7 @@ pub fn int_from_string<T: Integer>(s: alloc::string::String) -> Result<T, ParseI
 /// # Errors
 ///
 /// On error the input string is converted into the error return without allocating.
+#[inline]
 #[cfg(feature = "alloc")]
 pub fn int_from_box<T: Integer>(s: alloc::boxed::Box<str>) -> Result<T, ParseIntError> { int(s) }
 
@@ -142,7 +104,7 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 /// # Parameters
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
-/// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
+/// * `inner` - the inner integer type to be provided to `fn`. Must implement [`Integer`].
 /// * `fn`: the infallible conversion function to call to convert from an integer.
 ///
 /// # Errors
@@ -153,6 +115,7 @@ macro_rules! impl_parse_str_from_int_infallible {
         impl $crate::_export::_core::str::FromStr for $to {
             type Err = $crate::parse_int::ParseIntError;
 
+            #[inline]
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
                 $crate::_export::_core::convert::TryFrom::try_from(s)
             }
@@ -161,6 +124,7 @@ macro_rules! impl_parse_str_from_int_infallible {
         impl $crate::_export::_core::convert::TryFrom<&str> for $to {
             type Error = $crate::parse_int::ParseIntError;
 
+            #[inline]
             fn try_from(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Error> {
                 $crate::parse_int::int_from_str::<$inner>(s).map($to::$fn)
             }
@@ -170,6 +134,7 @@ macro_rules! impl_parse_str_from_int_infallible {
         impl $crate::_export::_core::convert::TryFrom<alloc::string::String> for $to {
             type Error = $crate::parse_int::ParseIntError;
 
+            #[inline]
             fn try_from(
                 s: alloc::string::String,
             ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
@@ -181,6 +146,7 @@ macro_rules! impl_parse_str_from_int_infallible {
         impl $crate::_export::_core::convert::TryFrom<alloc::boxed::Box<str>> for $to {
             type Error = $crate::parse_int::ParseIntError;
 
+            #[inline]
             fn try_from(
                 s: alloc::boxed::Box<str>,
             ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
@@ -221,6 +187,7 @@ macro_rules! impl_parse_str {
         impl $crate::_export::_core::str::FromStr for $to {
             type Err = $err;
 
+            #[inline]
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
                 $inner_fn(s)
             }
@@ -236,6 +203,7 @@ macro_rules! impl_tryfrom_str {
             impl $crate::_export::_core::convert::TryFrom<$from> for $to {
                 type Error = $err;
 
+                #[inline]
                 fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
                     $inner_fn(s)
                 }
@@ -250,13 +218,16 @@ pub(crate) use impl_tryfrom_str;
 /// # Errors
 ///
 /// If the input string does not contain a prefix.
+#[inline]
 pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
     if let Some(checked) = s.strip_prefix("0x") {
         Ok(checked)
     } else if let Some(checked) = s.strip_prefix("0X") {
         Ok(checked)
     } else {
-        Err(MissingPrefixError::new(s).into())
+        Err(PrefixedHexError(error::PrefixedHexErrorInner::MissingPrefix(
+            error::MissingPrefixError::new(s),
+        )))
     }
 }
 
@@ -265,112 +236,156 @@ pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
 /// # Errors
 ///
 /// If the input string contains a prefix.
+#[inline]
 pub fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> {
     if s.starts_with("0x") || s.starts_with("0X") {
-        return Err(ContainsPrefixError::new(s).into());
+        return Err(UnprefixedHexError(error::UnprefixedHexErrorInner::ContainsPrefix(
+            error::ContainsPrefixError::new(s),
+        )));
     }
     Ok(s)
 }
 
-/// Parses a `u32` from a hex string.
-///
-/// Input string may or may not contain a `0x` (or `0X`) prefix.
-///
-/// # Errors
-///
-/// If the input string is not a valid hex encoding of a `u32`.
-pub fn hex_u32(s: &str) -> Result<u32, ParseIntError> {
-    let unchecked = hex_remove_optional_prefix(s);
-    hex_u32_unchecked(unchecked)
+/// Macro to generate parsing functions for a given unsigned type
+macro_rules! parse_hex_for {
+    (
+        $int_type:ty, $bits:literal;
+        fn $any_hex_fn:ident();
+        fn $prefix_hex_fn:ident();
+        fn $unprefix_hex_fn:ident();
+        fn $uncheck_hex_fn:ident();
+    ) => {
+        #[doc = "Parses a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "` from a hex string.\n\n"]
+        #[doc = "Input string may or may not contain a `0x` (or `0X`) prefix.\n\n"]
+        #[doc = "# Errors\n\nIf the input string is not a valid hex encoding of a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "`."]
+        #[inline]
+        pub fn $any_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
+            let unchecked = hex_remove_optional_prefix(s);
+            $uncheck_hex_fn(unchecked)
+        }
+
+        #[doc = "Parses a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "` from a prefixed hex string.\n\n"]
+        #[doc = "# Errors\n\n"]
+        #[doc = "- If the input string does not contain a `0x` (or `0X`) prefix.\n"]
+        #[doc = "- If the input string is not a valid hex encoding of a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "`."]
+        #[inline]
+        pub fn $prefix_hex_fn(s: &str) -> Result<$int_type, PrefixedHexError> {
+            let checked = hex_remove_prefix(s)?;
+            $uncheck_hex_fn(checked)
+                .map_err(error::PrefixedHexErrorInner::ParseInt)
+                .map_err(PrefixedHexError)
+        }
+
+        #[doc = "Parses a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "` from an unprefixed hex string.\n\n"]
+        #[doc = "# Errors\n\n"]
+        #[doc = "- If the input string contains a `0x` (or `0X`) prefix.\n"]
+        #[doc = "- If the input string is not a valid hex encoding of a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "`."]
+        #[inline]
+        pub fn $unprefix_hex_fn(s: &str) -> Result<$int_type, UnprefixedHexError> {
+            let checked = hex_check_unprefixed(s)?;
+            $uncheck_hex_fn(checked)
+                .map_err(error::UnprefixedHexErrorInner::ParseInt)
+                .map_err(UnprefixedHexError)
+        }
+
+        #[doc = "Parses a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "` from an unprefixed hex string without first checking for a prefix.\n\n"]
+        #[doc = "# Errors\n\n"]
+        #[doc = "- If the input string contains a `0x` (or `0X`) prefix,"]
+        #[doc = " returns `InvalidDigit` due to the `x`.\n"]
+        #[doc = "- If the input string is not a valid hex encoding of a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "`."]
+        #[inline]
+        fn $uncheck_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
+            <$int_type>::from_str_radix(s, 16).map_err(|error| ParseIntError {
+                input: s.into(),
+                bits: $bits,
+                is_signed: false,
+                source: error,
+            })
+        }
+    };
 }
 
-/// Parses a `u32` from a prefixed hex string.
-///
-/// # Errors
-///
-/// - If the input string does not contain a `0x` (or `0X`) prefix.
-/// - If the input string is not a valid hex encoding of a `u32`.
-pub fn hex_u32_prefixed(s: &str) -> Result<u32, PrefixedHexError> {
+parse_hex_for!(
+    u16, 16;
+    fn hex_u16();
+    fn hex_u16_prefixed();
+    fn hex_u16_unprefixed();
+    fn hex_u16_unchecked();
+);
+parse_hex_for!(
+    u32, 32;
+    fn hex_u32();
+    fn hex_u32_prefixed();
+    fn hex_u32_unprefixed();
+    fn hex_u32_unchecked();
+);
+parse_hex_for!(
+    u64, 64;
+    fn hex_u64();
+    fn hex_u64_prefixed();
+    fn hex_u64_unprefixed();
+    fn hex_u64_unchecked();
+);
+parse_hex_for!(
+    u128, 128;
+    fn hex_u128();
+    fn hex_u128_prefixed();
+    fn hex_u128_unprefixed();
+    fn hex_u128_unchecked();
+);
+
+pub(crate) fn hex_u256_prefixed(s: &str) -> Result<crate::pow::U256, PrefixedHexError> {
     let checked = hex_remove_prefix(s)?;
-    Ok(hex_u32_unchecked(checked)?)
+    hex_u256_unchecked(checked)
+        .map_err(error::PrefixedHexErrorInner::ParseInt)
+        .map_err(PrefixedHexError)
 }
 
-/// Parses a `u32` from an unprefixed hex string.
-///
-/// # Errors
-///
-/// - If the input string contains a `0x` (or `0X`) prefix.
-/// - If the input string is not a valid hex encoding of a `u32`.
-pub fn hex_u32_unprefixed(s: &str) -> Result<u32, UnprefixedHexError> {
+pub(crate) fn hex_u256_unprefixed(s: &str) -> Result<crate::pow::U256, UnprefixedHexError> {
     let checked = hex_check_unprefixed(s)?;
-    Ok(hex_u32_unchecked(checked)?)
+    hex_u256_unchecked(checked)
+        .map_err(error::UnprefixedHexErrorInner::ParseInt)
+        .map_err(UnprefixedHexError)
 }
 
-/// Parses a `u32` from an unprefixed hex string without first checking for a prefix.
-///
-/// # Errors
-///
-/// - If the input string contains a `0x` (or `0X`) prefix, returns `InvalidDigit` due to the `x`.
-/// - If the input string is not a valid hex encoding of a `u32`.
-pub fn hex_u32_unchecked(s: &str) -> Result<u32, ParseIntError> {
-    u32::from_str_radix(s, 16).map_err(|error| ParseIntError {
-        input: s.into(),
-        bits: 32,
-        is_signed: false,
-        source: error,
-    })
-}
+pub(crate) fn hex_u256_unchecked(s: &str) -> Result<crate::pow::U256, ParseIntError> {
+    let (high, low) = if s.len() <= 32 {
+        let low = hex_u128_unchecked(s)?;
+        (0, low)
+    } else {
+        let high_len = s.len() - 32;
+        let high_s = &s[..high_len];
+        let low_s = &s[high_len..];
 
-/// Parses a `u128` from a hex string.
-///
-/// Input string may or may not contain a `0x` (or `0X`) prefix.
-///
-/// # Errors
-///
-/// If the input string is not a valid hex encoding of a `u128`.
-pub fn hex_u128(s: &str) -> Result<u128, ParseIntError> {
-    let unchecked = hex_remove_optional_prefix(s);
-    hex_u128_unchecked(unchecked)
-}
+        let high = hex_u128_unchecked(high_s)?;
+        let low = hex_u128_unchecked(low_s)?;
+        (high, low)
+    };
 
-/// Parses a `u128` from a prefixed hex string.
-///
-/// # Errors
-///
-/// - If the input string does not contain a `0x` (or `0X`) prefix.
-/// - If the input string is not a valid hex encoding of a `u128`.
-pub fn hex_u128_prefixed(s: &str) -> Result<u128, PrefixedHexError> {
-    let checked = hex_remove_prefix(s)?;
-    Ok(hex_u128_unchecked(checked)?)
-}
-
-/// Parses a `u128` from an unprefixed hex string.
-///
-/// # Errors
-///
-/// - If the input string contains a `0x` (or `0X`) prefix.
-/// - If the input string is not a valid hex encoding of a `u128`.
-pub fn hex_u128_unprefixed(s: &str) -> Result<u128, UnprefixedHexError> {
-    let checked = hex_check_unprefixed(s)?;
-    Ok(hex_u128_unchecked(checked)?)
-}
-
-/// Parses a `u128` from an unprefixed hex string without first checking for a prefix.
-///
-/// # Errors
-///
-/// - If the input string contains a `0x` (or `0X`) prefix, returns `InvalidDigit` due to the `x`.
-/// - If the input string is not a valid hex encoding of a `u128`.
-pub fn hex_u128_unchecked(s: &str) -> Result<u128, ParseIntError> {
-    u128::from_str_radix(s, 16).map_err(|error| ParseIntError {
-        input: s.into(),
-        bits: 128,
-        is_signed: false,
-        source: error,
-    })
+    let mut bytes = [0u8; 32];
+    bytes[..16].copy_from_slice(&low.to_le_bytes());
+    bytes[16..].copy_from_slice(&high.to_le_bytes());
+    Ok(crate::pow::U256::from_le_bytes(bytes))
 }
 
 /// Strips the hex prefix off `s` if one is present.
+#[inline]
 pub(crate) fn hex_remove_optional_prefix(s: &str) -> &str {
     if let Some(stripped) = s.strip_prefix("0x") {
         stripped
@@ -381,153 +396,212 @@ pub(crate) fn hex_remove_optional_prefix(s: &str) -> &str {
     }
 }
 
-/// Error returned when parsing an integer from a hex string that is supposed to contain a prefix.
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct PrefixedHexError(PrefixedHexErrorInner);
+/// Error types for integer parsing utilities.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
 
-/// Error returned when parsing an integer from a hex string that is supposed to contain a prefix.
-#[derive(Debug, Clone, Eq, PartialEq)]
-enum PrefixedHexErrorInner {
-    /// Hex string is missing prefix.
-    MissingPrefix(MissingPrefixError),
-    /// Error parsing integer from hex string.
-    ParseInt(ParseIntError),
-}
+    use internals::error::InputString;
+    use internals::write_err;
 
-impl From<Infallible> for PrefixedHexError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
+    /// Error with rich context returned when a string can't be parsed as an integer.
+    ///
+    /// This is an extension of [`core::num::ParseIntError`], which carries the input that failed to
+    /// parse as well as type information. As a result it provides very informative error messages that
+    /// make it easier to understand the problem and correct mistakes.
+    ///
+    /// Note that this is larger than the type from `core` so if it's passed through a deep call stack
+    /// in a performance-critical application you may want to box it or throw away the context by
+    /// converting to `core` type.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct ParseIntError {
+        pub(crate) input: InputString,
+        // for displaying - see Display impl with nice error message below
+        pub(crate) bits: u8,
+        // We could represent this as a single bit, but it wouldn't actually decrease the cost of moving
+        // the struct because String contains pointers so there will be padding of bits at least
+        // pointer_size - 1 bytes: min 1B in practice.
+        pub(crate) is_signed: bool,
+        pub(crate) source: core::num::ParseIntError,
+    }
 
-impl From<Infallible> for PrefixedHexErrorInner {
-    fn from(never: Infallible) -> Self { match never {} }
-}
+    impl From<Infallible> for ParseIntError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
 
-impl fmt::Display for PrefixedHexError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use PrefixedHexErrorInner as E;
+    impl fmt::Display for ParseIntError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            let signed = if self.is_signed { "signed" } else { "unsigned" };
+            write_err!(f, "{} ({}, {}-bit)", self.input.display_cannot_parse("integer"), signed, self.bits; self.source)
+        }
+    }
 
-        match self.0 {
-            E::MissingPrefix(ref e) => write_err!(f, "hex string is missing prefix"; e),
-            E::ParseInt(ref e) => write_err!(f, "prefixed hex string invalid int"; e),
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseIntError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.source) }
+    }
+
+    impl From<ParseIntError> for core::num::ParseIntError {
+        #[inline]
+        fn from(value: ParseIntError) -> Self { value.source }
+    }
+
+    impl AsRef<core::num::ParseIntError> for ParseIntError {
+        #[inline]
+        fn as_ref(&self) -> &core::num::ParseIntError { &self.source }
+    }
+
+    /// Error returned when parsing an integer from a hex string that is supposed to contain a prefix.
+    #[derive(Debug, Clone, Eq, PartialEq)]
+    pub struct PrefixedHexError(pub(super) PrefixedHexErrorInner);
+
+    /// Error returned when parsing an integer from a hex string that is supposed to contain a prefix.
+    #[derive(Debug, Clone, Eq, PartialEq)]
+    pub(super) enum PrefixedHexErrorInner {
+        /// Hex string is missing prefix.
+        MissingPrefix(MissingPrefixError),
+        /// Error parsing integer from hex string.
+        ParseInt(ParseIntError),
+    }
+
+    impl From<Infallible> for PrefixedHexError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for PrefixedHexError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            use PrefixedHexErrorInner as E;
+
+            match self.0 {
+                E::MissingPrefix(ref e) => write_err!(f, "hex string is missing prefix"; e),
+                E::ParseInt(ref e) => write_err!(f, "prefixed hex string invalid int"; e),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for PrefixedHexError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            use PrefixedHexErrorInner as E;
+
+            match self.0 {
+                E::MissingPrefix(ref e) => Some(e),
+                E::ParseInt(ref e) => Some(e),
+            }
+        }
+    }
+
+    /// Error returned when parsing an integer from a hex string that is not supposed to contain a prefix.
+    #[derive(Debug, Clone, Eq, PartialEq)]
+    pub struct UnprefixedHexError(pub(super) UnprefixedHexErrorInner);
+
+    #[derive(Debug, Clone, Eq, PartialEq)]
+    pub(super) enum UnprefixedHexErrorInner {
+        /// Hex string contains prefix.
+        ContainsPrefix(ContainsPrefixError),
+        /// Error parsing integer from string.
+        ParseInt(ParseIntError),
+    }
+
+    impl From<Infallible> for UnprefixedHexError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for UnprefixedHexError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            use UnprefixedHexErrorInner as E;
+
+            match self.0 {
+                E::ContainsPrefix(ref e) => write_err!(f, "hex string contains prefix"; e),
+                E::ParseInt(ref e) => write_err!(f, "hex string parse int"; e),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for UnprefixedHexError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            use UnprefixedHexErrorInner as E;
+
+            match self.0 {
+                E::ContainsPrefix(ref e) => Some(e),
+                E::ParseInt(ref e) => Some(e),
+            }
+        }
+    }
+
+    /// Error returned when a hex string is missing a prefix (e.g. `0x`).
+    #[derive(Debug, Clone, Eq, PartialEq)]
+    pub(super) struct MissingPrefixError {
+        hex: InputString,
+    }
+
+    impl MissingPrefixError {
+        /// Constructs a new error from the string with the missing prefix.
+        pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
+    }
+
+    impl fmt::Display for MissingPrefixError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "{} because it is missing the '0x' prefix",
+                self.hex.display_cannot_parse("hex")
+            )
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for MissingPrefixError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { hex: _ } = self;
+            None
+        }
+    }
+
+    /// Error when hex string contains a prefix (e.g. 0x).
+    #[derive(Debug, Clone, Eq, PartialEq)]
+    pub(super) struct ContainsPrefixError {
+        hex: InputString,
+    }
+
+    impl ContainsPrefixError {
+        /// Constructs a new error from the string that contains the prefix.
+        #[inline]
+        pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
+    }
+
+    impl fmt::Display for ContainsPrefixError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "{} because it contains the '0x' prefix",
+                self.hex.display_cannot_parse("hex")
+            )
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for ContainsPrefixError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { hex: _ } = self;
+            None
         }
     }
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for PrefixedHexError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use PrefixedHexErrorInner as E;
-
-        match self.0 {
-            E::MissingPrefix(ref e) => Some(e),
-            E::ParseInt(ref e) => Some(e),
-        }
-    }
-}
-
-impl From<MissingPrefixError> for PrefixedHexError {
-    fn from(e: MissingPrefixError) -> Self { Self(PrefixedHexErrorInner::MissingPrefix(e)) }
-}
-
-impl From<ParseIntError> for PrefixedHexError {
-    fn from(e: ParseIntError) -> Self { Self(PrefixedHexErrorInner::ParseInt(e)) }
-}
-
-/// Error returned when parsing an integer from a hex string that is not supposed to contain a prefix.
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct UnprefixedHexError(UnprefixedHexErrorInner);
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-enum UnprefixedHexErrorInner {
-    /// Hex string contains prefix.
-    ContainsPrefix(ContainsPrefixError),
-    /// Error parsing integer from string.
-    ParseInt(ParseIntError),
-}
-
-impl From<Infallible> for UnprefixedHexError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<Infallible> for UnprefixedHexErrorInner {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for UnprefixedHexError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use UnprefixedHexErrorInner as E;
-
-        match self.0 {
-            E::ContainsPrefix(ref e) => write_err!(f, "hex string is contains prefix"; e),
-            E::ParseInt(ref e) => write_err!(f, "hex string parse int"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for UnprefixedHexError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use UnprefixedHexErrorInner as E;
-
-        match self.0 {
-            E::ContainsPrefix(ref e) => Some(e),
-            E::ParseInt(ref e) => Some(e),
-        }
-    }
-}
-
-impl From<ContainsPrefixError> for UnprefixedHexError {
-    fn from(e: ContainsPrefixError) -> Self { Self(UnprefixedHexErrorInner::ContainsPrefix(e)) }
-}
-
-impl From<ParseIntError> for UnprefixedHexError {
-    fn from(e: ParseIntError) -> Self { Self(UnprefixedHexErrorInner::ParseInt(e)) }
-}
-
-/// Error returned when a hex string is missing a prefix (e.g. `0x`).
-#[derive(Debug, Clone, Eq, PartialEq)]
-struct MissingPrefixError {
-    hex: InputString,
-}
-
-impl MissingPrefixError {
-    /// Constructs a new error from the string with the missing prefix.
-    pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
-}
-
-impl fmt::Display for MissingPrefixError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} because it is missing the '0x' prefix", self.hex.display_cannot_parse("hex"))
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for MissingPrefixError {}
-
-/// Error when hex string contains a prefix (e.g. 0x).
-#[derive(Debug, Clone, Eq, PartialEq)]
-struct ContainsPrefixError {
-    hex: InputString,
-}
-
-impl ContainsPrefixError {
-    /// Constructs a new error from the string that contains the prefix.
-    pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
-}
-
-impl fmt::Display for ContainsPrefixError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} because it contains the '0x' prefix", self.hex.display_cannot_parse("hex"))
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for ContainsPrefixError {}
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
     #[cfg(feature = "std")]
-    use std::panic;
+    use std::{error::Error, panic};
 
     use super::*;
 
@@ -592,6 +666,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_u32_from_hex_prefixed_upper() {
+        let want = 171;
+        let got = hex_u32("0XAB").expect("failed to parse prefixed hex");
+        assert_eq!(got, want);
+    }
+
+    #[test]
     fn parse_u32_from_hex_no_prefix() {
         let want = 171;
         let got = hex_u32("ab").expect("failed to parse non-prefixed hex");
@@ -606,6 +687,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_hex_u32_upper_prefixed() {
+        let want = 171; // 0xab
+        assert_eq!(hex_u32_prefixed("0Xab").unwrap(), want);
+        assert!(hex_u32_unprefixed("0Xab").is_err());
+    }
+
+    #[test]
     fn parse_hex_u32_unprefixed() {
         let want = 171; // 0xab
         assert_eq!(hex_u32_unprefixed("ab").unwrap(), want);
@@ -616,6 +704,13 @@ mod tests {
     fn parse_u128_from_hex_prefixed() {
         let want = 3_735_928_559;
         let got = hex_u128("0xdeadbeef").expect("failed to parse prefixed hex");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn parse_u128_from_hex_upper_prefixed() {
+        let want = 3_735_928_559;
+        let got = hex_u128("0Xdeadbeef").expect("failed to parse prefixed hex");
         assert_eq!(got, want);
     }
 
@@ -634,6 +729,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_hex_u128_upper_prefixed() {
+        let want = 3_735_928_559;
+        assert_eq!(hex_u128_prefixed("0Xdeadbeef").unwrap(), want);
+        assert!(hex_u128_unprefixed("0Xdeadbeef").is_err());
+    }
+
+    #[test]
     fn parse_hex_u128_unprefixed() {
         let want = 3_735_928_559;
         assert_eq!(hex_u128_unprefixed("deadbeef").unwrap(), want);
@@ -643,5 +745,70 @@ mod tests {
     #[test]
     fn parse_u32_from_hex_unchecked_errors_on_prefix() {
         assert!(hex_u32_unchecked("0xab").is_err());
+        assert!(hex_u32_unchecked("0Xab").is_err());
+    }
+
+    #[test]
+    fn parse_u32_from_hex_unchecked_errors_on_overflow() {
+        assert!(hex_u32_unchecked("1234abcd").is_ok());
+        assert!(hex_u32_unchecked("1234abcd1").is_err());
+    }
+
+    #[test]
+    fn parse_u128_from_hex_unchecked_errors_on_prefix() {
+        assert!(hex_u128_unchecked("0xdeadbeef").is_err());
+        assert!(hex_u128_unchecked("0Xdeadbeef").is_err());
+    }
+
+    #[test]
+    fn parse_u128_from_hex_unchecked_errors_on_overflow() {
+        assert!(hex_u128_unchecked("deadbeefabcdffffdeadbeefabcdffff").is_ok());
+        assert!(hex_u128_unchecked("deadbeefabcdffffdeadbeefabcdffff1").is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // ParseIntError - parse invalid integer
+        let e = int_from_str::<u32>("not_a_number").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // PrefixedHexError
+        // missing prefix type
+        let e = hex_u32_prefixed("abc").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        let PrefixedHexError(error::PrefixedHexErrorInner::MissingPrefix(e)) = e else {
+            panic!("should be a MissingPrefixError")
+        };
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+        // bad number type
+        let e = hex_u32_prefixed("0xgabc").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // UnprefixedHexError
+        // has prefix type
+        let e = hex_u32_unprefixed("0xabc").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        let UnprefixedHexError(error::UnprefixedHexErrorInner::ContainsPrefix(e)) = e else {
+            panic!("should be a ContainsPrefixError")
+        };
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+        // bad number type
+        let e = hex_u32_unprefixed("gabc").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
     }
 }

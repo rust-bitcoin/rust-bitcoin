@@ -1,58 +1,29 @@
-use arbitrary::{Arbitrary, Unstructured};
+#![cfg_attr(fuzzing, no_main)]
+#![cfg_attr(not(fuzzing), allow(unused))]
+
 use bitcoin::blockdata::witness::WitnessExt;
-use bitcoin::consensus::{deserialize, serialize};
+use bitcoin::encoding::{decode_from_slice, encode_to_vec};
 use bitcoin::Witness;
-use honggfuzz::fuzz;
+use libfuzzer_sys::fuzz_target;
 
-fn do_test(data: &[u8]) {
-    let mut u = Unstructured::new(data);
+#[cfg(not(fuzzing))]
+fn main() {}
 
-    if let Ok(mut witness) = Witness::arbitrary(&mut u) {
-        let serialized = serialize(&witness);
+fn do_test(data: (Witness, Vec<u8>)) {
+    let mut witness = data.0;
+    let element_bytes = data.1;
 
-        let _ = witness.witness_script();
-        let _ = witness.taproot_leaf_script();
+    let serialized = encode_to_vec(&witness);
 
-        let deserialized: Result<Witness, _> = deserialize(serialized.as_slice());
-        assert_eq!(deserialized.unwrap(), witness);
+    let _ = witness.witness_script();
+    let _ = witness.taproot_leaf_script();
 
-        if let Ok(element_bytes) = Vec::<u8>::arbitrary(&mut u) {
-            witness.push(element_bytes.as_slice());
-        }
-    }
+    let deserialized: Result<Witness, _> = decode_from_slice(serialized.as_slice());
+    assert_eq!(deserialized.unwrap(), witness);
+
+    witness.push(element_bytes.as_slice());
 }
 
-fn main() {
-    loop {
-        fuzz!(|data| {
-            do_test(data);
-        });
-    }
-}
-
-#[cfg(all(test, fuzzing))]
-mod tests {
-    fn extend_vec_from_hex(hex: &str, out: &mut Vec<u8>) {
-        let mut b = 0;
-        for (idx, c) in hex.as_bytes().iter().enumerate() {
-            b <<= 4;
-            match *c {
-                b'A'..=b'F' => b |= c - b'A' + 10,
-                b'a'..=b'f' => b |= c - b'a' + 10,
-                b'0'..=b'9' => b |= c - b'0',
-                _ => panic!("Bad hex"),
-            }
-            if (idx & 1) == 1 {
-                out.push(b);
-                b = 0;
-            }
-        }
-    }
-
-    #[test]
-    fn duplicate_crash() {
-        let mut a = Vec::new();
-        extend_vec_from_hex("00", &mut a);
-        super::do_test(&a);
-    }
-}
+fuzz_target!(|data: (Witness, Vec<u8>)| {
+    do_test(data);
+});

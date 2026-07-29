@@ -14,20 +14,21 @@
 //! [BIP-0068]: <https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki>
 //! [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
 
-#[cfg(feature = "encoding")]
-use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-#[cfg(feature = "encoding")]
-use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::locktime::relative::error::TimeOverflowError;
 use crate::locktime::relative::{self, NumberOf512Seconds};
 use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[cfg(feature = "encoding")]
+#[doc(no_inline)]
+pub use self::error::SequenceDecoderError;
 
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -39,19 +40,19 @@ impl Sequence {
     ///
     /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
     pub const MAX: Self = Self(0xFFFF_FFFF);
+
     /// Zero value sequence.
     ///
     /// This sequence number enables replace-by-fee and absolute lock time.
     pub const ZERO: Self = Self(0);
+
     /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
     pub const FINAL: Self = Self::MAX;
+
     /// The sequence number that enables absolute lock time but disables replace-by-fee
     /// and relative lock time.
     pub const ENABLE_LOCKTIME_NO_RBF: Self = Self::MIN_NO_RBF;
-    /// The sequence number that enables replace-by-fee and absolute lock time but
-    /// disables relative lock time.
-    #[deprecated(since = "1.0.0-rc.0", note = "use `ENABLE_LOCKTIME_AND_RBF` instead")]
-    pub const ENABLE_RBF_NO_LOCKTIME: Self = Self(0xFFFF_FFFD);
+
     /// The maximum sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
     ///
@@ -69,8 +70,10 @@ impl Sequence {
     ///
     /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
     const MIN_NO_RBF: Self = Self(0xFFFF_FFFE);
+
     /// BIP-0068 relative lock time disable flag mask.
     const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x8000_0000;
+
     /// BIP-0068 relative lock time type flag mask.
     pub(super) const LOCK_TYPE_MASK: u32 = 0x0040_0000;
 
@@ -87,7 +90,7 @@ impl Sequence {
     ///
     /// The term 'final' is an archaic Bitcoin term, it may have come about because the sequence
     /// number in the original Bitcoin code was intended to be incremented in order to replace a
-    /// transaction, so once the sequence number got to `u64::MAX` it could no longer be increased,
+    /// transaction, so once the sequence number got to `u32::MAX` it could no longer be increased,
     /// hence it was 'final'.
     ///
     ///
@@ -114,13 +117,13 @@ impl Sequence {
     /// Returns `true` if the sequence number encodes a block based relative lock-time.
     #[inline]
     pub fn is_height_locked(self) -> bool {
-        self.is_relative_lock_time() & (self.0 & Self::LOCK_TYPE_MASK == 0)
+        self.is_relative_lock_time() && (self.0 & Self::LOCK_TYPE_MASK == 0)
     }
 
     /// Returns `true` if the sequence number encodes a time interval based relative lock-time.
     #[inline]
     pub fn is_time_locked(self) -> bool {
-        self.is_relative_lock_time() & (self.0 & Self::LOCK_TYPE_MASK > 0)
+        self.is_relative_lock_time() && (self.0 & Self::LOCK_TYPE_MASK > 0)
     }
 
     /// Constructs a new `Sequence` from a prefixed hex string.
@@ -154,7 +157,7 @@ impl Sequence {
     /// Constructs a new relative lock-time using time intervals where each interval is equivalent
     /// to 512 seconds.
     ///
-    /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin
+    /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
     pub fn from_512_second_intervals(intervals: u16) -> Self {
         Self(u32::from(intervals) | Self::LOCK_TYPE_MASK)
@@ -194,15 +197,9 @@ impl Sequence {
     #[inline]
     pub fn from_consensus(n: u32) -> Self { Self(n) }
 
-    /// Returns the inner 32bit integer value of Sequence.
+    /// Returns the inner 32-bit integer value of Sequence.
     #[inline]
     pub const fn to_consensus_u32(self) -> u32 { self.0 }
-
-    /// Gets the hex representation of this [`Sequence`].
-    #[cfg(feature = "alloc")]
-    #[inline]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
@@ -229,6 +226,8 @@ impl Sequence {
     const fn low_u16(self) -> u16 { self.0 as u16 }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Sequence);
+
 impl Default for Sequence {
     /// The default value of sequence is 0xffffffff.
     #[inline]
@@ -245,16 +244,6 @@ impl fmt::Display for Sequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-impl fmt::LowerHex for Sequence {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-
-impl fmt::UpperHex for Sequence {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
-}
-
 impl fmt::Debug for Sequence {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -263,86 +252,80 @@ impl fmt::Debug for Sequence {
     }
 }
 
-#[cfg(feature = "alloc")]
 parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype! {
-    /// The encoder for the [`Sequence`] type.
-    pub struct SequenceEncoder(encoding::ArrayEncoder<4>);
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Encodable for Sequence {
-    type Encoder<'e> = SequenceEncoder;
+impl encoding::Encode for Sequence {
+    type Encoder<'e> = SequenceEncoder<'e>;
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
-        SequenceEncoder(encoding::ArrayEncoder::without_length_prefix(
+        SequenceEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus_u32().to_le_bytes(),
         ))
     }
 }
 
-/// The decoder for the [`Sequence`] type.
 #[cfg(feature = "encoding")]
-pub struct SequenceDecoder(encoding::ArrayDecoder<4>);
-
-#[cfg(feature = "encoding")]
-impl Default for SequenceDecoder {
-    fn default() -> Self { Self::new() }
+impl encoding::Decode for Sequence {
+    type Decoder = SequenceDecoder;
 }
 
 #[cfg(feature = "encoding")]
-impl SequenceDecoder {
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Sequence`] type.
+    #[derive(Debug, Clone)]
+    pub struct SequenceEncoder<'e>(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`Sequence`] type.
+    #[derive(Debug, Clone)]
+    pub struct SequenceDecoder(encoding::ArrayDecoder<4>);
+
     /// Constructs a new [`Sequence`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-#[cfg(feature = "encoding")]
-impl encoding::Decoder for SequenceDecoder {
-    type Output = Sequence;
-    type Error = SequenceDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(SequenceDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end().map_err(SequenceDecoderError)?);
+    fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<Sequence, SequenceDecoderError> {
+        let value = result.map_err(SequenceDecoderError)?;
+        let n = u32::from_le_bytes(value);
         Ok(Sequence::from_consensus(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
-#[cfg(feature = "encoding")]
-impl encoding::Decodable for Sequence {
-    type Decoder = SequenceDecoder;
-    fn decoder() -> Self::Decoder { SequenceDecoder(encoding::ArrayDecoder::<4>::new()) }
-}
+/// Error types for input sequence numbers.
+pub mod error {
+    #[cfg(feature = "encoding")]
+    use core::convert::Infallible;
+    #[cfg(feature = "encoding")]
+    use core::fmt;
 
-/// An error consensus decoding an `Sequence`.
-#[cfg(feature = "encoding")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SequenceDecoderError(encoding::UnexpectedEofError);
+    #[cfg(feature = "encoding")]
+    use internals::write_err;
 
-#[cfg(feature = "encoding")]
-impl From<Infallible> for SequenceDecoderError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
+    /// An error consensus decoding a `Sequence`.
+    #[cfg(feature = "encoding")]
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct SequenceDecoderError(pub(super) encoding::UnexpectedEofError);
 
-#[cfg(feature = "encoding")]
-impl fmt::Display for SequenceDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "sequence decoder error"; self.0)
+    #[cfg(feature = "encoding")]
+    impl From<Infallible> for SequenceDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
     }
-}
 
-#[cfg(all(feature = "std", feature = "encoding"))]
-impl std::error::Error for SequenceDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    #[cfg(feature = "encoding")]
+    impl fmt::Display for SequenceDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write_err!(f, "sequence decoder error"; self.0)
+        }
+    }
+
+    #[cfg(feature = "encoding")]
+    #[cfg(feature = "std")]
+    impl std::error::Error for SequenceDecoderError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -391,11 +374,18 @@ impl<'a> Arbitrary<'a> for Sequence {
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::format;
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "encoding")]
+    use alloc::string::ToString;
+    #[cfg(feature = "encoding")]
+    #[cfg(feature = "std")]
+    use std::error::Error;
 
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "encoding")]
     use encoding::UnexpectedEofError;
     #[cfg(feature = "encoding")]
-    use encoding::{Decodable as _, Decoder as _};
+    use encoding::{Decode as _, Decoder as _};
 
     use super::*;
 
@@ -423,6 +413,58 @@ mod tests {
     #[test]
     fn from_seconds_ceil_causes_overflow_error() {
         assert!(Sequence::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS + 1).is_err());
+    }
+
+    #[test]
+    fn sequence_number() {
+        let seq_final = Sequence::from_consensus(0xFFFF_FFFF);
+        let seq_non_rbf = Sequence::from_consensus(0xFFFF_FFFE);
+        let block_time_lock = Sequence::from_consensus(0xFFFF);
+        let unit_time_lock = Sequence::from_consensus(0x40_FFFF);
+        let lock_time_disabled = Sequence::from_consensus(0x8000_0000);
+
+        assert!(seq_final.is_final());
+        assert!(!seq_final.is_rbf());
+        assert!(!seq_final.is_relative_lock_time());
+        assert!(!seq_non_rbf.is_rbf());
+        assert!(block_time_lock.is_relative_lock_time());
+        assert!(block_time_lock.is_height_locked());
+        assert!(block_time_lock.is_rbf());
+        assert!(unit_time_lock.is_relative_lock_time());
+        assert!(unit_time_lock.is_time_locked());
+        assert!(unit_time_lock.is_rbf());
+        assert!(!lock_time_disabled.is_relative_lock_time());
+    }
+
+    #[test]
+    fn sequence_from_hex_lower() {
+        let sequence = Sequence::from_hex("0xffffffff").unwrap();
+        assert_eq!(sequence, Sequence::MAX);
+    }
+
+    #[test]
+    fn sequence_from_hex_upper() {
+        let sequence = Sequence::from_hex("0XFFFFFFFF").unwrap();
+        assert_eq!(sequence, Sequence::MAX);
+    }
+
+    #[test]
+    fn sequence_from_unprefixed_hex_lower() {
+        let sequence = Sequence::from_unprefixed_hex("ffffffff").unwrap();
+        assert_eq!(sequence, Sequence::MAX);
+    }
+
+    #[test]
+    fn sequence_from_unprefixed_hex_upper() {
+        let sequence = Sequence::from_unprefixed_hex("FFFFFFFF").unwrap();
+        assert_eq!(sequence, Sequence::MAX);
+    }
+
+    #[test]
+    fn sequence_from_str_hex_invalid_hex_should_err() {
+        let hex = "0xzb93";
+        let result = Sequence::from_hex(hex);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -502,42 +544,30 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
-    fn sequence_encoding_round_trip() {
-        let sequence = Sequence(0x7FFF_FFFF);
-        let expected_bytes = alloc::vec![0xff, 0xff, 0xff, 0x7f];
-
-        let encoded = encoding::encode_to_vec(&sequence);
-        assert_eq!(encoded, expected_bytes);
-
-        let decoded = encoding::decode_from_slice::<Sequence>(encoded.as_slice()).unwrap();
-        assert_eq!(decoded, sequence);
-    }
-
-    #[test]
+    #[cfg(feature = "alloc")]
     #[cfg(feature = "encoding")]
-    fn sequence_decoding() {
-        let bytes = [0xff, 0xff, 0xff, 0xff];
-        let expected = Sequence::default();
-
-        let mut decoder = Sequence::decoder();
-        assert_eq!(decoder.read_limit(), 4);
-        assert!(!decoder.push_bytes(&mut bytes.as_slice()).unwrap());
-        assert_eq!(decoder.read_limit(), 0);
-
-        let decoded = decoder.end().unwrap();
-        assert_eq!(decoded, expected);
-    }
-
-    #[test]
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
     fn sequence_decoding_error() {
         let bytes = [0xff, 0xff, 0xff]; // 3 bytes is an EOF error
 
         let mut decoder = SequenceDecoder::default();
-        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap().needs_more());
 
         let error = decoder.end().unwrap_err();
         assert!(matches!(error, SequenceDecoderError(UnexpectedEofError { .. })));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder_error_display_is_non_empty() {
+        #[cfg(feature = "encoding")]
+        {
+            // SequenceDecoderError
+            let mut decoder = Sequence::decoder();
+            let _ = decoder.push_bytes(&mut [0u8; 3].as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+        }
     }
 }

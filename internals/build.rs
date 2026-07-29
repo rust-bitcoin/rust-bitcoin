@@ -8,11 +8,11 @@ use std::io;
 fn main() {
     let rustc = std::env::var_os("RUSTC");
     let rustc = rustc.as_ref().map_or_else(|| "rustc".as_ref(), std::path::Path::new);
-    let output = std::process::Command::new(rustc)
-        .arg("--version")
-        .output()
-        .unwrap_or_else(|error| panic!("failed to run `{:?} --version`: {:?}", rustc, error));
-    assert!(output.status.success(), "{:?} -- version returned non-zero exit code", rustc);
+    let output =
+        std::process::Command::new(rustc).arg("--version").output().unwrap_or_else(|error| {
+            panic!("failed to run `{} --version`: {:?}", rustc.display(), error)
+        });
+    assert!(output.status.success(), "{} -- version returned non-zero exit code", rustc.display());
     let stdout = String::from_utf8(output.stdout).expect("rustc produced non-UTF-8 output");
     let version_prefix = "rustc ";
     assert!(stdout.starts_with(version_prefix), "unexpected rustc output: {}", stdout);

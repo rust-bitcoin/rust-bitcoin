@@ -2,46 +2,45 @@
 
 //! SHA512 implementation.
 
+#![allow(clippy::unreadable_literal)]
+
 use internals::slice::SliceExt;
 
 mod crypto;
 #[cfg(test)]
 mod tests;
 
-use core::cmp;
-
-use crate::{incomplete_block_len, HashEngine as _};
+use crate::incomplete_block_len;
 
 crate::internal_macros::general_hash_type! {
-    512,
-    false,
-    "Output of the SHA512 hash function."
+    /// Output of the SHA512 hash function.
+    pub struct Hash([u8; 64]);
+
+    const DISPLAY_BACKWARD: bool = false;
 }
 
 impl Hash {
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     #[cfg(not(hashes_fuzz))]
     pub fn from_engine(mut e: HashEngine) -> Self {
-        // pad buffer with a single 1-bit then all 0s, until there are exactly 16 bytes remaining
         let n_bytes_hashed = e.bytes_hashed;
+        let buf_idx = incomplete_block_len(&e);
 
-        let zeroes = [0; BLOCK_SIZE - 16];
-        e.input(&[0x80]);
-        if incomplete_block_len(&e) > zeroes.len() {
-            e.input(&zeroes);
+        e.buffer[buf_idx] = 0x80;
+        e.buffer[buf_idx + 1..].fill(0);
+
+        if buf_idx >= BLOCK_SIZE - 16 {
+            HashEngine::process_blocks(&mut e.h, &e.buffer);
+            e.buffer[..BLOCK_SIZE - 8].fill(0);
         }
-        let pad_length = zeroes.len() - incomplete_block_len(&e);
-        e.input(&zeroes[..pad_length]);
-        debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
 
-        e.input(&[0; 8]);
-        e.input(&(8 * n_bytes_hashed).to_be_bytes());
-        debug_assert_eq!(incomplete_block_len(&e), 0);
+        e.buffer[BLOCK_SIZE - 8..].copy_from_slice(&(8 * n_bytes_hashed).to_be_bytes());
+        HashEngine::process_blocks(&mut e.h, &e.buffer);
 
         Self(e.midstate())
     }
 
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     #[cfg(hashes_fuzz)]
     pub fn from_engine(e: HashEngine) -> Self {
         let mut hash = e.midstate();
@@ -125,10 +124,9 @@ impl HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
-    type Bytes = [u8; 64];
     const BLOCK_SIZE: usize = 128;
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
-    crate::internal_macros::engine_input_impl!();
+    crate::internal_macros::impl_engine_input!();
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }

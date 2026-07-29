@@ -3,12 +3,12 @@
 # Script for generating a Rust test file that verifies all bitcoin_units items
 # are re-exported in bitcoin_primitives.
 #
-# The script parses api/units/all-features.txt and generates use statements
+# The script parses units/api/all-features.txt and generates use statements
 # that will fail to compile if any re-exports are missing.
 
 set -euo pipefail
 
-api_file="./api/units/all-features.txt"
+api_file="./units/api/all-features.txt"
 output_file="./primitives/tests/check-re-exports.rs"
 
 usage() {
@@ -21,7 +21,7 @@ DESCRIPTION
   Generates a Rust test file that verifies all public types and modules from
   bitcoin_units are re-exported in bitcoin_primitives.
 
-  The script parses api/units/all-features.txt and creates use statements for
+  The script parses units/api/all-features.txt and creates use statements for
   every 'pub enum', 'pub struct', and 'pub mod' declaration.
 
   Output file: primitives/tests/check-re-exports.rs
@@ -98,6 +98,9 @@ EOF
             path="${BASH_REMATCH[1]}"
         # Extract pub mod
         elif [[ "$line" =~ ^pub\ mod\ (bitcoin_units::[^[:space:]]+)$ ]]; then
+            path="${BASH_REMATCH[1]}"
+        # Extract pub use (re-exports)
+        elif [[ "$line" =~ ^pub\ use\ (bitcoin_primitives::[^[:space:]]+)$ ]]; then
             path="${BASH_REMATCH[1]}"
         fi
 

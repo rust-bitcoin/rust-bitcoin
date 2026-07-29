@@ -78,12 +78,20 @@ fn fmt_roundtrips() {
     let hash = sha256::Hash::hash(b"some arbitrary bytes");
     let hex = format!("{}", hash);
     let roundtrip = hex.parse::<sha256::Hash>().expect("failed to parse hex");
-    assert_eq!(roundtrip, hash)
+    assert_eq!(roundtrip, hash);
 }
 
 #[test]
 #[rustfmt::skip]
 fn midstate() {
+    // RPC output
+    static WANT: Midstate = sha256::Midstate::new([
+        0x0b, 0xcf, 0xe0, 0xe5, 0x4e, 0x6c, 0xc7, 0xd3,
+        0x4f, 0x4f, 0x7c, 0x1d, 0xf0, 0xb0, 0xf5, 0x03,
+        0xf2, 0xf7, 0x12, 0x91, 0x2a, 0x06, 0x05, 0xb4,
+        0x14, 0xed, 0x33, 0x7f, 0x7f, 0x03, 0x2e, 0x03,
+    ], 64);
+
     // Test vector obtained by doing an asset issuance on Elements
     let mut engine = sha256::Hash::engine();
     // sha256dhash of outpoint
@@ -97,14 +105,6 @@ fn midstate() {
     // 32 bytes of zeroes representing "new asset"
     engine.input(&[0; 32]);
 
-    // RPC output
-    static WANT: Midstate = sha256::Midstate::new([
-        0x0b, 0xcf, 0xe0, 0xe5, 0x4e, 0x6c, 0xc7, 0xd3,
-        0x4f, 0x4f, 0x7c, 0x1d, 0xf0, 0xb0, 0xf5, 0x03,
-        0xf2, 0xf7, 0x12, 0x91, 0x2a, 0x06, 0x05, 0xb4,
-        0x14, 0xed, 0x33, 0x7f, 0x7f, 0x03, 0x2e, 0x03,
-    ], 64);
-
     assert_eq!(
         engine.midstate().expect("total_bytes_hashed is valid"),
         WANT,
@@ -113,35 +113,8 @@ fn midstate() {
 
 #[test]
 fn engine_with_state() {
-    let mut engine = sha256::Hash::engine();
-    let midstate_engine = sha256::HashEngine::from_midstate(engine.midstate_unchecked());
-    // Fresh engine and engine initialized with fresh state should have same state
-    assert_eq!(engine.h, midstate_engine.h);
-
-    // Midstate changes after writing 64 bytes
-    engine.input(&[1; 63]);
-    assert_eq!(engine.h, midstate_engine.h);
-    engine.input(&[2; 1]);
-    assert_ne!(engine.h, midstate_engine.h);
-
-    // Initializing an engine with midstate from another engine should result in
-    // both engines producing the same hashes
-    let data_vec: &[&[u8]] = &[&[3u8; 1], &[4u8; 63], &[5u8; 65], &[6u8; 66]];
-    for data in data_vec {
-        let mut engine = engine.clone();
-        let mut midstate_engine = sha256::HashEngine::from_midstate(engine.midstate_unchecked());
-        assert_eq!(engine.h, midstate_engine.h);
-        assert_eq!(engine.bytes_hashed, midstate_engine.bytes_hashed);
-        engine.input(data);
-        midstate_engine.input(data);
-        assert_eq!(engine.h, midstate_engine.h);
-        let hash1 = sha256::Hash::from_engine(engine);
-        let hash2 = sha256::Hash::from_engine(midstate_engine);
-        assert_eq!(hash1, hash2);
-    }
-
     // Test that a specific midstate results in a specific hash. Midstate was
-    // obtained by applying sha256 to sha256("MuSig coefficient")||sha256("MuSig
+    // obtained by applying SHA256 to SHA256("MuSig coefficient")||SHA256("MuSig
     // coefficient").
     #[rustfmt::skip]
     static MIDSTATE: [u8; 32] = [
@@ -157,7 +130,35 @@ fn engine_with_state() {
         0x88, 0x52, 0x7f, 0x7d, 0x8a, 0x06, 0x94, 0x20,
         0x8f, 0xf1, 0xf7, 0xa9, 0xd5, 0x69, 0x09, 0x59,
     ];
-    let midstate_engine = sha256::HashEngine::from_midstate(sha256::Midstate::new(MIDSTATE, 64));
+
+    let mut engine = sha256::Hash::engine();
+    let midstate_engine = engine.midstate_unchecked().to_engine();
+    // Fresh engine and engine initialized with fresh state should have same state
+    assert_eq!(engine.h, midstate_engine.h);
+
+    // Midstate changes after writing 64 bytes
+    engine.input(&[1; 63]);
+    assert_eq!(engine.h, midstate_engine.h);
+    engine.input(&[2; 1]);
+    assert_ne!(engine.h, midstate_engine.h);
+
+    // Initializing an engine with midstate from another engine should result in
+    // both engines producing the same hashes
+    let data_vec: &[&[u8]] = &[&[3u8; 1], &[4u8; 63], &[5u8; 65], &[6u8; 66]];
+    for data in data_vec {
+        let mut engine = engine.clone();
+        let mut midstate_engine = engine.midstate_unchecked().to_engine();
+        assert_eq!(engine.h, midstate_engine.h);
+        assert_eq!(engine.bytes_hashed, midstate_engine.bytes_hashed);
+        engine.input(data);
+        midstate_engine.input(data);
+        assert_eq!(engine.h, midstate_engine.h);
+        let hash1 = sha256::Hash::from_engine(engine);
+        let hash2 = sha256::Hash::from_engine(midstate_engine);
+        assert_eq!(hash1, hash2);
+    }
+
+    let midstate_engine = sha256::Midstate::new(MIDSTATE, 64).to_engine();
     let hash = sha256::Hash::from_engine(midstate_engine);
     assert_eq!(hash, sha256::Hash(HASH_EXPECTED));
 }
@@ -216,6 +217,19 @@ fn sha256_serde() {
         &hash.readable(),
         &[Token::Str("ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c")],
     );
+}
+
+#[test]
+fn midstate_error_resume_hashing() {
+    let mut engine1 = sha256::Hash::engine();
+    let data = [1; 100];
+    engine1.input(&data);
+    let err = engine1.midstate().expect_err("100 bytes not block-aligned");
+    assert_eq!(err.unprocessed_bytes().len(), 36);
+    // we can resume hashing from err data
+    let mut engine2 = err.midstate().to_engine();
+    engine2.input(err.unprocessed_bytes());
+    assert_eq!(sha256::Hash::from_engine(engine1), sha256::Hash::from_engine(engine2));
 }
 
 #[cfg(target_arch = "wasm32")]

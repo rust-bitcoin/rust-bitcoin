@@ -18,7 +18,6 @@ changes to this document in a pull request.
   * [Building](#building)
 - [Development Tools](#development-tools)
   * [Just](#just)
-  * [Githooks](#githooks)
   * [Building the docs](#building-the-docs)
 - [Contribution workflow](#contribution-workflow)
   * [Preparing PRs](#preparing-prs)
@@ -116,11 +115,6 @@ detailed instructions.
 We support [`just`](https://just.systems/man/en/) for running dev workflow commands. Run `just` from
 your shell to see a list of available sub-commands.
 
-### Githooks
-
-To assist devs in catching errors _before_ running CI we provide some githooks. Copy the hooks in `githooks/`
-to your githooks folder or run `just githooks-install` to copy them all.
-
 ### Building the docs
 
 We build docs with the nightly toolchain, you may wish to use the following shell alias to check
@@ -171,7 +165,7 @@ Prerequisites that a PR must satisfy for merging into the `master` branch:
 * the tip of any PR branch must also compile and pass tests with no errors on
   MSRV (check [README.md] on current MSRV requirements) and pass fuzz tests on
   nightly rust;
-* contain all necessary tests for the introduced functional (either as a part of
+* contain all necessary tests for the introduced functionality (either as a part of
   commits, or, more preferably, as separate commits, so that it's easy to
   reorder them during review and check that the new tests fail without the new
   code);
@@ -314,7 +308,7 @@ the project to enable fine-grained unit testing is also an ongoing effort.
 Unit and integration tests are available for those interested, along with benchmarks. For project
 developers, especially new contributors looking for something to work on, we do:
 
-- Fuzz testing with [`Honggfuzz`](https://github.com/rust-fuzz/honggfuzz-rs)
+- Fuzz testing with [`libfuzzer`](https://github.com/rust-fuzz/libfuzzer)
 - Mutation testing with [`cargo-mutants`](https://github.com/sourcefrog/cargo-mutants)
 - Code verification with [`Kani`](https://github.com/model-checking/kani)
 
@@ -328,8 +322,8 @@ Run as for any other Rust project `cargo test --all-features`.
 
 ### Benchmarks
 
-We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
-bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
+We use a custom Rust compiler configuration conditional to guard the benchmark code. To run the
+benchmarks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
 
 ### Mutation tests
 

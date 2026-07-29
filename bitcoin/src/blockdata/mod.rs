@@ -22,8 +22,10 @@ pub use self::{
 /// Implements `FeeRate` and associated features.
 pub mod fee_rate {
     #[cfg(feature = "serde")]
+    #[doc(inline)]
     pub use units::fee_rate::serde;
-    /// Re-export everything from the [`units::fee_rate`] module.
+    // Re-export everything from the [`units::fee_rate`] module.
+    #[doc(inline)]
     pub use units::fee_rate::FeeRate;
 }
 
@@ -35,38 +37,21 @@ pub mod locktime {
         //! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
         //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
-        use io::{BufRead, Write};
-
-        pub use crate::consensus::encode::{self, Decodable, Encodable};
-
-        /// Re-export everything from the `units::locktime::absolute` module.
+        // Re-export everything from the `units::locktime::absolute` module.
         #[rustfmt::skip]        // Keep public re-exports separate.
         #[doc(inline)]
-        pub use units::locktime::absolute::{error, Height, LockTime, MedianTimePast};
+        pub use units::locktime::absolute::{
+            error, Height, LockTime, LockTimeDecoder, LockTimeEncoder, MedianTimePast
+        };
         #[doc(no_inline)]
         pub use units::locktime::absolute::{
-            ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError,
-            ParseTimeError,
+            ConversionError, IncompatibleHeightError, IncompatibleTimeError, LockTimeDecoderError,
+            ParseHeightError, ParseTimeError,
         };
 
         #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
         #[doc(hidden)]
         pub type Time = MedianTimePast;
-
-        impl Encodable for LockTime {
-            #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-                let v = self.to_consensus_u32();
-                v.consensus_encode(w)
-            }
-        }
-
-        impl Decodable for LockTime {
-            #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-                u32::consensus_decode(r).map(Self::from_consensus)
-            }
-        }
     }
 
     pub mod relative {
@@ -75,13 +60,14 @@ pub mod locktime {
         //! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
         //! whether bit 22 of the `u32` consensus value is set.
 
-        /// Re-export everything from the `units::locktime::relative` module.
+        // Re-export everything from the `units::locktime::relative` module.
         #[doc(inline)]
         pub use units::locktime::relative::{error, LockTime, NumberOf512Seconds, NumberOfBlocks};
         #[doc(no_inline)]
         pub use units::locktime::relative::{
-            DisabledLockTimeError, InvalidHeightError, InvalidTimeError, IsSatisfiedByError,
-            IsSatisfiedByHeightError, IsSatisfiedByTimeError, TimeOverflowError,
+            DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError,
+            InvalidHeightError, InvalidTimeError, IsSatisfiedByError, IsSatisfiedByHeightError,
+            IsSatisfiedByTimeError, TimeOverflowError,
         };
 
         #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
@@ -96,6 +82,7 @@ pub mod locktime {
 
 /// Implements `Weight` and associated features.
 pub mod weight {
-    /// Re-export everything from the [`units::weight`] module.
+    // Re-export everything from the [`units::weight`] module.
+    #[doc(inline)]
     pub use units::weight::Weight;
 }

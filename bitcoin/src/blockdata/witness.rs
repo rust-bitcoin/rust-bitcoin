@@ -4,12 +4,8 @@
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
 
-use io::{BufRead, Write};
-
-use crate::consensus::encode::{self, Error, ParseError, WriteExt};
-use crate::consensus::{Decodable, Encodable};
 use crate::crypto::ecdsa;
-use crate::crypto::key::SerializedXOnlyPublicKey;
+use crate::crypto::key::{FullPublicKey, SerializedXOnlyPublicKey};
 use crate::taproot::{self, ControlBlock, LeafScript, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX};
 use crate::{internal_macros, TapScript, WitnessScript};
 
@@ -17,28 +13,9 @@ type BorrowedControlBlock<'a> = ControlBlock<&'a TaprootMerkleBranch, &'a Serial
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::witness::{Iter, Witness};
+pub use primitives::witness::{error, Iter, Witness, WitnessDecoder, WitnessEncoder};
 #[doc(no_inline)]
-pub use primitives::witness::UnexpectedEofError;
-
-impl Decodable for Witness {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        io::decode_from_read(r).map_err(|e| Error::Parse(ParseError::Witness(e)))
-    }
-}
-
-impl Encodable for Witness {
-    // `self.content` includes the varints so encoding here includes them, as expected.
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut written = w.emit_compact_size(self.len())?;
-
-        for element in self.iter() {
-            written += encode::consensus_encode_with_size(element, w)?
-        }
-
-        Ok(written)
-    }
-}
+pub use primitives::witness::{UnexpectedEofError, WitnessDecoderError};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Witness`] type.
@@ -49,10 +26,25 @@ internal_macros::define_extension_trait! {
         /// serialized public key. Also useful for spending a P2SH-P2WPKH output.
         ///
         /// It is expected that `pubkey` is related to the secret key used to create `signature`.
-        fn p2wpkh(signature: ecdsa::Signature, pubkey: secp256k1::PublicKey) -> Self {
+        fn p2wpkh(signature: ecdsa::Signature, pubkey: FullPublicKey) -> Self {
             let mut witness = Witness::new();
             witness.push(signature.serialize());
-            witness.push(pubkey.serialize());
+            witness.push(pubkey.to_bytes());
+            witness
+        }
+
+        ///Constructs a new witness required to spend a P2WSH output.
+        ///
+        /// The witness will be made up of the satisfaction elements (signatures, preimages, etc.)
+        /// followed by the witness script as the last element. Also useful for spending a
+        /// P2SH-P2WSH output (with the appropriate scriptSig).
+        ///
+        /// The `satisfaction` slice should contain the script satisfaction stack items in the
+        /// order they are pushed onto the stack (e.g., `&[&[][..], &sig1[..], &sig2[..]]` for a
+        /// 2-of-3 multisig).
+        fn p2wsh(satisfaction: &[&[u8]], witness_script: &WitnessScript) -> Self {
+            let mut witness: Witness = satisfaction.iter().collect();
+            witness.push(witness_script.as_bytes());
             witness
         }
 
@@ -137,7 +129,7 @@ internal_macros::define_extension_trait! {
         /// Unlike the Taproot case, we do no validation to determine whether this is a
         /// witness script: it may be a Taproot control block, annex, or some other kind
         /// of object. If you are not certain whether the output being spent is Segwit v0,
-        /// use [`crate::script::ScriptExt::is_p2wsh`] on the output's script.
+        /// use [`crate::script::Script::is_p2wsh`] on the output's script.
         fn witness_script(&self) -> Option<&WitnessScript> { self.last().map(WitnessScript::from_bytes) }
     }
 }
@@ -237,28 +229,15 @@ mod sealed {
 
 #[cfg(test)]
 mod test {
-    use hex_lit::hex;
+    use hex::{hex, DisplayHex};
 
     use super::*;
-    use crate::consensus::{deserialize, encode, serialize};
-    use crate::hex::DisplayHex;
+    use crate::encoding::{
+        decode_from_slice, drain_to_vec, encode_to_vec, BytesEncoder, CompactSizeEncoder, Encoder2,
+    };
     use crate::sighash::EcdsaSighashType;
     use crate::taproot::LeafVersion;
     use crate::Transaction;
-
-    #[test]
-    fn exact_sized_iterator() {
-        let mut witness = Witness::default();
-        for i in 0..5 {
-            assert_eq!(witness.iter().len(), i);
-            witness.push([0u8]);
-        }
-        let mut iter = witness.iter();
-        for i in (0..=5).rev() {
-            assert_eq!(iter.len(), i);
-            iter.next();
-        }
-    }
 
     #[test]
     fn push_ecdsa_sig() {
@@ -288,16 +267,25 @@ mod test {
         let vec = vec![el_0, el_1];
 
         // Puts a CompactSize at the front as well as one at the front of each element.
-        let want_ser: Vec<u8> = encode::serialize(&vec);
+        let want_ser = {
+            let mut out = drain_to_vec(&mut CompactSizeEncoder::new(vec.len()));
+            for item in &vec {
+                out.extend_from_slice(&drain_to_vec(&mut Encoder2::new(
+                    CompactSizeEncoder::new(item.len()),
+                    BytesEncoder::without_length_prefix(item),
+                )));
+            }
+            out
+        };
 
         // `from_slice` expects bytes slices _without_ leading `CompactSize`.
         let got_witness = Witness::from_slice(&vec);
         assert_eq!(got_witness, want_witness);
 
-        let got_ser = encode::serialize(&got_witness);
+        let got_ser = encode_to_vec(&got_witness);
         assert_eq!(got_ser, want_ser);
 
-        let roundtrip: Witness = encode::deserialize(&got_ser).unwrap();
+        let roundtrip: Witness = decode_from_slice(&got_ser).unwrap();
         assert_eq!(roundtrip, want_witness)
     }
 
@@ -404,7 +392,7 @@ mod test {
     fn tx() {
         const S: &str = "02000000000102b44f26b275b8ad7b81146ba3dbecd081f9c1ea0dc05b97516f56045cfcd3df030100000000ffffffff1cb4749ae827c0b75f3d0a31e63efc8c71b47b5e3634a4c698cd53661cab09170100000000ffffffff020b3a0500000000001976a9143ea74de92762212c96f4dd66c4d72a4deb20b75788ac630500000000000016001493a8dfd1f0b6a600ab01df52b138cda0b82bb7080248304502210084622878c94f4c356ce49c8e33a063ec90f6ee9c0208540888cfab056cd1fca9022014e8dbfdfa46d318c6887afd92dcfa54510e057565e091d64d2ee3a66488f82c0121026e181ffb98ebfe5a64c983073398ea4bcd1548e7b971b4c175346a25a1c12e950247304402203ef00489a0d549114977df2820fab02df75bebb374f5eee9e615107121658cfa02204751f2d1784f8e841bff6d3bcf2396af2f1a5537c0e4397224873fbd3bfbe9cf012102ae6aa498ce2dd204e9180e71b4fb1260fe3d1a95c8025b34e56a9adf5f278af200000000";
         let tx_bytes = hex!(S);
-        let tx: Transaction = deserialize(&tx_bytes).unwrap();
+        let tx: Transaction = decode_from_slice(&tx_bytes).unwrap();
 
         let expected_wit = ["304502210084622878c94f4c356ce49c8e33a063ec90f6ee9c0208540888cfab056cd1fca9022014e8dbfdfa46d318c6887afd92dcfa54510e057565e091d64d2ee3a66488f82c01", "026e181ffb98ebfe5a64c983073398ea4bcd1548e7b971b4c175346a25a1c12e95"];
         for (i, wit_el) in tx.inputs[0].witness.iter().enumerate() {
@@ -421,16 +409,34 @@ mod test {
         assert_eq!(expected_wit[0], tx.inputs[0].witness[0].to_lower_hex_string());
         assert_eq!(expected_wit[1], tx.inputs[0].witness[1].to_lower_hex_string());
 
-        let tx_bytes_back = serialize(&tx);
+        let tx_bytes_back = encode_to_vec(&tx);
         assert_eq!(tx_bytes_back, tx_bytes);
+    }
+
+    #[test]
+    fn p2wsh_witness() {
+        let witness_script_bytes = hex!("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae");
+        let witness_script = WitnessScript::from_bytes(&witness_script_bytes);
+        let sig1 = hex!("304402201234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef02201234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef01");
+        let sig2 = hex!("3044022011111111111111111111111111111111111111111111111111111111111111110220222222222222222222222222222222222222222222222222222222222222222201");
+
+        // 2-of-2 multisig satisfaction: OP_0 bug push, then two sigs
+        let satisfaction: &[&[u8]] = &[&[], &sig1, &sig2];
+        let witness = Witness::p2wsh(satisfaction, witness_script);
+
+        assert_eq!(witness.len(), 4); // empty push + sig1 + sig2 + witness_script
+        assert_eq!(witness[0], *b"");
+        assert_eq!(witness[1], sig1[..]);
+        assert_eq!(witness[2], sig2[..]);
+        assert_eq!(witness[3], *witness_script.as_bytes());
     }
 
     #[test]
     fn fuzz_cases() {
         let bytes = hex!("26ff0000000000c94ce592cf7a4cbb68eb00ce374300000057cd0000000000000026");
-        assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
+        assert!(decode_from_slice::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
 
         let bytes = hex!("24000000ffffffffffffffffffffffff");
-        assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
+        assert!(decode_from_slice::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
     }
 }

@@ -1,9 +1,9 @@
 use bitcoin::ext::*;
 use bitcoin::{
-    consensus, ecdsa, sighash, Amount, CompressedPublicKey, ScriptPubKey, ScriptPubKeyBuf,
-    Transaction, WitnessScript,
+    ecdsa, encoding, sighash, Amount, FullPublicKey, ScriptPubKey, ScriptPubKeyBuf, Transaction,
+    WitnessScript,
 };
-use hex_lit::hex;
+use hex::hex;
 
 //These are real blockchain transactions examples of computing sighash for:
 // - P2WPKH
@@ -21,7 +21,7 @@ use hex_lit::hex;
 /// * `inp_idx` - the spending tx input index
 /// * `amount` - the ref tx output amount.
 fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
-    let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
+    let tx: Transaction = encoding::decode_from_slice(raw_tx).unwrap();
     let inp = &tx.inputs[inp_idx];
     let witness = &inp.witness;
     println!("Witness: {witness:?}");
@@ -36,7 +36,8 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
 
     //BIP-0143: "The item 5 : For P2WPKH witness program, the scriptCode is 0x1976a914{20-byte-pubkey-hash}88ac"
     //this is nothing but a standard P2PKH script OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG:
-    let pk = CompressedPublicKey::from_slice(pk_bytes).expect("failed to parse pubkey");
+    let pk_byte_arr = pk_bytes.try_into().expect("there should be 33 bytes for a compressed key");
+    let pk = FullPublicKey::from_bytes(pk_byte_arr).expect("failed to parse pubkey");
     let wpkh = pk.wpubkey_hash();
     println!("Script pubkey hash: {wpkh:x}");
     let spk = ScriptPubKeyBuf::new_p2wpkh(wpkh);
@@ -59,7 +60,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
 /// * `inp_idx` - the spending tx input index
 /// * `script_pubkey_bytes_opt` - the Option with scriptPubKey bytes. If None, it's p2sh case, i.e., reftx output's scriptPubKey.type is "scripthash". In this case scriptPubkey is extracted from the spending transaction's scriptSig. If Some(), it's p2ms case, i.e., reftx output's scriptPubKey.type is "multisig", and the scriptPubkey is supplied from the referenced output.
 fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt: Option<&[u8]>) {
-    let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
+    let tx: Transaction = encoding::decode_from_slice(raw_tx).unwrap();
     let inp = &tx.inputs[inp_idx];
     let script_sig = &inp.script_sig;
     println!("scriptSig is: {script_sig}");
@@ -104,7 +105,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
 /// * `inp_idx` - the spending tx input index
 /// * `amount` - the ref tx output amount.
 fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
-    let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
+    let tx: Transaction = encoding::decode_from_slice(raw_tx).unwrap();
     let inp = &tx.inputs[inp_idx];
     let witness = &inp.witness;
     println!("witness {witness:?}");

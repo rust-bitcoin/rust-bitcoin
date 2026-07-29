@@ -3,12 +3,13 @@
 # Script for generating a Rust test file that verifies all bitcoin_primitives
 # items are re-exported in the `bitcoin` crate.
 #
-# The script parses api/primitives/all-features.txt and generates use statements
-# that will fail to compile if any re-exports are missing.
+# The script parses primitives/api/all-features.txt and units/api/all-features.txt
+# to generate use statements that will fail to compile if any re-exports are missing.
 
 set -euo pipefail
 
-api_file="./api/primitives/all-features.txt"
+api_file="./primitives/api/all-features.txt"
+units_api_file="./units/api/all-features.txt"
 output_file="./bitcoin/tests/check-re-exports.rs"
 
 usage() {
@@ -21,8 +22,9 @@ DESCRIPTION
   Generates a Rust test file that verifies all public types and modules from
   bitcoin_primitives are re-exported in the bitcoin crate;
 
-  The script parses api/primitives/all-features.txt and creates use statements for
-  every 'pub enum', 'pub struct', and 'pub mod' declaration.
+  The script parses primitives/api/all-features.txt and units/api/all-features.txt
+  to creates use statements for every 'pub enum', 'pub struct', and 'pub mod'
+  declaration.
 
   Output file: bitcoin/tests/check-re-exports.rs
 EOF
@@ -83,6 +85,7 @@ EOF
     local use_statements=()
     local seen_items=()
 
+    # Process primitives API: types declared in or re-exported by primitives
     while IFS= read -r line; do
         local path=""
 
@@ -95,15 +98,14 @@ EOF
         # Extract pub mod
         elif [[ "$line" =~ ^pub\ mod\ (bitcoin_primitives::[^[:space:]]+)$ ]]; then
             path="${BASH_REMATCH[1]}"
+        # Extract pub use (re-exports)
+        elif [[ "$line" =~ ^pub\ use\ (bitcoin_primitives::[^[:space:]]+)$ ]]; then
+            path="${BASH_REMATCH[1]}"
         fi
 
         if [[ -n "$path" ]]; then
             # Remove generic type parameters (e.g., <T>)
             path="${path%%<*}"
-
-            if [[ "$path" == *Encoder* ]] || [[ $path == *Decoder* ]]; then
-                continue
-            fi
 
             # Convert bitcoin_primitives:: to bitcoin::
             local bitcoin_path="${path//bitcoin_primitives::/bitcoin::}"
@@ -115,6 +117,38 @@ EOF
             fi
         fi
     done < "$api_file"
+
+    # Also process units API: individual types inside modules that primitives re-exports
+    # wholesale (e.g. `pub use units::locktime::absolute`) are not enumerated in the
+    # primitives API surface, so we must check them against bitcoin directly.
+    while IFS= read -r line; do
+        local path=""
+
+        # Extract pub enum
+        if [[ "$line" =~ pub\ enum\ (bitcoin_units::[^[:space:]]+) ]]; then
+            path="${BASH_REMATCH[1]}"
+        # Extract pub struct
+        elif [[ "$line" =~ pub\ struct\ (bitcoin_units::[^[:space:]\(]+) ]]; then
+            path="${BASH_REMATCH[1]}"
+        # Extract pub mod
+        elif [[ "$line" =~ ^pub\ mod\ (bitcoin_units::[^[:space:]]+)$ ]]; then
+            path="${BASH_REMATCH[1]}"
+        # Extract pub use (re-exports)
+        elif [[ "$line" =~ ^pub\ use\ (bitcoin_units::[^[:space:]]+)$ ]]; then
+            path="${BASH_REMATCH[1]}"
+        fi
+
+        if [[ -n "$path" ]]; then
+            # Remove generic type parameters (e.g., <T>)
+            path="${path%%<*}"
+
+            local bitcoin_path="${path//bitcoin_units::/bitcoin::}"
+            if [[ " ${seen_items[*]} " != *" $bitcoin_path "* ]]; then
+                seen_items+=("$bitcoin_path")
+                use_statements+=("    use $bitcoin_path as _;")
+            fi
+        fi
+    done < "$units_api_file"
 
     # Sort use statements and add to file
     printf '%s\n' "${use_statements[@]}" | sort >> "$temp_file"
@@ -129,6 +163,10 @@ EOF
 check_required_files() {
     if [[ ! -f "$api_file" ]]; then
         err "Required file not found: $api_file"
+    fi
+
+    if [[ ! -f "$units_api_file" ]]; then
+        err "Required file not found: $units_api_file"
     fi
 
     local output_dir

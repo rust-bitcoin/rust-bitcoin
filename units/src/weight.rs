@@ -10,7 +10,8 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{parse_int, Amount, FeeRate, NumOpResult};
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
+use crate::{Amount, FeeRate, NumOpResult};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -25,11 +26,13 @@ mod encapsulate {
 
     impl Weight {
         /// Constructs a new [`Weight`] from weight units.
+        #[inline]
         pub const fn from_wu(wu: u64) -> Self { Self(wu) }
 
         /// Returns raw weight units.
         ///
         /// Can be used instead of `into()` to avoid inference issues.
+        #[inline]
         pub const fn to_wu(self) -> u64 { self.0 }
     }
 }
@@ -60,6 +63,7 @@ impl Weight {
     pub const MIN_TRANSACTION: Self = Self::from_wu(Self::WITNESS_SCALE_FACTOR * 60);
 
     /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
+    #[inline]
     pub const fn from_kwu(wu: u64) -> Option<Self> {
         // No `map()` in const context.
         match wu.checked_mul(1000) {
@@ -69,6 +73,7 @@ impl Weight {
     }
 
     /// Constructs a new [`Weight`] from virtual bytes, returning [`None`] if an overflow occurred.
+    #[inline]
     pub const fn from_vb(vb: u64) -> Option<Self> {
         // No `map()` in const context.
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
@@ -77,54 +82,60 @@ impl Weight {
         }
     }
 
-    /// Constructs a new [`Weight`] from virtual bytes panicking if an overflow occurred.
-    ///
-    /// # Panics
-    ///
-    /// If the conversion from virtual bytes overflows.
-    #[deprecated(since = "1.0.0-rc.0", note = "use `from_vb_unchecked` instead")]
-    #[track_caller]
-    pub const fn from_vb_unwrap(vb: u64) -> Self {
-        match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
-            Some(weight) => Self::from_wu(weight),
-            None => panic!("checked_mul overflowed"),
-        }
-    }
-
     /// Constructs a new [`Weight`] from virtual bytes without an overflow check.
+    #[inline]
     pub const fn from_vb_unchecked(vb: u64) -> Self {
         Self::from_wu(vb * Self::WITNESS_SCALE_FACTOR)
     }
 
-    /// Constructs a new [`Weight`] from witness size.
-    #[deprecated(since = "1.0.0-rc.1", note = "use `from_wu` instead")]
-    pub const fn from_witness_data_size(witness_size: u64) -> Self { Self::from_wu(witness_size) }
+    /// Constructs a new `Weight` from a prefixed hex string.
+    ///
+    /// The hex string once parsed is assumed to represent weight units.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a weight in weight units or it
+    /// does not include the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let weight = parse_int::hex_u64_prefixed(s)?;
+        Ok(Self::from_wu(weight))
+    }
 
-    /// Constructs a new [`Weight`] from non-witness size.
+    /// Constructs a new `Weight` from an unprefixed hex string.
     ///
-    /// # Panics
+    /// The hex string once parsed is assumed to represent weight units.
     ///
-    /// If the conversion from virtual bytes overflows.
-    #[deprecated(since = "1.0.0-rc.1", note = "use `from_vb` or `from_vb_unchecked` instead")]
-    pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
-        Self::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a weight in weight units or if
+    /// it includes the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        let weight = parse_int::hex_u64_unprefixed(s)?;
+        Ok(Self::from_wu(weight))
     }
 
     /// Converts to kilo weight units rounding down.
+    #[inline]
     pub const fn to_kwu_floor(self) -> u64 { self.to_wu() / 1000 }
 
     /// Converts to kilo weight units rounding up.
+    #[inline]
     pub const fn to_kwu_ceil(self) -> u64 { self.to_wu().div_ceil(1_000) }
 
     /// Converts to vB rounding down.
+    #[inline]
     pub const fn to_vbytes_floor(self) -> u64 { self.to_wu() / Self::WITNESS_SCALE_FACTOR }
 
     /// Converts to vB rounding up.
+    #[inline]
     pub const fn to_vbytes_ceil(self) -> u64 { self.to_wu().div_ceil(Self::WITNESS_SCALE_FACTOR) }
 
     /// Checked addition.
     ///
     /// Computes `self + rhs` returning [`None`] if an overflow occurred.
+    #[inline]
     #[must_use]
     pub const fn checked_add(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
@@ -137,6 +148,7 @@ impl Weight {
     /// Checked subtraction.
     ///
     /// Computes `self - rhs` returning [`None`] if an overflow occurred.
+    #[inline]
     #[must_use]
     pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
@@ -149,6 +161,7 @@ impl Weight {
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning [`None`] if an overflow occurred.
+    #[inline]
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
@@ -161,6 +174,7 @@ impl Weight {
     /// Checked division.
     ///
     /// Computes `self / rhs` returning [`None`] if `rhs == 0`.
+    #[inline]
     #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
@@ -175,10 +189,13 @@ impl Weight {
     /// Computes the absolute fee amount for a given [`FeeRate`] at this weight. When the resulting
     /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
     /// enough instead of falling short if rounded down.
+    #[inline]
     pub const fn mul_by_fee_rate(self, fee_rate: FeeRate) -> NumOpResult<Amount> {
         fee_rate.mul_by_weight(self)
     }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Weight, to_wu);
 
 /// Alternative will display the unit.
 impl fmt::Display for Weight {
@@ -192,6 +209,7 @@ impl fmt::Display for Weight {
 }
 
 impl From<Weight> for u64 {
+    #[inline]
     fn from(value: Weight) -> Self { value.to_wu() }
 }
 
@@ -247,18 +265,22 @@ crate::internal_macros::impl_add_assign!(Weight);
 crate::internal_macros::impl_sub_assign!(Weight);
 
 impl ops::MulAssign<u64> for Weight {
+    #[inline]
     fn mul_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() * rhs); }
 }
 
 impl ops::DivAssign<u64> for Weight {
+    #[inline]
     fn div_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() / rhs); }
 }
 
 impl ops::RemAssign<u64> for Weight {
+    #[inline]
     fn rem_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() % rhs); }
 }
 
 impl core::iter::Sum for Weight {
+    #[inline]
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = Self>,
@@ -268,6 +290,7 @@ impl core::iter::Sum for Weight {
 }
 
 impl<'a> core::iter::Sum<&'a Self> for Weight {
+    #[inline]
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
@@ -369,23 +392,33 @@ mod tests {
     fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
 
     #[test]
-    #[allow(deprecated)] // tests the deprecated function
-    #[allow(deprecated_in_future)]
-    fn from_witness_data_size() {
-        let witness_data_size = 1;
-        let got = Weight::from_witness_data_size(witness_data_size);
-        let want = Weight::from_wu(witness_data_size);
+    #[cfg(feature = "alloc")]
+    fn try_from_string() {
+        let weight_value: alloc::string::String = "10".into();
+        let got = Weight::try_from(weight_value).unwrap();
+        let want = Weight::from_wu(10);
         assert_eq!(got, want);
+
+        // Only base-10 integers should parse
+        let weight_value: alloc::string::String = "0xab".into();
+        assert!(Weight::try_from(weight_value).is_err());
+        let weight_value: alloc::string::String = "10.123".into();
+        assert!(Weight::try_from(weight_value).is_err());
     }
 
     #[test]
-    #[allow(deprecated)] // tests the deprecated function
-    #[allow(deprecated_in_future)]
-    fn from_non_witness_data_size() {
-        let non_witness_data_size = 1;
-        let got = Weight::from_non_witness_data_size(non_witness_data_size);
-        let want = Weight::from_wu(non_witness_data_size * 4);
+    #[cfg(feature = "alloc")]
+    fn try_from_box() {
+        let weight_value: alloc::boxed::Box<str> = "10".into();
+        let got = Weight::try_from(weight_value).unwrap();
+        let want = Weight::from_wu(10);
         assert_eq!(got, want);
+
+        // Only base-10 integers should parse
+        let weight_value: alloc::boxed::Box<str> = "0xab".into();
+        assert!(Weight::try_from(weight_value).is_err());
+        let weight_value: alloc::boxed::Box<str> = "10.123".into();
+        assert!(Weight::try_from(weight_value).is_err());
     }
 
     #[test]
@@ -546,5 +579,41 @@ mod tests {
         let mut weight = Weight::from_wu(10);
         weight %= 3;
         assert_eq!(weight, Weight::from_wu(1));
+    }
+
+    #[test]
+    fn iter_sum() {
+        let values = [
+            Weight::from_wu(10),
+            Weight::from_wu(50),
+            Weight::from_wu(30),
+            Weight::from_wu(5),
+            Weight::from_wu(5),
+        ];
+        let got: Weight = values.into_iter().sum();
+        let want = Weight::from_wu(100);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn iter_sum_ref() {
+        let values = [
+            Weight::from_wu(10),
+            Weight::from_wu(50),
+            Weight::from_wu(30),
+            Weight::from_wu(5),
+            Weight::from_wu(5),
+        ];
+        let got: Weight = values.iter().sum();
+        let want = Weight::from_wu(100);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn iter_sum_empty() {
+        let values: [Weight; 0] = [];
+        let got: Weight = values.into_iter().sum();
+        let want = Weight::from_wu(0);
+        assert_eq!(got, want);
     }
 }

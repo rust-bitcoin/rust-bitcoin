@@ -1,10 +1,14 @@
 [workspace]
-members = ["addresses", "base58", "bip158", "bitcoin", "chacha20_poly1305", "consensus_encoding", "crypto", "fuzz", "hashes", "internals", "io", "network", "p2p", "primitives", "units"]
+members = ["addresses", "base58", "bip158", "bitcoin", "chacha20_poly1305", "consensus_encoding", "crypto", "fuzz", "hashes", "internals", "io", "key_expression", "network", "p2p", "primitives", "taproot_primitives", "units"]
 exclude = ["benches"]
 resolver = "2"
 
+[workspace.metadata.rbmt.toolchains]
+nightly = "nightly-2026-07-02"
+stable = "1.97.1"
+
 [workspace.lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(kani)'] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(chacha20_poly1305_fuzz)', 'cfg(fuzzing)', 'cfg(hashes_fuzz)', 'cfg(kani)'] }
 
 [workspace.lints.clippy]
 # Exclude lints we don't think are valuable.
@@ -27,7 +31,7 @@ copy_iterator = "warn"
 default_trait_access = "warn"
 doc_link_with_quotes = "warn"
 doc_markdown = "warn"
-empty_enum = "warn"
+empty_enums = "warn"
 enum_glob_use = "warn"
 expl_impl_clone_on_copy = "warn"
 explicit_deref_methods = "warn"
@@ -116,7 +120,7 @@ struct_field_names = "allow" # dumb
 too_many_lines = "warn"
 transmute_ptr_to_ptr = "warn"
 trivially_copy_pass_by_ref = "warn"
-unchecked_duration_subtraction = "warn"
+unchecked_time_subtraction = "warn"
 unicode_not_nfc = "warn"
 uninlined_format_args = "allow" # This is a subjective style choice.
 unnecessary_box_returns = "warn"

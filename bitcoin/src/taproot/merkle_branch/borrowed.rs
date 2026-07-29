@@ -13,7 +13,8 @@ use super::{
 mod privacy_boundary {
     use super::*;
 
-    internals::transparent_newtype! {
+    // Defined in `REPO_DIR/include/newtype.rs`.
+    transparent_newtype! {
         /// The Merkle proof for inclusion of a tree in a Taproot tree hash.
         #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct TaprootMerkleBranch([TapNodeHash]);

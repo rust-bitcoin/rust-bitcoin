@@ -3,7 +3,7 @@
 //! Example of creating an encoder that encodes a slice of encodable objects.
 
 use bitcoin_consensus_encoding as encoding;
-use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
+use encoding::{ArrayEncoder, BytesEncoder, Encode, Encoder2, PrefixedSliceEncoder};
 
 fn main() {
     let v = vec![Inner::new(0xcafe_babe), Inner::new(0xdead_beef)];
@@ -29,23 +29,20 @@ impl Adt {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`Adt`] type.
-    pub struct AdtEncoder<'e>(Encoder2<Encoder2<CompactSizeEncoder, SliceEncoder<'e, Inner>>, BytesEncoder<'e>>);
+    pub struct AdtEncoder<'e>(Encoder2<PrefixedSliceEncoder<'e, Inner>, BytesEncoder<'e>>);
 }
 
-impl Encodable for Adt {
-    type Encoder<'a>
-        = AdtEncoder<'a>
+impl Encode for Adt {
+    type Encoder<'e>
+        = AdtEncoder<'e>
     where
-        Self: 'a;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        let a = Encoder2::new(
-            CompactSizeEncoder::new(self.v.len()),
-            SliceEncoder::without_length_prefix(&self.v),
-        );
+        let a = PrefixedSliceEncoder::new(&self.v);
         let b = BytesEncoder::without_length_prefix(self.b.as_ref());
 
-        AdtEncoder(Encoder2::new(a, b))
+        AdtEncoder::new(Encoder2::new(a, b))
     }
 }
 
@@ -61,14 +58,14 @@ impl Inner {
     pub fn to_array(&self) -> [u8; 4] { self.0.to_be_bytes() }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Inner`] type.
-    pub struct InnerEncoder(ArrayEncoder<4>);
+    pub struct InnerEncoder<'e>(ArrayEncoder<4>);
 }
 
-impl Encodable for Inner {
-    type Encoder<'e> = InnerEncoder;
+impl Encode for Inner {
+    type Encoder<'e> = InnerEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        InnerEncoder(ArrayEncoder::without_length_prefix(self.to_array()))
+        InnerEncoder::new(ArrayEncoder::without_length_prefix(self.to_array()))
     }
 }

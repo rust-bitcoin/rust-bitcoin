@@ -2,22 +2,76 @@
 
 //! SHA256 implementation.
 
+#![allow(clippy::unreadable_literal)]
+
 mod crypto;
 #[cfg(test)]
 mod tests;
 
-use core::{cmp, convert, fmt};
+use core::{convert, fmt};
 
 use internals::slice::SliceExt;
 
-use crate::{incomplete_block_len, sha256d, HashEngine as _};
+use crate::{incomplete_block_len, sha256d};
 #[cfg(doc)]
 use crate::{sha256t, sha256t_tag};
 
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::MidstateError;
+
 crate::internal_macros::general_hash_type! {
-    256,
-    false,
-    "Output of the SHA256 hash function."
+    /// Output of the SHA256 hash function.
+    pub struct Hash([u8; 32]);
+
+    const DISPLAY_BACKWARD: bool = false;
+}
+
+impl Hash {
+    /// Finalizes a hash engine to obtain a hash.
+    #[cfg(not(hashes_fuzz))]
+    pub fn from_engine(mut e: HashEngine) -> Self {
+        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
+        let n_bytes_hashed = e.bytes_hashed;
+
+        let buf_idx = incomplete_block_len(&e);
+
+        e.buffer[buf_idx] = 0x80;
+        e.buffer[buf_idx + 1..].fill(0);
+
+        if buf_idx >= BLOCK_SIZE - 8 {
+            HashEngine::process_blocks(&mut e.h, &e.buffer);
+            e.buffer[..BLOCK_SIZE - 8].fill(0);
+        }
+
+        e.buffer[BLOCK_SIZE - 8..].copy_from_slice(&(8 * n_bytes_hashed).to_be_bytes());
+        HashEngine::process_blocks(&mut e.h, &e.buffer);
+
+        Self(e.midstate_unchecked().bytes)
+    }
+
+    /// Finalizes a hash engine to obtain a hash.
+    #[cfg(hashes_fuzz)]
+    pub fn from_engine(e: HashEngine) -> Self {
+        let mut hash = e.midstate_unchecked().bytes;
+        if hash == [0; 32] {
+            // Assume SHA256 is secure and never generate 0-hashes (which represent invalid
+            // secp256k1 secret keys, causing downstream application breakage).
+            hash[0] = 1;
+        }
+        Hash(hash)
+    }
+
+    /// Iterates the SHA256 algorithm to turn a SHA256 hash into a `SHA256d` hash.
+    #[must_use]
+    pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
+
+    /// Computes hash from `bytes` in `const` context.
+    ///
+    /// Warning: this function is inefficient. It should be only used in `const` context.
+    pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
+        Self(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
+    }
 }
 
 const BLOCK_SIZE: usize = 64;
@@ -46,15 +100,7 @@ impl HashEngine {
     /// Constructs a new [`HashEngine`] from a [`Midstate`].
     ///
     /// Please see docs on [`Midstate`] before using this function.
-    pub fn from_midstate(midstate: Midstate) -> Self {
-        let mut ret = [0; 8];
-        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate.as_ref().bitcoin_as_chunks().0)
-        {
-            *ret_val = u32::from_be_bytes(*midstate_bytes);
-        }
-
-        Self { buffer: [0; BLOCK_SIZE], h: ret, bytes_hashed: midstate.bytes_hashed }
-    }
+    pub fn from_midstate(midstate: Midstate) -> Self { midstate.to_engine() }
 
     /// Returns `true` if the midstate can be extracted from this engine.
     ///
@@ -67,9 +113,30 @@ impl HashEngine {
     /// Outputs the midstate of the hash engine.
     ///
     /// Please see docs on [`Midstate`] before using this function.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MidstateError`] if the number of bytes hashed is not a multiple of 64.
     pub fn midstate(&self) -> Result<Midstate, MidstateError> {
         if !self.can_extract_midstate() {
-            return Err(MidstateError { invalid_n_bytes_hashed: self.bytes_hashed });
+            let unprocessed_len = (self.bytes_hashed % BLOCK_SIZE as u64) as usize;
+            let aligned_bytes = self.bytes_hashed - unprocessed_len as u64;
+
+            let mut midstate_bytes = [0; 32];
+            for (val, ret_bytes) in self.h.iter().zip(midstate_bytes.bitcoin_as_chunks_mut::<4>().0)
+            {
+                *ret_bytes = val.to_be_bytes();
+            }
+
+            return Err(MidstateError {
+                invalid_n_bytes_hashed: self.bytes_hashed,
+                block_aligned_midstate: Midstate {
+                    bytes: midstate_bytes,
+                    bytes_hashed: aligned_bytes,
+                },
+                unprocessed_bytes: self.buffer,
+                unprocessed_bytes_len: unprocessed_len,
+            });
         }
         Ok(self.midstate_unchecked())
     }
@@ -99,58 +166,11 @@ impl Default for HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
-    type Bytes = [u8; 32];
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
-    crate::internal_macros::engine_input_impl!();
+    crate::internal_macros::impl_engine_input!();
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
-}
-
-impl Hash {
-    /// Finalize a hash engine to obtain a hash.
-    #[cfg(not(hashes_fuzz))]
-    pub fn from_engine(mut e: HashEngine) -> Self {
-        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-        let n_bytes_hashed = e.bytes_hashed;
-
-        let zeroes = [0; BLOCK_SIZE - 8];
-        e.input(&[0x80]);
-        if incomplete_block_len(&e) > zeroes.len() {
-            e.input(&zeroes);
-        }
-        let pad_length = zeroes.len() - incomplete_block_len(&e);
-        e.input(&zeroes[..pad_length]);
-        debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
-
-        e.input(&(8 * n_bytes_hashed).to_be_bytes());
-        debug_assert_eq!(incomplete_block_len(&e), 0);
-
-        Self(e.midstate_unchecked().bytes)
-    }
-
-    /// Finalize a hash engine to obtain a hash.
-    #[cfg(hashes_fuzz)]
-    pub fn from_engine(e: HashEngine) -> Self {
-        let mut hash = e.midstate_unchecked().bytes;
-        if hash == [0; 32] {
-            // Assume sha256 is secure and never generate 0-hashes (which represent invalid
-            // secp256k1 secret keys, causing downstream application breakage).
-            hash[0] = 1;
-        }
-        Hash(hash)
-    }
-
-    /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
-    #[must_use]
-    pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
-
-    /// Computes hash from `bytes` in `const` context.
-    ///
-    /// Warning: this function is inefficient. It should be only used in `const` context.
-    pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
-        Self(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
-    }
 }
 
 /// Unfinalized output of the SHA256 hash function.
@@ -184,9 +204,7 @@ impl Midstate {
     /// Panics if `bytes_hashed` is not a multiple of 64.
     #[track_caller]
     pub const fn new(state: [u8; 32], bytes_hashed: u64) -> Self {
-        if bytes_hashed % 64 != 0 {
-            panic!("bytes hashed is not a multiple of 64");
-        }
+        assert!(bytes_hashed % 64 == 0, "bytes hashed is not a multiple of 64");
 
         Self { bytes: state, bytes_hashed }
     }
@@ -196,6 +214,16 @@ impl Midstate {
 
     /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
     pub const fn to_parts(self) -> ([u8; 32], u64) { (self.bytes, self.bytes_hashed) }
+
+    /// Constructs a new [`HashEngine`] from this [`Midstate`].
+    pub fn to_engine(self) -> HashEngine {
+        let mut ret = [0; 8];
+        for (ret_val, midstate_bytes) in ret.iter_mut().zip(self.as_ref().bitcoin_as_chunks().0) {
+            *ret_val = u32::from_be_bytes(*midstate_bytes);
+        }
+
+        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, bytes_hashed: self.bytes_hashed }
+    }
 
     /// Constructs a new midstate for tagged hashes.
     ///
@@ -236,22 +264,62 @@ impl convert::AsRef<[u8]> for Midstate {
     fn as_ref(&self) -> &[u8] { &self.bytes }
 }
 
-/// `Midstate` invariant violated (not a multiple of 64).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MidstateError {
-    /// The invalid number of bytes hashed.
-    invalid_n_bytes_hashed: u64,
-}
+/// Error types for the SHA256 hash.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
 
-impl fmt::Display for MidstateError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "invalid number of bytes hashed {} (should have been a multiple of 64)",
-            self.invalid_n_bytes_hashed
-        )
+    use super::{Midstate, BLOCK_SIZE};
+
+    /// [`Midstate`] invariant violated (not a multiple of 64).
+    ///
+    /// [`Midstate`]: super::Midstate
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct MidstateError {
+        /// The invalid number of bytes hashed.
+        pub(super) invalid_n_bytes_hashed: u64,
+        pub(super) block_aligned_midstate: Midstate,
+        pub(super) unprocessed_bytes: [u8; BLOCK_SIZE],
+        pub(super) unprocessed_bytes_len: usize,
+    }
+
+    impl MidstateError {
+        /// Returns block-aligned midstate.
+        #[inline]
+        pub const fn midstate(&self) -> &Midstate { &self.block_aligned_midstate }
+
+        /// returns the unprocessed bytes remaining in the buffer.
+        #[inline]
+        pub fn unprocessed_bytes(&self) -> &[u8] {
+            &self.unprocessed_bytes[..self.unprocessed_bytes_len]
+        }
+    }
+
+    impl From<Infallible> for MidstateError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for MidstateError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "invalid number of bytes hashed {} (should have been a multiple of 64)",
+                self.invalid_n_bytes_hashed
+            )
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for MidstateError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {
+                invalid_n_bytes_hashed: _,
+                block_aligned_midstate: _,
+                unprocessed_bytes: _,
+                unprocessed_bytes_len: _,
+            } = self;
+            None
+        }
     }
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for MidstateError {}

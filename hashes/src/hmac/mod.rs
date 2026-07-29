@@ -31,74 +31,6 @@ impl<T: Hash> PartialEq for Hmac<T> {
 
 impl<T: Hash> Eq for Hmac<T> {}
 
-/// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
-#[derive(Debug, Clone)]
-pub struct HmacEngine<T: HashEngine> {
-    iengine: T,
-    oengine: T,
-}
-
-impl<T: HashEngine> HmacEngine<T> {
-    /// Constructs a new keyed HMAC engine from `key`.
-    ///
-    /// We only support underlying hashes whose block sizes are ≤ 128 bytes.
-    ///
-    /// # Panics
-    ///
-    /// Larger hashes will result in a panic.
-    pub fn new(key: &[u8]) -> Self
-    where
-        T: Default,
-    {
-        debug_assert!(T::BLOCK_SIZE <= 128);
-
-        let mut ipad = [0x36u8; 128];
-        let mut opad = [0x5cu8; 128];
-        let mut ret = Self { iengine: T::default(), oengine: T::default() };
-
-        if key.len() > T::BLOCK_SIZE {
-            let mut engine = T::default();
-            engine.input(key);
-            let hash = engine.finalize();
-
-            for (b_i, b_h) in ipad.iter_mut().zip(hash.as_ref()) {
-                *b_i ^= *b_h;
-            }
-            for (b_o, b_h) in opad.iter_mut().zip(hash.as_ref()) {
-                *b_o ^= *b_h;
-            }
-        } else {
-            for (b_i, b_h) in ipad.iter_mut().zip(key) {
-                *b_i ^= *b_h;
-            }
-            for (b_o, b_h) in opad.iter_mut().zip(key) {
-                *b_o ^= *b_h;
-            }
-        };
-
-        ret.iengine.input(&ipad[..T::BLOCK_SIZE]);
-        ret.oengine.input(&opad[..T::BLOCK_SIZE]);
-        ret
-    }
-
-    /// A special constructor giving direct access to the underlying "inner" and "outer" engines.
-    pub fn from_inner_engines(iengine: T, oengine: T) -> Self { Self { iengine, oengine } }
-}
-
-impl<T: HashEngine> HashEngine for HmacEngine<T> {
-    type Hash = Hmac<T::Hash>;
-    type Bytes = T::Bytes;
-    const BLOCK_SIZE: usize = T::BLOCK_SIZE;
-
-    fn n_bytes_hashed(&self) -> u64 { self.iengine.n_bytes_hashed() }
-    fn input(&mut self, buf: &[u8]) { self.iengine.input(buf) }
-    fn finalize(mut self) -> Self::Hash {
-        let ihash = self.iengine.finalize();
-        self.oengine.input(ihash.as_ref());
-        Hmac(self.oengine.finalize())
-    }
-}
-
 impl<T: Hash + fmt::Debug> fmt::Debug for Hmac<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
@@ -141,6 +73,96 @@ impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a, T: Hash + arbitrary::Arbitrary<'a>> arbitrary::Arbitrary<'a> for Hmac<T> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(u.arbitrary()?))
+    }
+}
+
+/// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
+#[derive(Debug, Clone)]
+pub struct HmacEngine<T: HashEngine> {
+    iengine: T,
+    oengine: T,
+}
+
+impl<T: HashEngine> HmacEngine<T> {
+    /// Constructs a new keyed HMAC engine from `key`.
+    ///
+    /// We only support underlying hashes whose block sizes are ≤ 128 bytes.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `T::BLOCK_SIZE` exceeds 128 bytes.
+    pub fn new(key: &[u8]) -> Self
+    where
+        T: Default,
+    {
+        assert!(T::BLOCK_SIZE <= 128);
+
+        let mut ipad = [0x36u8; 128];
+        let mut opad = [0x5cu8; 128];
+        let mut ret = Self { iengine: T::default(), oengine: T::default() };
+
+        if key.len() > T::BLOCK_SIZE {
+            let mut engine = T::default();
+            engine.input(key);
+            let hash = engine.finalize();
+
+            for (b_i, b_h) in ipad.iter_mut().zip(hash.as_ref()) {
+                *b_i ^= *b_h;
+            }
+            for (b_o, b_h) in opad.iter_mut().zip(hash.as_ref()) {
+                *b_o ^= *b_h;
+            }
+        } else {
+            for (b_i, b_h) in ipad.iter_mut().zip(key) {
+                *b_i ^= *b_h;
+            }
+            for (b_o, b_h) in opad.iter_mut().zip(key) {
+                *b_o ^= *b_h;
+            }
+        };
+
+        ret.iengine.input(&ipad[..T::BLOCK_SIZE]);
+        ret.oengine.input(&opad[..T::BLOCK_SIZE]);
+
+        crate::non_secure_erase(&mut ipad);
+        crate::non_secure_erase(&mut opad);
+
+        ret
+    }
+
+    /// A special constructor giving direct access to the underlying "inner" and "outer" engines.
+    pub fn from_inner_engines(iengine: T, oengine: T) -> Self { Self { iengine, oengine } }
+
+    /// Attempts to erase the contents of the underlying hash engines
+    ///
+    /// Note, however, that the compiler is allowed to freely copy or move the
+    /// contents of this type to other places in memory. Preventing this behavior
+    /// is very subtle. For more discussion on this, please see the documentation
+    /// of the [`zeroize`](https://docs.rs/zeroize) crate.
+    #[inline]
+    pub fn non_secure_erase(&mut self) {
+        crate::non_secure_erase(&mut self.iengine);
+        crate::non_secure_erase(&mut self.oengine);
+    }
+}
+
+impl<T: HashEngine> HashEngine for HmacEngine<T> {
+    type Hash = Hmac<T::Hash>;
+    const BLOCK_SIZE: usize = T::BLOCK_SIZE;
+
+    fn n_bytes_hashed(&self) -> u64 { self.iengine.n_bytes_hashed() }
+    fn input(&mut self, buf: &[u8]) { self.iengine.input(buf) }
+    fn finalize(mut self) -> Self::Hash {
+        let ihash = self.iengine.finalize();
+        self.oengine.input(ihash.as_ref());
+        Hmac(self.oengine.finalize())
+    }
+}
+
 #[cfg(feature = "std")]
 crate::internal_macros::impl_write!(
     HmacEngine<T>,
@@ -155,6 +177,7 @@ crate::internal_macros::impl_write!(
 #[cfg(test)]
 mod tests {
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn test() {
         use crate::{sha256, Hash as _, HashEngine, HmacEngine};
 
@@ -275,6 +298,14 @@ mod tests {
             engine.input(test.input);
             let hash = engine.finalize();
             assert_eq!(hash.as_ref(), test.output);
+            assert_eq!(hash.to_byte_array(), test.output);
+
+            // Hash through engine, checking that we can input byte by byte
+            let mut engine = HmacEngine::<sha256::HashEngine>::new(test.key);
+            for ch in test.input {
+                engine.input(&[*ch]);
+            }
+            let hash = engine.finalize();
             assert_eq!(hash.to_byte_array(), test.output);
         }
     }

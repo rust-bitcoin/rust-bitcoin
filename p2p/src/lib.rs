@@ -8,17 +8,21 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 
-mod consensus;
+include!("../include/array_newtype.rs");
+
 mod network_ext;
 
 #[cfg(feature = "std")]
 pub mod address;
 pub mod bip152;
+pub mod error;
+pub mod merkle_tree;
 #[cfg(feature = "std")]
 pub mod message;
 pub mod message_blockdata;
 pub mod message_bloom;
 pub mod message_compact_blocks;
+pub mod message_erlay;
 pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
@@ -26,6 +30,14 @@ pub mod message_network;
 extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
+
+#[cfg(feature = "serde")]
+pub extern crate serde;
+
+#[cfg(feature = "arbitrary")]
+pub extern crate arbitrary;
+
+pub extern crate hex;
 
 use alloc::borrow::ToOwned;
 use alloc::string::String;
@@ -35,20 +47,27 @@ use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::consensus::encode::{self, Decodable, Encodable};
-use bitcoin::network::{Network, Params, TestnetVersion};
-use hex::FromHex;
-use internals::impl_to_hex_from_lower_hex;
-use io::{BufRead, Write};
+use encoding::{ArrayDecoder, ArrayEncoder};
+use network::{Network, TestnetVersion};
 
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::network_ext::NetworkExt;
+pub use self::{
+    message_filter::{FilterHash, FilterHeader},
+    network_ext::NetworkExt,
+};
 
 #[cfg(feature = "std")]
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::{address::Address, message::CheckedData};
+pub use self::address::Address;
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::{
+    MagicDecoderError, ParseMagicError, ProtocolVersionDecoderError,
+    ServiceFlagsDecoderError, UnknownMagicError, UnknownNetworkError,
+};
 
 /// Version of the protocol as appearing in network version handshakes and some message headers.
 ///
@@ -96,18 +115,39 @@ impl From<ProtocolVersion> for u32 {
     fn from(version: ProtocolVersion) -> Self { version.0 }
 }
 
-impl Encodable for ProtocolVersion {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`ProtocolVersion`] type.
+    #[derive(Debug, Clone)]
+    pub struct ProtocolVersionEncoder<'e>(encoding::ArrayEncoder<4>);
+}
+
+impl encoding::Encode for ProtocolVersion {
+    type Encoder<'e> = ProtocolVersionEncoder<'e>;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ProtocolVersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.0.to_le_bytes(),
+        ))
     }
 }
 
-impl Decodable for ProtocolVersion {
-    #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self(Decodable::consensus_decode(r)?))
+crate::decoder_newtype! {
+    /// The decoder for the [`ProtocolVersion`] type.
+    #[derive(Debug, Clone)]
+    pub struct ProtocolVersionDecoder(encoding::ArrayDecoder<4>);
+
+    /// Constructs a new [`ProtocolVersion`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(
+        result: Result<[u8; 4], encoding::UnexpectedEofError>
+    ) -> Result<ProtocolVersion, ProtocolVersionDecoderError> {
+        let n = u32::from_le_bytes(result.map_err(ProtocolVersionDecoderError)?);
+        Ok(ProtocolVersion(n))
     }
+}
+
+impl encoding::Decode for ProtocolVersion {
+    type Decoder = ProtocolVersionDecoder;
 }
 
 /// Flags to indicate which network services a node supports.
@@ -175,13 +215,15 @@ impl ServiceFlags {
 
     /// Gets the integer representation of this [`ServiceFlags`].
     pub fn to_u64(self) -> u64 { self.0 }
+
+    /// Gets the hex representation of this type.
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::LowerHex for ServiceFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-impl_to_hex_from_lower_hex!(ServiceFlags, |service_flags: &ServiceFlags| 16
-    - service_flags.0.leading_zeros() as usize / 4);
 
 impl fmt::UpperHex for ServiceFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
@@ -253,19 +295,41 @@ impl ops::BitXorAssign for ServiceFlags {
     fn bitxor_assign(&mut self, rhs: Self) { let _ = self.remove(rhs); }
 }
 
-impl Encodable for ServiceFlags {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`ServiceFlags`] type.
+    #[derive(Debug, Clone)]
+    pub struct ServiceFlagsEncoder<'e>(encoding::ArrayEncoder<8>);
+}
+
+impl encoding::Encode for ServiceFlags {
+    type Encoder<'e> = ServiceFlagsEncoder<'e>;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ServiceFlagsEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.0.to_le_bytes(),
+        ))
     }
 }
 
-impl Decodable for ServiceFlags {
-    #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self(Decodable::consensus_decode(r)?))
+crate::decoder_newtype! {
+    /// The decoder for the [`ServiceFlags`] type.
+    #[derive(Debug, Clone)]
+    pub struct ServiceFlagsDecoder(encoding::ArrayDecoder<8>);
+
+    /// Constructs a new [`ServiceFlags`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(
+        result: Result<[u8; 8], encoding::UnexpectedEofError>
+    ) -> Result<ServiceFlags, ServiceFlagsDecoderError> {
+        let n = u64::from_le_bytes(result.map_err(ServiceFlagsDecoderError)?);
+        Ok(ServiceFlags(n))
     }
 }
+
+impl encoding::Decode for ServiceFlags {
+    type Decoder = ServiceFlagsDecoder;
+}
+
 /// Network magic bytes to identify the cryptocurrency network the message was intended for.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct Magic([u8; 4]);
@@ -288,17 +352,16 @@ impl Magic {
     /// Gets network magic bytes.
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 
-    /// Returns the magic bytes for the network defined by `params`.
-    pub fn from_params(params: impl AsRef<Params>) -> Option<Self> {
-        params.as_ref().network.try_into().ok()
-    }
+    /// Gets the hex representation of this type.
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl FromStr for Magic {
     type Err = ParseMagicError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match <[u8; 4]>::from_hex(s) {
+        match hex::decode_to_array::<4>(s) {
             Ok(magic) => Ok(Self::from_bytes(magic)),
             Err(e) => Err(ParseMagicError { error: e, magic: s.to_owned() }),
         }
@@ -336,41 +399,58 @@ impl TryFrom<Magic> for Network {
 }
 
 impl fmt::Display for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
-        Ok(())
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
 impl fmt::Debug for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
 }
 
 impl fmt::LowerHex for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
         Ok(())
     }
 }
-impl_to_hex_from_lower_hex!(Magic, |_| 8);
 
 impl fmt::UpperHex for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Upper)?;
         Ok(())
     }
 }
 
-impl Encodable for Magic {
-    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(writer)
+encoding::encoder_newtype_exact! {
+    /// The encoder type for network [`Magic`].
+    #[derive(Debug, Clone)]
+    pub struct MagicEncoder<'e>(ArrayEncoder<4>);
+}
+
+impl encoding::Encode for Magic {
+    type Encoder<'e> = MagicEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        MagicEncoder::new(ArrayEncoder::without_length_prefix(self.0))
     }
 }
 
-impl Decodable for Magic {
-    fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self(Decodable::consensus_decode(reader)?))
+type MagicInnerDecoder = ArrayDecoder<4>;
+
+crate::decoder_newtype! {
+    /// The decoder type for a network [`Magic`].
+    #[derive(Debug, Default, Clone)]
+    pub struct MagicDecoder(MagicInnerDecoder);
+
+    fn end(
+        result: Result<[u8; 4], <MagicInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<Magic, MagicDecoderError> {
+        let bytes = result.map_err(MagicDecoderError)?;
+        Ok(Magic::from_bytes(bytes))
     }
+}
+
+impl encoding::Decode for Magic {
+    type Decoder = MagicDecoder;
 }
 
 impl AsRef<[u8]> for Magic {
@@ -405,59 +485,6 @@ impl BorrowMut<[u8; 4]> for Magic {
     fn borrow_mut(&mut self) -> &mut [u8; 4] { &mut self.0 }
 }
 
-/// An error in parsing magic bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct ParseMagicError {
-    /// The error that occurred when parsing the string.
-    error: hex::HexToArrayError,
-    /// The byte string that failed to parse.
-    magic: String,
-}
-
-impl fmt::Display for ParseMagicError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "failed to parse {} as network magic", self.magic)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for ParseMagicError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.error) }
-}
-
-/// Error in creating a Network from Magic bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct UnknownMagicError(Magic);
-
-impl fmt::Display for UnknownMagicError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "unknown network magic {}", self.0)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for UnknownMagicError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
-
-/// Error in creating a Magic from a Network.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct UnknownNetworkError(Network);
-
-impl fmt::Display for UnknownNetworkError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "unknown network {}", self.0)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for UnknownNetworkError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
-
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ProtocolVersion {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
@@ -473,50 +500,53 @@ impl<'a> Arbitrary<'a> for Magic {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
 
+// decoder_newtype! macro
+include!("../include/decoder_newtype.rs");
+
 #[cfg(test)]
 mod tests {
     use alloc::string::ToString;
 
-    use bitcoin::consensus::encode::{deserialize, serialize};
+    use encoding::{decode_from_slice, encode_to_vec};
 
     use super::*;
 
     #[test]
     fn serialize_deserialize() {
-        assert_eq!(serialize(&Magic::BITCOIN), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        assert_eq!(encode_to_vec(&Magic::BITCOIN), &[0xf9, 0xbe, 0xb4, 0xd9]);
         let magic: Magic = Network::Bitcoin.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0xf9, 0xbe, 0xb4, 0xd9]);
-        assert_eq!(serialize(&Magic::TESTNET3), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(encode_to_vec(&magic), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        assert_eq!(encode_to_vec(&Magic::TESTNET3), &[0x0b, 0x11, 0x09, 0x07]);
         let magic: Magic = Network::Testnet(TestnetVersion::V3).try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x0b, 0x11, 0x09, 0x07]);
-        assert_eq!(serialize(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
+        assert_eq!(encode_to_vec(&magic), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(encode_to_vec(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
         let magic: Magic = Network::Testnet(TestnetVersion::V4).try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
-        assert_eq!(serialize(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
+        assert_eq!(encode_to_vec(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
+        assert_eq!(encode_to_vec(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
         let magic: Magic = Network::Signet.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x0a, 0x03, 0xcf, 0x40]);
-        assert_eq!(serialize(&Magic::REGTEST), &[0xfa, 0xbf, 0xb5, 0xda]);
+        assert_eq!(encode_to_vec(&magic), &[0x0a, 0x03, 0xcf, 0x40]);
+        assert_eq!(encode_to_vec(&Magic::REGTEST), &[0xfa, 0xbf, 0xb5, 0xda]);
         let magic: Magic = Network::Regtest.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
+        assert_eq!(encode_to_vec(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
 
         assert_eq!(
-            deserialize::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
+            decode_from_slice::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
             Network::Bitcoin.try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
+            decode_from_slice::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
             Network::Testnet(TestnetVersion::V3).try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
+            decode_from_slice::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
             Network::Testnet(TestnetVersion::V4).try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(),
+            decode_from_slice::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(),
             Network::Signet.try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
+            decode_from_slice::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
             Network::Regtest.try_into().ok()
         );
     }

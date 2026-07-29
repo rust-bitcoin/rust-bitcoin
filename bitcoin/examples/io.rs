@@ -7,8 +7,8 @@
 //! this we provide the `bitcoin_io` crate which provides `io::Read`, `io::BufRead`, and
 //! `io::Write`. This module demonstrates its usage.
 
-use bitcoin::consensus::{Decodable, Encodable as _};
 use bitcoin::{OutPoint, Txid};
+use encoding::{Encode, ExactSizeEncoder};
 
 fn main() {
     // Encode/Decode a `rust-bitcoin` type to/from a stdlib type.
@@ -33,13 +33,12 @@ fn encode_decode_from_stdlib_type() {
     let mut v = Vec::new();
 
     // Under the hood we implement our `io` traits for a bunch of stdlib types so this just works.
-    let _bytes_written = data.consensus_encode(&mut v).expect("failed to encode to writer");
+    io::encode_to_writer(&data, &mut v).expect("failed to encode to writer");
 
     // Slices implement `std::io::Read`.
-    let mut reader = v.as_ref();
+    let reader = v.as_ref();
 
-    let _: OutPoint =
-        Decodable::consensus_decode(&mut reader).expect("failed to decode from reader");
+    let _: OutPoint = io::decode_from_read(reader).expect("failed to decode from reader");
 }
 
 /// Encodes to a custom type by implementing the `bitcoin_io::Write` trait.
@@ -68,7 +67,9 @@ fn encode_to_custom_type() {
     let data = dummy_utxo();
 
     let mut counter = WriteCounter { count: 0 };
-    let bytes_written = data.consensus_encode(&mut counter).expect("failed to encode to writer");
+    let mut encoder = data.encoder();
+    let bytes_written = encoder.len();
+    io::drain_to_writer(&mut encoder, &mut counter).expect("failed to encode to writer");
     assert_eq!(bytes_written, 36); // 32 bytes for txid + 4 bytes for vout.
 }
 
@@ -87,7 +88,9 @@ fn encode_using_wrapper() {
     // let bytes_written = data.consensus_encode(&mut counter)?;
 
     let mut counter = io::FromStd::new(WriteCounter::new());
-    let bytes_written = data.consensus_encode(&mut counter).expect("failed to encode to writer");
+    let mut encoder = data.encoder();
+    let bytes_written = encoder.len();
+    io::drain_to_writer(&mut encoder, &mut counter).expect("failed to encode to writer");
     assert_eq!(bytes_written, 36); // 32 bytes for txid + 4 bytes for vout.
     assert_eq!(bytes_written, counter.get_ref().written());
 

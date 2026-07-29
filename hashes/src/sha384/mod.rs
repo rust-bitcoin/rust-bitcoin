@@ -5,13 +5,14 @@
 use crate::sha512;
 
 crate::internal_macros::general_hash_type! {
-    384,
-    false,
-    "Output of the SHA384 hash function."
+    /// Output of the SHA384 hash function.
+    pub struct Hash([u8; 48]);
+
+    const DISPLAY_BACKWARD: bool = false;
 }
 
 impl Hash {
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     pub fn from_engine(e: HashEngine) -> Self {
         let mut ret = [0; 48];
         ret.copy_from_slice(&sha512::Hash::from_engine(e.0).as_byte_array()[..48]);
@@ -34,7 +35,6 @@ impl Default for HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
-    type Bytes = [u8; 48];
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
@@ -61,7 +61,7 @@ mod tests {
 
         #[rustfmt::skip]
         let tests = [
-            // Examples from go sha384 tests.
+            // Examples from go SHA384 tests.
             Test {
                 input: "",
                 output: [

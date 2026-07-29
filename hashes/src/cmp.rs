@@ -14,6 +14,10 @@
 ///
 /// As of rust 1.31.0 disassembly looks completely within reason for this, see
 /// <https://godbolt.org/z/mMbGQv>.
+///
+/// # Panics
+///
+/// Panics if the slices have different lengths.
 pub fn fixed_time_eq(a: &[u8], b: &[u8]) -> bool {
     #[cfg(hashes_fuzz)]
     {
@@ -66,6 +70,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[allow(clippy::unreadable_literal)]
     fn eq_test() {
         assert!(fixed_time_eq(&[0b00000000], &[0b00000000]));
         assert!(fixed_time_eq(&[0b00000001], &[0b00000001]));

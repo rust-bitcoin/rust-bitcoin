@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides a monodic type returned by mathematical operations (`core::ops`).
+//! Provides a monadic type returned by mathematical operations (`core::ops`).
 
 use core::num::{NonZeroI64, NonZeroU64};
 use core::ops;
@@ -14,16 +14,20 @@ use crate::internal_macros::{
 use crate::result::{MathOp, NumOpError, NumOpResult, OptionExt};
 
 impl From<Amount> for NumOpResult<Amount> {
+    #[inline]
     fn from(a: Amount) -> Self { Self::Valid(a) }
 }
 impl From<&Amount> for NumOpResult<Amount> {
+    #[inline]
     fn from(a: &Amount) -> Self { Self::Valid(*a) }
 }
 
 impl From<SignedAmount> for NumOpResult<SignedAmount> {
+    #[inline]
     fn from(a: SignedAmount) -> Self { Self::Valid(a) }
 }
 impl From<&SignedAmount> for NumOpResult<SignedAmount> {
+    #[inline]
     fn from(a: &SignedAmount) -> Self { Self::Valid(*a) }
 }
 
@@ -204,6 +208,7 @@ impl_sub_assign_for_results!(SignedAmount);
 impl ops::Neg for SignedAmount {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self::from_sat(self.to_sat().neg()).expect("all +ve and -ve values are valid")
     }

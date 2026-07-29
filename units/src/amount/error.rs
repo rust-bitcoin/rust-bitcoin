@@ -9,6 +9,7 @@ use internals::error::InputString;
 use internals::write_err;
 
 use super::INPUT_STRING_LEN_LIMIT;
+use crate::parse_int::{PrefixedHexError, UnprefixedHexError};
 
 /// Error returned when parsing an amount with denomination fails.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -28,50 +29,13 @@ impl From<Infallible> for ParseError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
-impl From<Infallible> for ParseErrorInner {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<ParseAmountError> for ParseError {
-    fn from(e: ParseAmountError) -> Self { Self(ParseErrorInner::Amount(e)) }
-}
-
-impl From<ParseDenominationError> for ParseError {
-    fn from(e: ParseDenominationError) -> Self { Self(ParseErrorInner::Denomination(e)) }
-}
-
-impl From<OutOfRangeError> for ParseError {
-    fn from(e: OutOfRangeError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
-}
-
-impl From<TooPreciseError> for ParseError {
-    fn from(e: TooPreciseError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
-}
-
-impl From<MissingDigitsError> for ParseError {
-    fn from(e: MissingDigitsError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
-}
-
-impl From<InputTooLargeError> for ParseError {
-    fn from(e: InputTooLargeError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
-}
-
-impl From<InvalidCharacterError> for ParseError {
-    fn from(e: InvalidCharacterError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
-}
-
-impl From<BadPositionError> for ParseError {
-    fn from(e: BadPositionError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
-}
-
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
             ParseErrorInner::Amount(ref e) => write_err!(f, "invalid amount"; e),
             ParseErrorInner::Denomination(ref e) => write_err!(f, "invalid denomination"; e),
             // We consider this to not be a source because it currently doesn't contain useful info.
-            ParseErrorInner::MissingDenomination(_) =>
-                f.write_str("the input doesn't contain a denomination"),
+            ParseErrorInner::MissingDenomination(ref e) => write_err!(f, "missing denomination"; e),
         }
     }
 }
@@ -83,7 +47,7 @@ impl std::error::Error for ParseError {
             ParseErrorInner::Amount(ref e) => Some(e),
             ParseErrorInner::Denomination(ref e) => Some(e),
             // We consider this to not be a source because it currently doesn't contain useful info.
-            ParseErrorInner::MissingDenomination(_) => None,
+            ParseErrorInner::MissingDenomination(ref e) => Some(e),
         }
     }
 }
@@ -106,35 +70,13 @@ pub(crate) enum ParseAmountErrorInner {
     InvalidCharacter(InvalidCharacterError),
     /// A valid character is in an invalid position.
     BadPosition(BadPositionError),
-}
-
-impl From<TooPreciseError> for ParseAmountError {
-    fn from(value: TooPreciseError) -> Self { Self(ParseAmountErrorInner::TooPrecise(value)) }
-}
-
-impl From<MissingDigitsError> for ParseAmountError {
-    fn from(value: MissingDigitsError) -> Self { Self(ParseAmountErrorInner::MissingDigits(value)) }
-}
-
-impl From<InputTooLargeError> for ParseAmountError {
-    fn from(value: InputTooLargeError) -> Self { Self(ParseAmountErrorInner::InputTooLarge(value)) }
-}
-
-impl From<InvalidCharacterError> for ParseAmountError {
-    fn from(value: InvalidCharacterError) -> Self {
-        Self(ParseAmountErrorInner::InvalidCharacter(value))
-    }
-}
-
-impl From<BadPositionError> for ParseAmountError {
-    fn from(value: BadPositionError) -> Self { Self(ParseAmountErrorInner::BadPosition(value)) }
+    /// An error parsing a prefixed hex amount.
+    PrefixedHex(PrefixedHexError),
+    /// An error parsing an unprefixed hex amount.
+    UnprefixedHex(UnprefixedHexError),
 }
 
 impl From<Infallible> for ParseAmountError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<Infallible> for ParseAmountErrorInner {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -151,12 +93,15 @@ impl fmt::Display for ParseAmountError {
                 write_err!(f, "invalid character in the input"; error)
             }
             E::BadPosition(ref error) => write_err!(f, "valid character in bad position"; error),
+            E::PrefixedHex(ref error) => write_err!(f, "prefixed hex is invalid"; error),
+            E::UnprefixedHex(ref error) => write_err!(f, "unprefixed hex is invalid"; error),
         }
     }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for ParseAmountError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use ParseAmountErrorInner as E;
 
@@ -167,6 +112,8 @@ impl std::error::Error for ParseAmountError {
             E::MissingDigits(ref error) => Some(error),
             E::InvalidCharacter(ref error) => Some(error),
             E::BadPosition(ref error) => Some(error),
+            E::PrefixedHex(ref error) => Some(error),
+            E::UnprefixedHex(ref error) => Some(error),
         }
     }
 }
@@ -182,6 +129,7 @@ impl OutOfRangeError {
     /// Returns the minimum and maximum allowed values for the type that was parsed.
     ///
     /// This can be used to give a hint to the user which values are allowed.
+    #[inline]
     pub fn valid_range(self) -> (i64, u64) {
         match self.is_signed {
             true => (i64::MIN, i64::MAX as u64),
@@ -190,15 +138,19 @@ impl OutOfRangeError {
     }
 
     /// Returns true if the input value was larger than the maximum allowed value.
+    #[inline]
     pub fn is_above_max(self) -> bool { self.is_greater_than_max }
 
     /// Returns true if the input value was smaller than the minimum allowed value.
+    #[inline]
     pub fn is_below_min(self) -> bool { !self.is_greater_than_max }
 
     #[cfg(test)]
+    #[inline]
     pub(crate) fn too_big(is_signed: bool) -> Self { Self { is_signed, is_greater_than_max: true } }
 
     #[cfg(test)]
+    #[inline]
     pub(crate) fn too_small() -> Self {
         Self {
             // implied - negative() is used for the other
@@ -207,6 +159,7 @@ impl OutOfRangeError {
         }
     }
 
+    #[inline]
     pub(crate) fn negative() -> Self {
         Self {
             // implied - too_small() is used for the other
@@ -214,6 +167,10 @@ impl OutOfRangeError {
             is_greater_than_max: false,
         }
     }
+}
+
+impl From<Infallible> for OutOfRangeError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for OutOfRangeError {
@@ -227,16 +184,22 @@ impl fmt::Display for OutOfRangeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for OutOfRangeError {}
-
-impl From<OutOfRangeError> for ParseAmountError {
-    fn from(value: OutOfRangeError) -> Self { Self(ParseAmountErrorInner::OutOfRange(value)) }
+impl std::error::Error for OutOfRangeError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { is_signed: _, is_greater_than_max: _ } = self;
+        None
+    }
 }
 
 /// Error returned when the input string has higher precision than satoshis.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TooPreciseError {
     pub(super) position: usize,
+}
+
+impl From<Infallible> for TooPreciseError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for TooPreciseError {
@@ -253,12 +216,22 @@ impl fmt::Display for TooPreciseError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for TooPreciseError {}
+impl std::error::Error for TooPreciseError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { position: _ } = self;
+        None
+    }
+}
 
 /// Error returned when the input string is too large.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct InputTooLargeError {
     pub(super) len: usize,
+}
+
+impl From<Infallible> for InputTooLargeError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for InputTooLargeError {
@@ -279,7 +252,13 @@ impl fmt::Display for InputTooLargeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for InputTooLargeError {}
+impl std::error::Error for InputTooLargeError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { len: _ } = self;
+        None
+    }
+}
 
 /// Error returned when digits were expected in the input but there were none.
 ///
@@ -289,7 +268,12 @@ pub struct MissingDigitsError {
     pub(super) kind: MissingDigitsKind,
 }
 
+impl From<Infallible> for MissingDigitsError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for MissingDigitsError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.kind {
             MissingDigitsKind::Empty => f.write_str("the input is empty"),
@@ -300,7 +284,13 @@ impl fmt::Display for MissingDigitsError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for MissingDigitsError {}
+impl std::error::Error for MissingDigitsError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { kind: _ } = self;
+        None
+    }
+}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub(super) enum MissingDigitsKind {
@@ -313,6 +303,10 @@ pub(super) enum MissingDigitsKind {
 pub struct InvalidCharacterError {
     pub(super) invalid_char: char,
     pub(super) position: usize,
+}
+
+impl From<Infallible> for InvalidCharacterError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for InvalidCharacterError {
@@ -330,13 +324,23 @@ impl fmt::Display for InvalidCharacterError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for InvalidCharacterError {}
+impl std::error::Error for InvalidCharacterError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { invalid_char: _, position: _ } = self;
+        None
+    }
+}
 
 /// Error returned when a valid character (e.g. '_') is in an invalid/bad position.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BadPositionError {
     pub(super) char: char,
     pub(super) position: usize,
+}
+
+impl From<Infallible> for BadPositionError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for BadPositionError {
@@ -356,7 +360,13 @@ impl fmt::Display for BadPositionError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for BadPositionError {}
+impl std::error::Error for BadPositionError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { char: _, position: _ } = self;
+        None
+    }
+}
 
 /// An error during amount parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -383,9 +393,11 @@ impl fmt::Display for ParseDenominationError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for ParseDenominationError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
-            Self::Unknown(_) | Self::PossiblyConfusing(_) => None,
+            Self::Unknown(ref e) => Some(e),
+            Self::PossiblyConfusing(ref e) => Some(e),
         }
     }
 }
@@ -395,12 +407,36 @@ impl std::error::Error for ParseDenominationError {
 #[non_exhaustive]
 pub struct MissingDenominationError;
 
+impl From<Infallible> for MissingDenominationError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for MissingDenominationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "the input does not contain a denomination")
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MissingDenominationError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self {} = self;
+        None
+    }
+}
+
 /// Error returned when parsing an unknown denomination.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct UnknownDenominationError(pub(super) InputString);
 
+impl From<Infallible> for UnknownDenominationError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for UnknownDenominationError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.unknown_variant("bitcoin denomination", f)
     }
@@ -408,13 +444,21 @@ impl fmt::Display for UnknownDenominationError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnknownDenominationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// Error returned when parsing a possibly confusing denomination.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct PossiblyConfusingDenominationError(pub(super) InputString);
+
+impl From<Infallible> for PossiblyConfusingDenominationError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for PossiblyConfusingDenominationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -424,7 +468,11 @@ impl fmt::Display for PossiblyConfusingDenominationError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for PossiblyConfusingDenominationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// An error consensus decoding an `Amount`.
@@ -435,11 +483,13 @@ pub struct AmountDecoderError(pub(super) AmountDecoderErrorInner);
 #[cfg(feature = "encoding")]
 impl AmountDecoderError {
     /// Constructs an EOF error.
+    #[inline]
     pub(super) fn eof(e: encoding::UnexpectedEofError) -> Self {
         Self(AmountDecoderErrorInner::UnexpectedEof(e))
     }
 
     /// Constructs an out of range (`Amount::from_sat`) error.
+    #[inline]
     pub(super) fn out_of_range(e: OutOfRangeError) -> Self {
         Self(AmountDecoderErrorInner::OutOfRange(e))
     }
@@ -471,14 +521,188 @@ impl fmt::Display for AmountDecoderError {
     }
 }
 
-#[cfg(all(feature = "std", feature = "encoding"))]
+#[cfg(feature = "encoding")]
+#[cfg(feature = "std")]
 impl std::error::Error for AmountDecoderError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use AmountDecoderErrorInner as E;
 
         match self.0 {
             E::UnexpectedEof(ref e) => Some(e),
             E::OutOfRange(ref e) => Some(e),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
+    use core::str::FromStr;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
+    #[cfg(feature = "encoding")]
+    use encoding::{Decode as _, Decoder as _};
+
+    #[cfg(feature = "alloc")]
+    use super::{ParseAmountError, ParseAmountErrorInner, ParseErrorInner};
+    #[cfg(feature = "alloc")]
+    use crate::amount::{Amount, Denomination, ParseDenominationError, ParseError};
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[allow(clippy::too_many_lines)] // Test could be refactored ...
+    fn error_display_is_non_empty() {
+        // A helper macro to break out a ParseAmountErrorInner type and assert display down the chain.
+        macro_rules! assert_amount_err {
+            ($e:expr, $enum_arm:ident, $err_msg:expr) => {
+                assert!(!$e.to_string().is_empty());
+                let ParseError(ParseErrorInner::Amount(err)) = $e else { panic!($err_msg) };
+                assert!(!err.to_string().is_empty());
+                #[cfg(feature = "std")]
+                assert!(err.source().is_some());
+
+                let ParseAmountError(ParseAmountErrorInner::$enum_arm(err)) = err else {
+                    panic!($err_msg)
+                };
+                assert!(!err.to_string().is_empty());
+                // The inner-most types have no source
+                #[cfg(feature = "std")]
+                assert!(err.source().is_none());
+            };
+        }
+
+        // InputTooLargeError
+        // one char too long
+        let long_input = alloc::format!("{} BTC", "1".repeat(51));
+        let e = Amount::from_str(&long_input).unwrap_err();
+        assert_amount_err!(e, InputTooLarge, "error should be InputTooLargeError");
+        // n chars too long
+        let long_input = alloc::format!("{} BTC", "1".repeat(52));
+        let e = Amount::from_str(&long_input).unwrap_err();
+        assert_amount_err!(e, InputTooLarge, "error should be InputTooLargeError");
+
+        // InvalidCharacterError
+        // invalid character in amount string
+        let e = Amount::from_str("12x34 BTC").unwrap_err();
+        assert_amount_err!(e, InvalidCharacter, "error should be InvalidCharacterError");
+        // too many decimal points
+        let e = Amount::from_str("12.3.4 BTC").unwrap_err();
+        assert_amount_err!(e, InvalidCharacter, "error should be InvalidCharacterError");
+        // too many minus signs
+        let e = Amount::from_str("--1234 BTC").unwrap_err();
+        assert_amount_err!(e, InvalidCharacter, "error should be InvalidCharacterError");
+
+        // MissingDigitsError
+        // no numeric value
+        let e = Amount::from_str("BTC").unwrap_err();
+        assert_amount_err!(e, MissingDigits, "error should be MissingDigitsError");
+        // Only a minus sign
+        let e = Amount::from_str("- BTC").unwrap_err();
+        assert_amount_err!(e, MissingDigits, "error should be MissingDigitsError");
+
+        // OutOfRangeError
+        // amount too large
+        let e = Amount::from_str("21000001 BTC").unwrap_err();
+        assert_amount_err!(e, OutOfRange, "error should be OutOfRangeError");
+        // less than 0
+        let e = Amount::from_str("-10 BTC").unwrap_err();
+        assert_amount_err!(e, OutOfRange, "error should be OutOfRangeError");
+
+        // TooPreciseError - sub-satoshi precision
+        let e = Amount::from_str("0.000000001 BTC").unwrap_err();
+        assert_amount_err!(e, TooPrecise, "error should be TooPreciseError");
+
+        // BadPositionError
+        // underscore in bad position
+        let e = Amount::from_str("_123 BTC").unwrap_err();
+        assert_amount_err!(e, BadPosition, "error should be BadPositionError");
+        // underscore in bad position (negative)
+        let e = Amount::from_str("-_123 BTC").unwrap_err();
+        assert_amount_err!(e, BadPosition, "error should be BadPositionError");
+        // consecutive underscores
+        let e = Amount::from_str("1__23 BTC").unwrap_err();
+        assert_amount_err!(e, BadPosition, "error should be BadPositionError");
+
+        // ParseAmountError - parent type for the errors above
+        let e = Amount::from_str_in("invalid", Denomination::Bitcoin).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // UnknownDenominationError - amount with unknown denomination string
+        let e = Denomination::from_str("XYZ").unwrap_err();
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        let ParseDenominationError::Unknown(e) = e else {
+            panic!("error should be UnknownDenominationError")
+        };
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // PossiblyConfusingDenominationError - confusing denomination like "MBTC"
+        let e = Denomination::from_str("MBTC").unwrap_err();
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        let ParseDenominationError::PossiblyConfusing(e) = e else {
+            panic!("error should be PossiblyConfusingDenominationError")
+        };
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // ParseDenominationError - parent error for the above *DenominationError types
+        // Unknown type
+        let e = Denomination::from_str("UNKNOWN").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // Possibly confusing type
+        let e = Denomination::from_str("MBTC").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // ParseError - parent type for all of the above
+        // Amount type
+        let e = "invalid BTC".parse::<Amount>().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // bad denomination type
+        let e = "123 GBTC".parse::<Amount>().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // missing denomination type
+        let e = "123".parse::<Amount>().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        #[cfg(feature = "encoding")]
+        {
+            // AmountDecoderError
+            // EOF type
+            let mut decoder = Amount::decoder();
+            let _ = decoder.push_bytes(&mut [0u8; 3].as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+
+            // Out of range type
+            let mut decoder = Amount::decoder();
+            let _ =
+                decoder.push_bytes(&mut (21_000_001 * 100_000_000_u64).to_le_bytes().as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
         }
     }
 }

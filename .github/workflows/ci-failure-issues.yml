@@ -1,0 +1,96 @@
+name: CI Failure Issues
+
+on:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
+    workflows:
+      - Fuzz
+      - Kani CI
+      - Miri
+    types:
+      - completed
+    branches:
+      - master
+
+permissions:
+  issues: write
+
+concurrency:
+  group: ci-failure-issues-${{ github.event.workflow_run.name }}
+  cancel-in-progress: false
+
+jobs:
+  sync-issue:
+    if: ${{ contains(fromJson('["failure","success"]'), github.event.workflow_run.conclusion) }}
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const workflow = run.name;
+            const marker = `<!-- ci-failure-key:${workflow} -->`;
+            const workflowFiles = {
+              "Fuzz": "cron-daily-fuzz.yml",
+              "Kani CI": "cron-daily-kani.yml",
+              "Miri": "cron-daily-miri.yml",
+            };
+
+            const formatTs = iso => {
+              const d = new Date(iso);
+              const pad = n => String(n).padStart(2, "0");
+              return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} at ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} UTC`;
+            };
+            const shortSha = sha => (sha || "unknown").slice(0, 7);
+            const commitUrl = sha => `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/commit/${sha}`;
+            const workflowUrl = workflowFiles[workflow]
+              ? `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/workflows/${workflowFiles[workflow]}`
+              : `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions?query=${encodeURIComponent(`workflow:"${workflow}"`)}`;
+
+            function titleFor() {
+              return `The ${workflow} workflow is failing`;
+            }
+
+            function bodyForFailure() {
+              return [
+                marker,
+                "",
+                `The [${workflow} workflow](${workflowUrl}) started failing on ${formatTs(run.created_at)}: [${workflow} #${run.run_number}](${run.html_url}) - [\`${shortSha(run.head_sha)}\`](${commitUrl(run.head_sha)})`,
+              ].join("\n");
+            }
+
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100,
+            });
+
+            const existing = issues.find(issue =>
+              !issue.pull_request && issue.body && issue.body.includes(marker)
+            );
+
+            if (run.conclusion === "failure" && !existing) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: titleFor(),
+                body: bodyForFailure(),
+              });
+            }
+
+            if (run.conclusion === "success" && existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `The [${workflow} workflow](${workflowUrl}) successfully ran again on ${formatTs(run.created_at)}: [${workflow} #${run.run_number}](${run.html_url}).`,
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: "closed",
+              });
+            }

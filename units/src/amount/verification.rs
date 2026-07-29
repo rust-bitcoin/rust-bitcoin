@@ -2,7 +2,7 @@
 
 //! Verification tests for the `amount` module.
 
-use std::cmp;
+use core::cmp;
 
 use super::{Amount, SignedAmount};
 

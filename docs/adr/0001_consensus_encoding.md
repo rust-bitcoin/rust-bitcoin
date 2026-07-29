@@ -77,9 +77,9 @@ Encoding is generally infallible (e.g. encoding to `Vec` never fails). Decoding 
 
 ```rust
 pub trait Encodable {
-    type Encoder<'s>: Encoder
+    type Encoder<'e>: Encoder
     where
-        Self: 's;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_>;
 }

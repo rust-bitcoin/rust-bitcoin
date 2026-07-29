@@ -3,7 +3,9 @@
 //! A simplified `Copy` version of `arrayvec::ArrayVec`.
 
 use core::fmt;
+use core::mem::MaybeUninit;
 
+use error::Error;
 pub use safety_boundary::ArrayVec;
 
 /// Limits the scope of `unsafe` auditing.
@@ -21,6 +23,7 @@ mod safety_boundary {
 
     impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
         /// Constructs an empty `ArrayVec`.
+        #[must_use]
         pub const fn new() -> Self { Self { len: 0, data: [MaybeUninit::uninit(); CAP] } }
 
         /// Constructs a new `ArrayVec` initialized with the contents of `slice`.
@@ -58,50 +61,87 @@ mod safety_boundary {
             unsafe { core::slice::from_raw_parts_mut(ptr, self.len) }
         }
 
-        /// Adds an element into `self`.
-        ///
-        /// # Panics
-        ///
-        /// If the length would increase past CAP.
-        pub fn push(&mut self, element: T) {
-            assert!(self.len < CAP);
-            self.data[self.len] = MaybeUninit::new(element);
-            self.len += 1;
+        /// Returns remaining spare capacity of the vector as a slice of `MaybeUninit<T>`.
+        pub fn spare_capacity_mut(&mut self) -> &mut [MaybeUninit<T>] {
+            // SOUNDNESS: self.len <= CAP is the invariant on the type
+            unsafe { self.data.get_unchecked_mut(self.len..) }
         }
 
-        /// Removes the last element, returning it.
+        /// Forces the length to `new_len`.
         ///
-        /// # Returns
+        /// # Safety
         ///
-        /// None if the `ArrayVec` is empty.
-        pub fn pop(&mut self) -> Option<T> {
-            if self.len > 0 {
-                self.len -= 1;
-                // SAFETY: All elements in 0..len are initialized
-                let res = self.data[self.len];
-                self.data[self.len] = MaybeUninit::uninit();
-                Some(unsafe { res.assume_init() })
-            } else {
-                None
-            }
-        }
-
-        /// Copies and appends all elements from `slice` into `self`.
-        ///
-        /// # Panics
-        ///
-        /// If the length would increase past CAP.
-        pub fn extend_from_slice(&mut self, slice: &[T]) {
-            let new_len = self.len.checked_add(slice.len()).expect("integer/buffer overflow");
-            assert!(new_len <= CAP, "buffer overflow");
-            // SAFETY: MaybeUninit<T> has the same layout as T
-            let slice = unsafe {
-                let ptr = slice.as_ptr();
-                core::slice::from_raw_parts(ptr.cast::<MaybeUninit<T>>(), slice.len())
-            };
-            self.data[self.len..new_len].copy_from_slice(slice);
+        /// * `new_len` must be less than or equal to `CAP`.
+        /// * All elements up to `new_len` must be initialized.
+        pub unsafe fn set_len(&mut self, new_len: usize) {
+            debug_assert!(new_len <= CAP);
             self.len = new_len;
         }
+    }
+}
+
+impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
+    /// Adds an element into `self`.
+    ///
+    /// # Panics
+    ///
+    /// If the length would increase past CAP.
+    #[track_caller]
+    pub fn push(&mut self, element: T) {
+        self.try_push(element).expect("push past the capacity of the array");
+    }
+
+    /// Adds an element into `self`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `CapacityExceeded` if the `ArrayVec` is full.
+    pub fn try_push(&mut self, element: T) -> Result<(), Error> {
+        let first = self.spare_capacity_mut().first_mut().ok_or(Error::CapacityExceeded(CAP))?;
+        *first = MaybeUninit::new(element);
+        let old_len = self.len();
+        // SOUNDNESS:
+        // * first being non-None implies the element exists therefore one-past the length <=
+        //   CAP
+        // * all elements up to old_len were already filled and we just added one
+        unsafe {
+            self.set_len(old_len + 1);
+        }
+        Ok(())
+    }
+
+    /// Removes the last element, returning it.
+    ///
+    /// # Returns
+    ///
+    /// None if the `ArrayVec` is empty.
+    pub fn pop(&mut self) -> Option<T> {
+        let res = *self.last()?;
+        let old_len = self.len();
+        // SOUNDNESS:
+        // * decreasing the already-valid len keeps the len <= CAP invariant
+        // * decreasing the already-valid len does not mark any new elements as initialized
+        unsafe { self.set_len(old_len - 1) }
+        Some(res)
+    }
+
+    /// Copies and appends all elements from `slice` into `self`.
+    ///
+    /// # Panics
+    ///
+    /// If the length would increase past CAP.
+    pub fn extend_from_slice(&mut self, slice: &[T]) {
+        // SAFETY: MaybeUninit<T> has the same layout as T
+        let slice = unsafe {
+            let ptr = slice.as_ptr();
+            core::slice::from_raw_parts(ptr.cast::<MaybeUninit<T>>(), slice.len())
+        };
+        self.spare_capacity_mut()
+            .get_mut(..slice.len())
+            .expect("buffer overflow")
+            .copy_from_slice(slice);
+        let old_len = self.len();
+        unsafe { self.set_len(old_len + slice.len()) }
     }
 }
 
@@ -174,7 +214,96 @@ impl<T: Copy + fmt::Debug, const CAP: usize> fmt::Debug for ArrayVec<T, CAP> {
 }
 
 impl<T: Copy + core::hash::Hash, const CAP: usize> core::hash::Hash for ArrayVec<T, CAP> {
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state) }
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state); }
+}
+
+/// Error types for `ArrayVec`.
+pub mod error {
+    use core::fmt;
+
+    /// Errors encountered when inserting or removing elements from an `ArrayVec`.
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub enum Error {
+        /// Attempting to push additional element beyond the `ArrayVec`'s capacity.
+        CapacityExceeded(usize),
+    }
+
+    impl fmt::Display for Error {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::CapacityExceeded(cap) => write!(f, "Capacity exceeded: {}", cap),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for Error {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::CapacityExceeded(_) => None,
+            }
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T: Copy + crate::serde::Serialize, const CAP: usize> crate::serde::Serialize
+    for ArrayVec<T, CAP>
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: crate::serde::Serializer,
+    {
+        serializer.collect_seq(self.iter())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T, const CAP: usize> crate::serde::Deserialize<'de> for ArrayVec<T, CAP>
+where
+    T: Copy + crate::serde::Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use core::marker::PhantomData;
+
+        use crate::serde::de;
+
+        struct Visitor<T, const CAP: usize>(PhantomData<T>);
+
+        impl<'de, T, const CAP: usize> de::Visitor<'de> for Visitor<T, CAP>
+        where
+            T: Copy + crate::serde::Deserialize<'de>,
+        {
+            type Value = ArrayVec<T, CAP>;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "a sequence of at most {} elements", CAP)
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::SeqAccess<'de>,
+            {
+                use de::Error;
+
+                if let Some(hint) = seq.size_hint() {
+                    if hint > CAP {
+                        return Err(Error::invalid_length(hint, &self));
+                    }
+                }
+
+                let mut out = ArrayVec::<T, CAP>::new();
+                while let Some(elem) = seq.next_element::<T>()? {
+                    out.try_push(elem).map_err(|_| Error::invalid_length(out.len() + 1, &self))?;
+                }
+                Ok(out)
+            }
+        }
+        deserializer.deserialize_seq(Visitor::<T, CAP>(PhantomData))
+    }
 }
 
 #[cfg(test)]
@@ -191,7 +320,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "assertion failed")]
+    #[should_panic(expected = "push past the capacity of the array")]
     fn overflow_push() {
         let mut av = ArrayVec::<_, 0>::new();
         av.push(42);
@@ -208,6 +337,101 @@ mod tests {
     fn extend_from_slice() {
         let mut av = ArrayVec::<u8, 8>::new();
         av.extend_from_slice(b"abc");
+    }
+
+    #[cfg(feature = "test-serde")]
+    #[test]
+    fn serde_round_trip_u8() {
+        let mut want = ArrayVec::<u8, 8>::new();
+        want.extend_from_slice(b"abc");
+
+        let json = crate::serde_json::to_string(&want).expect("serde_json failed to encode");
+        let got: ArrayVec<u8, 8> =
+            crate::serde_json::from_str(&json).expect("serde_json failed to decode");
+        assert_eq!(got, want);
+
+        let bin = crate::bincode::serialize(&want).expect("bincode failed to encode");
+        let got: ArrayVec<u8, 8> =
+            crate::bincode::deserialize(&bin).expect("bincode failed to decode");
+        assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "test-serde")]
+    #[test]
+    fn serde_round_trip_u32() {
+        let mut want = ArrayVec::<u32, 4>::new();
+        (1..=3).for_each(|i| want.push(i));
+
+        let json = crate::serde_json::to_string(&want).expect("serde_json failed to encode");
+        let got: ArrayVec<u32, 4> =
+            crate::serde_json::from_str(&json).expect("serde_json failed to decode");
+        assert_eq!(got, want);
+
+        let bin = crate::bincode::serialize(&want).expect("bincode failed to encode");
+        let got: ArrayVec<u32, 4> =
+            crate::bincode::deserialize(&bin).expect("bincode failed to decode");
+        assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "test-serde")]
+    #[test]
+    fn serde_round_trip_empty() {
+        let want = ArrayVec::<u8, 0>::new();
+
+        let json = crate::serde_json::to_string(&want).expect("serde_json failed to encode");
+        assert_eq!(json, "[]");
+        let got: ArrayVec<u8, 0> =
+            crate::serde_json::from_str(&json).expect("serde_json failed to decode");
+        assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "test-serde")]
+    #[test]
+    fn serde_deserialize_overflow_json_returns_error() {
+        // CAP=2 but JSON contains 3 elements -> must error, not panic.
+        // Excercises the read-until-overflow path (no usable size_hint).
+        let json = "[1,2,3]";
+        let res: Result<ArrayVec<u8, 2>, _> = crate::serde_json::from_str(json);
+        assert!(res.is_err(), "expected an error for over-capacity input");
+    }
+
+    #[cfg(feature = "test-serde")]
+    #[test]
+    fn serde_deserialize_overflow_bincode_returns_error() {
+        // Exercises the size_hint > CAP fast-reject path; bincode prefixes the
+        // sequence with a length, which becomes the sze_hint on deserialize.
+        let slice: &[u8] = &[1, 2, 3];
+        let bin = crate::bincode::serialize(slice).expect("bincode failed to encode");
+        let res: Result<ArrayVec<u8, 2>, _> = crate::bincode::deserialize(&bin);
+        assert!(res.is_err(), "expected an error for over-capacity input");
+    }
+
+    #[cfg(feature = "test-serde")]
+    #[test]
+    fn serde_matches_vec_wire_format() {
+        // Verifies the on-the-wire encoding is identical to `Vec<T>`/`&[T]` so
+        // that an `ArrayVec<T, CAP>` is interchangeable with `Vec<T>` in serde.
+        let slice: &[u8] = &[1, 2, 3];
+        let want = ArrayVec::<u8, 8>::from_slice(slice);
+
+        // JSON
+        let av_json = crate::serde_json::to_string(&want).expect("serde_json failed to encode");
+        let slice_json = crate::serde_json::to_string(slice).expect("serde_json failed to encode");
+        assert_eq!(av_json, slice_json);
+
+        // Bincode.
+        let av_bin = crate::bincode::serialize(&want).expect("bincode failed to encode");
+        let slice_bin = crate::bincode::serialize(slice).expect("bincode failed to encode");
+        assert_eq!(av_bin, slice_bin);
+
+        // Deserialize the slice-encoded bytes into ArrayVec.
+        let got: ArrayVec<u8, 8> =
+            crate::serde_json::from_str(&slice_json).expect("serde_json failed to decode");
+        assert_eq!(got, want);
+
+        let got: ArrayVec<u8, 8> =
+            crate::bincode::deserialize(&slice_bin).expect("bincode failed to decode");
+        assert_eq!(got, want);
     }
 }
 

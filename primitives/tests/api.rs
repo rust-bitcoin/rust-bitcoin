@@ -13,9 +13,13 @@
 #![cfg(feature = "hex")]
 #![cfg(feature = "arbitrary")]
 
+extern crate alloc;
+
 use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
-use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
+use bitcoin_primitives::script::{
+    self, PushBytes, ScriptHash, ScriptPubKeyBufDecoder, ScriptSigBufDecoder, WScriptHash,
+};
 use bitcoin_primitives::{
     absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
     RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, TapScript,
@@ -63,9 +67,10 @@ struct Structs<'a> {
     r: OutPoint,
     s: Txid,
     t: Wtxid,
-    u: transaction::Version,
-    v: Witness,
-    // w: witness::Iter<'a>,
+    u: transaction::Ntxid,
+    v: transaction::Version,
+    w: Witness,
+    // x: witness::Iter<'a>,
 }
 
 static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
@@ -103,9 +108,10 @@ struct CommonTraits {
     r: OutPoint,
     s: Txid,
     t: Wtxid,
-    u: transaction::Version,
-    v: Witness,
-    // w: witness::Iter<'a>,
+    u: transaction::Ntxid,
+    v: transaction::Version,
+    w: Witness,
+    // x: witness::Iter<'a>,
 }
 
 /// A struct that includes all types that implement `Clone`.
@@ -121,6 +127,18 @@ struct Clone<'a> {
     h: merkle_tree::WitnessMerkleNode,
     i: pow::CompactTarget,
     // j: &'a Script,
+    #[cfg(feature = "alloc")]
+    j0: alloc::boxed::Box<PushBytes>,
+    #[cfg(feature = "alloc")]
+    j1: alloc::boxed::Box<RedeemScript>,
+    #[cfg(feature = "alloc")]
+    j2: alloc::boxed::Box<ScriptPubKey>,
+    #[cfg(feature = "alloc")]
+    j3: alloc::boxed::Box<ScriptSig>,
+    #[cfg(feature = "alloc")]
+    j4: alloc::boxed::Box<TapScript>,
+    #[cfg(feature = "alloc")]
+    j5: alloc::boxed::Box<WitnessScript>,
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
@@ -135,9 +153,10 @@ struct Clone<'a> {
     r: OutPoint,
     s: Txid,
     t: Wtxid,
-    u: transaction::Version,
-    v: Witness,
-    w: witness::Iter<'a>,
+    u: transaction::Ntxid,
+    v: transaction::Version,
+    w: Witness,
+    x: witness::Iter<'a>,
 }
 
 /// Public structs that derive common traits.
@@ -168,9 +187,10 @@ struct Ord {
     r: OutPoint,
     s: Txid,
     t: Wtxid,
-    u: transaction::Version,
-    v: Witness,
-    // w: witness::Iter<'a>,
+    u: transaction::Ntxid,
+    v: transaction::Version,
+    w: Witness,
+    // x: witness::Iter<'a>,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -189,6 +209,24 @@ struct Default {
     c5: WitnessScriptBuf,
     d: Sequence,
     e: Witness,
+}
+
+/// A struct that includes all public decoder types.
+#[derive(Default)] // All decoders implement `Default`.
+struct Decoders {
+    a: block::BlockDecoder,
+    b: block::BlockHashDecoder,
+    c: block::HeaderDecoder,
+    d: block::VersionDecoder,
+    e: merkle_tree::TxMerkleNodeDecoder,
+    f: ScriptPubKeyBufDecoder,
+    g: ScriptSigBufDecoder,
+    h: transaction::TransactionDecoder,
+    i: transaction::TxInDecoder,
+    j: transaction::TxOutDecoder,
+    k: transaction::OutPointDecoder,
+    l: transaction::VersionDecoder,
+    m: witness::WitnessDecoder,
 }
 
 /// A struct that includes all public error types.
@@ -212,9 +250,8 @@ fn api_can_use_units_modules_from_crate_root() {
 #[test]
 fn api_can_use_units_types_from_crate_root() {
     use bitcoin_primitives::{
-        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime,
-        BlockTimeDecoder, BlockTimeDecoderError, FeeRate, NumOpResult, Sequence, SignedAmount,
-        Weight,
+        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
+        NumOpResult, Sequence, SignedAmount, Weight,
     };
 }
 
@@ -238,16 +275,19 @@ fn api_can_use_all_units_types_from_module_amount_error() {
 #[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_primitives::{
-        block, locktime, merkle_tree, pow, script, sequence, transaction, witness,
+        amount, block, fee_rate, locktime, merkle_tree, parse_int, pow, result, script, sequence,
+        time, transaction, weight, witness,
     };
 }
 
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_primitives::{
-        Block, BlockHash, BlockHeader, BlockVersion, CompactTarget, OutPoint, ScriptPubKey,
-        ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, Transaction, TransactionVersion, TxIn,
-        TxMerkleNode, TxOut, Txid, Witness, WitnessCommitment, WitnessMerkleNode, Wtxid,
+        Block, BlockChecked, BlockHash, BlockHeader, BlockUnchecked, BlockValidation, BlockVersion,
+        CompactTarget, OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf,
+        ScriptSig, ScriptSigBuf, Sequence, TapScript, TapScriptBuf, Transaction,
+        TransactionVersion, TxIn, TxOut, Txid, Witness, WitnessCommitment, WitnessScript,
+        WitnessScriptBuf, Wtxid,
     };
 }
 
@@ -263,9 +303,41 @@ fn api_can_use_all_types_from_module_locktime() {
 #[test]
 fn api_can_use_all_types_from_module_script() {
     use bitcoin_primitives::script::{
-        RedeemScriptSizeError, ScriptHash, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
-        WScriptHash, WitnessScriptSizeError,
+        RedeemScriptSizeError, ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash,
+        ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, WScriptHash,
+        WitnessScriptSizeError,
     };
+}
+
+#[test]
+fn api_can_use_all_types_from_module_block() {
+    use bitcoin_primitives::block::{
+        BlockDecoder, BlockDecoderError, BlockEncoder, BlockHashDecoder, BlockHashDecoderError,
+        BlockHashEncoder, HeaderDecoder, HeaderEncoder, VersionDecoder, VersionDecoderError,
+        VersionEncoder,
+    };
+}
+
+#[test]
+fn api_can_use_all_types_from_module_merkle_tree() {
+    use bitcoin_primitives::merkle_tree::{
+        TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
+    };
+}
+
+#[test]
+fn api_can_use_all_types_from_module_transaction() {
+    use bitcoin_primitives::transaction::{
+        OutPointDecoder, OutPointDecoderError, OutPointEncoder, TransactionDecoder,
+        TransactionDecoderError, TransactionEncoder, TxInDecoder, TxInDecoderError, TxInEncoder,
+        TxOutDecoder, TxOutDecoderError, TxOutEncoder, VersionDecoder, VersionDecoderError,
+        VersionEncoder,
+    };
+}
+
+#[test]
+fn api_can_use_all_types_from_module_witness() {
+    use bitcoin_primitives::witness::{WitnessDecoder, WitnessDecoderError, WitnessEncoder};
 }
 
 // `Debug` representation is never empty (C-DEBUG-NONEMPTY).
@@ -301,7 +373,7 @@ fn api_all_non_error_types_have_non_empty_debug() {
         block::WitnessCommitment::from_byte_array(BYTES);
         merkle_tree::TxMerkleNode::from_byte_array(BYTES);
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
-        pow::CompactTarget::from_consensus(0x1d00_ffff);
+        pow::CompactTarget::arbitrary(&mut u).unwrap();
         REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
         SCRIPT_PUB_KEY.as_script();
@@ -321,6 +393,7 @@ fn api_all_non_error_types_have_non_empty_debug() {
         OutPoint::arbitrary(&mut u).unwrap();
         transaction.compute_txid();
         transaction.compute_wtxid();
+        transaction.compute_ntxid();
         transaction.version;
         Witness::arbitrary(&mut u).unwrap();
         // ad: witness::Iter<'a>,
@@ -362,6 +435,26 @@ fn regression_default() {
         e: Witness::new(),
     };
     assert_eq!(got, want);
+}
+
+#[test]
+fn decoders_implement_default() { let _ = Decoders::default(); }
+
+#[test]
+fn decoders_implement_new() {
+    let _ = block::BlockDecoder::new();
+    let _ = block::BlockHashDecoder::new();
+    let _ = block::HeaderDecoder::new();
+    let _ = block::VersionDecoder::new();
+    let _ = merkle_tree::TxMerkleNodeDecoder::new();
+    let _ = ScriptPubKeyBufDecoder::new();
+    let _ = ScriptSigBufDecoder::new();
+    let _ = transaction::TransactionDecoder::new();
+    let _ = transaction::TxInDecoder::new();
+    let _ = transaction::TxOutDecoder::new();
+    let _ = transaction::OutPointDecoder::new();
+    let _ = transaction::VersionDecoder::new();
+    let _ = witness::WitnessDecoder::new();
 }
 
 #[test]

@@ -309,7 +309,7 @@ warnings.
 
 ### Links
 
-We favour links at the bottom of the docs section:
+We favor links at the bottom of the docs section:
 
 ```rust
     /// it is a real Taproot script spend (and not some other kind of output contrived
@@ -332,13 +332,14 @@ enum Foo {
 ```
 
 For types that should not form a total or partial order, or that technically do but it does not
-make sense to compare them, we use the `Ordered` trait from the
-[`ordered`](https://crates.io/crates/ordered) crate. See `absolute::LockTime` for an example.
+make sense to compare them semantically, consider carefully before deriving `PartialOrd` or `Ord`.
+While deterministic sorting is useful for use with collections (e.g. `BTreeMap`), it bakes the
+enum variant order into the public API. Adding enum variants in the middle changes discriminants
+and breaks compatibility.
 
 For error types you likely want to use `#[derive(Debug, Clone, PartialEq, Eq)]`.
 
 See [Errors](#errors) section.
-
 
 ## Attributes
 
@@ -349,6 +350,17 @@ See [Errors](#errors) section.
   compatible. These configuration conditionals are set at build time in `bitcoin/build.rs`. New
   version attributes may be added as needed.
 
+- Use stacked attributes over `#[cfg(all(...))]` when a simple conjunction applies to the same item.
+
+    Good:
+    ```rust
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    ```
+    Bad:
+    ```rust
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    ```
 
 ## BIP References
 

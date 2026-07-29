@@ -52,44 +52,42 @@ mod owned;
 mod push_bytes;
 #[cfg(test)]
 mod tests;
-pub mod witness_program;
 pub mod witness_version;
 
-use core::convert::Infallible;
-use core::fmt;
-
-use io::{BufRead, Write};
-
 use self::witness_version::WitnessVersion;
-use crate::consensus::{encode, Decodable, Encodable};
-use crate::internal_macros::impl_asref_push_bytes;
 use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
-use crate::prelude::Vec;
-use crate::OutPoint;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
     borrowed::{ScriptExt, TapScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
-    builder::Builder,
+    builder::{Builder, BuilderExt},
     instruction::{Instruction, Instructions, InstructionIndices},
-    owned::{ScriptBufExt, ScriptPubKeyBufExt},
-    push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, ScriptIntError},
+    owned::{ScriptBufExt, ScriptPubKeyBufExt, ScriptSigBufExt},
+    push_bytes::{PushBytes, PushBytesBuf, PushBytesExt, PushBytesErrorReport},
 };
 #[doc(inline)]
+pub use addresses::witness_program;
+#[doc(no_inline)]
+pub use primitives::script::ScriptBufDecoderError;
+#[doc(inline)]
 pub use primitives::script::{
-    RedeemScript, RedeemScriptBuf, RedeemScriptSizeError, RedeemScriptTag, Script, ScriptBuf,
-    ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig,
-    ScriptSigBuf, ScriptSigTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash,
-    WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
+    RedeemScript, RedeemScriptBuf, RedeemScriptTag, Script, ScriptBuf, ScriptBufDecoder,
+    ScriptEncoder, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag,
+    ScriptSig, ScriptSigBuf, ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf,
+    SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash, WitnessScript,
+    WitnessScriptBuf, WitnessScriptTag,
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
+pub(in crate::blockdata) use self::builder::BuilderExtPriv;
+#[doc(no_inline)]
+pub use self::error::{
+    Error, PushBytesError, RedeemScriptSizeError, ScriptIntError, WitnessScriptSizeError,
+};
 pub(crate) use self::owned::ScriptBufExtPriv;
-
-impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
 /// Constructs a new [`WitnessScriptBuf`] containing the script code used for spending a P2WPKH output.
 ///
@@ -200,9 +198,11 @@ fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
 }
 
 /// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
+///
 /// Does not do any checks on version or program length.
 ///
 /// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
+// This function is duplicated in addresses and primitives. If you make any changes, please update all three.
 pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     version: WitnessVersion,
     program: T,
@@ -214,76 +214,69 @@ pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
-impl<T> Encodable for Script<T> {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
+/// Error types for Bitcoin scripts.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    use crate::OutPoint;
+
+    #[rustfmt::skip]        // Keep public re-exports separate.
+    #[doc(inline)]
+    pub use super::push_bytes::ScriptIntError;
+    #[doc(no_inline)]
+    pub use primitives::script::error::{
+        PushBytesError, RedeemScriptSizeError, ScriptBufDecoderError, WitnessScriptSizeError,
+    };
+
+    /// Ways that a script might fail. Not everything is split up as
+    /// much as it could be; patches welcome if more detailed errors
+    /// would help you.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum Error {
+        /// Something did a non-minimal push; for more information see
+        /// <https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#push-operators>
+        NonMinimalPush,
+        /// Some opcode expected a parameter but it was missing or truncated.
+        EarlyEndOfScript,
+        /// Tried to read an array off the stack as a number when it was more than 4 bytes.
+        NumericOverflow,
+        /// Cannot find the spent output.
+        UnknownSpentOutput(OutPoint),
+        /// Cannot serialize the spending transaction.
+        Serialization,
     }
-}
 
-impl<T> Encodable for ScriptBuf<T> {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.as_script().consensus_encode(w)
+    impl From<Infallible> for Error {
+        fn from(never: Infallible) -> Self { match never {} }
     }
-}
 
-impl<T> Decodable for ScriptBuf<T> {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
-        Ok(Self::from_bytes(v))
-    }
-}
-
-/// Ways that a script might fail. Not everything is split up as
-/// much as it could be; patches welcome if more detailed errors
-/// would help you.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Something did a non-minimal push; for more information see
-    /// <https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#push-operators>
-    NonMinimalPush,
-    /// Some opcode expected a parameter but it was missing or truncated.
-    EarlyEndOfScript,
-    /// Tried to read an array off the stack as a number when it was more than 4 bytes.
-    NumericOverflow,
-    /// Can not find the spent output.
-    UnknownSpentOutput(OutPoint),
-    /// Can not serialize the spending transaction.
-    Serialization,
-}
-
-impl From<Infallible> for Error {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::NonMinimalPush => f.write_str("non-minimal datapush"),
-            Self::EarlyEndOfScript => f.write_str("unexpected end of script"),
-            Self::NumericOverflow =>
-                f.write_str("numeric overflow (number on stack larger than 4 bytes)"),
-            Self::UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
-            Self::Serialization =>
-                f.write_str("can not serialize the spending transaction in Transaction::verify()"),
+    impl fmt::Display for Error {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::NonMinimalPush => f.write_str("non-minimal datapush"),
+                Self::EarlyEndOfScript => f.write_str("unexpected end of script"),
+                Self::NumericOverflow =>
+                    f.write_str("numeric overflow (number on stack larger than 4 bytes)"),
+                Self::UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
+                Self::Serialization => f.write_str(
+                    "can not serialize the spending transaction in Transaction::verify()",
+                ),
+            }
         }
     }
-}
 
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::NonMinimalPush
-            | Self::EarlyEndOfScript
-            | Self::NumericOverflow
-            | Self::UnknownSpentOutput(_)
-            | Self::Serialization => None,
+    #[cfg(feature = "std")]
+    impl std::error::Error for Error {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::NonMinimalPush
+                | Self::EarlyEndOfScript
+                | Self::NumericOverflow
+                | Self::UnknownSpentOutput(_)
+                | Self::Serialization => None,
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Rust Bitcoin - unit types
+//! # Rust Bitcoin Unit Types
 //!
 //! This library provides basic types used by the Rust Bitcoin ecosystem.
 //!
@@ -23,16 +23,20 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
-// Exclude lints we don't think are valuable.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 // Extra restriction lints.
 #![warn(clippy::indexing_slicing)] // Avoid implicit panics from indexing/slicing.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
-
 #[cfg(feature = "std")]
 extern crate std;
+
+#[cfg(feature = "arbitrary")]
+pub extern crate arbitrary;
+#[cfg(feature = "encoding")]
+pub extern crate encoding;
+#[cfg(feature = "serde")]
+pub extern crate serde;
 
 #[doc(hidden)]
 pub mod _export {
@@ -50,6 +54,7 @@ pub mod block;
 pub mod fee_rate;
 pub mod locktime;
 pub mod parse_int;
+pub mod pow;
 pub mod result;
 pub mod sequence;
 pub mod time;
@@ -62,12 +67,13 @@ pub use self::{
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     locktime::{absolute, relative},
+    pow::{CompactTarget, Target, Work},
     result::NumOpResult,
     sequence::Sequence,
     time::BlockTime,
     weight::Weight
 };
 
-#[deprecated(since = "1.0.0-rc.0", note = "use `BlockHeightInterval` instead")]
-#[doc(hidden)]
-pub type BlockInterval = BlockHeightInterval;
+// decoder_newtype! macro
+#[cfg(feature = "encoding")]
+include!("../include/decoder_newtype.rs");

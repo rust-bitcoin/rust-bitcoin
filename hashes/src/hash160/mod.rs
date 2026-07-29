@@ -10,13 +10,14 @@
 use crate::{ripemd160, sha256};
 
 crate::internal_macros::general_hash_type! {
-    160,
-    false,
-    "Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))"
+    /// Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))
+    pub struct Hash([u8; 20]);
+
+    const DISPLAY_BACKWARD: bool = false;
 }
 
 impl Hash {
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     pub fn from_engine(e: HashEngine) -> Self {
         let sha2 = sha256::Hash::from_engine(e.0);
         let rmd = ripemd160::Hash::hash(sha2.as_byte_array());
@@ -42,7 +43,6 @@ impl Default for HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
-    type Bytes = [u8; 20];
     const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
 
     fn input(&mut self, data: &[u8]) { self.0.input(data) }

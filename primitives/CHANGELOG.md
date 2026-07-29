@@ -1,6 +1,66 @@
-# 1.0.0 - 2025-10-18
+# Changelog
+
+## [Unreleased]
+
+# [0.103.0] - 2026-07-14
+
+- Move `script_hash` and `wscript_hash` to primitives [#6504](https://github.com/rust-bitcoin/rust-bitcoin/pull/6504)
+- Move `builder` script functions to primitives [#6514](https://github.com/rust-bitcoin/rust-bitcoin/pull/6514)
+- script: make `new_p2wsh` available on hashable scripts [#6498](https://github.com/rust-bitcoin/rust-bitcoin/pull/6498)
+- hashes: Introduce `drain_to_hash` and `encode_to_hash` [#6456](https://github.com/rust-bitcoin/rust-bitcoin/pull/6456)
+- Implement `ExactSizeEncoder` for `WitnessEncoder` [#6428](https://github.com/rust-bitcoin/rust-bitcoin/pull/6428)
+- Adjust `Arbitrary` impls to enforce invariants from decoders [#6407](https://github.com/rust-bitcoin/rust-bitcoin/pull/6407)
+- Seal the `Tag` trait [#6403](https://github.com/rust-bitcoin/rust-bitcoin/pull/6403)
+- Move `serde_as_consensus` to `consensus_encoding` [#6395](https://github.com/rust-bitcoin/rust-bitcoin/pull/6395)
+- Move some script functions to `primitives` [#6342](https://github.com/rust-bitcoin/rust-bitcoin/pull/6342)
+- Replace `HexPrimitive` decoding with `consensus_encoding` [#6330](https://github.com/rust-bitcoin/rust-bitcoin/pull/6330)
+- Move `Builder` to `primitives` [#6313](https://github.com/rust-bitcoin/rust-bitcoin/pull/6313)
+- Move `WitnessVersion` to `primitives` [#6307](https://github.com/rust-bitcoin/rust-bitcoin/pull/6307)
+- Move `Opcode` to `primitives` [#6306](https://github.com/rust-bitcoin/rust-bitcoin/pull/6306)
+- Simplify and optimize witness decoder [#6321](https://github.com/rust-bitcoin/rust-bitcoin/pull/6321)
+- Remove double allocation from `ScriptBuf::from_hex_prefixed` [#6295](https://github.com/rust-bitcoin/rust-bitcoin/pull/6295)
+- Implement `fmt::LowerHex` and `fmt::UpperHex` for `Witness` [#6316](https://github.com/rust-bitcoin/rust-bitcoin/pull/6316)
+- Avoid allocating claimed size when decoding witness length [#6298](https://github.com/rust-bitcoin/rust-bitcoin/pull/6298)
+- Fix witness commitment check (BIP-141) [#6250](https://github.com/rust-bitcoin/rust-bitcoin/pull/6250)
+- witness: Allocate in `reserve_batch` if `capacity < MIN_VECTOR_ALLOCATE` [#6241](https://github.com/rust-bitcoin/rust-bitcoin/pull/6241)
+- Use optimized `sha256d` for 64-byte in merkle root computation [#5946](https://github.com/rust-bitcoin/rust-bitcoin/pull/5946)
+- Move `PushBytes` and co to `primitives` [#6128](https://github.com/rust-bitcoin/rust-bitcoin/pull/6128)
+- Remove the unstable `hex-conservative` dependency [#6148](https://github.com/rust-bitcoin/rust-bitcoin/pull/6148)
+- Add minimum allocation size [#6198](https://github.com/rust-bitcoin/rust-bitcoin/pull/6198)
+- witness: Allocate in `reserve_batch` if `capacity < MIN_VECTOR_ALLOCATE` [#6241](https://github.com/rust-bitcoin/rust-bitcoin/pull/6241)
+- Add `SignetBlockScript`/`Buf` for signet challenge scripts [#5871](https://github.com/rust-bitcoin/rust-bitcoin/pull/5871)
+- Move script hex parsing functions to `primitives` [#5657](https://github.com/rust-bitcoin/rust-bitcoin/pull/5657)
+- Remove `From<SubError>` for error types [#5855](https://github.com/rust-bitcoin/rust-bitcoin/pull/5855)
+- Do not re-export non-essential hash types [#5891](https://github.com/rust-bitcoin/rust-bitcoin/pull/5891)
+- Re-export `serde` and `arbitrary` when they appear in public API [#5862](https://github.com/rust-bitcoin/rust-bitcoin/pull/5862)
+- Implement stringly traits for `Block` using hex [#5703](https://github.com/rust-bitcoin/rust-bitcoin/pull/5703)
+- Move `TxMerkleNodeDecoder`/`Error` to `merkle_tree` module [#5724](https://github.com/rust-bitcoin/rust-bitcoin/pull/5724)
+- Remove excess allocations from `Witness::from_iter` [#5650](https://github.com/rust-bitcoin/rust-bitcoin/pull/5650)
+- Remove `BlockTime` decoder from root export [#5527](https://github.com/rust-bitcoin/rust-bitcoin/pull/5527)
+- Upgrade to `bitcoin-units 0.5.0` [#6292](https://github.com/rust-bitcoin/rust-bitcoin/pull/6292)
+- Upgrade to `bitcoin_hashes 1.0.0`
+- Upgrade to `consensus-encoding 1.0.0`
+
+## [0.102.0] - 2026-02-17
+
+It was found that the `1.0.0-rc.x` releases were troublesome because
+of how `cargo` resolves version numbers that include a suffix. For
+this reason we elected to go back to pre-1.0 version numbers but this
+release is still explicitly a 1.0 release candidate.
+
+- Remove `From<UnexpectedEof>` for primitive decoder error types [#5606](https://github.com/rust-bitcoin/rust-bitcoin/pull/5606)
+- Use `hashes` format implementations and fix reverse hashes [#5603](https://github.com/rust-bitcoin/rust-bitcoin/pull/5603)
+- Add fmt traits for simple wrapper types [#5597](https://github.com/rust-bitcoin/rust-bitcoin/pull/5597)
+- Use saturating add in `WitnessDecoder` [#5569](https://github.com/rust-bitcoin/rust-bitcoin/pull/5569)
+- Reject transactions with 0 outputs [#5470](https://github.com/rust-bitcoin/rust-bitcoin/pull/5470)
+- Prevent null prevout in non-coinbase transactions [#5450](https://github.com/rust-bitcoin/rust-bitcoin/pull/5450)
+- Reject txs with output sum > MAX_MONEY [#5443](https://github.com/rust-bitcoin/rust-bitcoin/pull/5443)
+- Reject transactions with invalid coinbase `scriptSig` length [#5430](https://github.com/rust-bitcoin/rust-bitcoin/pull/5430)
+
+## 1.0.0 Release Candidates - 2025-10-18
 
 This changelog is a rolling description of everything that will eventually end up in `v1.0`.
+EDIT: This changelog is for `1.0.0-rc.0` through `1.0.0-rc.2` and may well be missing stuff.
 
 There are a bunch of changes in this stable release, of note script
 tagging and the consensus encoding re-write.
@@ -42,7 +102,7 @@ And also we did:
 - Re-export `block::Header` as `BlockHeader` [#3562](https://github.com/rust-bitcoin/rust-bitcoin/pull/3562)
 - Favour `to_vec` over `to_bytes` [#3544](https://github.com/rust-bitcoin/rust-bitcoin/pull/3544)
 
-## Locktimes
+### Locktimes
 
 Lock times got a bit of work. A big win was:
 
@@ -56,16 +116,16 @@ we changed the format:
 
 - Modify locktime serde implementations #4511
 
-## Arbitrary
+### Arbitrary
 
 - Add Arbitrary impl for BlockHash, TxMerkleNode, and Wtxid #4720
 - Add Arbitrary impl for relative::LockTime #4689
 
-## Mutation testing
+### Mutation testing
 
 The whole crate is mutation tested using `cargo-mutants` - BOOM!
 
-# 0.101.0 - 2024-11-15
+## [0.101.0] - 2024-11-15
 
 This is the first "real" release of the `primitives` crate, as such it
 includes a lot of work. Search GitHub with the following filter to see
@@ -91,7 +151,12 @@ matter how small so we can fix them for the stable release.
 
 Enjoy!
 
-# 0.100.0 - 2024-07-01
+## 0.100.0 - 2024-07-01
 
 * Initial release of the `github.com/rust-bitcoin/rust-bitcoin/primitives` crate as
   `bitcoin-primitives`. The name on crates.io was generously transferred to us.
+
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-primitives-0.103.0...HEAD
+[0.103.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.102.0...bitcoin-primitives-0.103.0
+[0.102.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.101.0...bitcoin-primitives-0.102.0
+[0.101.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.100.0...primitives-0.101.0

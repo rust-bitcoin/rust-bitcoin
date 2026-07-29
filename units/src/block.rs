@@ -4,27 +4,31 @@
 //!
 //! These types are thin wrappers around `u32`, no invariants implemented or implied.
 //!
-//! These are general types for abstracting over block heights, they are not designed to use with
+//! These are general types for abstracting over block heights, they are not designed for use with
 //! lock times. If you are creating lock times you should be using the
 //! [`locktime::absolute::Height`] and [`locktime::relative::NumberOfBlocks`] types.
 //!
 //! The difference between these types and the locktime types is that these types are thin wrappers
 //! whereas the locktime types contain more complex locktime specific abstractions.
 
-#[cfg(feature = "encoding")]
-use core::convert::Infallible;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-#[cfg(feature = "encoding")]
-use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(doc)]
 use crate::locktime;
 use crate::locktime::{absolute, relative};
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[cfg(feature = "encoding")]
+#[doc(no_inline)]
+pub use self::error::BlockHeightDecoderError;
+#[doc(no_inline)]
+pub use self::error::TooBigForRelativeHeightError;
 
 macro_rules! impl_u32_wrapper {
     {
@@ -34,17 +38,48 @@ macro_rules! impl_u32_wrapper {
         $(#[$($type_attrs)*])*
         $type_vis struct $newtype($inner_vis u32);
 
+        impl $newtype {
+            #[doc = "Constructs a new `"]
+            #[doc = stringify!($newtype)]
+            #[doc = "` from an unprefixed hex string.\n\n"]
+            #[doc = "# Errors\n\n"]
+            #[doc = "If the input string is not a valid hex representation of a `"]
+            #[doc = stringify!($newtype)]
+            #[doc = "` or it does not include the `0x` prefix."]
+            #[inline]
+            pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+                let block_height = parse_int::hex_u32_prefixed(s)?;
+                Ok(Self(block_height))
+            }
+
+            #[doc = "Constructs a new `"]
+            #[doc = stringify!($newtype)]
+            #[doc = "` from a prefixed hex string.\n\n"]
+            #[doc = "# Errors\n\n"]
+            #[doc = "If the input string is not a valid hex representation of a `"]
+            #[doc = stringify!($newtype)]
+            #[doc = "` or if it includes the `0x` prefix."]
+            #[inline]
+            pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+                let block_height = parse_int::hex_u32_unprefixed(s)?;
+                Ok(Self(block_height))
+            }
+        }
+
         impl fmt::Display for $newtype {
+            #[inline]
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
         }
 
         crate::parse_int::impl_parse_str_from_int_infallible!($newtype, u32, from);
 
         impl From<u32> for $newtype {
+            #[inline]
             fn from(inner: u32) -> Self { Self::from_u32(inner) }
         }
 
         impl From<$newtype> for u32 {
+            #[inline]
             fn from(height: $newtype) -> Self { height.to_u32() }
         }
 
@@ -107,29 +142,54 @@ impl BlockHeight {
     pub const MAX: Self = Self(u32::MAX);
 
     /// Constructs a new block height from a `u32`.
+    #[inline]
     pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 
     /// Returns block height as a `u32`.
+    #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
     /// Attempt to subtract two [`BlockHeight`]s, returning `None` if overflow occurred.
+    #[inline]
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<BlockHeightInterval> {
         self.to_u32().checked_sub(other.to_u32()).map(BlockHeightInterval)
     }
 
     /// Attempt to add an interval to this [`BlockHeight`], returning `None` if overflow occurred.
+    #[inline]
     #[must_use]
     pub fn checked_add(self, other: BlockHeightInterval) -> Option<Self> {
         self.to_u32().checked_add(other.to_u32()).map(Self)
     }
+
+    /// Saturating integer addition.
+    ///
+    /// Computes self + rhs, saturating at `BlockHeight::MAX` instead of overflowing.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_add(self, rhs: BlockHeightInterval) -> Self {
+        Self::from_u32(self.to_u32().saturating_add(rhs.to_u32()))
+    }
+
+    /// Saturating integer subtraction.
+    ///
+    /// Computes self - rhs, saturating at `BlockHeight::MIN` instead of overflowing.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_sub(self, rhs: BlockHeightInterval) -> Self {
+        Self::from_u32(self.to_u32().saturating_sub(rhs.to_u32()))
+    }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockHeight);
 
 impl From<absolute::Height> for BlockHeight {
     /// Converts a [`locktime::absolute::Height`] to a [`BlockHeight`].
     ///
     /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
     /// minus one, while [`BlockHeight`] may take the full range of `u32`.
+    #[inline]
     fn from(h: absolute::Height) -> Self { Self::from_u32(h.to_u32()) }
 }
 
@@ -140,86 +200,47 @@ impl TryFrom<BlockHeight> for absolute::Height {
     ///
     /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
     /// minus one, while [`BlockHeight`] may take the full range of `u32`.
+    #[inline]
     fn try_from(h: BlockHeight) -> Result<Self, Self::Error> { Self::from_u32(h.to_u32()) }
 }
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype! {
-    /// The encoder for the [`BlockHeight`] type.
-    pub struct BlockHeightEncoder(encoding::ArrayEncoder<4>);
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Encodable for BlockHeight {
-    type Encoder<'e> = BlockHeightEncoder;
+impl encoding::Encode for BlockHeight {
+    type Encoder<'e> = BlockHeightEncoder<'e>;
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockHeightEncoder(encoding::ArrayEncoder::without_length_prefix(
+        BlockHeightEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_u32().to_le_bytes(),
         ))
     }
 }
 
-/// The decoder for the [`BlockHeight`] type.
 #[cfg(feature = "encoding")]
-pub struct BlockHeightDecoder(encoding::ArrayDecoder<4>);
-
-#[cfg(feature = "encoding")]
-impl Default for BlockHeightDecoder {
-    fn default() -> Self { Self::new() }
+impl encoding::Decode for BlockHeight {
+    type Decoder = BlockHeightDecoder;
 }
 
 #[cfg(feature = "encoding")]
-impl BlockHeightDecoder {
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`BlockHeight`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockHeightEncoder<'e>(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`BlockHeight`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockHeightDecoder(encoding::ArrayDecoder<4>);
+
     /// Constructs a new [`BlockHeight`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-#[cfg(feature = "encoding")]
-impl encoding::Decoder for BlockHeightDecoder {
-    type Output = BlockHeight;
-    type Error = BlockHeightDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(BlockHeightDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end().map_err(BlockHeightDecoderError)?);
+    fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<BlockHeight, BlockHeightDecoderError> {
+        let value = result.map_err(BlockHeightDecoderError)?;
+        let n = u32::from_le_bytes(value);
         Ok(BlockHeight::from_u32(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decodable for BlockHeight {
-    type Decoder = BlockHeightDecoder;
-    fn decoder() -> Self::Decoder { BlockHeightDecoder(encoding::ArrayDecoder::<4>::new()) }
-}
-
-/// An error consensus decoding an `BlockHeight`.
-#[cfg(feature = "encoding")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct BlockHeightDecoderError(encoding::UnexpectedEofError);
-
-#[cfg(feature = "encoding")]
-impl From<Infallible> for BlockHeightDecoderError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "encoding")]
-impl fmt::Display for BlockHeightDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "block height decoder error"; self.0)
-    }
-}
-
-#[cfg(all(feature = "std", feature = "encoding"))]
-impl std::error::Error for BlockHeightDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl_u32_wrapper! {
@@ -244,29 +265,36 @@ impl BlockHeightInterval {
     pub const MAX: Self = Self(u32::MAX);
 
     /// Constructs a new block interval from a `u32`.
+    #[inline]
     pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 
     /// Returns block interval as a `u32`.
+    #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
     /// Attempt to subtract two [`BlockHeightInterval`]s, returning `None` if overflow occurred.
+    #[inline]
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<Self> {
         self.to_u32().checked_sub(other.to_u32()).map(Self)
     }
 
     /// Attempt to add two [`BlockHeightInterval`]s, returning `None` if overflow occurred.
+    #[inline]
     #[must_use]
     pub fn checked_add(self, other: Self) -> Option<Self> {
         self.to_u32().checked_add(other.to_u32()).map(Self)
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockHeightInterval);
+
 impl From<relative::NumberOfBlocks> for BlockHeightInterval {
     /// Converts a [`locktime::relative::NumberOfBlocks`] to a [`BlockHeightInterval`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
+    #[inline]
     fn from(h: relative::NumberOfBlocks) -> Self { Self::from_u32(h.to_height().into()) }
 }
 
@@ -277,6 +305,7 @@ impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
+    #[inline]
     fn try_from(h: BlockHeightInterval) -> Result<Self, Self::Error> {
         u16::try_from(h.to_u32())
             .map(Self::from)
@@ -309,49 +338,58 @@ impl BlockMtp {
     pub const MAX: Self = Self(u32::MAX);
 
     /// Constructs a new block MTP from a `u32`.
+    #[inline]
     pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 
     /// Returns block MTP as a `u32`.
+    #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Constructs a [`BlockMtp`] by computing the median‐time‐past from the last 11 block timestamps
+    /// Constructs a [`BlockMtp`] by computing the median-time-past from the last 11 block timestamps.
     ///
     /// Because block timestamps are not monotonic, this function internally sorts them;
     /// it is therefore not important what order they appear in the array; use whatever
     /// is most convenient.
+    #[inline]
     pub fn new(mut timestamps: [crate::BlockTime; 11]) -> Self {
         timestamps.sort_unstable();
         Self::from_u32(u32::from(timestamps[5]))
     }
 
     /// Attempt to subtract two [`BlockMtp`]s, returning `None` if overflow occurred.
+    #[inline]
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<BlockMtpInterval> {
         self.to_u32().checked_sub(other.to_u32()).map(BlockMtpInterval)
     }
 
     /// Attempt to add an interval to this [`BlockMtp`], returning `None` if overflow occurred.
+    #[inline]
     #[must_use]
     pub fn checked_add(self, other: BlockMtpInterval) -> Option<Self> {
         self.to_u32().checked_add(other.to_u32()).map(Self)
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockMtp);
+
 impl From<absolute::MedianTimePast> for BlockMtp {
     /// Converts a [`locktime::absolute::MedianTimePast`] to a [`BlockMtp`].
     ///
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.
+    #[inline]
     fn from(h: absolute::MedianTimePast) -> Self { Self::from_u32(h.to_u32()) }
 }
 
 impl TryFrom<BlockMtp> for absolute::MedianTimePast {
     type Error = absolute::ConversionError;
 
-    /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
+    /// Converts a [`BlockMtp`] to a [`locktime::absolute::MedianTimePast`].
     ///
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.
+    #[inline]
     fn try_from(h: BlockMtp) -> Result<Self, Self::Error> { Self::from_u32(h.to_u32()) }
 }
 
@@ -377,9 +415,11 @@ impl BlockMtpInterval {
     pub const MAX: Self = Self(u32::MAX);
 
     /// Constructs a new block MTP interval from a `u32`.
+    #[inline]
     pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 
     /// Returns block MTP interval as a `u32`.
+    #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
     /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding down.
@@ -415,17 +455,21 @@ impl BlockMtpInterval {
     }
 
     /// Attempt to subtract two [`BlockMtpInterval`]s, returning `None` if overflow occurred.
+    #[inline]
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<Self> {
         self.to_u32().checked_sub(other.to_u32()).map(Self)
     }
 
     /// Attempt to add two [`BlockMtpInterval`]s, returning `None` if overflow occurred.
+    #[inline]
     #[must_use]
     pub fn checked_add(self, other: Self) -> Option<Self> {
         self.to_u32().checked_add(other.to_u32()).map(Self)
     }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockMtpInterval);
 
 impl From<relative::NumberOf512Seconds> for BlockMtpInterval {
     /// Converts a [`locktime::relative::NumberOf512Seconds`] to a [`BlockMtpInterval `].
@@ -433,26 +477,9 @@ impl From<relative::NumberOf512Seconds> for BlockMtpInterval {
     /// A relative locktime MTP interval has a resolution of 512 seconds, and a maximum value
     /// of `u16::MAX` 512-second intervals. [`BlockMtpInterval`] may take the full range of
     /// `u32`.
+    #[inline]
     fn from(h: relative::NumberOf512Seconds) -> Self { Self::from_u32(h.to_seconds()) }
 }
-
-/// Error returned when the block interval is too big to be used as a relative lock time.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TooBigForRelativeHeightError(u32);
-
-impl fmt::Display for TooBigForRelativeHeightError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "block interval is too big to be used as a relative lock time: {} (max: {})",
-            self.0,
-            relative::NumberOfBlocks::MAX
-        )
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for TooBigForRelativeHeightError {}
 
 crate::internal_macros::impl_op_for_references! {
     // height - height = interval
@@ -562,6 +589,7 @@ crate::internal_macros::impl_add_assign!(BlockMtpInterval);
 crate::internal_macros::impl_sub_assign!(BlockMtpInterval);
 
 impl core::iter::Sum for BlockHeightInterval {
+    #[inline]
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sum = iter.map(Self::to_u32).sum();
         Self::from_u32(sum)
@@ -569,6 +597,7 @@ impl core::iter::Sum for BlockHeightInterval {
 }
 
 impl<'a> core::iter::Sum<&'a Self> for BlockHeightInterval {
+    #[inline]
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
@@ -579,6 +608,7 @@ impl<'a> core::iter::Sum<&'a Self> for BlockHeightInterval {
 }
 
 impl core::iter::Sum for BlockMtpInterval {
+    #[inline]
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sum = iter.map(Self::to_u32).sum();
         Self::from_u32(sum)
@@ -586,6 +616,7 @@ impl core::iter::Sum for BlockMtpInterval {
 }
 
 impl<'a> core::iter::Sum<&'a Self> for BlockMtpInterval {
+    #[inline]
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
@@ -595,10 +626,76 @@ impl<'a> core::iter::Sum<&'a Self> for BlockMtpInterval {
     }
 }
 
+/// Error types for block height and interval types.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    #[cfg(feature = "encoding")]
+    use internals::write_err;
+
+    use crate::locktime::relative;
+
+    /// Error returned when the block interval is too big to be used as a relative lock time.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct TooBigForRelativeHeightError(pub(super) u32);
+
+    impl From<Infallible> for TooBigForRelativeHeightError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for TooBigForRelativeHeightError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "block interval is too big to be used as a relative lock time: {} (max: {})",
+                self.0,
+                relative::NumberOfBlocks::MAX
+            )
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for TooBigForRelativeHeightError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
+    }
+
+    /// An error consensus decoding a `BlockHeight`.
+    #[cfg(feature = "encoding")]
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct BlockHeightDecoderError(pub(super) encoding::UnexpectedEofError);
+
+    #[cfg(feature = "encoding")]
+    impl From<Infallible> for BlockHeightDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "encoding")]
+    impl fmt::Display for BlockHeightDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write_err!(f, "block height decoder error"; self.0)
+        }
+    }
+
+    #[cfg(feature = "encoding")]
+    #[cfg(feature = "std")]
+    impl std::error::Error for BlockHeightDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
     #[cfg(feature = "encoding")]
-    use encoding::{Decodable as _, Decoder as _, UnexpectedEofError};
+    use encoding::{Decode as _, Decoder as _, UnexpectedEofError};
 
     use super::*;
     use crate::relative::{NumberOf512Seconds, TimeOverflowError};
@@ -780,40 +877,12 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
-    fn block_height_encoding_round_trip() {
-        let blockheight = BlockHeight(0x7FFF_FFFF);
-        let expected_bytes = alloc::vec![0xff, 0xff, 0xff, 0x7f];
-
-        let encoded = encoding::encode_to_vec(&blockheight);
-        assert_eq!(encoded, expected_bytes);
-
-        let decoded = encoding::decode_from_slice::<BlockHeight>(encoded.as_slice()).unwrap();
-        assert_eq!(decoded, blockheight);
-    }
-
-    #[test]
-    #[cfg(feature = "encoding")]
-    fn block_height_decoding() {
-        let bytes = [0xff, 0xff, 0xff, 0xff];
-        let expected = BlockHeight(0xFFFF_FFFF);
-
-        let mut decoder = BlockHeight::decoder();
-        assert_eq!(decoder.read_limit(), 4);
-        assert!(!decoder.push_bytes(&mut bytes.as_slice()).unwrap());
-        assert_eq!(decoder.read_limit(), 0);
-
-        let decoded = decoder.end().unwrap();
-        assert_eq!(decoded, expected);
-    }
-
-    #[test]
     #[cfg(feature = "encoding")]
     fn block_height_decoding_error() {
         let bytes = [0xff, 0xff, 0xff]; // 3 bytes is an EOF error
 
         let mut decoder = BlockHeightDecoder::default();
-        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap().needs_more());
 
         let error = decoder.end().unwrap_err();
         assert!(matches!(error, BlockHeightDecoderError(UnexpectedEofError { .. })));
@@ -840,4 +909,59 @@ mod tests {
     serde_roundtrip_test!(block_height_interval_serde_round_trip, BlockHeightInterval);
     serde_roundtrip_test!(block_mtp_serde_round_trip, BlockMtp);
     serde_roundtrip_test!(block_mtp_interval_serde_round_trip, BlockMtpInterval);
+
+    #[test]
+    fn block_height_saturating_add() {
+        // Normal addition
+        assert_eq!(BlockHeight(100).saturating_add(BlockHeightInterval(50)), BlockHeight(150),);
+        assert_eq!(BlockHeight::ZERO.saturating_add(BlockHeightInterval(1)), BlockHeight(1),);
+
+        // Saturates at MAX instead of overflowing
+        assert_eq!(BlockHeight::MAX.saturating_add(BlockHeightInterval(1)), BlockHeight::MAX,);
+        assert_eq!(BlockHeight::MAX.saturating_add(BlockHeightInterval(100)), BlockHeight::MAX,);
+        assert_eq!(
+            BlockHeight(u32::MAX - 10).saturating_add(BlockHeightInterval(20)),
+            BlockHeight::MAX,
+        );
+
+        // Adding zero
+        assert_eq!(BlockHeight(500).saturating_add(BlockHeightInterval::ZERO), BlockHeight(500),);
+    }
+
+    #[test]
+    fn block_height_saturating_sub() {
+        // Normal subtraction
+        assert_eq!(BlockHeight(100).saturating_sub(BlockHeightInterval(50)), BlockHeight(50),);
+        assert_eq!(BlockHeight(100).saturating_sub(BlockHeightInterval(100)), BlockHeight(0),);
+
+        // Saturates at MIN instead of underflowing
+        assert_eq!(BlockHeight::MIN.saturating_sub(BlockHeightInterval(1)), BlockHeight::MIN,);
+        assert_eq!(BlockHeight::ZERO.saturating_sub(BlockHeightInterval(100)), BlockHeight::ZERO,);
+        assert_eq!(BlockHeight(10).saturating_sub(BlockHeightInterval(20)), BlockHeight::ZERO,);
+
+        // Subtracting zero
+        assert_eq!(BlockHeight(500).saturating_sub(BlockHeightInterval::ZERO), BlockHeight(500),);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // TooBigForRelativeHeightError - block interval too big for relative height
+        let big_interval = BlockHeightInterval::from_u32(u32::MAX);
+        let e = relative::NumberOfBlocks::try_from(big_interval).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        #[cfg(feature = "encoding")]
+        {
+            // BlockHeightDecoderError
+            let mut decoder = BlockHeight::decoder();
+            let _ = decoder.push_bytes(&mut [0u8; 3].as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+        }
+    }
 }

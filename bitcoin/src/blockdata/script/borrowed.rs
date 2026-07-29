@@ -2,33 +2,27 @@
 
 use core::fmt;
 
-use hex::DisplayHex as _;
 use internals::array::ArrayExt; // For `split_first`.
-use internals::ToU64 as _;
 
 use super::witness_version::WitnessVersion;
 use super::{
-    Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
-    RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
-    TapScript, WScriptHash, WitnessScript, WitnessScriptSizeError,
+    Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript, RedeemScriptSizeError,
+    Script, ScriptHashableTag, ScriptPubKey, ScriptSig, TapScript, WitnessScript,
+    WitnessScriptSizeError,
 };
-use crate::consensus::{self, Encodable};
-use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
+use crate::encoding::{Encode, ExactSizeEncoder};
+use crate::key::{LegacyPublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
-use crate::opcodes::{self, Opcode};
+use crate::opcodes::{self, Opcode, OpcodeExt as _};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
-use crate::prelude::{sink, String, ToString};
+use crate::prelude::{String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};
-use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
-use crate::witness_program::P2A_PROGRAM;
-use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, WitnessScriptBuf};
+use crate::taproot::{LeafVersion, TapLeafHash, TapLeafHashExt as _, TapNodeHash};
+use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, ToU64 as _, WitnessScriptBuf};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
     pub trait ScriptExt<T> impl<T> for Script<T> {
-        /// Constructs a new script builder
-        fn builder() -> Builder<T> { Builder::new() }
-
         /// Counts the sigops for this Script using accurate counting.
         ///
         /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
@@ -138,20 +132,6 @@ internal_macros::define_extension_trait! {
         #[deprecated(since = "TBD", note = "use `to_hex_string_no_length_prefix` instead")]
         fn to_hex_string(&self) -> String { self.to_hex_string_no_length_prefix() }
 
-        /// Consensus encodes the script as lower-case hex.
-        ///
-        /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
-        /// `to_hex_string_no_length_prefix`.
-        fn to_hex_string_prefixed(&self) -> String { consensus::encode::serialize_hex(self) }
-
-        /// Encodes the script as lower-case hex.
-        ///
-        /// This is **not** consensus encoding. The returned hex string will not include the length
-        /// prefix. See `to_hex_string_prefixed`.
-        fn to_hex_string_no_length_prefix(&self) -> String {
-            self.as_bytes().to_lower_hex_string()
-        }
-
         /// Returns the first opcode of the script (if there is any).
         fn first_opcode(&self) -> Option<Opcode> {
             self.as_bytes().first().copied().map(From::from)
@@ -159,14 +139,6 @@ internal_macros::define_extension_trait! {
 
         // These methods only exist for scriptPubKey and redeemScript, as indicated by the
         // where clauses on them.
-
-        /// Returns 160-bit hash of the script for P2SH outputs.
-        #[inline]
-        fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError>
-        where T: ScriptHashableTag
-        {
-            ScriptHash::from_script(self)
-        }
 
         /// Computes the P2SH output corresponding to this redeem script.
         fn to_p2sh(&self) -> Result<ScriptPubKeyBuf, RedeemScriptSizeError>
@@ -195,71 +167,12 @@ internal_macros::define_extension_trait! {
                 None
             }
         }
-
-        /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
-        ///
-        /// # Returns
-        ///
-        /// The witness version if this script is found to conform to the SegWit rules:
-        ///
-        /// > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte
-        /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
-        /// > special meaning. The value of the first push is called the "version byte". The following
-        /// > byte vector pushed is called the "witness program".
-        #[inline]
-        fn witness_version(&self) -> Option<WitnessVersion>
-        where T: ScriptHashableTag
-        {
-            let script_len = self.len();
-            if !(4..=42).contains(&script_len) {
-                return None;
-            }
-
-            let ver_opcode = Opcode::from(self.as_bytes()[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
-            let push_opbyte = self.as_bytes()[1]; // Second byte push opcode 2-40 bytes
-
-            if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8() {
-                return None;
-            }
-            // Check that the rest of the script has the correct size
-            if script_len - 2 != push_opbyte as usize {
-                return None;
-            }
-
-            WitnessVersion::try_from(ver_opcode).ok()
-        }
-
-        /// Checks whether a script pubkey is a P2WSH output.
-        #[inline]
-        fn is_p2wsh(&self) -> bool
-        where T: ScriptHashableTag
-        {
-            self.len() == 34
-                && self.witness_version() == Some(WitnessVersion::V0)
-                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2WPKH output.
-        #[inline]
-        fn is_p2wpkh(&self) -> bool
-        where T: ScriptHashableTag
-        {
-            self.len() == 22
-                && self.witness_version() == Some(WitnessVersion::V0)
-                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
-        }
     }
 }
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`WitnessScript`] type.
     pub trait WitnessScriptExt impl for WitnessScript {
-        /// Returns 256-bit hash of the script for P2WSH outputs.
-        #[inline]
-        fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
-            WScriptHash::from_script(self)
-        }
-
         /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
         /// script").
         fn to_p2wsh(&self) -> Result<ScriptPubKeyBuf, WitnessScriptSizeError> {
@@ -305,28 +218,8 @@ internal_macros::define_extension_trait! {
         /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
         /// This happens when the public key is invalid (e.g. the point not being on the curve).
         /// In this situation the script is unspendable.
-        fn p2pk_public_key(&self) -> Option<PublicKey> {
-            PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
-        }
-
-        /// Checks whether a script pubkey is a P2SH output.
-        #[inline]
-        fn is_p2sh(&self) -> bool {
-            self.len() == 23
-                && self.as_bytes()[0] == OP_HASH160.to_u8()
-                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
-                && self.as_bytes()[22] == OP_EQUAL.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2PKH output.
-        #[inline]
-        fn is_p2pkh(&self) -> bool {
-            self.len() == 25
-                && self.as_bytes()[0] == OP_DUP.to_u8()
-                && self.as_bytes()[1] == OP_HASH160.to_u8()
-                && self.as_bytes()[2] == OP_PUSHBYTES_20.to_u8()
-                && self.as_bytes()[23] == OP_EQUALVERIFY.to_u8()
-                && self.as_bytes()[24] == OP_CHECKSIG.to_u8()
+        fn p2pk_public_key(&self) -> Option<LegacyPublicKey> {
+            LegacyPublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
         }
 
         /// Checks whether a script pubkey is a bare multisig output.
@@ -337,18 +230,13 @@ internal_macros::define_extension_trait! {
         ///    `2 <pubkey1> <pubkey2> <pubkey3> 3 OP_CHECKMULTISIG`
         #[inline]
         fn is_multisig(&self) -> bool {
-            let required_sigs;
-
             let mut instructions = self.instructions();
-            if let Some(Ok(Instruction::Op(op))) = instructions.next() {
-                if let Some(pushnum) = op.decode_pushnum() {
-                    required_sigs = pushnum;
-                } else {
-                    return false;
-                }
-            } else {
+            let Some(Ok(Instruction::Op(op))) = instructions.next() else {
                 return false;
-            }
+            };
+            let Some(required_sigs) = op.decode_pushnum() else {
+                return false;
+            };
 
             let mut num_pubkeys: u8 = 0;
             while let Some(Ok(instruction)) = instructions.next() {
@@ -356,13 +244,9 @@ internal_macros::define_extension_trait! {
                     Instruction::PushBytes(_) => {
                         num_pubkeys += 1;
                     }
-                    Instruction::Op(op) => {
-                        if let Some(pushnum) = op.decode_pushnum() {
-                            if pushnum != num_pubkeys {
-                                return false;
-                            }
-                        }
-                        break;
+                    Instruction::Op(op) => match op.decode_pushnum() {
+                        Some(push_num) if push_num == num_pubkeys => break,
+                        _ => return false,
                     }
                 }
             }
@@ -371,20 +255,12 @@ internal_macros::define_extension_trait! {
                 return false;
             }
 
-            if let Some(Ok(Instruction::Op(op))) = instructions.next() {
-                if op != OP_CHECKMULTISIG {
-                    return false;
-                }
-            } else {
+            let Some(Ok(Instruction::Op(OP_CHECKMULTISIG))) = instructions.next() else {
                 return false;
-            }
+            };
 
             instructions.next().is_none()
         }
-
-        /// Checks whether a script pubkey is a Segregated Witness (SegWit) program.
-        #[inline]
-        fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
 
         /// Checks whether a script pubkey is a P2TR output.
         #[inline]
@@ -392,24 +268,6 @@ internal_macros::define_extension_trait! {
             self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V1)
                 && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2A output.
-        #[inline]
-        fn is_p2a(&self) -> bool {
-            self.len() == 4
-                && self.witness_version() == Some(WitnessVersion::V1)
-                && self.as_bytes()[1] == OP_PUSHBYTES_2.to_u8()
-                && self.as_bytes()[2..] == P2A_PROGRAM
-        }
-
-        /// Check if this is a consensus-valid OP_RETURN output.
-        ///
-        /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
-        /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
-        #[inline]
-        fn is_op_return(&self) -> bool {
-            self.as_bytes().first().is_some_and(|&b| b == OP_RETURN.to_u8())
         }
 
         /// Check if this is an OP_RETURN that obeys Bitcoin Core standardness policy.
@@ -492,6 +350,7 @@ internal_macros::define_extension_trait! {
                             // p2pk, p2pkh
                             OP_CHECKSIG | OP_CHECKSIGVERIFY => {
                                 n += 1;
+                                pushnum_cache = None;
                             }
                             OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
                                 match (accurate, pushnum_cache) {
@@ -505,6 +364,7 @@ internal_macros::define_extension_trait! {
                                         n += 20;
                                     }
                                 }
+                                pushnum_cache = None;
                             }
                             _ => {
                                 pushnum_cache = opcode.decode_pushnum();
@@ -576,11 +436,11 @@ internal_macros::define_extension_trait! {
                 } else if self.is_witness_program() {
                     32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+                    self.encoder().len().to_u64() // The serialized size of this script_pubkey
                 } else {
                     32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+                    self.encoder().len().to_u64() // The serialized size of this script_pubkey
                 })?
                 / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
                         // Note: We ensure the division happens at the end, since Core performs the division at the end.

@@ -4,6 +4,7 @@ version = "0.0.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"
+homepage = "https://rust-bitcoin.org"
 description = "Golomb-rice coded filters for set membership query."
 categories = ["cryptography::cryptocurrencies"]
 keywords = ["bitcoin", "peer-to-peer", "cryptography"]
@@ -20,6 +21,5 @@ exclude = ["tests", "contrib"]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.clippy]
-redundant_clone = "warn"
-use_self = "warn"
+[lints]
+workspace = true

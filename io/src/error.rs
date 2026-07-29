@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+//! Error types for the `io` crate.
+
+#[cfg(feature = "alloc")]
+#[cfg(not(feature = "std"))]
 use alloc::boxed::Box;
 use core::fmt;
+#[cfg(feature = "std")]
+use std::boxed::Box;
 
 /// The `io` crate error type.
 #[derive(Debug)]
@@ -17,7 +22,8 @@ pub struct Error {
 
     #[cfg(feature = "std")]
     error: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
-    #[cfg(all(feature = "alloc", not(feature = "std")))]
+    #[cfg(feature = "alloc")]
+    #[cfg(not(feature = "std"))]
     error: Option<Box<dyn fmt::Debug + Send + Sync + 'static>>,
 }
 
@@ -32,7 +38,8 @@ impl Error {
     }
 
     /// Constructs a new I/O error.
-    #[cfg(all(feature = "alloc", not(feature = "std")))]
+    #[cfg(feature = "alloc")]
+    #[cfg(not(feature = "std"))]
     pub fn new<E: sealed::IntoBoxDynDebug>(kind: ErrorKind, error: E) -> Self {
         Self { kind, _not_unwind_safe: core::marker::PhantomData, error: Some(error.into()) }
     }
@@ -47,7 +54,8 @@ impl Error {
     }
 
     /// Returns a reference to this error.
-    #[cfg(all(feature = "alloc", not(feature = "std")))]
+    #[cfg(feature = "alloc")]
+    #[cfg(not(feature = "std"))]
     pub fn get_ref(&self) -> Option<&(dyn fmt::Debug + Send + Sync + 'static)> {
         self.error.as_deref()
     }
@@ -65,7 +73,7 @@ impl From<ErrorKind> for Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> core::result::Result<(), core::fmt::Error> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_fmt(format_args!("I/O Error: {}", self.kind.description()))?;
         #[cfg(any(feature = "alloc", feature = "std"))]
         if let Some(e) = &self.error {
@@ -195,7 +203,44 @@ define_errorkind!(
     Other
 );
 
-#[cfg(all(feature = "alloc", not(feature = "std")))]
+/// An error that can occur when reading and decoding from a buffered reader.
+#[derive(Debug)]
+pub enum ReadError<D> {
+    /// An I/O error occurred while reading from the reader.
+    Io(Error),
+    /// The decoder encountered an error while parsing the data.
+    Decode(D),
+}
+
+impl<D: fmt::Display> fmt::Display for ReadError<D> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Io(e) => write!(f, "I/O error: {}", e),
+            Self::Decode(e) => write!(f, "decode error: {}", e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<D> std::error::Error for ReadError<D>
+where
+    D: fmt::Debug + fmt::Display + std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(e) => Some(e),
+            Self::Decode(e) => Some(e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<D> From<Error> for ReadError<D> {
+    fn from(e: Error) -> Self { Self::Io(e) }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(not(feature = "std"))]
 mod sealed {
     use alloc::boxed::Box;
     use alloc::string::String;

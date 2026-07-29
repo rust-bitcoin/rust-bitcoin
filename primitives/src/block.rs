@@ -7,44 +7,53 @@
 //! module describes structures and functions needed to describe
 //! these blocks and the blockchain.
 
-use core::convert::Infallible;
+#[cfg(feature = "alloc")]
+use core::borrow::Borrow;
 use core::fmt;
 #[cfg(feature = "alloc")]
 use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::Encodable;
-#[cfg(feature = "hex")]
-use encoding::EncodableByteIter;
+use encoding::{ArrayDecoder, Decoder6};
 #[cfg(feature = "alloc")]
-use encoding::{
-    CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
-};
-use hashes::{sha256d, HashEngine as _};
-use internals::write_err;
+use encoding::{Decoder2, Encoder2, PrefixedSliceEncoder, VecDecoder};
+use hashes::sha256d;
+#[cfg(feature = "alloc")]
+use hashes::HashEngine as _;
 
+#[cfg(feature = "hex")]
+use crate::hex_codec::HexPrimitive;
 #[cfg(feature = "alloc")]
-use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
+use crate::merkle_tree::WitnessMerkleNode;
+use crate::merkle_tree::{TxMerkleNode, TxMerkleNodeDecoder};
+use crate::pow::CompactTargetDecoder;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
+use crate::time::BlockTimeDecoder;
+use crate::{BlockTime, CompactTarget};
 #[cfg(feature = "alloc")]
-use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
-use crate::{BlockTime, CompactTarget, TxMerkleNode};
-#[cfg(feature = "alloc")]
-use crate::{BlockTimeDecoder, BlockTimeDecoderError, Transaction, WitnessMerkleNode};
+use crate::{Transaction, Wtxid};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use units::block::{BlockHeight, BlockHeightDecoder, BlockHeightEncoder, BlockHeightInterval, BlockMtp, BlockMtpInterval};
-// Re-export errors that appear directly in the API - but no doc inline.
-#[doc(no_inline)]
-pub use units::block::{BlockHeightDecoderError, TooBigForRelativeHeightError};
 
-#[doc(inline)]
-pub use crate::hash_types::{
-    BlockHash, BlockHashDecoder, BlockHashDecoderError, BlockHashEncoder, WitnessCommitment,
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[cfg(feature = "alloc")]
+#[doc(no_inline)]
+pub use self::error::{BlockDecoderError, InvalidBlockError};
+#[doc(no_inline)]
+pub use self::error::{
+    BlockHashDecoderError, BlockHeightDecoderError, HeaderDecoderError,
+    TooBigForRelativeHeightError, VersionDecoderError,
 };
+#[doc(inline)]
+pub use crate::hash_types::{BlockHash, BlockHashDecoder, BlockHashEncoder, WitnessCommitment};
+
+// Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
+#[cfg(feature = "alloc")]
+const WITNESS_COMMITMENT_MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
 
 /// Marker for whether or not a block has been validated.
 ///
@@ -168,7 +177,7 @@ impl Block<Unchecked> {
     ) -> Option<(WitnessMerkleNode, WitnessCommitment)> {
         compute_witness_root(&self.transactions).map(|witness_root| {
             let mut encoder = sha256d::Hash::engine();
-            encoder = hashes::encode_to_engine(&witness_root, encoder);
+            hashes::encode_to_engine(&witness_root, &mut encoder);
             encoder.input(witness_reserved_value);
             let witness_commitment = WitnessCommitment::from_byte_array(
                 sha256d::Hash::from_engine(encoder).to_byte_array(),
@@ -178,20 +187,21 @@ impl Block<Unchecked> {
     }
 
     /// Checks if witness commitment in coinbase matches the transaction list.
-    // Returns the Merkle root if it was computed (so it can be cached in `assume_checked`).
+    ///
+    /// # Returns
+    ///
+    /// Returns the Merkle root if it was computed. This can then be passed into [`assume_checked`] to
+    /// save re-calculating it.
+    ///
+    /// [`assume_checked`]: Block<Unchecked>::assume_checked
     pub fn check_witness_commitment(&self) -> (bool, Option<WitnessMerkleNode>) {
         if self.transactions.is_empty() {
             return (false, None);
         }
 
-        // Witness commitment is optional if there are no transactions using SegWit in the block.
-        if self.transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
-            return (true, None);
-        }
-
         if self.transactions[0].is_coinbase() {
-            let coinbase = self.transactions[0].clone();
-            if let Some(commitment) = witness_commitment_from_coinbase(&coinbase) {
+            let coinbase = &self.transactions[0];
+            if let Some(commitment) = witness_commitment_from_coinbase(coinbase) {
                 // Witness reserved value is in coinbase input witness.
                 let witness_vec: Vec<_> = coinbase.inputs[0].witness.iter().collect();
                 if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
@@ -203,7 +213,14 @@ impl Block<Unchecked> {
                         }
                     }
                 }
+
+                return (false, None);
             }
+        }
+
+        // Witness commitment is optional if there are no transactions using SegWit in the block.
+        if self.transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
+            return (true, None);
         }
 
         (false, None)
@@ -276,136 +293,95 @@ mod sealed {
 }
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
-    /// The encoder for the [`Block`] type.
-    pub struct BlockEncoder<'e>(
-        Encoder2<HeaderEncoder, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
-    );
+#[cfg(feature = "hex")]
+impl core::str::FromStr for Block<Unchecked>
+where
+    Self: encoding::Decode,
+{
+    type Err = encoding::FromHexError<BlockDecoderError>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> { encoding::decode_from_hex(s) }
 }
 
 #[cfg(feature = "alloc")]
-impl Encodable for Block {
+#[cfg(feature = "hex")]
+impl<V: Validation> fmt::Display for Block<V>
+where
+    Self: encoding::Encode,
+{
+    #[allow(clippy::use_self)]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&HexPrimitive(self), f)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl<V: Validation> fmt::LowerHex for Block<V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&HexPrimitive(self), f)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl<V: Validation> fmt::UpperHex for Block<V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&HexPrimitive(self), f)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<V> encoding::Encode for Block<V>
+where
+    V: Validation,
+{
     type Encoder<'e>
-        = Encoder2<HeaderEncoder, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+        = BlockEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder2::new(
+        BlockEncoder::new(Encoder2::new(
             self.header.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.transactions.len()),
-                SliceEncoder::without_length_prefix(&self.transactions),
-            ),
-        )
+            PrefixedSliceEncoder::new(&self.transactions),
+        ))
     }
+}
+
+#[cfg(feature = "alloc")]
+impl encoding::Decode for Block<Unchecked> {
+    type Decoder = BlockDecoder;
+}
+
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Block`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockEncoder<'e>(
+        Encoder2<HeaderEncoder<'e>, PrefixedSliceEncoder<'e, Transaction>>
+    );
 }
 
 #[cfg(feature = "alloc")]
 type BlockInnerDecoder = Decoder2<HeaderDecoder, VecDecoder<Transaction>>;
 
-/// The decoder for the [`Block`] type.
-///
-/// This decoder can only produce a `Block<Unchecked>`.
 #[cfg(feature = "alloc")]
-pub struct BlockDecoder(BlockInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`Block`] type.
+    ///
+    /// This decoder can only produce a `Block<Unchecked>`.
+    #[derive(Debug, Clone)]
+    pub struct BlockDecoder(BlockInnerDecoder);
 
-#[cfg(feature = "alloc")]
-impl Decoder for BlockDecoder {
-    type Output = Block;
-    type Error = BlockDecoderError;
+    /// Constructs a new [`Block`] decoder.
+    pub const fn new() -> Self { Self(Decoder2::new(HeaderDecoder::new(), VecDecoder::new())) }
 
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(BlockDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (header, transactions) = self.0.end().map_err(BlockDecoderError)?;
+    fn end(result: Result<(Header, Vec<Transaction>), <BlockInnerDecoder as encoding::Decoder>::Error>) -> Result<Block, BlockDecoderError> {
+        let (header, transactions) = result.map_err(BlockDecoderError)?;
         Ok(Self::Output::new_unchecked(header, transactions))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
-
-#[cfg(feature = "alloc")]
-impl Decodable for Block {
-    type Decoder = BlockDecoder;
-    fn decoder() -> Self::Decoder {
-        BlockDecoder(Decoder2::new(Header::decoder(), VecDecoder::<Transaction>::new()))
-    }
-}
-
-/// An error consensus decoding a [`Block`].
-#[cfg(feature = "alloc")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct BlockDecoderError(<BlockInnerDecoder as Decoder>::Error);
-
-#[cfg(feature = "alloc")]
-impl From<Infallible> for BlockDecoderError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "alloc")]
-impl fmt::Display for BlockDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self.0 {
-            encoding::Decoder2Error::First(ref e) => write_err!(f, "block decoder error"; e),
-            encoding::Decoder2Error::Second(ref e) => write_err!(f, "block decoder error"; e),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-#[cfg(feature = "std")]
-impl std::error::Error for BlockDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match &self.0 {
-            encoding::Decoder2Error::First(ref e) => Some(e),
-            encoding::Decoder2Error::Second(ref e) => Some(e),
-        }
-    }
-}
-
-/// Invalid block error.
-#[cfg(feature = "alloc")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum InvalidBlockError {
-    /// Header Merkle root does not match the calculated Merkle root.
-    InvalidMerkleRoot,
-    /// The witness commitment in coinbase transaction does not match the calculated `witness_root`.
-    InvalidWitnessCommitment,
-    /// Block has no transactions (missing coinbase).
-    NoTransactions,
-    /// The first transaction is not a valid coinbase transaction.
-    InvalidCoinbase,
-}
-
-#[cfg(feature = "alloc")]
-impl From<Infallible> for InvalidBlockError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "alloc")]
-impl fmt::Display for InvalidBlockError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::InvalidMerkleRoot =>
-                write!(f, "header Merkle root does not match the calculated Merkle root"),
-            Self::InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
-            Self::NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
-            Self::InvalidCoinbase =>
-                write!(f, "the first transaction is not a valid coinbase transaction"),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidBlockError {}
 
 /// Computes the Merkle root for a list of transactions.
 ///
@@ -417,8 +393,12 @@ impl std::error::Error for InvalidBlockError {}
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
 /// you should not unwrap the `Option` returned by this method!
 #[cfg(feature = "alloc")]
-pub fn compute_merkle_root(transactions: &[Transaction]) -> Option<TxMerkleNode> {
-    let hashes = transactions.iter().map(Transaction::compute_txid);
+pub fn compute_merkle_root<T>(transactions: T) -> Option<TxMerkleNode>
+where
+    T: IntoIterator,
+    T::Item: Borrow<Transaction>,
+{
+    let hashes = transactions.into_iter().map(|t| t.borrow().compute_txid());
     TxMerkleNode::calculate_root(hashes)
 }
 
@@ -432,13 +412,17 @@ pub fn compute_merkle_root(transactions: &[Transaction]) -> Option<TxMerkleNode>
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
 /// you should not unwrap the `Option` returned by this method!
 #[cfg(feature = "alloc")]
-pub fn compute_witness_root(transactions: &[Transaction]) -> Option<WitnessMerkleNode> {
-    let hashes = transactions.iter().enumerate().map(|(i, t)| {
+pub fn compute_witness_root<T>(transactions: T) -> Option<WitnessMerkleNode>
+where
+    T: IntoIterator,
+    T::Item: Borrow<Transaction>,
+{
+    let hashes = transactions.into_iter().enumerate().map(|(i, t)| {
         if i == 0 {
             // Replace the first hash with zeroes.
-            crate::Wtxid::COINBASE
+            Wtxid::COINBASE
         } else {
-            t.compute_wtxid()
+            t.borrow().compute_wtxid()
         }
     });
     WitnessMerkleNode::calculate_root(hashes)
@@ -446,19 +430,14 @@ pub fn compute_witness_root(transactions: &[Transaction]) -> Option<WitnessMerkl
 
 #[cfg(feature = "alloc")]
 fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCommitment> {
-    // Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
-    const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
-
     if !coinbase.is_coinbase() {
         return None;
     }
 
     // Commitment is in the last output that starts with magic bytes.
-    if let Some(pos) = coinbase
-        .outputs
-        .iter()
-        .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
-    {
+    if let Some(pos) = coinbase.outputs.iter().rposition(|o| {
+        o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == WITNESS_COMMITMENT_MAGIC
+    }) {
         let bytes =
             <[u8; 32]>::try_from(&coinbase.outputs[pos].script_pubkey.as_bytes()[6..38]).unwrap();
         Some(WitnessCommitment::from_byte_array(bytes))
@@ -501,41 +480,36 @@ impl Header {
     /// Returns the block hash.
     // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
     pub fn block_hash(&self) -> BlockHash {
-        let bare_hash = hashes::encode_to_engine(self, sha256d::Hash::engine()).finalize();
-        BlockHash::from_byte_array(bare_hash.to_byte_array())
-    }
-}
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
-impl core::str::FromStr for Header {
-    type Err = ParseHeaderError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseHeaderError)
+        let hash = hashes::encode_to_hash::<_, sha256d::HashEngine>(self);
+        BlockHash::from_byte_array(hash.to_byte_array())
     }
 }
 
 #[cfg(feature = "hex")]
-impl fmt::Display for Header {
-    #[allow(clippy::use_self)]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use hex_unstable::{fmt_hex_exact, Case};
+impl core::str::FromStr for Header {
+    type Err = encoding::FromHexError<HeaderDecoderError>;
 
-        fmt_hex_exact!(f, Header::SIZE, HeaderIter(EncodableByteIter::new(self)), Case::Lower)
+    fn from_str(s: &str) -> Result<Self, Self::Err> { encoding::decode_from_hex(s) }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::Display for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&HexPrimitive(self), f)
     }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for Header {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+        fmt::LowerHex::fmt(&HexPrimitive(self), f)
     }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for Header {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+        fmt::UpperHex::fmt(&HexPrimitive(self), f)
     }
 }
 
@@ -553,63 +527,11 @@ impl fmt::Debug for Header {
     }
 }
 
-/// A wrapper around [`encoding::EncodableByteIter`]
-///
-/// This wrapper implements `ExactSizeIterator` for use with `fmt_hex_exact!`.
-#[cfg(feature = "hex")]
-struct HeaderIter<'a>(EncodableByteIter<'a, Header>);
-
-#[cfg(feature = "hex")]
-impl Iterator for HeaderIter<'_> {
-    type Item = u8;
-
-    fn next(&mut self) -> Option<Self::Item> { self.0.next() }
-
-    fn size_hint(&self) -> (usize, Option<usize>) { (Header::SIZE, Some(Header::SIZE)) }
-}
-#[cfg(feature = "hex")]
-impl ExactSizeIterator for HeaderIter<'_> {}
-
-/// An error that occurs during parsing of a [`Header`] from a hex string.
-#[cfg(all(feature = "hex", feature = "alloc"))]
-pub struct ParseHeaderError(crate::ParsePrimitiveError<Header>);
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
-impl fmt::Debug for ParseHeaderError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
-}
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
-impl fmt::Display for ParseHeaderError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
-}
-
-#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
-impl std::error::Error for ParseHeaderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        std::error::Error::source(&self.0)
-    }
-}
-
-encoding::encoder_newtype! {
-    /// The encoder for the [`Header`] type.
-    pub struct HeaderEncoder(
-        encoding::Encoder6<
-            VersionEncoder,
-            BlockHashEncoder,
-            crate::merkle_tree::TxMerkleNodeEncoder,
-            crate::time::BlockTimeEncoder,
-            crate::pow::CompactTargetEncoder,
-            encoding::ArrayEncoder<4>,
-        >
-    );
-}
-
-impl Encodable for Header {
-    type Encoder<'e> = HeaderEncoder;
+impl encoding::Encode for Header {
+    type Encoder<'e> = HeaderEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        HeaderEncoder(encoding::Encoder6::new(
+        HeaderEncoder::new(encoding::Encoder6::new(
             self.version.encoder(),
             self.prev_blockhash.encoder(),
             self.merkle_root.encoder(),
@@ -620,7 +542,25 @@ impl Encodable for Header {
     }
 }
 
-#[cfg(feature = "alloc")]
+impl encoding::Decode for Header {
+    type Decoder = HeaderDecoder;
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Header`] type.
+    #[derive(Debug, Clone)]
+    pub struct HeaderEncoder<'e>(
+        encoding::Encoder6<
+            VersionEncoder<'e>,
+            BlockHashEncoder<'e>,
+            crate::merkle_tree::TxMerkleNodeEncoder<'e>,
+            crate::time::BlockTimeEncoder<'e>,
+            crate::pow::CompactTargetEncoder<'e>,
+            encoding::ArrayEncoder<4>,
+        >
+    );
+}
+
 type HeaderInnerDecoder = Decoder6<
     VersionDecoder,
     BlockHashDecoder,
@@ -630,13 +570,38 @@ type HeaderInnerDecoder = Decoder6<
     encoding::ArrayDecoder<4>, // Nonce
 >;
 
-/// The decoder for the [`Header`] type.
-#[cfg(feature = "alloc")]
-pub struct HeaderDecoder(HeaderInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`Header`] type.
+    #[derive(Debug, Clone)]
+    pub struct HeaderDecoder(HeaderInnerDecoder);
 
-#[cfg(feature = "alloc")]
+    /// Constructs a new [`Header`] decoder.
+    pub const fn new() -> Self {
+        Self(Decoder6::new(
+            VersionDecoder::new(),
+            BlockHashDecoder::new(),
+            TxMerkleNodeDecoder::new(),
+            BlockTimeDecoder::new(),
+            CompactTargetDecoder::new(),
+            ArrayDecoder::new(),
+        ))
+    }
+
+    fn map_push_bytes_err(err: <HeaderInnerDecoder as encoding::Decoder>::Error) -> HeaderDecoderError {
+        Self::from_inner(err)
+    }
+
+    fn end(
+        result: Result<<HeaderInnerDecoder as encoding::Decoder>::Output, <HeaderInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<Header, HeaderDecoderError> {
+        let (version, prev_blockhash, merkle_root, time, bits, nonce) = result.map_err(Self::from_inner)?;
+        let nonce = u32::from_le_bytes(nonce);
+        Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
+    }
+}
+
 impl HeaderDecoder {
-    fn from_inner(e: <HeaderInnerDecoder as Decoder>::Error) -> HeaderDecoderError {
+    fn from_inner(e: <HeaderInnerDecoder as encoding::Decoder>::Error) -> HeaderDecoderError {
         match e {
             encoding::Decoder6Error::First(e) => HeaderDecoderError::Version(e),
             encoding::Decoder6Error::Second(e) => HeaderDecoderError::PrevBlockhash(e),
@@ -644,96 +609,6 @@ impl HeaderDecoder {
             encoding::Decoder6Error::Fourth(e) => HeaderDecoderError::Time(e),
             encoding::Decoder6Error::Fifth(e) => HeaderDecoderError::Bits(e),
             encoding::Decoder6Error::Sixth(e) => HeaderDecoderError::Nonce(e),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl Decoder for HeaderDecoder {
-    type Output = Header;
-    type Error = HeaderDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(Self::from_inner)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (version, prev_blockhash, merkle_root, time, bits, nonce) =
-            self.0.end().map_err(Self::from_inner)?;
-        let nonce = u32::from_le_bytes(nonce);
-        Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-#[cfg(feature = "alloc")]
-impl Decodable for Header {
-    type Decoder = HeaderDecoder;
-    fn decoder() -> Self::Decoder {
-        HeaderDecoder(Decoder6::new(
-            VersionDecoder::new(),
-            BlockHashDecoder::new(),
-            TxMerkleNodeDecoder::new(),
-            BlockTimeDecoder::new(),
-            CompactTargetDecoder::new(),
-            encoding::ArrayDecoder::new(),
-        ))
-    }
-}
-
-/// An error consensus decoding a `Header`.
-#[cfg(feature = "alloc")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum HeaderDecoderError {
-    /// Error while decoding the `version`.
-    Version(VersionDecoderError),
-    /// Error while decoding the `prev_blockhash`.
-    PrevBlockhash(BlockHashDecoderError),
-    /// Error while decoding the `merkle_root`.
-    MerkleRoot(TxMerkleNodeDecoderError),
-    /// Error while decoding the `time`.
-    Time(BlockTimeDecoderError),
-    /// Error while decoding the `bits`.
-    Bits(CompactTargetDecoderError),
-    /// Error while decoding the `nonce`.
-    Nonce(encoding::UnexpectedEofError),
-}
-
-#[cfg(feature = "alloc")]
-impl From<Infallible> for HeaderDecoderError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "alloc")]
-impl fmt::Display for HeaderDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::Version(ref e) => write_err!(f, "header decoder error"; e),
-            Self::PrevBlockhash(ref e) => write_err!(f, "header decoder error"; e),
-            Self::MerkleRoot(ref e) => write_err!(f, "header decoder error"; e),
-            Self::Time(ref e) => write_err!(f, "header decoder error"; e),
-            Self::Bits(ref e) => write_err!(f, "header decoder error"; e),
-            Self::Nonce(ref e) => write_err!(f, "header decoder error"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-#[cfg(feature = "alloc")]
-impl std::error::Error for HeaderDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            Self::Version(ref e) => Some(e),
-            Self::PrevBlockhash(ref e) => Some(e),
-            Self::MerkleRoot(ref e) => Some(e),
-            Self::Time(ref e) => Some(e),
-            Self::Bits(ref e) => Some(e),
-            Self::Nonce(ref e) => Some(e),
         }
     }
 }
@@ -815,82 +690,224 @@ impl Version {
     }
 }
 
+impl fmt::Display for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+impl fmt::LowerHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+}
+
+impl fmt::UpperHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+impl fmt::Octal for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Octal::fmt(&self.0, f) }
+}
+
+impl fmt::Binary for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Binary::fmt(&self.0, f) }
+}
+
 impl Default for Version {
     #[inline]
     fn default() -> Self { Self::NO_SOFT_FORK_SIGNALLING }
 }
 
-encoding::encoder_newtype! {
-    /// The encoder for the [`Version`] type.
-    pub struct VersionEncoder(encoding::ArrayEncoder<4>);
-}
-
-impl Encodable for Version {
-    type Encoder<'e> = VersionEncoder;
+impl encoding::Encode for Version {
+    type Encoder<'e> = VersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder(encoding::ArrayEncoder::without_length_prefix(
+        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus().to_le_bytes(),
         ))
     }
 }
 
-/// The decoder for the [`Version`] type.
-pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+impl encoding::Decode for Version {
+    type Decoder = VersionDecoder;
+}
 
-impl VersionDecoder {
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Version`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
+}
+
+crate::decoder_newtype! {
+    /// The decoder for the [`Version`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+
     /// Constructs a new [`Version`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for VersionDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for VersionDecoder {
-    type Output = Version;
-    type Error = VersionDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        Ok(self.0.push_bytes(bytes)?)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = i32::from_le_bytes(self.0.end()?);
+    fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<Version, VersionDecoderError> {
+        let value = result.map_err(VersionDecoderError)?;
+        let n = i32::from_le_bytes(value);
         Ok(Version::from_consensus(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
-impl encoding::Decodable for Version {
-    type Decoder = VersionDecoder;
-    fn decoder() -> Self::Decoder { VersionDecoder(encoding::ArrayDecoder::<4>::new()) }
-}
+/// Error types for Bitcoin blocks.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
 
-/// An error consensus decoding an `Version`.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct VersionDecoderError(encoding::UnexpectedEofError);
+    use internals::write_err;
 
-impl From<Infallible> for VersionDecoderError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
+    use crate::merkle_tree::TxMerkleNodeDecoderError;
+    use crate::pow::CompactTargetDecoderError;
+    use crate::time::BlockTimeDecoderError;
 
-impl From<encoding::UnexpectedEofError> for VersionDecoderError {
-    fn from(e: encoding::UnexpectedEofError) -> Self { Self(e) }
-}
+    #[rustfmt::skip]                // Keep public re-exports separate.
+    #[doc(no_inline)]
+    pub use units::block::{BlockHeightDecoderError, TooBigForRelativeHeightError};
+    #[doc(inline)]
+    pub use crate::hash_types::BlockHashDecoderError;
 
-impl fmt::Display for VersionDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "version decoder error"; self.0)
+    /// An error consensus decoding a [`Block`](super::Block).
+    #[cfg(feature = "alloc")]
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct BlockDecoderError(pub(super) <super::BlockInnerDecoder as encoding::Decoder>::Error);
+
+    #[cfg(feature = "alloc")]
+    impl From<Infallible> for BlockDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
     }
-}
 
-#[cfg(feature = "std")]
-impl std::error::Error for VersionDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    #[cfg(feature = "alloc")]
+    impl fmt::Display for BlockDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write_err!(f, "block decoder error"; self.0)
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "std")]
+    impl std::error::Error for BlockDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
+
+    /// Invalid block error.
+    #[cfg(feature = "alloc")]
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum InvalidBlockError {
+        /// Header Merkle root does not match the calculated Merkle root.
+        InvalidMerkleRoot,
+        /// The witness commitment in coinbase transaction does not match the calculated `witness_root`.
+        InvalidWitnessCommitment,
+        /// Block has no transactions (missing coinbase).
+        NoTransactions,
+        /// The first transaction is not a valid coinbase transaction.
+        InvalidCoinbase,
+    }
+
+    #[cfg(feature = "alloc")]
+    impl From<Infallible> for InvalidBlockError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "alloc")]
+    impl fmt::Display for InvalidBlockError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::InvalidMerkleRoot =>
+                    write!(f, "header Merkle root does not match the calculated Merkle root"),
+                Self::InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
+                Self::NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
+                Self::InvalidCoinbase =>
+                    write!(f, "the first transaction is not a valid coinbase transaction"),
+            }
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidBlockError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::InvalidMerkleRoot => None,
+                Self::InvalidWitnessCommitment => None,
+                Self::NoTransactions => None,
+                Self::InvalidCoinbase => None,
+            }
+        }
+    }
+
+    /// An error consensus decoding a `Header`.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum HeaderDecoderError {
+        /// Error while decoding the `version`.
+        Version(VersionDecoderError),
+        /// Error while decoding the `prev_blockhash`.
+        PrevBlockhash(BlockHashDecoderError),
+        /// Error while decoding the `merkle_root`.
+        MerkleRoot(TxMerkleNodeDecoderError),
+        /// Error while decoding the `time`.
+        Time(BlockTimeDecoderError),
+        /// Error while decoding the `bits`.
+        Bits(CompactTargetDecoderError),
+        /// Error while decoding the `nonce`.
+        Nonce(encoding::UnexpectedEofError),
+    }
+
+    impl From<Infallible> for HeaderDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for HeaderDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match *self {
+                Self::Version(ref e) => write_err!(f, "header decoder error"; e),
+                Self::PrevBlockhash(ref e) => write_err!(f, "header decoder error"; e),
+                Self::MerkleRoot(ref e) => write_err!(f, "header decoder error"; e),
+                Self::Time(ref e) => write_err!(f, "header decoder error"; e),
+                Self::Bits(ref e) => write_err!(f, "header decoder error"; e),
+                Self::Nonce(ref e) => write_err!(f, "header decoder error"; e),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for HeaderDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match *self {
+                Self::Version(ref e) => Some(e),
+                Self::PrevBlockhash(ref e) => Some(e),
+                Self::MerkleRoot(ref e) => Some(e),
+                Self::Time(ref e) => Some(e),
+                Self::Bits(ref e) => Some(e),
+                Self::Nonce(ref e) => Some(e),
+            }
+        }
+    }
+
+    /// An error consensus decoding a `Version`.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
+
+    impl From<Infallible> for VersionDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for VersionDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write_err!(f, "version decoder error"; self.0)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for VersionDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -934,9 +951,22 @@ impl<'a> Arbitrary<'a> for Version {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
     use alloc::{format, vec};
-    #[cfg(all(feature = "alloc", feature = "hex"))]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     use core::str::FromStr as _;
+
+    #[cfg(feature = "alloc")]
+    use encoding::Decode as _;
+    use encoding::{check_encode, Decoder as _};
+    #[cfg(feature = "hex")]
+    use hex::hex;
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "serde")]
+    use serde::{Deserialize, Serialize};
 
     use super::*;
 
@@ -980,6 +1010,24 @@ mod tests {
     }
 
     #[test]
+    fn soft_fork_signalling() {
+        for i in 0..31 {
+            let version_int = (0x2000_0000u32 ^ (1 << i)) as i32;
+            let version = Version::from_consensus(version_int);
+            if i < 29 {
+                assert!(version.is_signalling_soft_fork(i));
+            } else {
+                assert!(!version.is_signalling_soft_fork(i));
+            }
+        }
+
+        let segwit_signal = Version::from_consensus(0x2000_0000 ^ (1 << 1));
+        assert!(!segwit_signal.is_signalling_soft_fork(0));
+        assert!(segwit_signal.is_signalling_soft_fork(1));
+        assert!(!segwit_signal.is_signalling_soft_fork(2));
+    }
+
+    #[test]
     fn version_to_consensus() {
         let version = Version::from_consensus(1_234_567_890);
         assert_eq!(version.to_consensus(), 1_234_567_890);
@@ -989,6 +1037,21 @@ mod tests {
     fn version_default() {
         let version = Version::default();
         assert_eq!(version.to_consensus(), Version::NO_SOFT_FORK_SIGNALLING.to_consensus());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_display() {
+        let version = Version(75);
+        assert_eq!(format!("{}", version), "75");
+        assert_eq!(format!("{:x}", version), "4b");
+        assert_eq!(format!("{:#x}", version), "0x4b");
+        assert_eq!(format!("{:X}", version), "4B");
+        assert_eq!(format!("{:#X}", version), "0x4B");
+        assert_eq!(format!("{:o}", version), "113");
+        assert_eq!(format!("{:#o}", version), "0o113");
+        assert_eq!(format!("{:b}", version), "1001011");
+        assert_eq!(format!("{:#b}", version), "0b1001011");
     }
 
     // Check that the size of the header consensus serialization matches the const SIZE value
@@ -1044,6 +1107,17 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn block_as_parts() {
+        let header = dummy_header();
+        let transactions = vec![];
+        let block = Block::new_unchecked(header, transactions.clone());
+        let (block_header, block_transactions) = block.as_parts();
+        assert_eq!(block_header, &header);
+        assert_eq!(block_transactions, &transactions);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_cached_witness_root() {
         let header = dummy_header();
         let transactions = vec![];
@@ -1060,10 +1134,8 @@ mod tests {
         let transactions = Vec::new(); // Empty transactions
 
         let block = Block::new_unchecked(header, transactions);
-        match block.validate() {
-            Err(InvalidBlockError::NoTransactions) => (),
-            other => panic!("Expected NoTransactions error, got: {:?}", other),
-        }
+        let err = block.validate().unwrap_err();
+        assert_eq!(err, InvalidBlockError::NoTransactions);
     }
 
     #[test]
@@ -1093,10 +1165,79 @@ mod tests {
         let transactions = vec![non_coinbase_tx];
         let block = Block::new_unchecked(header, transactions);
 
-        match block.validate() {
-            Err(InvalidBlockError::InvalidCoinbase) => (),
-            other => panic!("Expected InvalidCoinbase error, got: {:?}", other),
-        }
+        let err = block.validate().unwrap_err();
+        assert_eq!(err, InvalidBlockError::InvalidCoinbase);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_read_limit() {
+        let mut coinbase_in = crate::TxIn::EMPTY_COINBASE;
+        coinbase_in.script_sig = crate::ScriptSigBuf::from_bytes(vec![0u8; 2]);
+
+        let block = Block::new_unchecked(
+            dummy_header(),
+            vec![Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: crate::absolute::LockTime::ZERO,
+                inputs: vec![coinbase_in],
+                outputs: vec![crate::TxOut {
+                    amount: units::Amount::MIN,
+                    script_pubkey: crate::ScriptPubKeyBuf::new(),
+                }],
+            }],
+        );
+
+        let bytes = encoding::encode_to_vec(&block);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Block::decoder();
+        assert!(decoder.read_limit() > 0);
+        let status = decoder.push_bytes(&mut view).unwrap();
+        assert!(status.is_ready());
+        assert_eq!(decoder.read_limit(), 0);
+        assert_eq!(decoder.end().unwrap(), block);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_new() {
+        let decoder = BlockDecoder::new();
+        assert!(decoder.read_limit() > 0);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_default() {
+        let decoder = BlockDecoder::default();
+        assert!(decoder.read_limit() > 0);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_read_limit() {
+        let header = dummy_header();
+        let bytes = encoding::encode_to_vec(&header);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Header::decoder();
+        assert!(decoder.read_limit() > 0);
+        let status = decoder.push_bytes(&mut view).unwrap();
+        assert!(status.is_ready());
+        assert_eq!(decoder.read_limit(), 0);
+        assert_eq!(decoder.end().unwrap(), header);
+    }
+
+    #[test]
+    fn header_decoder_new() {
+        let decoder = HeaderDecoder::new();
+        assert!(decoder.read_limit() > 0);
+    }
+
+    #[test]
+    fn header_decoder_default() {
+        let decoder = HeaderDecoder::default();
+        assert!(decoder.read_limit() > 0);
     }
 
     #[test]
@@ -1117,6 +1258,31 @@ mod tests {
 
         let result = block.check_witness_commitment();
         assert_eq!(result, (true, None));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_rejects_empty_coinbase_witness_commitment() {
+        let mut script = Vec::from(WITNESS_COMMITMENT_MAGIC);
+        script.extend_from_slice(&[0; 32]);
+
+        let coinbase = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn::EMPTY_COINBASE],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::ZERO,
+                script_pubkey: crate::script::ScriptBuf::from_bytes(script),
+            }],
+        };
+
+        let transactions = vec![coinbase];
+        let mut header = dummy_header();
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+
+        let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
     }
 
     #[test]
@@ -1209,6 +1375,10 @@ mod tests {
         let want = format!("{:.20}", want);
         let got = format!("{:.20}", header);
         assert_eq!(got, want);
+
+        let want = format!("{:.0}", want);
+        let got = format!("{:.0}", header);
+        assert_eq!(got, want);
     }
 
     #[test]
@@ -1217,7 +1387,7 @@ mod tests {
     fn header_hex() {
         let header = dummy_header();
 
-        let want = concat!(
+        let lower_hex = concat!(
             "01000000",                                                         // version
             "9999999999999999999999999999999999999999999999999999999999999999", // prev_blockhash
             "7777777777777777777777777777777777777777777777777777777777777777", // merkle_root
@@ -1227,38 +1397,56 @@ mod tests {
         );
 
         // All of these should yield a lowercase hex
-        assert_eq!(want, format!("{:x}", header));
-        assert_eq!(want, format!("{}", header));
+        assert_eq!(lower_hex, format!("{:x}", header));
+        assert_eq!(lower_hex, format!("{}", header));
 
         // And these should yield uppercase hex
-        let upper_encoded =
-            want.chars().map(|chr| chr.to_ascii_uppercase()).collect::<alloc::string::String>();
-        assert_eq!(upper_encoded, format!("{:X}", header));
+        let upper_hex = lower_hex.to_ascii_uppercase();
+        assert_eq!(upper_hex, format!("{:X}", header));
+
+        // Check padding (right, left, center, custom char)
+        assert_eq!(format!("{:>164}", lower_hex), format!("{:>164x}", header));
+        assert_eq!(format!("{:<164}", lower_hex), format!("{:<164x}", header));
+        assert_eq!(format!("{:^164}", lower_hex), format!("{:^164x}", header));
+        assert_eq!(format!("{:_>164}", lower_hex), format!("{:_>164x}", header));
+
+        // Alt forms
+        let lower_hex_alt = format!("0x{}", lower_hex);
+        assert_eq!(lower_hex_alt, format!("{:#x}", header));
+        assert_eq!(format!("0X{}", upper_hex), format!("{:#X}", header));
+
+        // Alternate + padding
+        assert_eq!(format!("{:>166}", lower_hex_alt), format!("{:>#166x}", header));
+        assert_eq!(format!("{:<166}", lower_hex_alt), format!("{:<#166x}", header));
+        assert_eq!(format!("{:^166}", lower_hex_alt), format!("{:^#166x}", header));
+
+        // Alt + truncate
+        assert_eq!(format!("{:>.20}", lower_hex_alt), format!("{:>#.20x}", header));
+        assert_eq!(format!("{:<.20}", lower_hex_alt), format!("{:<#.20x}", header));
+        assert_eq!(format!("{:^.20}", lower_hex_alt), format!("{:^#.20x}", header));
     }
 
     #[test]
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn header_from_hex_str_round_trip() {
-        // Create a transaction and convert it to a hex string
+        // Create a header and convert it to a hex string
         let header = dummy_header();
 
         let lower_hex_header = format!("{:x}", header);
         let upper_hex_header = format!("{:X}", header);
 
-        // Parse the hex strings back into transactions
+        // Parse the hex strings back into headers
         let parsed_lower = Header::from_str(&lower_hex_header).unwrap();
         let parsed_upper = Header::from_str(&upper_hex_header).unwrap();
 
-        // The parsed transaction should match the originals
+        // The parsed header should match the originals
         assert_eq!(header, parsed_lower);
         assert_eq!(header, parsed_upper);
     }
 
-    #[test]
     #[cfg(feature = "alloc")]
-    fn block_decode() {
-        // Make a simple block, encode then decode. Verify equivalence.
+    fn dummy_block() -> Block {
         let header = Header {
             version: Version::ONE,
             #[rustfmt::skip]
@@ -1291,25 +1479,80 @@ mod tests {
                 sequence: crate::sequence::Sequence::MAX,
                 witness: crate::witness::Witness::new(),
             }],
-            outputs: Vec::new(),
+            outputs: vec![crate::transaction::TxOut {
+                amount: units::Amount::ONE_SAT,
+                script_pubkey: crate::script::ScriptPubKeyBuf::new(),
+            }],
         }];
-        let original_block = Block::new_unchecked(header, transactions);
+        Block::new_unchecked(header, transactions)
+    }
 
-        // Encode + decode the block
-        let encoded = encoding::encode_to_vec(&original_block);
-        let decoded_block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn block_hex() {
+        let header = dummy_header();
+        let transactions = vec![Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::locktime::absolute::LockTime::ZERO,
+            inputs: vec![],
+            outputs: vec![],
+        }];
+        let block = Block::new_unchecked(header, transactions);
 
-        assert_eq!(original_block, decoded_block);
+        // Transaction with no inputs uses segwit serialization:
+        // version (4) + marker (1) + flag (1) + input_count (1) + output_count (1) + lock_time (4)
+        let want = "010000009999999999999999999999999999999999999999999999999999999999999999777777777777777777777777777777777777777777777777777777777777777702000000030000000400000001010000000001000000000000";
+
+        assert_eq!(format!("{}", block), want);
+        assert_eq!(format!("{:x}", block), want);
+        assert_eq!(format!("0x{want}"), format!("{:#x}", block));
+        assert_eq!(format!("0X{}", want.to_ascii_uppercase()), format!("{:#X}", block));
+        assert_eq!(format!("{:>166}", format!("0x{want}")), format!("{:>#166x}", block));
+        assert_eq!(format!("{:.20}", want), format!("{:.20x}", block));
+
+        // Note this is pointless because the hex does not have letters in it, only numbers.
+        let want =
+            want.chars().map(|chr| chr.to_ascii_uppercase()).collect::<alloc::string::String>();
+        assert_eq!(want, format!("{:X}", block));
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn block_from_hex_str_round_trip() {
+        let block = dummy_block();
+
+        let lower_hex_block = format!("{:x}", block);
+        let upper_hex_block = format!("{:X}", block);
+
+        let parsed_lower = Block::from_str(&lower_hex_block).unwrap();
+        let parsed_upper = Block::from_str(&upper_hex_block).unwrap();
+
+        assert_eq!(parsed_lower, block);
+        assert_eq!(parsed_upper, block);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decode() {
+        let original = dummy_block();
+
+        let encoded = encoding::encode_to_vec(&original);
+        let decoded: Block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+
+        assert_eq!(decoded, original);
     }
 
     // Test vector provided by tm0 in issue #5023
     #[test]
-    #[cfg(all(feature = "alloc", feature = "hex"))]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn merkle_tree_hash_collision() {
         // https://learnmeabitcoin.com/explorer/block/00000000000008a662b4a95a46e4c54cb04852525ac0ef67d1bcac85238416d4
         // this block has 7 transactions
         const BLOCK_128461_HEX: &str = "01000000166208c96de305f2a304130a1b53727abf8fb77e8a3cfe2a831e000000000000d4fd086755b4d46221362a09a4228bed60d729d22362b87803ff44b72c138ec04a8ce94d2194261af9551f720701000000010000000000000000000000000000000000000000000000000000000000000000ffffffff08042194261a026005ffffffff018076242a01000000434104390e51c3d66d5ee10327395872e33bc232e9e1660225c9f88fa594fdcdcd785d86b1152fb380a63cdf57d8cf2345a55878412a6864656b158704e0b734b3fd9dac000000000100000001f591edc180a889b21a45b6bd5b5e0017d4137dae9695703107ac1e6e878c9f02000000008b483045022100e066df28b29bf18bfcd8da11ea576a6f502f59e7b1d37e2e849ee4648008962b022023be840ec01ffa6860b5577bf0b8546541f40c287eb57b8b421a1396c7aea583014104add16286f51f68cee1b436d0c29a41a59fa8bd224eb6bec34b073512303c70fc3d630cb4952416ef02340c56bee2eef294659b4023ea8a3d90a297bdb54321f9ffffffff02508470b5000000001976a91472579bbeaeca0802fde07ce88f946b64da63989388ac40aeeb02000000001976a914d2a7410246b5ece345aa821af89bff0b6fa3bcaa88ac0000000001000000016197cb143d4cef51389076fdee3f62c294b65bc9aff217a6c71b9dd987e22754000000008c493046022100bf174e942e4619f4e470b5d8b1c0c8ded9e2f7a6616c073c5ab05cc9d699ede3022100a642fa9d0bcc89523635f9468e4813a120b233a249678de0ebf7ba398a4205f6014104122979c0ac1c3af2aa84b4c1d6a9b3b6fa491827f1a2ba37c4b58bdecd644438da715497a44b16aedbadbd18cf9765cdb36851284f643ed743c4365798dd314affffffff02c0404384000000001976a91443cd8fbad7421a53f9e899a2c9761259705d465b88acc0f4f50e000000001976a9142f6c963506b0a2c93a09a92171957e9e7e11a7a388ac00000000010000000228a11f953c26d558a8299ad9dc61279d7abc9a4059820b614bf403c05e471c481d0000008b48304502205baff189016e6fee8e0faa9eebdc8f150d2d3815007719ceccabd995607bb0b0022100f4cc49ef0b29561e976bf6f6f7ae135f665b8dd38a67634bb6bbe74c0da9c1f7014104dd5920aedc3f79ace9c8061f3724812f5b218ea81d175dd990071175874d6c79025f9db516ab23975e510645aabc4ee699cc5c24358a403d15a7736a504399f8ffffffff191b06773a7cec0bb30539f185edbf1d139f9756071c6ae395c1c29f3e2484f6010000008c493046022100c7123436476f923cd8dacbe132f5128b529baa194c9aedc570402d8d2d7902ac02210094e6974695265d96d5859ab493df00c90b62a84dcc33a05753aea23b38c249670141041d878bc5438ff439490e71d059e6b687e511336c0aa53e0d129663c91db71cfe20008891f1e4780bf1139ec9c9e81bfd2e3ea9009608a78d96a5a3a5bf7812baffffffff0200093d00000000001976a914fd0d4c3d0963db8358bd01ba6f386d4c5ef2e30288ac0084d717000000001976a914dcb1e8e699eb9f07a1ddfd5d764aa74359ddd93088ac00000000010000000118e2286c42643e6146669b0f5ee35454fe256aac2b1401dbeefd941f2e6d2074000000008b483045022100edec1c5078fed29d808282d62f167eb3f0ea6a6655f3869c12eca9c63d8463c2022031a3ae430be137932059b4a3e3fb7f1e1f2a05065dbc47c3142972de45c76daa01410423162e5ac10ec46c4a142fea3197cc66e614b9f28f014882ebc8271c4ab6022e474ccdc246445dd2479f9de217e8aaf4d770da15aff1078d329c02e0f4de8d77ffffffff02b00ac165000000001976a914f543a7f0dfcd621a05c646810ba94da791ed14c488ac80de8002000000001976a9144763f6309b3aca0bff49ed6365ffbd791b1afc5d88ac0000000001000000014e3632994e6cbcae4122bf9e8de242aa1d7c13bf6d045392fa69fa92353f13cf000000008c493046022100c6879938322e9945dae2404a2b104b534df7fdab5927a30a57a12418d619c3b8022100c53331f402010cbdc8297d7a827154e42263fc2f6cef6e56b85bbc061d5e30810141047e717e70b8c5e928bc2c482662dbe9007113f7a5fb0360da1d2f193add960fed97ab3163e85c02b127829d694ab4a796326918d4f639d0b19345f7558406667dffffffff0270c8b165000000001976a9146c908731300d5c0a4215ba3bb3041b4f313d14f688ac40420f00000000001976a91457b01e2a6bf178a10a0e36cd3e301a41ac58b68b88ac000000000100000001a2e94f26db15d7098104a3616b650cc7490eca961a23111c12c3d94f593ab3bc000000008c493046022100b355076f2c956d7565d44fdf589ebdbdff70abcd806c71845b47d31c3579cbc00221008352a03c5276ba481ae92a2327307ad1ce9b234be7386c105fb914ceb9c63341014104872ee8390f11c8ac309df772362614ff7c99f98e1fd68888c5e8765d630c93ae86fcd33922b17f5da490ea14a9f9002ef4e7fb11166ba399f9794296ca02e401ffffffff02f07d5460000000001976a914ff1da11fbd50b9906e78c694169c19902d2ee20388ac804a5d05000000001976a91444d5774b8277c59a07ed9dce1225e2d24a3faab188ac00000000";
-        let bytes: [u8; 1948] = hex_unstable::FromHex::from_hex(BLOCK_128461_HEX).unwrap();
+        let bytes = hex::decode_to_array::<1948>(BLOCK_128461_HEX).unwrap();
         let valid_block: Block<Unchecked> = encoding::decode_from_slice(&bytes).unwrap();
         let (header, mut transactions) = valid_block.clone().into_parts();
         transactions.push(transactions[6].clone());
@@ -1323,9 +1566,8 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn witness_commitment_from_coinbase_simple() {
         // Add witness commitment to the coinbase
-        let magic = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
         let mut pubkey_bytes = [0; 38];
-        pubkey_bytes[0..6].copy_from_slice(&magic);
+        pubkey_bytes[0..6].copy_from_slice(&WITNESS_COMMITMENT_MAGIC);
         let witness_commitment =
             WitnessCommitment::from_byte_array(pubkey_bytes[6..38].try_into().unwrap());
         let commitment_script = crate::script::ScriptBuf::from_bytes(pubkey_bytes.to_vec());
@@ -1344,6 +1586,30 @@ mod tests {
         // Test if the witness commitment is extracted properly
         let extracted = witness_commitment_from_coinbase(&tx);
         assert_eq!(extracted, Some(witness_commitment));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn witness_commitment_from_non_coinbase_returns_none() {
+        let tx = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn {
+                previous_output: crate::OutPoint {
+                    txid: crate::Txid::from_byte_array([1; 32]),
+                    vout: 0,
+                },
+                script_sig: crate::ScriptSigBuf::new(),
+                sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
+                witness: crate::Witness::new(),
+            }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::ScriptPubKeyBuf::new(),
+            }],
+        };
+
+        assert!(witness_commitment_from_coinbase(&tx).is_none());
     }
 
     #[test]
@@ -1371,6 +1637,31 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn block_check_witness_commitment_non_coinbase() {
+        let tx = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn {
+                previous_output: crate::OutPoint {
+                    txid: crate::Txid::from_byte_array([1; 32]),
+                    vout: 0,
+                },
+                script_sig: crate::ScriptSigBuf::new(),
+                sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
+                witness: crate::Witness::from_slice(&[&[11_u8; 32][..]]),
+            }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::ScriptPubKeyBuf::new(),
+            }],
+        };
+
+        let block = Block::new_unchecked(dummy_header(), vec![tx]);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_check_witness_commitment_no_transactions() {
         // Test case of block with no transactions
         let empty_block = Block::new_unchecked(dummy_header(), vec![]);
@@ -1379,7 +1670,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "alloc", feature = "hex"))]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn block_check_witness_commitment_with_witness() {
         let mut txin = crate::TxIn::EMPTY_COINBASE;
         // Single witness item of 32 bytes.
@@ -1387,7 +1679,7 @@ mod tests {
         txin.witness.push(witness_bytes);
 
         // pubkey bytes must match the magic bytes followed by the hash of the witness bytes.
-        let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex(
+        let script_pubkey_bytes = hex::decode_to_array::<38>(
             "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
         )
         .unwrap();
@@ -1414,7 +1706,7 @@ mod tests {
         let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
         let result = block.check_witness_commitment();
 
-        let exp_bytes: [u8; 32] = hex_unstable::FromHex::from_hex(
+        let exp_bytes = hex::decode_to_array::<32>(
             "fb848679079938b249a12f14b72d56aeb116df79254e17cdf72b46523bcb49db",
         )
         .unwrap();
@@ -1423,7 +1715,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "alloc", feature = "hex"))]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn block_check_witness_commitment_invalid_witness() {
         let mut txin = crate::TxIn::EMPTY_COINBASE;
         let witness_bytes: [u8; 32] = [11u8; 32];
@@ -1431,7 +1724,7 @@ mod tests {
         txin.witness.push(witness_bytes);
         txin.witness.push([12u8]);
 
-        let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex(
+        let script_pubkey_bytes = hex::decode_to_array::<38>(
             "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
         )
         .unwrap();
@@ -1455,8 +1748,269 @@ mod tests {
             }],
         };
 
+        let mut header = dummy_header();
+        let transactions = vec![tx1, tx2];
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+
+        let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn block_check_witness_commitment_invalid_commitment() {
+        let mut txin = crate::TxIn::EMPTY_COINBASE;
+        txin.witness.push([11u8; 32]);
+
+        let mut script_pubkey_bytes = hex::decode_to_array::<38>(
+            "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
+        )
+        .unwrap();
+        script_pubkey_bytes[37] ^= 1;
+
+        let tx1 = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![txin],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
+            }],
+        };
+
+        let tx2 = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn::EMPTY_COINBASE],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::script::ScriptBuf::new(),
+            }],
+        };
+
         let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
-        let result = block.check_witness_commitment();
-        assert_eq!(result, (false, None));
+        assert_eq!(block.check_witness_commitment(), (false, None));
+    }
+
+    #[test]
+    fn version_encoder_emits_consensus_bytes() {
+        let version = Version::from_consensus(123_456_789);
+
+        check_encode(&version, &version.to_consensus().to_le_bytes());
+    }
+
+    #[test]
+    fn version_decoder_end_and_read_limit() {
+        let mut decoder = VersionDecoder::new();
+        let bytes_arr = Version::TWO.to_consensus().to_le_bytes();
+        let mut bytes = bytes_arr.as_slice();
+
+        assert!(decoder.read_limit() > 0);
+
+        let status = decoder.push_bytes(&mut bytes).unwrap();
+        assert!(status.is_ready());
+        assert!(bytes.is_empty());
+
+        assert_eq!(decoder.read_limit(), 0);
+        let decoded = decoder.end().unwrap();
+        assert_eq!(decoded, Version::TWO);
+    }
+
+    #[test]
+    fn version_decoder_default_roundtrip() {
+        let version = Version::from_consensus(123_456_789);
+        let mut decoder = VersionDecoder::default();
+        let consensus = version.to_consensus().to_le_bytes();
+        let mut bytes = consensus.as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+
+        assert_eq!(decoder.end().unwrap(), version);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_decodable_decoder() {
+        let decoder = Version::decoder();
+        assert!(decoder.read_limit() > 0);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_error() {
+        fn is_first(err: &BlockDecoderError) -> bool {
+            match err.0 {
+                encoding::Decoder2Error::First(_) => true,
+                encoding::Decoder2Error::Second(_) => false,
+            }
+        }
+
+        fn is_second(err: &BlockDecoderError) -> bool {
+            match err.0 {
+                encoding::Decoder2Error::First(_) => false,
+                encoding::Decoder2Error::Second(_) => true,
+            }
+        }
+
+        let err_first = Block::decoder().end().unwrap_err();
+        assert!(is_first(&err_first));
+        assert!(!is_second(&err_first));
+        assert!(!err_first.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_first).is_some());
+
+        // Provide a complete header and a vec length prefix (1 tx) but omit any tx bytes.
+        // This forces the inner VecDecoder to error when finalizing.
+        let mut bytes = encoding::encode_to_vec(&dummy_header());
+        bytes.push(1u8);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Block::decoder();
+        assert!(decoder.push_bytes(&mut view).unwrap().needs_more());
+        assert!(view.is_empty());
+
+        let err_second = decoder.end().unwrap_err();
+        assert!(is_second(&err_second));
+        assert!(!is_first(&err_second));
+        assert!(!err_second.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_second).is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_error() {
+        let header_bytes = encoding::encode_to_vec(&dummy_header());
+        // Number of bytes in the encoding up to the start of each field.
+        let lengths = [0usize, 4, 36, 68, 72, 76];
+
+        for &len in &lengths {
+            let mut decoder = Header::decoder();
+            let mut slice = header_bytes[..len].as_ref();
+            decoder.push_bytes(&mut slice).unwrap();
+            let err = decoder.end().unwrap_err();
+            match len {
+                0 => assert!(matches!(err, HeaderDecoderError::Version(_))),
+                4 => assert!(matches!(err, HeaderDecoderError::PrevBlockhash(_))),
+                36 => assert!(matches!(err, HeaderDecoderError::MerkleRoot(_))),
+                68 => assert!(matches!(err, HeaderDecoderError::Time(_))),
+                72 => assert!(matches!(err, HeaderDecoderError::Bits(_))),
+                76 => assert!(matches!(err, HeaderDecoderError::Nonce(_))),
+                _ => unreachable!(),
+            }
+            assert!(!err.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(std::error::Error::source(&err).is_some());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn invalid_block_error() {
+        #[cfg(feature = "std")]
+        use std::error::Error as _;
+
+        let variants = [
+            InvalidBlockError::InvalidMerkleRoot,
+            InvalidBlockError::InvalidWitnessCommitment,
+            InvalidBlockError::NoTransactions,
+            InvalidBlockError::InvalidCoinbase,
+        ];
+
+        for variant in variants {
+            assert!(!variant.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(variant.source().is_none());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_decoder_error() {
+        let err = VersionDecoder::new().end().unwrap_err();
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err).is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn parse_block_error() {
+        let err = Block::from_str("00").unwrap_err();
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err).is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn parse_header_error() {
+        let err = Header::from_str("00").unwrap_err();
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err).is_some());
+    }
+
+    /// A type that has a `Block` field and a `Header` field.
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "serde")]
+    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    struct Adt {
+        #[serde(with = "encoding::serde_as_consensus")]
+        header: Header,
+        #[serde(with = "encoding::serde_as_consensus")]
+        block: Block,
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "serde")]
+    fn can_serde_as_consensus_json() {
+        let orig = Adt { header: dummy_header(), block: dummy_block() };
+
+        let json = serde_json::to_string(&orig).expect("failed to serialize");
+
+        let want = "{\"header\":\"0100000099999999999999999999999999999999999999999999999999999999999999997777777777777777777777777777777777777777777777777777777777777777020000000300000004000000\",\"block\":\"01000000dcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbaabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd10c2e3674e61bc00000400000101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff025151ffffffff0101000000000000000091500b00\"}";
+        assert_eq!(json, want);
+
+        let roundtrip: Adt = serde_json::from_str(&json).expect("failed to deserialize");
+        assert_eq!(roundtrip, orig);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "serde")]
+    fn can_serde_as_consensus_bincode() {
+        let orig = Adt { header: dummy_header(), block: dummy_block() };
+
+        // Bincode is non-human-readable, so it should use bytes
+        let bytes = bincode::serialize(&orig).expect("failed to serialize");
+
+        let roundtrip: Adt = bincode::deserialize(&bytes).expect("failed to deserialize");
+        assert_eq!(roundtrip, orig);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn block_version() {
+        let block = hex!("ffffff7f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        let decode: Result<Block<Unchecked>, _> = encoding::decode_from_slice(&block);
+        assert!(decode.is_ok());
+
+        let real_decode = decode.unwrap().assume_checked(None);
+        assert_eq!(real_decode.header().version, Version::from_consensus(2_147_483_647));
+
+        let block2 = hex!("000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        let decode2: Result<Block<Unchecked>, _> = encoding::decode_from_slice(&block2);
+        assert!(decode2.is_ok());
+        let real_decode2 = decode2.unwrap().assume_checked(None);
+        assert_eq!(real_decode2.header().version, Version::from_consensus(-2_147_483_648));
     }
 }

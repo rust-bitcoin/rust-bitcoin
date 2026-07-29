@@ -1,0 +1,660 @@
+// SPDX-License-Identifier: CC0-1.0
+
+//! Bitcoin Taproot signatures.
+//!
+//! This module provides Taproot signatures used by Bitcoin that can be roundtrip (de)serialized.
+
+#[cfg(feature = "hex")]
+#[cfg(feature = "alloc")]
+use alloc::string::String;
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
+use core::borrow::Borrow;
+use core::fmt;
+use core::ops::Deref;
+#[cfg(feature = "hex")]
+use core::str::FromStr;
+
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+use internals::array::ArrayExt;
+
+pub use self::into_iter::IntoIter;
+#[cfg(feature = "hex")]
+use crate::hex;
+use crate::sighash::{InvalidSighashTypeError, TapSighashType};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::SigFromSliceError;
+#[cfg(feature = "hex")]
+#[doc(no_inline)]
+pub use self::error::ParseSignatureError;
+
+const MAX_LEN: usize = 65; // 64 for sig, 1B sighash flag
+
+/// A BIP-0340-0341 serialized Taproot signature with the corresponding hash type.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Signature {
+    /// The underlying schnorr signature.
+    pub signature: secp256k1::schnorr::Signature,
+    /// The corresponding hash type.
+    pub sighash_type: TapSighashType,
+}
+
+impl Signature {
+    /// Deserializes the signature from a slice.
+    ///
+    /// # Errors
+    ///
+    /// - [`SigFromSliceError::InvalidSignatureSize`] if the input slice is not 64 or 65 bytes.
+    /// - [`SigFromSliceError::SighashType`] if the sighash type is invalid or the sighash type
+    ///   is default and the slice is 65 bytes.
+    pub fn from_slice(sl: &[u8]) -> Result<Self, SigFromSliceError> {
+        if let Ok(signature) = <[u8; 64]>::try_from(sl) {
+            // default type
+            let signature = secp256k1::schnorr::Signature::from_byte_array(signature);
+            Ok(Self { signature, sighash_type: TapSighashType::Default })
+        } else if let Ok(signature) = <[u8; 65]>::try_from(sl) {
+            let (sighash_type, signature) = signature.split_last();
+            let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)
+                .map_err(SigFromSliceError::SighashType)?;
+            // per BIP-341: if the sig is 65 bytes long, return Fail if sig[64] = 0x00
+            // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#taproot-key-path-spending-signature-validation
+            if sighash_type == TapSighashType::Default {
+                return Err(SigFromSliceError::SighashType(InvalidSighashTypeError(0)));
+            }
+            let signature = secp256k1::schnorr::Signature::from_byte_array(*signature);
+            Ok(Self { signature, sighash_type })
+        } else {
+            Err(SigFromSliceError::InvalidSignatureSize(sl.len()))
+        }
+    }
+
+    /// Serializes the signature (without heap allocation).
+    ///
+    /// This returns a type with an API very similar to that of `Box<[u8]>`.
+    /// You can get a slice from it using deref coercions or turn it into an iterator.
+    #[inline]
+    pub fn serialize(self) -> SerializedSignature {
+        let mut buf = [0; MAX_LEN];
+        let ser_sig = self.signature.to_byte_array();
+        buf[..64].copy_from_slice(&ser_sig);
+        let len = if self.sighash_type == TapSighashType::Default {
+            // default sighash type, don't add extra sighash byte
+            64
+        } else {
+            buf[64] = self.sighash_type as u8;
+            65
+        };
+        SerializedSignature::from_raw_parts(buf, len)
+    }
+
+    /// Serializes the signature.
+    ///
+    /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
+    #[cfg(feature = "alloc")]
+    #[inline]
+    pub fn to_vec(self) -> Vec<u8> {
+        let mut ser_sig = self.signature.as_ref().to_vec();
+        // If default sighash type, don't add extra sighash byte
+        if self.sighash_type != TapSighashType::Default {
+            ser_sig.push(self.sighash_type as u8);
+        }
+        ser_sig
+    }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::Display for Signature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.serialize(), f)
+    }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::LowerHex for Signature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.serialize(), f)
+    }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::UpperHex for Signature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::UpperHex::fmt(&self.serialize(), f)
+    }
+}
+
+#[cfg(feature = "hex")]
+impl FromStr for Signature {
+    type Err = ParseSignatureError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match hex::decode_to_array::<64>(s) {
+            Ok(bytes) => Self::from_slice(&bytes).map_err(ParseSignatureError::Decode),
+            Err(hex::DecodeFixedLengthBytesError::InvalidChar(error)) =>
+                Err(ParseSignatureError::InvalidChar(error)),
+            Err(hex::DecodeFixedLengthBytesError::InvalidLength(_)) => {
+                match hex::decode_to_array::<65>(s) {
+                    Ok(bytes) => Self::from_slice(&bytes).map_err(ParseSignatureError::Decode),
+                    Err(hex::DecodeFixedLengthBytesError::InvalidChar(error)) =>
+                        Err(ParseSignatureError::InvalidChar(error)),
+                    Err(hex::DecodeFixedLengthBytesError::InvalidLength(_)) =>
+                        Err(ParseSignatureError::InvalidLength(s.len())),
+                }
+            }
+        }
+    }
+}
+
+/// A serialized Taproot Signature
+///
+/// Serialized Taproot signatures have the issue that they can have different lengths.
+/// We want to avoid using `Vec` since that would require allocations making the code slower and
+/// unable to run on platforms without an allocator.
+#[derive(Copy, Clone)]
+pub struct SerializedSignature {
+    data: [u8; MAX_LEN],
+    len: usize,
+}
+
+impl SerializedSignature {
+    /// Constructs a new `SerializedSignature` from a Signature.
+    ///
+    /// In other words this serializes a `Signature` into a `SerializedSignature`.
+    #[inline]
+    pub fn from_signature(sig: Signature) -> Self { sig.serialize() }
+
+    /// Converts the serialized signature into the [`Signature`] struct.
+    ///
+    /// In other words this deserializes the `SerializedSignature`.
+    ///
+    /// # Errors
+    ///
+    /// See [`Signature::from_slice`].
+    #[inline]
+    pub fn to_signature(self) -> Result<Signature, SigFromSliceError> {
+        Signature::from_slice(&self)
+    }
+
+    /// Returns the length of the serialized signature data.
+    #[inline]
+    // `len` is never 0, so `is_empty` would always return `false`.
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize { self.len }
+
+    /// Returns an iterator over bytes of the signature.
+    #[inline]
+    pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
+
+    #[cfg(feature = "hex")]
+    fn is_default(&self) -> bool { self.len() != MAX_LEN }
+
+    #[inline]
+    #[cfg(feature = "hex")]
+    fn fmt_internal(&self, f: &mut fmt::Formatter, case: hex::Case) -> fmt::Result {
+        if self.is_default() {
+            hex::fmt_hex_exact!(f, MAX_LEN - 1, self, case)
+        } else {
+            hex::fmt_hex_exact!(f, MAX_LEN, self, case)
+        }
+    }
+
+    /// Constructs new `SerializedSignature` from data and length.
+    ///
+    /// # Panics
+    ///
+    /// If `len` > `MAX_LEN`
+    #[inline]
+    pub(crate) fn from_raw_parts(data: [u8; MAX_LEN], len: usize) -> Self {
+        assert!(len <= MAX_LEN, "attempt to set length to {} but the maximum is {}", len, MAX_LEN);
+        Self { data, len }
+    }
+
+    /// Set the length of the object.
+    #[inline]
+    pub(crate) fn set_len_unchecked(&mut self, len: usize) { self.len = len; }
+
+    /// Gets the hex representation of this type.
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
+}
+
+impl fmt::Debug for SerializedSignature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        #[cfg(feature = "hex")]
+        {
+            fmt::Display::fmt(self, f)
+        }
+        #[cfg(not(feature = "hex"))]
+        {
+            for b in self {
+                write!(f, "{:02x}", b)?;
+            }
+            Ok(())
+        }
+    }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::Display for SerializedSignature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::LowerHex for SerializedSignature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(f, hex::Case::Lower) }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::UpperHex for SerializedSignature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(f, hex::Case::Upper) }
+}
+
+impl PartialEq for SerializedSignature {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool { **self == **other }
+}
+
+impl PartialEq<[u8]> for SerializedSignature {
+    #[inline]
+    fn eq(&self, other: &[u8]) -> bool { **self == *other }
+}
+
+impl PartialEq<SerializedSignature> for [u8] {
+    #[inline]
+    fn eq(&self, other: &SerializedSignature) -> bool { *self == **other }
+}
+
+impl PartialOrd for SerializedSignature {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> { Some(self.cmp(other)) }
+}
+
+impl Ord for SerializedSignature {
+    #[inline]
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
+}
+
+impl PartialOrd<[u8]> for SerializedSignature {
+    #[inline]
+    fn partial_cmp(&self, other: &[u8]) -> Option<core::cmp::Ordering> {
+        (**self).partial_cmp(other)
+    }
+}
+
+impl PartialOrd<SerializedSignature> for [u8] {
+    #[inline]
+    fn partial_cmp(&self, other: &SerializedSignature) -> Option<core::cmp::Ordering> {
+        self.partial_cmp(&**other)
+    }
+}
+
+impl Eq for SerializedSignature {}
+
+impl core::hash::Hash for SerializedSignature {
+    #[inline]
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { (**self).hash(state) }
+}
+
+impl AsRef<[u8]> for SerializedSignature {
+    #[inline]
+    fn as_ref(&self) -> &[u8] { &self.data[..self.len] }
+}
+
+impl Borrow<[u8]> for SerializedSignature {
+    #[inline]
+    fn borrow(&self) -> &[u8] { &self.data[..self.len] }
+}
+
+impl Deref for SerializedSignature {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &[u8] { &self.data[..self.len] }
+}
+
+impl IntoIterator for SerializedSignature {
+    type IntoIter = IntoIter;
+    type Item = u8;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter { IntoIter::new(self) }
+}
+
+impl<'a> IntoIterator for &'a SerializedSignature {
+    type IntoIter = core::slice::Iter<'a, u8>;
+    type Item = &'a u8;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter { (**self).iter() }
+}
+
+impl From<Signature> for SerializedSignature {
+    #[inline]
+    fn from(value: Signature) -> Self { Self::from_signature(value) }
+}
+
+impl TryFrom<SerializedSignature> for Signature {
+    type Error = SigFromSliceError;
+
+    #[inline]
+    fn try_from(value: SerializedSignature) -> Result<Self, Self::Error> { value.to_signature() }
+}
+
+impl<'a> TryFrom<&'a SerializedSignature> for Signature {
+    type Error = SigFromSliceError;
+
+    #[inline]
+    fn try_from(value: &'a SerializedSignature) -> Result<Self, Self::Error> {
+        value.to_signature()
+    }
+}
+
+/// Separate mod to prevent outside code from accidentally breaking invariants.
+mod into_iter {
+    use super::SerializedSignature;
+
+    /// Owned iterator over the bytes of [`SerializedSignature`]
+    ///
+    /// Created by [`IntoIterator::into_iter`] method.
+    // allowed because of https://github.com/rust-lang/rust/issues/98348
+    #[allow(missing_copy_implementations)]
+    #[derive(Clone, Debug)]
+    pub struct IntoIter {
+        signature: SerializedSignature,
+        // invariant: pos <= signature.len()
+        pos: usize,
+    }
+
+    impl IntoIter {
+        #[inline]
+        pub(crate) fn new(signature: SerializedSignature) -> Self {
+            Self {
+                signature,
+                // for all unsigned n: 0 <= n
+                pos: 0,
+            }
+        }
+
+        /// Returns the remaining bytes as a slice.
+        ///
+        /// This method is analogous to [`core::slice::Iter::as_slice`].
+        #[inline]
+        pub fn as_slice(&self) -> &[u8] { &self.signature[self.pos..] }
+    }
+
+    impl Iterator for IntoIter {
+        type Item = u8;
+
+        #[inline]
+        fn next(&mut self) -> Option<Self::Item> {
+            let byte = *self.signature.get(self.pos)?;
+            // can't overflow or break invariant because if pos is too large we return early
+            self.pos += 1;
+            Some(byte)
+        }
+
+        #[inline]
+        fn size_hint(&self) -> (usize, Option<usize>) {
+            // can't overflow thanks to the invariant
+            let len = self.signature.len() - self.pos;
+            (len, Some(len))
+        }
+
+        // override for speed
+        #[inline]
+        fn nth(&mut self, n: usize) -> Option<Self::Item> {
+            if n >= self.len() {
+                // upholds invariant because the values will be equal
+                self.pos = self.signature.len();
+                None
+            } else {
+                // if n < signature.len() - self.pos then n + self.pos < signature.len() which neither
+                // overflows nor breaks the invariant
+                self.pos += n;
+                self.next()
+            }
+        }
+    }
+
+    impl ExactSizeIterator for IntoIter {}
+
+    impl core::iter::FusedIterator for IntoIter {}
+
+    impl DoubleEndedIterator for IntoIter {
+        #[inline]
+        fn next_back(&mut self) -> Option<Self::Item> {
+            if self.pos == self.signature.len() {
+                return None;
+            }
+
+            // if len is 0 then pos is also 0 thanks to the invariant so we would return before we
+            // reach this
+            let new_len = self.signature.len() - 1;
+            let byte = self.signature[new_len];
+            self.signature.set_len_unchecked(new_len);
+            Some(byte)
+        }
+    }
+}
+
+/// Error types for taproot signatures.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    use internals::write_err;
+
+    use crate::sighash::InvalidSighashTypeError;
+
+    /// An error constructing a [`Signature`] from a byte slice.
+    ///
+    /// [`Signature`]: super::Signature
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum SigFromSliceError {
+        /// Invalid signature hash type.
+        SighashType(InvalidSighashTypeError),
+        /// Invalid Taproot signature size
+        InvalidSignatureSize(usize),
+    }
+
+    impl From<Infallible> for SigFromSliceError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for SigFromSliceError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::SighashType(ref e) => write_err!(f, "sighash"; e),
+                Self::InvalidSignatureSize(sz) =>
+                    write!(f, "invalid Taproot signature size: {}", sz),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for SigFromSliceError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::SighashType(ref e) => Some(e),
+                Self::InvalidSignatureSize(_) => None,
+            }
+        }
+    }
+
+    /// Error encountered while parsing a Taproot signature from a string.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    #[cfg(feature = "hex")]
+    pub enum ParseSignatureError {
+        /// Hex string invalid length error.
+        InvalidLength(usize),
+        /// Hex string invalid character error.
+        InvalidChar(hex::error::InvalidCharError),
+        /// Signature byte slice decoding error.
+        Decode(SigFromSliceError),
+    }
+
+    #[cfg(feature = "hex")]
+    impl From<Infallible> for ParseSignatureError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "hex")]
+    impl fmt::Display for ParseSignatureError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::InvalidLength(len) => write!(
+                    f,
+                    "signature must be 128 or 130 ASCII characters long but it had {} bytes",
+                    len
+                ),
+                Self::InvalidChar(ref e) => write_err!(f, "invalid character in signature"; e),
+                Self::Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
+            }
+        }
+    }
+
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseSignatureError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::InvalidLength(_) => None,
+                Self::InvalidChar(ref e) => Some(e),
+                Self::Decode(ref e) => Some(e),
+            }
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Signature {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let arbitrary_bytes: [u8; secp256k1::constants::SCHNORR_SIGNATURE_SIZE] = u.arbitrary()?;
+
+        Ok(Self {
+            signature: secp256k1::schnorr::Signature::from_byte_array(arbitrary_bytes),
+            sighash_type: TapSighashType::arbitrary(u)?,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    use alloc::string::ToString;
+
+    use super::*;
+
+    #[test]
+    fn iterator_ops_are_homomorphic() {
+        let mut fake_signature_data = [0; MAX_LEN];
+        for (i, byte) in fake_signature_data.iter_mut().enumerate() {
+            *byte = i as u8;
+        }
+
+        let fake_signature = SerializedSignature { data: fake_signature_data, len: MAX_LEN };
+
+        let mut iter1 = fake_signature.into_iter();
+        let mut iter2 = fake_signature.iter();
+
+        // while let so we can compare size_hint and as_slice
+        while let (Some(a), Some(b)) = (iter1.next(), iter2.next()) {
+            assert_eq!(a, *b);
+            assert_eq!(iter1.size_hint(), iter2.size_hint());
+            assert_eq!(iter1.as_slice(), iter2.as_slice());
+        }
+
+        let mut iter1 = fake_signature.into_iter();
+        let mut iter2 = fake_signature.iter();
+
+        // manual next_back instead of rev() so that we can check as_slice()
+        // if next_back is implemented correctly then rev() is also correct - provided by `core`
+        while let (Some(a), Some(b)) = (iter1.next_back(), iter2.next_back()) {
+            assert_eq!(a, *b);
+            assert_eq!(iter1.size_hint(), iter2.size_hint());
+            assert_eq!(iter1.as_slice(), iter2.as_slice());
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    const SIG_STRINGS: &[&str] = &[
+        // default sighash type
+        "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab",
+        // various sighash types
+        "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab01",
+        "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab02",
+        "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab03",
+        "7777777777777777abababababababababababababababababababababababababababababababababababababababababababababababababababababababab81",
+    ];
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn signature_hex_roundtrip() {
+        for &want in SIG_STRINGS {
+            let sig = want.parse::<Signature>().unwrap();
+            let got = sig.to_string();
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn signature_hex_default_error() {
+        let sig_hex = "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab00";
+        let parse_err = sig_hex.parse::<Signature>().unwrap_err();
+        assert!(matches!(
+            parse_err,
+            ParseSignatureError::Decode(SigFromSliceError::SighashType(InvalidSighashTypeError(0))),
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn serialized_signature_hex() {
+        for &want in SIG_STRINGS {
+            let sig = want.parse::<Signature>().unwrap();
+            let got = sig.serialize().to_string();
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn serialized_signature_debug() {
+        let bytes = [0xab; 64];
+        let sig = Signature::from_slice(&bytes).unwrap();
+        let ser_sig = SerializedSignature::from_signature(sig);
+        let sig_string = alloc::format!("{:?}", ser_sig);
+        assert_eq!(
+            sig_string,
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+        );
+    }
+}

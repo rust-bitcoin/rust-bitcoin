@@ -1,10 +1,23 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin network.
+//! # Rust Bitcoin Network Kind
 //!
 //! The term "network" is overloaded, here [`Network`] refers to the specific
 //! Bitcoin network we are operating on e.g., signet, regtest. The terms
 //! "network" and "chain" are often used interchangeably for this concept.
+//!
+//! # Exhaustivity
+//!
+//! The [`Network`] enum is exhaustive by design. New Bitcoin networks require a breaking change
+//! to this enum, which forces library users to explicitly handle them. In contrast,
+//! [`TestnetVersion`] uses `#[non_exhaustive]` since testnet versions evolve more frequently.
+//!
+//! If you're concerned about forward compatibility with potential future Bitcoin networks, the
+//! higher level `bitcoin` crate provides a `Params` type that encapsulates network-specific
+//! parameters. Consider using `T: Into<Params>` in your public APIs instead of [`Network`]
+//! directly.
+//!
+//! See [issue #2225](https://github.com/rust-bitcoin/rust-bitcoin/issues/2225) for more discussion.
 
 #![no_std]
 // Coding conventions.
@@ -16,14 +29,20 @@
 extern crate std;
 
 #[cfg(feature = "serde")]
-extern crate serde;
+pub extern crate serde;
 
 use core::fmt;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::error::InputString;
 #[cfg(feature = "serde")]
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::ParseNetworkError;
 
 /// What kind of network we are on.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -36,7 +55,7 @@ pub enum NetworkKind {
 }
 
 impl NetworkKind {
-    /// Returns true if this is real mainnet bitcoin.
+    /// Returns `true` if this represents the Bitcoin mainnet.
     pub const fn is_mainnet(self) -> bool { matches!(self, Self::Main) }
 }
 
@@ -49,16 +68,15 @@ impl From<Network> for NetworkKind {
     }
 }
 
-/// The cryptocurrency network to act on.
+/// The Bitcoin network to act on.
 ///
 /// This is an exhaustive enum, meaning that we cannot add any future networks without defining a
-/// new, incompatible version of this type. If you are using this type directly and wish to support the
-/// new network, this will be a breaking change to your APIs and likely require changes in your code.
+/// new, incompatible version of this type. If you are using this type directly and wish to support
+/// the new network, this will be a breaking change to your APIs and likely require changes in your
+/// code.
 ///
-/// If you are concerned about forward compatibility, consider using `T: Into<Params>` instead of
-/// this type as a parameter to functions in your public API, or directly using the `Params` type.
-// For extensive discussion on the usage of `non_exhaustive` please see:
-// https://github.com/rust-bitcoin/rust-bitcoin/issues/2225
+/// For forward compatibility, consider using the `Params` type from the higher level `bitcoin`
+/// crate instead.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
 pub enum Network {
     /// Mainnet Bitcoin.
@@ -79,6 +97,86 @@ pub enum TestnetVersion {
     V3,
     /// Testnet version 4.
     V4,
+}
+
+impl Network {
+    /// Converts to the equivalent Bitcoin Core `-chain` argument string.
+    ///
+    /// This is useful when interacting with Bitcoin Core via command-line arguments or
+    /// configuration files that expect the `-chain` parameter format.
+    pub fn to_core_arg(self) -> &'static str {
+        match self {
+            Self::Bitcoin => "main",
+            // For user-side compatibility, testnet3 is retained as test
+            Self::Testnet(TestnetVersion::V3) => "test",
+            Self::Testnet(TestnetVersion::V4) => "testnet4",
+            Self::Signet => "signet",
+            Self::Regtest => "regtest",
+        }
+    }
+
+    /// Parses a Bitcoin Core `-chain` argument string into a `Network`.
+    ///
+    /// This is the inverse of [`to_core_arg`](Self::to_core_arg), useful when parsing
+    /// configuration files or command-line arguments from Bitcoin Core.
+    ///
+    /// # Arguments
+    ///
+    /// * `core_arg` - A string value from Bitcoin Core's `-chain` parameter.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ParseNetworkError`] if the input is not a valid network identifier.
+    pub fn from_core_arg(core_arg: &str) -> Result<Self, ParseNetworkError> {
+        let network = match core_arg {
+            "main" => Self::Bitcoin,
+            "test" => Self::Testnet(TestnetVersion::V3),
+            "testnet4" => Self::Testnet(TestnetVersion::V4),
+            "signet" => Self::Signet,
+            "regtest" => Self::Regtest,
+            _ => return Err(ParseNetworkError(InputString::from(core_arg))),
+        };
+        Ok(network)
+    }
+
+    /// Returns the standard display string for this network.
+    const fn as_display_str(self) -> &'static str {
+        match self {
+            Self::Bitcoin => "bitcoin",
+            Self::Testnet(TestnetVersion::V3) => "testnet",
+            Self::Testnet(TestnetVersion::V4) => "testnet4",
+            Self::Signet => "signet",
+            Self::Regtest => "regtest",
+        }
+    }
+}
+
+impl fmt::Display for Network {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", self.as_display_str())
+    }
+}
+
+impl FromStr for Network {
+    type Err = ParseNetworkError;
+
+    /// Parses a network identifier string into a `Network`.
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bitcoin" => Ok(Self::Bitcoin),
+            // For user-side compatibility, testnet3 is retained as testnet
+            "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
+            "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
+            "signet" => Ok(Self::Signet),
+            "regtest" => Ok(Self::Regtest),
+            _ => Err(ParseNetworkError(InputString::from(s))),
+        }
+    }
+}
+
+impl AsRef<Self> for Network {
+    fn as_ref(&self) -> &Self { self }
 }
 
 #[cfg(feature = "serde")]
@@ -118,86 +216,33 @@ impl<'de> Deserialize<'de> for Network {
     }
 }
 
-impl Network {
-    /// Converts a `Network` to its equivalent `bitcoind -chain` argument name.
-    ///
-    /// ```bash
-    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
-    /// Chain selection options:
-    ///
-    /// -chain=<chain>
-    /// Use the chain <chain> (default: main). Allowed values: main, test, signet, regtest
-    /// ```
-    pub fn to_core_arg(self) -> &'static str {
-        match self {
-            Self::Bitcoin => "main",
-            // For user-side compatibility, testnet3 is retained as test
-            Self::Testnet(TestnetVersion::V3) => "test",
-            Self::Testnet(TestnetVersion::V4) => "testnet4",
-            Self::Signet => "signet",
-            Self::Regtest => "regtest",
-        }
-    }
-
-    /// Converts a `bitcoind -chain` argument name to its equivalent `Network`.
-    ///
-    /// ```bash
-    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
-    /// Chain selection options:
-    ///
-    /// -chain=<chain>
-    /// Use the chain <chain> (default: main). Allowed values: main, test, signet, regtest
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// Errors if input is not exactly one of:
-    /// * `main`
-    /// * `test`
-    /// * `testnet4`
-    /// * `signet`
-    /// * `regtest`
-    pub fn from_core_arg(core_arg: &str) -> Result<Self, ParseNetworkError> {
-        let network = match core_arg {
-            "main" => Self::Bitcoin,
-            "test" => Self::Testnet(TestnetVersion::V3),
-            "testnet4" => Self::Testnet(TestnetVersion::V4),
-            "signet" => Self::Signet,
-            "regtest" => Self::Regtest,
-            _ => return Err(ParseNetworkError(InputString::from(core_arg))),
-        };
-        Ok(network)
-    }
-
-    /// Returns a string representation of the `Network` enum variant.
-    /// This is useful for displaying the network type as a string.
-    const fn as_display_str(self) -> &'static str {
-        match self {
-            Self::Bitcoin => "bitcoin",
-            Self::Testnet(TestnetVersion::V3) => "testnet",
-            Self::Testnet(TestnetVersion::V4) => "testnet4",
-            Self::Signet => "signet",
-            Self::Regtest => "regtest",
-        }
-    }
-}
-
-impl fmt::Display for Network {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", self.as_display_str())
-    }
-}
-
 #[cfg(feature = "serde")]
 pub mod as_core_arg {
-    //! Module for serialization/deserialization of network variants into/from Bitcoin Core values
+    //! Serde helper module for Bitcoin Core `-chain` argument serialization.
+    //!
+    //! This module provides custom serialization/deserialization for use with the
+    //! `#[serde(with = "...")]` attribute, converting [`Network`] to/from the Bitcoin Core
+    //! `-chain` argument format.
+    //!
+    //! # Example
+    //!
+    //! ```ignore
+    //! use serde::{Deserialize, Serialize};
+    //! use bitcoin_network_kind::Network;
+    //!
+    //! #[derive(Serialize, Deserialize)]
+    //! struct Config {
+    //!     #[serde(with = "bitcoin_network_kind::as_core_arg")]
+    //!     network: Network,
+    //! }
+    //! ```
 
     // No need to document these functions, they are well known.
     #![allow(missing_docs)]
     #![allow(clippy::missing_errors_doc)]
 
     use crate::Network;
-    
+
     #[allow(clippy::trivially_copy_pass_by_ref)] // `serde` controls the API.
     pub fn serialize<S>(network: &Network, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -236,42 +281,46 @@ pub mod as_core_arg {
     }
 }
 
-/// An error in parsing network string.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct ParseNetworkError(InputString);
-
-impl fmt::Display for ParseNetworkError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        // Outputs 'failed to parse <input string> as network'.
-        write!(f, "{}", self.0.display_cannot_parse("network"))
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for ParseNetworkError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
-
-impl FromStr for Network {
-    type Err = ParseNetworkError;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "bitcoin" => Ok(Self::Bitcoin),
-            // For user-side compatibility, testnet3 is retained as testnet
-            "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
-            "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
-            "signet" => Ok(Self::Signet),
-            "regtest" => Ok(Self::Regtest),
-            _ => Err(ParseNetworkError(InputString::from(s))),
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for NetworkKind {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match bool::arbitrary(u)? {
+            true => Ok(Self::Main),
+            false => Ok(Self::Test),
         }
     }
 }
 
-impl AsRef<Self> for Network {
-    fn as_ref(&self) -> &Self { self }
+/// Error types for the network.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    use internals::error::InputString;
+
+    /// An error in parsing network string.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct ParseNetworkError(pub(super) InputString);
+
+    impl From<Infallible> for ParseNetworkError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for ParseNetworkError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            // Outputs 'failed to parse <input string> as network'.
+            write!(f, "{}", self.0.display_cannot_parse("network"))
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseNetworkError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
+    }
 }
 
 #[cfg(test)]

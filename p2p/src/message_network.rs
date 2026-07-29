@@ -12,13 +12,20 @@ use alloc::vec::Vec;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
+use encoding::{
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decoder4, Encoder4, PrefixedBytesEncoder,
+};
 use hashes::sha256d;
-use io::{BufRead, Write};
 
-use crate::address::Address;
-use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
+use crate::address::{Address, AddressDecoder};
 use crate::{ProtocolVersion, ServiceFlags};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::{
+    AlertDecoderError, RejectDecoderError, RejectReasonDecoderError, UserAgentDecoderError,
+    VersionMessageDecoderError,
+};
 
 // Some simple messages
 
@@ -56,6 +63,7 @@ pub struct VersionMessage {
 
 impl VersionMessage {
     /// Constructs a new `version` message with `relay` set to false
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         version: ProtocolVersion,
         services: ServiceFlags,
@@ -80,18 +88,102 @@ impl VersionMessage {
     }
 }
 
-impl_consensus_encoding!(
-    VersionMessage,
-    version,
-    services,
-    timestamp,
-    receiver,
-    sender,
-    nonce,
-    user_agent,
-    start_height,
-    relay
-);
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`VersionMessage`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionMessageEncoder<'e>(
+        encoding::Encoder2<
+            encoding::Encoder3<
+                crate::ProtocolVersionEncoder<'e>,
+                crate::ServiceFlagsEncoder<'e>,
+                encoding::ArrayEncoder<8>
+            >,
+            encoding::Encoder6<
+                crate::address::AddressEncoder<'e>,
+                crate::address::AddressEncoder<'e>,
+                encoding::ArrayEncoder<8>,
+                UserAgentEncoder<'e>,
+                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<1>
+            >
+        >
+    );
+}
+
+impl encoding::Encode for VersionMessage {
+    type Encoder<'e>
+        = VersionMessageEncoder<'e>
+    where
+        Self: 'e;
+
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionMessageEncoder::new(encoding::Encoder2::new(
+            encoding::Encoder3::new(
+                self.version.encoder(),
+                self.services.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.timestamp.to_le_bytes()),
+            ),
+            encoding::Encoder6::new(
+                self.receiver.encoder(),
+                self.sender.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+                self.user_agent.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.start_height.to_le_bytes()),
+                encoding::ArrayEncoder::without_length_prefix([u8::from(self.relay)]),
+            ),
+        ))
+    }
+}
+
+impl encoding::Decode for VersionMessage {
+    type Decoder = VersionMessageDecoder;
+}
+
+type VersionMessageInnerDecoder = encoding::Decoder2<
+    encoding::Decoder3<
+        crate::ProtocolVersionDecoder,
+        crate::ServiceFlagsDecoder,
+        encoding::ArrayDecoder<8>,
+    >,
+    encoding::Decoder6<
+        AddressDecoder,
+        AddressDecoder,
+        encoding::ArrayDecoder<8>,
+        UserAgentDecoder,
+        encoding::ArrayDecoder<4>,
+        encoding::ArrayDecoder<1>,
+    >,
+>;
+
+crate::decoder_newtype! {
+    /// The Decoder for [`VersionMessage`].
+    #[derive(Debug, Default, Clone)]
+    pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+
+    fn end(
+        result: Result<
+            <VersionMessageInnerDecoder as encoding::Decoder>::Output,
+            <VersionMessageInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<VersionMessage, VersionMessageDecoderError> {
+        let (
+            (version, services, timestamp),
+            (receiver, sender, nonce, user_agent, start_height, relay),
+        ) = result.map_err(VersionMessageDecoderError)?;
+        Ok(VersionMessage {
+            version,
+            services,
+            timestamp: i64::from_le_bytes(timestamp),
+            receiver,
+            sender,
+            nonce: u64::from_le_bytes(nonce),
+            user_agent,
+            start_height: i32::from_le_bytes(start_height),
+            relay: relay[0] != 0,
+        })
+    }
+}
 
 /// A bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
 /// connection between two peers is established. It is intended to advertise client software in a
@@ -103,7 +195,46 @@ pub struct UserAgent {
     user_agent: String,
 }
 
-impl_consensus_encoding!(UserAgent, user_agent);
+encoding::encoder_newtype_exact! {
+    /// The encoder for a [`UserAgent`] string.
+    #[derive(Debug, Clone)]
+    pub struct UserAgentEncoder<'e>(PrefixedBytesEncoder<'e>);
+}
+
+impl encoding::Encode for UserAgent {
+    type Encoder<'e> = UserAgentEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        UserAgentEncoder::new(PrefixedBytesEncoder::new(self.user_agent.as_bytes()))
+    }
+}
+
+type UserAgentInnerDecoder = ByteVecDecoder;
+
+crate::decoder_newtype! {
+    /// The decoder for the [`UserAgent`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct UserAgentDecoder(UserAgentInnerDecoder);
+
+    fn map_push_bytes_err(err: encoding::ByteVecDecoderError) -> UserAgentDecoderError {
+        UserAgentDecoderError::Decoder(err)
+    }
+
+    fn end(
+        result: Result<Vec<u8>, encoding::ByteVecDecoderError>
+    ) -> Result<UserAgent, UserAgentDecoderError> {
+        let bytes = result.map_err(UserAgentDecoderError::Decoder)?;
+        let user_agent =
+            String::from_utf8(bytes).map_err(|_| UserAgentDecoderError::InvalidUtf8)?;
+        Ok(UserAgent { user_agent })
+    }
+}
+
+impl encoding::Decode for UserAgent {
+    type Decoder = UserAgentDecoder;
+
+    fn decoder() -> Self::Decoder { UserAgentDecoder(UserAgentInnerDecoder::new()) }
+}
 
 impl UserAgent {
     const MAX_USER_AGENT_LEN: usize = 256;
@@ -176,7 +307,7 @@ pub struct UserAgentVersion {
 }
 
 impl UserAgentVersion {
-    /// Creates a user agent client version associated with a name.
+    /// Constructs a user agent client version associated with a name.
     pub const fn new(software_version: ClientSoftwareVersion) -> Self {
         Self { version: software_version, comments: None }
     }
@@ -269,27 +400,52 @@ pub enum RejectReason {
     Checkpoint = 0x43,
 }
 
-impl Encodable for RejectReason {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        w.write_all(&[*self as u8])?;
-        Ok(1)
+encoding::encoder_newtype_exact! {
+    /// The encoder type for a [`RejectReason`].
+    #[derive(Debug, Clone)]
+    pub struct RejectReasonEncoder<'e>(ArrayEncoder<1>);
+}
+
+impl encoding::Encode for RejectReason {
+    type Encoder<'e> = RejectReasonEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        RejectReasonEncoder::new(ArrayEncoder::without_length_prefix([*self as u8]))
     }
 }
 
-impl Decodable for RejectReason {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(match r.read_u8()? {
-            0x01 => Self::Malformed,
-            0x10 => Self::Invalid,
-            0x11 => Self::Obsolete,
-            0x12 => Self::Duplicate,
-            0x40 => Self::NonStandard,
-            0x41 => Self::Dust,
-            0x42 => Self::Fee,
-            0x43 => Self::Checkpoint,
-            _ => return Err(crate::consensus::parse_failed_error("unknown reject code")),
+crate::decoder_newtype! {
+    /// The decoder type for a [`RejectReason`].
+    #[derive(Debug, Default, Clone)]
+    pub struct RejectReasonDecoder(ArrayDecoder<1>);
+
+    fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> RejectReasonDecoderError {
+        RejectReasonDecoderError::Decoder(err)
+    }
+
+    fn end(
+        result: Result<[u8; 1], encoding::UnexpectedEofError>
+    ) -> Result<RejectReason, RejectReasonDecoderError> {
+        let code_arr = result.map_err(RejectReasonDecoderError::Decoder)?;
+        let code = u8::from_le_bytes(code_arr);
+        Ok(match code {
+            0x01 => RejectReason::Malformed,
+            0x10 => RejectReason::Invalid,
+            0x11 => RejectReason::Obsolete,
+            0x12 => RejectReason::Duplicate,
+            0x40 => RejectReason::NonStandard,
+            0x41 => RejectReason::Dust,
+            0x42 => RejectReason::Fee,
+            0x43 => RejectReason::Checkpoint,
+            unknown => return Err(RejectReasonDecoderError::UnknownRejectCode(unknown)),
         })
     }
+}
+
+impl encoding::Decode for RejectReason {
+    type Decoder = RejectReasonDecoder;
+
+    fn decoder() -> Self::Decoder { RejectReasonDecoder(ArrayDecoder::new()) }
 }
 
 /// Reject message might be sent by peers rejecting one of our messages
@@ -305,7 +461,74 @@ pub struct Reject {
     pub hash: sha256d::Hash,
 }
 
-impl_consensus_encoding!(Reject, message, ccode, reason, hash);
+encoding::encoder_newtype_exact! {
+    /// The encoder type for a [`Reject`] message.
+    #[derive(Debug, Clone)]
+    pub struct RejectEncoder<'e>(
+        Encoder4<
+            PrefixedBytesEncoder<'e>,
+            RejectReasonEncoder<'e>,
+            PrefixedBytesEncoder<'e>,
+            ArrayEncoder<32>,
+        >
+    );
+}
+
+impl encoding::Encode for Reject {
+    type Encoder<'e> = RejectEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        RejectEncoder::new(Encoder4::new(
+            PrefixedBytesEncoder::new(self.message.as_bytes()),
+            self.ccode.encoder(),
+            PrefixedBytesEncoder::new(self.reason.as_bytes()),
+            ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
+        ))
+    }
+}
+
+type RejectInnerDecoder =
+    Decoder4<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder, ArrayDecoder<32>>;
+
+crate::decoder_newtype! {
+    /// The decoder type for a [`Reject`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct RejectDecoder(RejectInnerDecoder);
+
+    fn map_push_bytes_err(err: <RejectInnerDecoder as encoding::Decoder>::Error) -> RejectDecoderError {
+        RejectDecoderError::Decoder(err)
+    }
+
+    fn end(
+        result: Result<
+            <RejectInnerDecoder as encoding::Decoder>::Output,
+            <RejectInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<Reject, RejectDecoderError> {
+        let (message, ccode, reason, hash) = result.map_err(RejectDecoderError::Decoder)?;
+        let message = String::from_utf8(message)
+            .map_err(|_| RejectDecoderError::InvalidUtf8)
+            .map(Cow::Owned)?;
+        let reason = String::from_utf8(reason)
+            .map_err(|_| RejectDecoderError::InvalidUtf8)
+            .map(Cow::Owned)?;
+        let hash = sha256d::Hash::from_byte_array(hash);
+        Ok(Reject { message, ccode, reason, hash })
+    }
+}
+
+impl encoding::Decode for Reject {
+    type Decoder = RejectDecoder;
+
+    fn decoder() -> Self::Decoder {
+        RejectDecoder(Decoder4::new(
+            ByteVecDecoder::new(),
+            RejectReason::decoder(),
+            ByteVecDecoder::new(),
+            ArrayDecoder::new(),
+        ))
+    }
+}
 
 /// A deprecated message type that was used to notify users of system changes. Due to a number of
 /// vulnerabilities, alerts are no longer used. A final alert was sent as of Bitcoin Core 0.14.0,
@@ -330,7 +553,191 @@ impl Alert {
     pub fn is_final_alert(&self) -> bool { self.0.eq(&Self::FINAL_ALERT) }
 }
 
-impl_vec_wrapper!(Alert, Vec<u8>);
+encoding::encoder_newtype_exact! {
+    /// The encoder type for an [`Alert`] message.
+    #[derive(Debug, Clone)]
+    pub struct AlertEncoder<'e>(PrefixedBytesEncoder<'e>);
+}
+
+impl encoding::Encode for Alert {
+    type Encoder<'e> = AlertEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> { AlertEncoder::new(PrefixedBytesEncoder::new(&self.0)) }
+}
+
+type AlertInnerDecoder = ByteVecDecoder;
+
+crate::decoder_newtype! {
+    /// The decoder for the [`Alert`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct AlertDecoder(AlertInnerDecoder);
+
+    fn end(
+        result: Result<Vec<u8>, encoding::ByteVecDecoderError>
+    ) -> Result<Alert, AlertDecoderError> {
+        Ok(Alert(result.map_err(AlertDecoderError)?))
+    }
+}
+
+impl encoding::Decode for Alert {
+    type Decoder = AlertDecoder;
+
+    fn decoder() -> Self::Decoder { AlertDecoder(AlertInnerDecoder::new()) }
+}
+
+/// Error types for network messages.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    use internals::write_err;
+
+    /// An error consensus decoding a [`VersionMessage`].
+    ///
+    /// [`VersionMessage`]: super::VersionMessage
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct VersionMessageDecoderError(
+        pub(super) <super::VersionMessageInnerDecoder as encoding::Decoder>::Error,
+    );
+
+    impl From<Infallible> for VersionMessageDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for VersionMessageDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write_err!(f, "version message decoder error"; self.0)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for VersionMessageDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
+
+    /// An error decoding a [`UserAgent`] message.
+    ///
+    /// [`UserAgent`]: super::UserAgent
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum UserAgentDecoderError {
+        /// Inner decoder error.
+        Decoder(<super::UserAgentInnerDecoder as encoding::Decoder>::Error),
+        /// The string did not contain valid UTF-8.
+        InvalidUtf8,
+    }
+
+    impl From<Infallible> for UserAgentDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for UserAgentDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::Decoder(d) => write_err!(f, "useragent error"; d),
+                Self::InvalidUtf8 => write!(f, "invalid utf-8."),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for UserAgentDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Decoder(d) => Some(d),
+                Self::InvalidUtf8 => None,
+            }
+        }
+    }
+
+    /// Errors occurring when decoding a [`RejectReason`].
+    ///
+    /// [`RejectReason`]: super::RejectReason
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum RejectReasonDecoderError {
+        /// Inner decoder error.
+        Decoder(<encoding::ArrayDecoder<1> as encoding::Decoder>::Error),
+        /// Unknown reject code.
+        UnknownRejectCode(u8),
+    }
+
+    impl From<Infallible> for RejectReasonDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for RejectReasonDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::Decoder(d) => write_err!(f, "rejectreason error"; d),
+                Self::UnknownRejectCode(code) => write!(f, "unknown reject code {}", code),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for RejectReasonDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Decoder(e) => Some(e),
+                Self::UnknownRejectCode(_) => None,
+            }
+        }
+    }
+
+    /// Errors occurring when decoding a [`Reject`].
+    ///
+    /// [`Reject`]: super::Reject
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum RejectDecoderError {
+        /// Inner decoder error.
+        Decoder(<super::RejectInnerDecoder as encoding::Decoder>::Error),
+        /// Invalid UTF-8 string.
+        InvalidUtf8,
+    }
+
+    impl From<Infallible> for RejectDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for RejectDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::Decoder(d) => write_err!(f, "reject error"; d),
+                Self::InvalidUtf8 => write!(f, "invalid utf-8"),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for RejectDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Decoder(d) => Some(d),
+                Self::InvalidUtf8 => None,
+            }
+        }
+    }
+
+    /// An error decoding an [`Alert`] message.
+    ///
+    /// [`Alert`]: super::Alert
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct AlertDecoderError(pub(super) <super::AlertInnerDecoder as encoding::Decoder>::Error);
+
+    impl From<Infallible> for AlertDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for AlertDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write_err!(f, "alert error"; self.0)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for AlertDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
+}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ClientSoftwareVersion {
@@ -356,7 +763,19 @@ impl<'a> Arbitrary<'a> for UserAgentVersion {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for UserAgent {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::new(u.arbitrary::<String>()?, &u.arbitrary()?))
+        let version = UserAgentVersion::arbitrary(u)?;
+
+        let mut name: String = u
+            .arbitrary::<String>()?
+            .chars()
+            .filter(|c| !matches!(c, '/' | '(' | ')' | ':'))
+            .collect();
+
+        let overhead = 3 + version.to_string().chars().count();
+        let max_name = Self::MAX_USER_AGENT_LEN - overhead;
+        name.truncate(max_name);
+
+        Ok(Self::new(name, &version))
     }
 }
 
@@ -415,8 +834,7 @@ impl<'a> Arbitrary<'a> for Alert {
 mod tests {
     use alloc::string::ToString;
 
-    use bitcoin::consensus::encode::{deserialize, serialize};
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
 
@@ -425,7 +843,7 @@ mod tests {
         // This message is from my satoshi node, morning of May 27 2014
         let from_sat = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001");
 
-        let decode: Result<VersionMessage, _> = deserialize(&from_sat);
+        let decode: Result<VersionMessage, _> = encoding::decode_from_slice(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version.0, 70002);
@@ -447,7 +865,7 @@ mod tests {
         assert_eq!(real_decode.start_height, 302_892);
         assert!(real_decode.relay);
 
-        assert_eq!(serialize(&real_decode), from_sat);
+        assert_eq!(encoding::encode_to_vec(&real_decode), from_sat);
     }
 
     #[test]
@@ -455,8 +873,10 @@ mod tests {
         let reject_tx_conflict = hex!("027478121474786e2d6d656d706f6f6c2d636f6e666c69637405df54d3860b3c41806a3546ab48279300affacf4b88591b229141dcf2f47004");
         let reject_tx_nonfinal = hex!("02747840096e6f6e2d66696e616c259bbe6c83db8bbdfca7ca303b19413dc245d9f2371b344ede5f8b1339a5460b");
 
-        let decode_result_conflict: Result<Reject, _> = deserialize(&reject_tx_conflict);
-        let decode_result_nonfinal: Result<Reject, _> = deserialize(&reject_tx_nonfinal);
+        let decode_result_conflict: Result<Reject, _> =
+            encoding::decode_from_slice(&reject_tx_conflict);
+        let decode_result_nonfinal: Result<Reject, _> =
+            encoding::decode_from_slice(&reject_tx_nonfinal);
 
         assert!(decode_result_conflict.is_ok());
         assert!(decode_result_nonfinal.is_ok());
@@ -483,14 +903,14 @@ mod tests {
             nonfinal.hash
         );
 
-        assert_eq!(serialize(&conflict), reject_tx_conflict);
-        assert_eq!(serialize(&nonfinal), reject_tx_nonfinal);
+        assert_eq!(encoding::encode_to_vec(&conflict), reject_tx_conflict);
+        assert_eq!(encoding::encode_to_vec(&nonfinal), reject_tx_nonfinal);
     }
 
     #[test]
     fn alert_message_test() {
         let alert_hex = hex!("60010000000000000000000000ffffff7f00000000ffffff7ffeffff7f01ffffff7f00000000ffffff7f00ffffff7f002f555247454e543a20416c657274206b657920636f6d70726f6d697365642c207570677261646520726571756972656400");
-        let alert: Alert = deserialize(&alert_hex).unwrap();
+        let alert: Alert = encoding::decode_from_slice(&alert_hex).unwrap();
         assert!(alert.is_final_alert());
     }
 

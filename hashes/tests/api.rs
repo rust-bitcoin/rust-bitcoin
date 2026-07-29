@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Test the API surface of `units`.
+//! Test the API surface of `hashes`.
 //!
 //! The point of these tests is to check the API surface as opposed to test the API functionality.
 //!
@@ -8,6 +8,7 @@
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![allow(deprecated)]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
@@ -22,7 +23,7 @@ use bitcoin_hashes::{
     Sha512, Sha512_256, Siphash24,
 };
 
-// Arbitrary midstate value; taken from as sha256t unit tests.
+// Arbitrary midstate value; taken from as SHA256t unit tests.
 const TEST_MIDSTATE: [u8; 32] = [
     156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147, 108,
     71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
@@ -34,7 +35,7 @@ sha256t_tag! {
     struct Tag = raw(TEST_MIDSTATE, 64);
 }
 hash_newtype! {
-    /// A concrete sha256t hash type so we don't have to use generics.
+    /// A concrete SHA256t hash type so we don't have to use generics.
     #[derive(Debug)]
     struct TaggedHash(sha256t::Hash<Tag>);
 }
@@ -172,16 +173,16 @@ struct Errors {
 #[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_hashes::{
-        hash160, hkdf, hmac, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256,
-        siphash24,
+        hash160, hkdf, hmac, muhash, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512,
+        sha512_256, siphash24,
     };
 }
 
 #[test]
 fn api_can_use_alias_from_crate_root() {
     use bitcoin_hashes::{
-        Hash160, Hkdf, Hmac, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384, Sha512, Sha512_256,
-        Siphash24,
+        Hash160, Hkdf, Hmac, MuHash, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384, Sha512,
+        Sha512_256, Siphash24,
     };
 }
 
@@ -212,6 +213,22 @@ fn api_all_non_error_types_have_non_empty_debug() {
     check_debug!(t; a);
 }
 
+// Public error `Debug` representation is never empty (C-DEBUG-NONEMPTY).
+#[test]
+fn api_all_public_error_types_have_non_empty_debug() {
+    // HKDF is capped at 255 output blocks, so one byte past that limit must error.
+    let mut okm = vec![0_u8; 255 * 32 + 1];
+    let err = Hkdf::<sha256::HashEngine>::new(&[], &[]).expand(&[], &mut okm).unwrap_err();
+    let debug = format!("{:?}", err);
+    assert!(!debug.is_empty());
+
+    let mut engine = sha256::HashEngine::new();
+    engine.input(&[0xab]);
+    let err = engine.midstate().unwrap_err();
+    let debug = format!("{:?}", err);
+    assert!(!debug.is_empty());
+}
+
 #[test]
 fn all_types_implement_send_sync() {
     fn assert_send<T: Send>() {}
@@ -220,6 +237,8 @@ fn all_types_implement_send_sync() {
     //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
     assert_send::<Hashes<Sha256>>();
     assert_sync::<Hashes<Sha256>>();
+    assert_send::<Hkdf<sha256::HashEngine>>();
+    assert_sync::<Hkdf<sha256::HashEngine>>();
     assert_send::<Engines>();
     assert_sync::<Engines>();
     assert_send::<OtherStructs>();
@@ -228,4 +247,28 @@ fn all_types_implement_send_sync() {
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
     assert_send::<Errors>();
     assert_sync::<Errors>();
+}
+
+// Error types should implement `std::error::Error` (C-GOOD-ERR).
+#[cfg(feature = "std")]
+#[test]
+fn all_error_types_implement_error() {
+    fn assert_error<T: std::error::Error>() {}
+
+    assert_error::<hkdf::MaxLengthError>();
+    assert_error::<sha256::MidstateError>();
+}
+
+// This is for documentation and so anyone can play with these if they want.
+#[test]
+fn dyn_compatible() {
+    // use bitcoin_hashes::{sha256t, HashEngine, Hash, IsByteArray};
+
+    // struct Traits {
+    //     // These traits are explicitly not dyn compatible.
+    //     a: Box<dyn HashEngine>,
+    //     b: Box<dyn Hash>,
+    //     c: Box<dyn IsByteArray>,
+    //     d: Box<dyn sha256t::Tag>,
+    // }
 }

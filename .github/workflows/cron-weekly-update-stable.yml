@@ -11,36 +11,30 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    strategy:
+      matrix:
+        # Update toolchain on master and LTS branches.
+        branch: [master, 0.32.xxx, 0.32.xx]
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ matrix.branch }}
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-      - name: Update semver-checks.yml to use latest stable
+      - name: Install cargo-rbmt
+        run: cargo install --git https://github.com/rust-bitcoin/rust-bitcoin-maintainer-tools.git --rev $(cat rbmt-version) cargo-rbmt
+      - name: Update stable toolchain in Cargo.toml
         run: |
-          set -x
-          # Extract the version of the compiler dtolnay/rust-toolchain gives us.
-          STABLE_VERSION=$(rustc --version | sed -ne 's/^rustc //p' | cut -d ' ' -f1)
-          # Update the stable version in the reference file.
-          echo "${STABLE_VERSION}" > ./.github/workflows/stable-version
-          echo "stable_version=${STABLE_VERSION}" >> $GITHUB_ENV
-          # If somehow the stable version has not changed. In this case don't make an empty PR.
-          if ! git diff --exit-code > /dev/null; then
-              echo "Updated stable. Opening PR."
-              echo "changes_made=true" >> $GITHUB_ENV
-          else
-              echo "Attempted to update stable but the latest-stable date did not change. Not opening any PR."
-              echo "changes_made=false" >> $GITHUB_ENV
-          fi
+          cargo rbmt toolchains --update-stable
+          echo "stable_version=$(cargo rbmt toolchains --stable)" >> $GITHUB_ENV
       - name: Create Pull Request
-        if: env.changes_made == 'true'
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
+          base: ${{ matrix.branch }}
           author: Update Stable Rustc Bot <bot@example.com>
           committer: Update Stable Rustc Bot <bot@example.com>
-          title: Automated weekly update to rustc stable (to ${{ env.stable_version }})
+          title: Automated weekly update to rustc stable (to ${{ env.stable_version }}) on ${{ matrix.branch }}
           body: |
-           Automated update to Github CI workflow `semver-checks.yml` by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
-          commit-message: Automated update to Github CI to rustc stable-${{ env.stable_version }}
-          branch: create-pull-request/weekly-stable-update
+           Automated update to Cargo.toml workspace metadata by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
+          commit-message: Automated update to rustc stable-${{ env.stable_version }}
+          branch: create-pull-request/weekly-stable-update-${{ matrix.branch }}

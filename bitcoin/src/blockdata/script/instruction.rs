@@ -2,8 +2,8 @@
 
 use internals::script::{self, PushDataLenLen};
 
-use super::{Error, PushBytes, Script, ScriptBufExtPriv as _};
-use crate::opcodes::{self, Opcode};
+use super::{Error, PushBytes, PushBytesExt as _, Script, ScriptBufExtPriv as _};
+use crate::opcodes::{self, Opcode, OpcodeExt as _};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -253,11 +253,6 @@ impl<'a> Iterator for InstructionIndices<'a> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) { self.instructions.size_hint() }
-
-    // the override avoids computing pos multiple times
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.next_with(|this| this.instructions.nth(n))
-    }
 }
 
 impl core::iter::FusedIterator for InstructionIndices<'_> {}

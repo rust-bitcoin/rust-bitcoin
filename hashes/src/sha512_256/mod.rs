@@ -1,22 +1,27 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SHA512_256 implementation.
+//! `SHA512_256` implementation.
 //!
-//! SHA512/256 is a hash function that uses the sha512 algorithm but it truncates
-//! the output to 256 bits. It has different initial constants than sha512 so it
-//! produces an entirely different hash compared to sha512. More information at
-//! <https://eprint.iacr.org/2010/548.pdf>.
+//! SHA512/256 is a hash function that uses the SHA512 algorithm but it truncates the output to 256
+//! bits. It has different initial constants than SHA512 so it produces an entirely different hash
+//! compared to SHA512. More information at <https://eprint.iacr.org/2010/548.pdf>.
 
 use crate::sha512;
 
 crate::internal_macros::general_hash_type! {
-    256,
-    false,
-    "Output of the SHA512/256 hash function.\n\nSHA512/256 is a hash function that uses the sha512 algorithm but it truncates the output to 256 bits. It has different initial constants than sha512 so it produces an entirely different hash compared to sha512. More information at <https://eprint.iacr.org/2010/548.pdf>."
+    /// Output of the SHA512/256 hash function.
+    ///
+    /// SHA512/256 is a hash function that uses the SHA512 algorithm but it truncates the output to
+    /// 256 bits. It has different initial constants than SHA512 so it produces an entirely
+    /// different hash compared to SHA512. More information at
+    /// <https://eprint.iacr.org/2010/548.pdf>.
+    pub struct Hash([u8; 32]);
+
+    const DISPLAY_BACKWARD: bool = false;
 }
 
 impl Hash {
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     pub fn from_engine(e: HashEngine) -> Self {
         let mut ret = [0; 32];
         ret.copy_from_slice(&sha512::Hash::from_engine(e.0).as_byte_array()[..32]);
@@ -26,10 +31,9 @@ impl Hash {
 
 /// Engine to compute SHA512/256 hash function.
 ///
-/// SHA512/256 is a hash function that uses the sha512 algorithm but it truncates
-/// the output to 256 bits. It has different initial constants than sha512 so it
-/// produces an entirely different hash compared to sha512. More information at
-/// <https://eprint.iacr.org/2010/548.pdf>.
+/// SHA512/256 is a hash function that uses the SHA512 algorithm but it truncates the output to 256
+/// bits. It has different initial constants than SHA512 so it produces an entirely different hash
+/// compared to SHA512. More information at <https://eprint.iacr.org/2010/548.pdf>.
 #[derive(Debug, Clone)]
 pub struct HashEngine(sha512::HashEngine);
 
@@ -44,7 +48,6 @@ impl Default for HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
-    type Bytes = [u8; 64];
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
@@ -71,7 +74,7 @@ mod tests {
 
         #[rustfmt::skip]
         let tests = [
-            // Examples from go sha512/256 tests.
+            // Examples from go SHA512/256 tests.
             Test {
                 input: "",
                 output: [

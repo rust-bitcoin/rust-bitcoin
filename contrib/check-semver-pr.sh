@@ -16,6 +16,9 @@ set -euo pipefail
 # under the hood to invoke rustdoc.
 RUSTDOCFLAGS="-Z unstable-options --document-private-items --document-hidden-items --output-format=json --cap-lints=allow"
 
+# Crates that have reached 1.0 must not introduce semver-breaking API changes.
+SEMVER_HARD_FAIL_CRATES=("bitcoin-consensus-encoding" "bitcoin_hashes" "bitcoin-network-kind")
+
 # These will be set to the commit SHA from the PR's target branch
 # GitHub Actions CI.
 # NOTE: if running locally this will be set to master.
@@ -50,6 +53,16 @@ main() {
     generate_json_files_no_default_features "bitcoin-io" "current"
     generate_json_files_features_alloc "bitcoin-io" "current"
 
+    # 6. bitcoin-consensus-encoding: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-consensus-encoding" "current"
+    generate_json_files_no_default_features "bitcoin-consensus-encoding" "current"
+    generate_json_files_features_alloc "bitcoin-consensus-encoding" "current"
+
+    # 7. bitcoin-network-kind: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-network-kind" "current"
+    generate_json_files_no_default_features "bitcoin-network-kind" "current"
+    generate_json_files_features_alloc "bitcoin-network-kind" "current"
+
 
     # Switch to target commit.
     echo "Checking out target commit at $TARGET_COMMIT"
@@ -79,6 +92,16 @@ main() {
     generate_json_files_no_default_features "bitcoin-io" "master"
     generate_json_files_features_alloc "bitcoin-io" "master"
 
+    # 6. bitcoin-consensus-encoding: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-consensus-encoding" "master"
+    generate_json_files_no_default_features "bitcoin-consensus-encoding" "master"
+    generate_json_files_features_alloc "bitcoin-consensus-encoding" "master"
+
+    # 7. bitcoin-network-kind: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-network-kind" "master"
+    generate_json_files_no_default_features "bitcoin-network-kind" "master"
+    generate_json_files_features_alloc "bitcoin-network-kind" "master"
+
     # Check for API semver breaks on all the generated JSON files above.
     run_cargo_semver_check "bitcoin" "all-features"
     run_cargo_semver_check "bitcoin" "no-default-features"
@@ -93,6 +116,12 @@ main() {
     run_cargo_semver_check "bitcoin-io" "all-features"
     run_cargo_semver_check "bitcoin-io" "no-default-features"
     run_cargo_semver_check "bitcoin-io" "alloc"
+    run_cargo_semver_check "bitcoin-consensus-encoding" "all-features"
+    run_cargo_semver_check "bitcoin-consensus-encoding" "no-default-features"
+    run_cargo_semver_check "bitcoin-consensus-encoding" "alloc"
+    run_cargo_semver_check "bitcoin-network-kind" "all-features"
+    run_cargo_semver_check "bitcoin-network-kind" "no-default-features"
+    run_cargo_semver_check "bitcoin-network-kind" "alloc"
 
     # Invoke cargo semver-checks to check for breaking changes
     # in all generated files.
@@ -163,26 +192,37 @@ generate_json_files_features_alloc() {
 }
 
 # Check if there are breaking changes.
-# We loop through all the generated files and check if there is a FAIL
-# in the cargo semver-checks output.
-# If we detect a fail, we create an empty file semver-break.
+# We loop through all the generated files and check whether cargo semver-checks
+# reported a major (breaking) change. 
+# Minor changes are not breaking and are ignored.
+# If we detect a break, we create an empty file semver-break.
 # If the following CI step finds this file, it will add:
 # 1. a comment on the PR.
 # 2. a label to the PR.
 check_for_breaking_changes() {
     for file in *semver.txt; do
         echo "Checking $file"
-        if grep -q "FAIL" "$file"; then
-            echo "You have introduced changes to the public API"
-            echo "FAIL found in $file"
+        # Only flag major failures. minor changes are ignored.
+        if grep -qE '[1-9][0-9]* major .* checks failed' "$file"; then
+            echo "You have introduced breaking changes to the public API"
+            echo "Major semver break found in $file"
             cat "$file"
             # flag it as a breaking change
-            # Handle the case where FAIL is found
             touch semver-break
+
+            for crate in "${SEMVER_HARD_FAIL_CRATES[@]}"; do
+                if [[ "$file" == "$crate"-* ]]; then
+                    touch semver-hard-fail
+                fi
+            done
         fi
     done
     if ! [ -f semver-break ]; then
        echo "No breaking changes found"
+    fi
+    if [ -f semver-hard-fail ]; then
+        echo "Semver break detected in a 1.0 crate; failing CI"
+        exit 1
     fi
 }
 

@@ -1,40 +1,39 @@
 [package]
 name = "bitcoin-primitives"
-version = "1.0.0-rc.2"
+version = "0.103.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "Tobin C. Harding <me@tobin.cc>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"
+homepage = "https://rust-bitcoin.org"
 description = "Primitive types used by the rust-bitcoin ecosystem"
 categories = ["cryptography::cryptocurrencies", "no-std"]
 keywords = ["bitcoin", "types"]
 readme = "README.md"
 edition = "2021"
 rust-version = "1.74.0"
-exclude = ["tests", "contrib"]
+exclude = ["api", "tests", "contrib"]
 
 [features]
 default = ["std", "hex"]
-std = ["alloc", "hashes/std", "hex-stable?/std", "hex-unstable?/std", "internals/std", "units/std"]
-alloc = ["hashes/alloc", "hex-stable?/alloc", "hex-unstable?/alloc", "internals/alloc", "units/alloc"]
-serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc", "hex"]
+std = ["alloc", "hashes/std", "hex?/std", "internals/std", "units/std"]
+alloc = ["hashes/alloc", "hex?/alloc", "internals/alloc", "units/alloc"]
+serde = ["dep:serde", "encoding/serde", "hashes/serde", "internals/serde", "units/serde", "alloc", "hex"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
-hex = ["dep:hex-stable", "dep:hex-unstable", "hashes/hex", "internals/hex"]
+hex = ["dep:hex", "hashes/hex", "encoding/hex"]
 
 [dependencies]
-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "=1.0.0-rc.3", default-features = false }
-hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.19.0", default-features = false }
-internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0" }
-units = { package = "bitcoin-units", path = "../units", version = "=1.0.0-rc.4", default-features = false, features = [ "encoding" ] }
+encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0", default-features = false }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.1.0", default-features = false }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
+units = { package = "bitcoin-units", path = "../units", version = "0.5.0", default-features = false, features = [ "encoding" ] }
 
 arbitrary = { version = "1.4.1", optional = true }
-hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, optional = true }
-hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+hex = { package = "hex-conservative", version = "1.1.0", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, features = ["derive", "alloc"], optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.68"
 bincode = "1.3.1"
-hex_lit = "0.1.1"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -42,3 +41,21 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true
+
+[package.metadata.rbmt.api]
+enabled = true
+features = [["alloc"]]
+
+[package.metadata.rbmt.test]
+exact_features = [
+    ["alloc", "hex"],
+    ["alloc", "serde"],
+    ["hex", "serde"],
+    ["std", "hex"],
+    ["std", "serde"],
+    ["alloc", "hex", "serde"],
+    ["std", "hex", "serde"],
+]
+
+[package.metadata.rbmt.prerelease]
+enabled = true

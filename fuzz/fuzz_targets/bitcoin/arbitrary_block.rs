@@ -1,64 +1,33 @@
-use arbitrary::{Arbitrary, Unstructured};
+#![cfg_attr(fuzzing, no_main)]
+#![cfg_attr(not(fuzzing), allow(unused))]
+
 use bitcoin::block::{self, Block, BlockCheckedExt as _};
-use bitcoin::consensus::{deserialize, serialize};
-use honggfuzz::fuzz;
+use bitcoin::encoding::{decode_from_slice, encode_to_vec};
+use libfuzzer_sys::fuzz_target;
 
-fn do_test(data: &[u8]) {
-    let mut u = Unstructured::new(data);
-    let b = Block::arbitrary(&mut u);
+#[cfg(not(fuzzing))]
+fn main() {}
 
-    if let Ok(block) = b {
-        let serialized = serialize(&block);
+fn do_test(block: Block) {
+    let serialized = encode_to_vec(&block);
 
-        // Manually call all compute functions with unchecked block data.
-        let (header, transactions) = block.clone().into_parts();
-        block::compute_merkle_root(&transactions);
-        // Use 32-byte zero array as witness_reserved_value per BIP-0141 requirement.
-        block.compute_witness_commitment(&[0u8; 32]);
-        block::compute_witness_root(&transactions);
+    // Manually call all compute functions with unchecked block data.
+    let (header, transactions) = block.clone().into_parts();
+    block::compute_merkle_root(&transactions);
+    // Use 32-byte zero array as witness_reserved_value per BIP-0141 requirement.
+    block.compute_witness_commitment(&[0u8; 32]);
+    block::compute_witness_root(&transactions);
 
-        if let Ok(block) = Block::new_checked(header, transactions) {
-            let _ = block.bip34_block_height();
-            block.block_hash();
-            block.weight();
-        }
-
-        let deserialized: Result<Block, _> = deserialize(serialized.as_slice());
-        assert_eq!(deserialized.unwrap(), block);
+    if let Ok(block) = Block::new_checked(header, transactions) {
+        let _ = block.bip34_block_height();
+        block.block_hash();
+        block.weight();
     }
+
+    let deserialized: Result<Block, _> = decode_from_slice(serialized.as_slice());
+    assert_eq!(deserialized.unwrap(), block);
 }
 
-fn main() {
-    loop {
-        fuzz!(|data| {
-            do_test(data);
-        });
-    }
-}
-
-#[cfg(all(test, fuzzing))]
-mod tests {
-    fn extend_vec_from_hex(hex: &str, out: &mut Vec<u8>) {
-        let mut b = 0;
-        for (idx, c) in hex.as_bytes().iter().enumerate() {
-            b <<= 4;
-            match *c {
-                b'A'..=b'F' => b |= c - b'A' + 10,
-                b'a'..=b'f' => b |= c - b'a' + 10,
-                b'0'..=b'9' => b |= c - b'0',
-                _ => panic!("Bad hex"),
-            }
-            if (idx & 1) == 1 {
-                out.push(b);
-                b = 0;
-            }
-        }
-    }
-
-    #[test]
-    fn duplicate_crash() {
-        let mut a = Vec::new();
-        extend_vec_from_hex("00", &mut a);
-        super::do_test(&a);
-    }
-}
+fuzz_target!(|data: Block| {
+    do_test(data);
+});

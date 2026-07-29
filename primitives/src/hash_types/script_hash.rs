@@ -11,7 +11,7 @@ use core::str;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::hash160;
 
-use crate::script::{Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
+use crate::script::{PushBytes, PushBytesBuf, Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
 
 /// A 160-bit hash of Bitcoin Script bytecode.
 ///
@@ -20,6 +20,9 @@ use crate::script::{Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
 /// represent it.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ScriptHash(hash160::Hash);
+
+super::impl_debug!(ScriptHash);
+crate::impl_asref_push_bytes!(ScriptHash);
 
 impl ScriptHash {
     /// Constructs a new `ScriptHash` after first checking the script size.
@@ -86,7 +89,12 @@ impl fmt::Display for RedeemScriptSizeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for RedeemScriptSizeError {}
+impl std::error::Error for RedeemScriptSizeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { size: _ } = self;
+        None
+    }
+}
 
 // The new hash wrapper type.
 type HashType = ScriptHash;

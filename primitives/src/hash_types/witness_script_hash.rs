@@ -11,7 +11,7 @@ use core::str;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256;
 
-use crate::script::{WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
+use crate::script::{PushBytes, PushBytesBuf, WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
 
 /// SegWit (256-bit) version of a Bitcoin Script bytecode hash.
 ///
@@ -20,6 +20,9 @@ use crate::script::{WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
 /// scripts and have reversed representations, so this type cannot be used for both.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WScriptHash(sha256::Hash);
+
+super::impl_debug!(WScriptHash);
+crate::impl_asref_push_bytes!(WScriptHash);
 
 impl WScriptHash {
     /// Constructs a new `WScriptHash` after first checking the script size.
@@ -81,7 +84,12 @@ impl fmt::Display for WitnessScriptSizeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for WitnessScriptSizeError {}
+impl std::error::Error for WitnessScriptSizeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { size: _ } = self;
+        None
+    }
+}
 
 include!("./generic.rs");
 

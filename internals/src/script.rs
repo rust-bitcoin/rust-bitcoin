@@ -21,7 +21,7 @@ pub fn read_push_data_len(
 
     if data.len() < size {
         return Err(EarlyEndOfScriptError);
-    };
+    }
 
     let mut ret = 0;
     for (i, item) in data.take(size).enumerate() {
@@ -72,6 +72,6 @@ mod tests {
         let bytes = [0x01];
         let want = 0x01;
         let got = read_push_data_len(&mut bytes.iter(), PushDataLenLen::One).unwrap();
-        assert_eq!(got, want as usize);
+        assert_eq!(got, usize::try_from(want).unwrap());
     }
 }

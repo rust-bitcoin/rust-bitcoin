@@ -3,31 +3,25 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use hex::FromHex as _;
-use internals::ToU64 as _;
-
 use super::{
     opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
-    ScriptExtPriv as _, ScriptPubKeyBuf,
+    ScriptExtPriv as _, ScriptSigBuf, WitnessScript,
 };
-use crate::key::{
-    PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
-};
+use crate::key::{FullPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
-use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
-use crate::script::{self, ScriptHash, WScriptHash};
-use crate::taproot::TapNodeHash;
-use crate::{consensus, internal_macros};
+use crate::script::{self, BuilderExt as _};
+use crate::{internal_macros, ToU64 as _};
+
+#[rustfmt::skip] // Keep public re-exports separate.
+#[doc(inline)]
+pub use addresses::ScriptPubKeyBufExt;
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.
     pub trait ScriptBufExt<T> impl<T> for ScriptBuf<T> {
-        /// Constructs a new script builder
-        fn builder() -> Builder<T> { Builder::new() }
-
         /// Adds instructions to push an integer onto the stack.
         ///
         /// Integers are encoded as little-endian signed-magnitude numbers, but there are dedicated
@@ -70,44 +64,6 @@ internal_macros::define_extension_trait! {
             }
         }
 
-        /// Adds a single opcode to the script.
-        fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
-
-        /// Adds instructions to push some arbitrary data onto the stack.
-        ///
-        /// If the data can be exactly produced by a numeric opcode, that opcode
-        /// will be used, since its behavior is equivalent but will not violate minimality
-        /// rules. To avoid this, use [`ScriptBuf::push_slice_non_minimal`] which will always
-        /// use a push opcode.
-        ///
-        /// However, this method does *not* enforce any numeric minimality rules.
-        /// If your pushes should be interpreted as numbers, ensure your input does
-        /// not have any leading zeros. In particular, the number 0 should be encoded
-        /// as an empty string rather than as a single 0 byte.
-        fn push_slice<D: AsRef<PushBytes>>(&mut self, data: D) {
-            let bytes = data.as_ref().as_bytes();
-            if bytes.len() == 1 {
-                match bytes[0] {
-                    0x81 => { self.push_opcode(OP_1NEGATE); },
-                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1))); },
-                    _ => { self.push_slice_non_minimal(data); },
-                }
-            } else {
-                self.push_slice_non_minimal(data);
-            }
-        }
-
-        /// Adds instructions to push some arbitrary data onto the stack without minimality.
-        ///
-        /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
-        ///
-        /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
-        fn push_slice_non_minimal<D: AsRef<PushBytes>>(&mut self, data: D) {
-            let data = data.as_ref();
-            self.reserve(Self::reserved_len_for_slice(data.len()));
-            self.push_slice_no_opt(data);
-        }
-
         /// Add a single instruction to the script.
         ///
         /// # Panics
@@ -146,31 +102,11 @@ internal_macros::define_extension_trait! {
         fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
-        fn from_hex_prefixed(s: &str) -> Result<Self, consensus::FromHexError>
-            where Self: Sized
-        {
-            consensus::encode::deserialize_hex(s)
-        }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
         #[deprecated(since = "TBD", note = "use `from_hex_no_length_prefix()` instead")]
-        fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError>
+        fn from_hex(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError>
             where Self: Sized
         {
             Self::from_hex_no_length_prefix(s)
-        }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// This is **not** consensus encoding. If your hex string is a consensus encoded script
-        /// then use `ScriptBuf::from_hex_prefixed`.
-        fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::HexToBytesError>
-            where Self: Sized
-        {
-            let v = Vec::from_hex(s)?;
-            Ok(Self::from_bytes(v))
         }
 
         // This belongs only on RedeemScript and ScriptPubKey
@@ -184,73 +120,31 @@ internal_macros::define_extension_trait! {
 }
 
 crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`ScriptPubKeyBuf`] type.
-    pub trait ScriptPubKeyBufExt impl for ScriptPubKeyBuf {
-        /// Generates OP_RETURN-type of scriptPubkey for the given data.
-        fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
-            Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
+    /// Extension functionality for the [`ScriptSigBuf`] type.
+    pub trait ScriptSigBufExt impl for ScriptSigBuf {
+        /// Constructs a scriptSig required to spend a P2SH-P2WPKH output.
+        ///
+        /// The scriptSig pushes the P2WPKH redeem script (`0 <20-byte-pubkey-hash>`) which
+        /// is required when spending a P2SH-wrapped Segwit output. The witness data should
+        /// be provided separately using [`WitnessExt::p2wpkh`].
+        ///
+        /// [`WitnessExt::p2wpkh`]: crate::blockdata::witness::WitnessExt::p2wpkh
+        fn p2sh_p2wpkh(pubkey: FullPublicKey) -> Self {
+            let redeem_script: super::ScriptPubKeyBuf = Builder::new().push_int_unchecked(0).push_slice(pubkey.wpubkey_hash()).into_script();
+            Builder::new().push_slice(<&PushBytes>::try_from(redeem_script.as_bytes()).expect("redeem script is 22 bytes")).into_script()
         }
 
-        /// Generates P2PK-type of scriptPubkey.
-        fn new_p2pk(pubkey: PublicKey) -> Self {
-            Builder::new().push_key(pubkey).push_opcode(OP_CHECKSIG).into_script()
-        }
-
-        /// Generates P2PKH-type of scriptPubkey.
-        fn new_p2pkh(pubkey_hash: PubkeyHash) -> Self {
-            Builder::new()
-                .push_opcode(OP_DUP)
-                .push_opcode(OP_HASH160)
-                .push_slice(pubkey_hash)
-                .push_opcode(OP_EQUALVERIFY)
-                .push_opcode(OP_CHECKSIG)
-                .into_script()
-        }
-
-        /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
-        fn new_p2sh(script_hash: ScriptHash) -> Self {
-            Builder::new()
-                .push_opcode(OP_HASH160)
-                .push_slice(script_hash)
-                .push_opcode(OP_EQUAL)
-                .into_script()
-        }
-
-        /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-        fn new_p2wsh(script_hash: WScriptHash) -> Self {
-            // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-            script::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
-        }
-
-        /// Generates P2TR for script spending path using an internal public key and some optional
-        /// script tree Merkle root.
-        fn new_p2tr<K: Into<UntweakedPublicKey>>(
-            internal_key: K,
-            merkle_root: Option<TapNodeHash>,
-        ) -> Self {
-            let internal_key = internal_key.into();
-            let (output_key, _) = internal_key.tap_tweak(merkle_root);
-            // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
-            script::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
-        }
-
-        /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
-        fn new_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
-            // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
-            script::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
-        }
-
-        /// Generates pay to anchor output.
-        fn new_p2a() -> Self {
-            script::new_witness_program_unchecked(WitnessVersion::V1, P2A_PROGRAM)
-        }
-
-        /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
-        fn new_witness_program(witness_program: &WitnessProgram) -> Self {
-            Builder::new()
-                .push_opcode(witness_program.version().into())
-                .push_slice(witness_program.program())
-                .into_script()
+        /// Constructs a scriptSig required to spend a P2SH-P2WSH output.
+        ///
+        /// The scriptSig pushes the P2WSH redeem script (`0 <32-byte-script-hash>`) which
+        /// is required when spending a P2SH-wrapped Segwit output. The witness data should
+        /// be provided separately using [`WitnessExt::p2wsh`].
+        ///
+        /// [`WitnessExt::p2wsh`]: crate::blockdata::witness::WitnessExt::p2wsh
+        fn p2sh_p2wsh(witness_script: &WitnessScript) -> Result<ScriptSigBuf, super::WitnessScriptSizeError> {
+            let hash = witness_script.wscript_hash()?;
+            let redeem_script: super::ScriptPubKeyBuf = Builder::new().push_int_unchecked(0).push_slice(hash).into_script();
+            Ok(Builder::new().push_slice(<&PushBytes>::try_from(redeem_script.as_bytes()).expect("redeem script is 34 bytes")).into_script())
         }
     }
 }

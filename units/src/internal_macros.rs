@@ -73,10 +73,12 @@ pub(crate) use impl_op_for_references;
 macro_rules! impl_add_assign {
     ($ty:ident) => {
         impl core::ops::AddAssign<$ty> for $ty {
+            #[inline]
             fn add_assign(&mut self, rhs: $ty) { *self = *self + rhs }
         }
 
         impl core::ops::AddAssign<&$ty> for $ty {
+            #[inline]
             fn add_assign(&mut self, rhs: &$ty) { *self = *self + *rhs }
         }
     };
@@ -90,6 +92,7 @@ pub(crate) use impl_add_assign;
 macro_rules! impl_add_assign_for_results {
     ($ty:ident) => {
         impl ops::AddAssign<$ty> for NumOpResult<$ty> {
+            #[inline]
             fn add_assign(&mut self, rhs: $ty) {
                 match self {
                     Self::Error(_) => *self = Self::Error(NumOpError::while_doing(MathOp::Add)),
@@ -99,6 +102,7 @@ macro_rules! impl_add_assign_for_results {
         }
 
         impl ops::AddAssign<Self> for NumOpResult<$ty> {
+            #[inline]
             fn add_assign(&mut self, rhs: Self) {
                 match (&self, rhs) {
                     (Self::Valid(_), Self::Valid(rhs)) => *self += rhs,
@@ -117,6 +121,7 @@ pub(crate) use impl_add_assign_for_results;
 macro_rules! impl_sub_assign_for_results {
     ($ty:ident) => {
         impl ops::SubAssign<$ty> for NumOpResult<$ty> {
+            #[inline]
             fn sub_assign(&mut self, rhs: $ty) {
                 match self {
                     Self::Error(_) => *self = Self::Error(NumOpError::while_doing(MathOp::Sub)),
@@ -126,6 +131,7 @@ macro_rules! impl_sub_assign_for_results {
         }
 
         impl ops::SubAssign<Self> for NumOpResult<$ty> {
+            #[inline]
             fn sub_assign(&mut self, rhs: Self) {
                 match (&self, rhs) {
                     (Self::Valid(_), Self::Valid(rhs)) => *self -= rhs,
@@ -141,10 +147,12 @@ pub(crate) use impl_sub_assign_for_results;
 macro_rules! impl_sub_assign {
     ($ty:ident) => {
         impl core::ops::SubAssign<$ty> for $ty {
+            #[inline]
             fn sub_assign(&mut self, rhs: $ty) { *self = *self - rhs }
         }
 
         impl core::ops::SubAssign<&$ty> for $ty {
+            #[inline]
             fn sub_assign(&mut self, rhs: &$ty) { *self = *self - *rhs }
         }
     };
@@ -155,10 +163,12 @@ pub(crate) use impl_sub_assign;
 macro_rules! impl_mul_assign {
     ($ty:ty, $rhs:ident) => {
         impl core::ops::MulAssign<$rhs> for $ty {
+            #[inline]
             fn mul_assign(&mut self, rhs: $rhs) { *self = *self * rhs }
         }
 
         impl core::ops::MulAssign<&$rhs> for $ty {
+            #[inline]
             fn mul_assign(&mut self, rhs: &$rhs) { *self = *self * *rhs }
         }
     };
@@ -169,12 +179,80 @@ pub(crate) use impl_mul_assign;
 macro_rules! impl_div_assign {
     ($ty:ty, $rhs:ident) => {
         impl core::ops::DivAssign<$rhs> for $ty {
+            #[inline]
             fn div_assign(&mut self, rhs: $rhs) { *self = *self / rhs }
         }
 
         impl core::ops::DivAssign<&$rhs> for $ty {
+            #[inline]
             fn div_assign(&mut self, rhs: &$rhs) { *self = *self / *rhs }
         }
     };
 }
 pub(crate) use impl_div_assign;
+
+/// Implements Lower/UpperHex, Octal and Binary for a new-type `$ty`.
+///
+/// This macro can be used on raw new-types (e.g. `BlockHeight`), or those encapsulated
+/// per the privacy rules by accessing the inner value with a method `$fn`.
+macro_rules! impl_fmt_traits_for_u32_wrapper {
+    ($ty:ident) => {
+        impl core::fmt::LowerHex for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::LowerHex::fmt(&self.0, f)
+            }
+        }
+
+        impl core::fmt::UpperHex for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::UpperHex::fmt(&self.0, f)
+            }
+        }
+
+        impl core::fmt::Octal for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::Octal::fmt(&self.0, f)
+            }
+        }
+
+        impl core::fmt::Binary for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::Binary::fmt(&self.0, f)
+            }
+        }
+    };
+    ($ty:ident, $fn:ident) => {
+        impl core::fmt::LowerHex for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::LowerHex::fmt(&self.$fn(), f)
+            }
+        }
+
+        impl core::fmt::UpperHex for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::UpperHex::fmt(&self.$fn(), f)
+            }
+        }
+
+        impl core::fmt::Octal for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::Octal::fmt(&self.$fn(), f)
+            }
+        }
+
+        impl core::fmt::Binary for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::Binary::fmt(&self.$fn(), f)
+            }
+        }
+    };
+}
+pub(crate) use impl_fmt_traits_for_u32_wrapper;

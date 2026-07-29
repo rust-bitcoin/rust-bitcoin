@@ -9,12 +9,13 @@ fn bench_siphash24(c: &mut Criterion) {
     let mut g = c.benchmark_group("siphash24");
 
     for &size in &[1024usize, 65536] {
-        let mut engine = siphash24::HashEngine::with_keys(0, 0);
         let bytes = vec![1u8; size];
         g.throughput(Throughput::Bytes(size as u64));
         g.bench_function(BenchmarkId::new("engine_input", size), |b| {
             b.iter(|| {
+                let mut engine = siphash24::HashEngine::with_keys(0, 0);
                 engine.input(black_box(&bytes));
+                black_box(engine.finalize());
             });
         });
     }

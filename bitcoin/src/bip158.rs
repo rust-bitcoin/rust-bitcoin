@@ -38,60 +38,25 @@
 //!  ```
 
 use core::cmp::{self, Ordering};
-use core::convert::Infallible;
-use core::fmt;
 
 use hashes::{sha256d, siphash24};
 use internals::array::ArrayExt as _;
-use internals::{write_err, ToU64 as _};
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};
-use crate::consensus::{ReadExt, WriteExt};
+use crate::encoding::{CompactSizeEncoder, CompactSizeU64Decoder, ExactSizeEncoder as _};
 use crate::prelude::{BTreeSet, Borrow, Vec};
-use crate::script::{ScriptPubKey, ScriptPubKeyExt as _};
+use crate::script::ScriptPubKey;
 use crate::transaction::OutPoint;
+use crate::ToU64 as _;
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::Error;
 
 /// Golomb encoding parameter as in BIP-0158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
 const M: u64 = 784931;
-
-/// Errors for blockfilter.
-#[derive(Debug)]
-#[non_exhaustive]
-pub enum Error {
-    /// Missing UTXO, cannot calculate script filter.
-    UtxoMissing(OutPoint),
-    /// I/O error reading or writing binary serialization of the filter.
-    Io(io::Error),
-}
-
-impl From<Infallible> for Error {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
-            Self::Io(ref e) => write_err!(f, "I/O error"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::UtxoMissing(_) => None,
-            Self::Io(ref e) => Some(e),
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(io: io::Error) -> Self { Self::Io(io) }
-}
 
 /// A block filter, as described by BIP 158.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -188,10 +153,8 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
             .flat_map(|t| t.inputs.iter().map(|i| &i.previous_output))
             .map(script_for_coin)
         {
-            match script {
-                Ok(script) => self.add_element(script.borrow().as_bytes()),
-                Err(e) => return Err(e),
-            }
+            let script = script?;
+            self.add_element(script.borrow().as_bytes());
         }
         Ok(())
     }
@@ -257,7 +220,8 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().unwrap_or(0);
+        let n_elements = io::decode_from_read_with::<CompactSizeU64Decoder, _>(&mut *reader)
+            .map_err(Error::InvalidCompactSize)?;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -300,7 +264,8 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().unwrap_or(0);
+        let n_elements = io::decode_from_read_with::<CompactSizeU64Decoder, _>(&mut *reader)
+            .map_err(Error::InvalidCompactSize)?;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -375,7 +340,9 @@ impl<'a, W: Write> GcsFilterWriter<'a, W> {
         mapped.sort_unstable();
 
         // write number of elements as varint
-        let mut wrote = self.writer.emit_compact_size(mapped.len())?;
+        let mut encoder = CompactSizeEncoder::new(mapped.len());
+        let mut wrote = encoder.len();
+        io::drain_to_writer(&mut encoder, &mut self.writer)?;
 
         // write out deltas of sorted values into a Golomb-Rice coded bit stream
         let mut writer = BitStreamWriter::new(self.writer);
@@ -467,7 +434,7 @@ impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
         if nbits > 64 {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
-                "can not read more than 64 bits at once",
+                "cannot read more than 64 bits at once",
             ));
         }
         let mut data = 0u64;
@@ -502,7 +469,7 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
         if nbits > 64 {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
-                "can not write more than 64 bits at once",
+                "cannot write more than 64 bits at once",
             ));
         }
         let mut wrote = 0;
@@ -531,20 +498,76 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
     }
 }
 
+/// Error types for BIP-158
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    use internals::write_err;
+
+    use crate::transaction::OutPoint;
+
+    /// Errors for blockfilter.
+    #[derive(Debug)]
+    #[non_exhaustive]
+    pub enum Error {
+        /// Missing UTXO, cannot calculate script filter.
+        UtxoMissing(OutPoint),
+        /// Invalid CompactSize encoded element count in the filter.
+        InvalidCompactSize(io::ReadError<encoding::CompactSizeDecoderError>),
+        /// I/O error reading or writing binary serialization of the filter.
+        Io(io::Error),
+    }
+
+    impl From<Infallible> for Error {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for Error {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
+                Self::InvalidCompactSize(ref e) => write_err!(f, "invalid CompactSize"; e),
+                Self::Io(ref e) => write_err!(f, "I/O error"; e),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for Error {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::UtxoMissing(_) => None,
+                Self::InvalidCompactSize(ref e) => Some(e),
+                Self::Io(ref e) => Some(e),
+            }
+        }
+    }
+
+    impl From<io::Error> for Error {
+        fn from(io: io::Error) -> Self { Self::Io(io) }
+    }
+}
+
 #[cfg(test)]
 mod test {
+    #[cfg(feature = "std")]
     use std::collections::HashMap;
 
-    use hex_lit::hex;
+    use hex::hex;
+    #[cfg(feature = "std")]
     use serde_json::Value;
 
     use super::*;
-    use crate::consensus::encode::deserialize;
+    #[cfg(feature = "std")]
+    use crate::encoding::decode_from_slice;
+    #[cfg(feature = "std")]
     use crate::ScriptPubKeyBuf;
 
     #[test]
+    #[cfg(feature = "std")]
     fn blockfilters() {
-        let hex = |b| <Vec<u8> as hex::FromHex>::from_hex(b).unwrap();
+        let hex = |b| crate::hex::decode_to_vec(b).unwrap();
 
         // test vectors from: https://github.com/jimpo/bitcoin/blob/c7efb652f3543b001b4dd22186a354605b14f47e/src/test/data/blockfilters.json
         let data = include_str!("../tests/data/blockfilters.json");
@@ -552,7 +575,8 @@ mod test {
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
             let block_hash = t.get(1).unwrap().as_str().unwrap().parse::<BlockHash>().unwrap();
-            let block: Block = deserialize(&hex(t.get(2).unwrap().as_str().unwrap())).unwrap();
+            let block: Block =
+                decode_from_slice(&hex(t.get(2).unwrap().as_str().unwrap())).unwrap();
             let block = block.assume_checked(None);
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
@@ -586,7 +610,7 @@ mod test {
             assert!(filter
                 .match_all(
                     *block_hash,
-                    &mut txmap.iter().filter_map(|(_, s)| if !s.is_empty() {
+                    &mut txmap.values().filter_map(|s| if !s.is_empty() {
                         Some(s.as_bytes())
                     } else {
                         None
@@ -667,11 +691,45 @@ mod test {
             for p in &patterns {
                 query.push(p);
             }
-            query.push(&hex!("abcdef"));
+            let extra = hex!("abcdef");
+            query.push(&extra);
             assert!(!reader
                 .match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
                 .unwrap());
         }
+    }
+
+    #[test]
+    fn malformed_filter_count_errors() {
+        // Check the inner private error type via text
+        fn assert_error_string(result: Result<bool, Error>, substring: &str) {
+            match result {
+                Err(Error::InvalidCompactSize(io::ReadError::Decode(c_err))) => {
+                    let err_msg = format!("{}", c_err);
+                    assert!(err_msg.contains(substring));
+                }
+                _ => panic!("Incorrect error type: {:?}", result),
+            }
+        }
+
+        let query = [hex!("000000")];
+        let reader = GcsFilterReader::new(0, 0, M, P);
+
+        let mut bytes = &[0xfd][..];
+        let result = reader.match_any(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert_error_string(result, "required at least");
+
+        let mut bytes = &[0xfd][..];
+        let result = reader.match_all(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert_error_string(result, "required at least");
+
+        let mut bytes = &[0xfd, 0xfc, 0x00][..];
+        let result = reader.match_any(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert_error_string(result, "not encoded minimally");
+
+        let mut bytes = &[0xfd, 0xfc, 0x00][..];
+        let result = reader.match_all(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert_error_string(result, "not encoded minimally");
     }
 
     #[test]

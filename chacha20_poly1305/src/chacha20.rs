@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The ChaCha20 stream cipher from RFC8439.
+//! The `ChaCha20` stream cipher from RFC8439.
 
 use core::ops::BitXor;
 
-/// The first four words (32-bit) of the ChaCha stream cipher state are constants.
-const WORD_1: u32 = 0x61707865;
-const WORD_2: u32 = 0x3320646e;
-const WORD_3: u32 = 0x79622d32;
-const WORD_4: u32 = 0x6b206574;
+/// The first four words (32-bit) of the `ChaCha` stream cipher state are constants.
+const WORD_1: u32 = 0x6170_7865;
+const WORD_2: u32 = 0x3320_646e;
+const WORD_3: u32 = 0x7962_2d32;
+const WORD_4: u32 = 0x6b20_6574;
 
 /// The cipher's block size is 64 bytes.
 const CHACHA_BLOCKSIZE: usize = 64;
 
 /// A 256-bit secret key shared by the parties communicating.
-#[derive(Clone, Copy)]
-pub struct Key([u8; 32]);
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Key(pub(super) [u8; 32]);
 
 impl Key {
     /// Constructs a new key.
@@ -23,7 +23,7 @@ impl Key {
 }
 
 /// A 96-bit initialization vector (IV), or nonce.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Nonce([u8; 12]);
 
 impl Nonce {
@@ -64,7 +64,7 @@ impl UpTo3<3> for () {}
 /// In the future, a "blacklist" for the alignment option might be useful to
 /// disable it on architectures which definitely do not support SIMD in order to avoid
 /// needless memory inefficiencies.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct U32x4([u32; 4]);
 
 impl U32x4 {
@@ -143,7 +143,7 @@ impl BitXor for U32x4 {
 ///   4   5   6   7
 ///   8   9  10  11
 ///  12  13  14  15
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct State {
     matrix: [U32x4; 4],
 }
@@ -198,7 +198,7 @@ impl State {
     /// The column quarter rounds are made up of indexes: `[0,4,8,12]`, `[1,5,9,13]`, `[2,6,10,14]`, `[3,7,11,15]`.
     /// The diagonals quarter rounds are made up of indexes: `[0,5,10,15]`, `[1,6,11,12]`, `[2,7,8,13]`, `[3,4,9,14]`.
     ///
-    /// The underlying quarter_round function is vectorized using the
+    /// The underlying `quarter_round` function is vectorized using the
     /// u32x4 type in order to perform 4 quarter round functions at the same time.
     /// This is a little more difficult to read, but it gives the compiler
     /// a strong hint to use the performant SIMD instructions.
@@ -222,7 +222,7 @@ impl State {
         [a, b, c, d]
     }
 
-    /// Transforms the state by performing the ChaCha block function.
+    /// Transforms the state by performing the `ChaCha` block function.
     #[inline(always)]
     fn chacha_block(&mut self) {
         let mut working_state = self.matrix;
@@ -248,10 +248,11 @@ impl State {
     }
 }
 
-/// The ChaCha20 stream cipher from RFC8439.
+/// The `ChaCha20` stream cipher from RFC8439.
 ///
 /// The 20-round IETF version uses a 96-bit nonce and 32-bit block counter. This is the
 /// variant used in the Bitcoin ecosystem, including BIP-0324.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChaCha20 {
     /// Secret key shared by the parties communicating.
     key: Key,
@@ -259,24 +260,25 @@ pub struct ChaCha20 {
     nonce: Nonce,
     /// Internal block index of keystream.
     block_count: u32,
-    /// Internal byte offset index of the block_count.
+    /// Internal byte offset index of the `block_count`.
     seek_offset_bytes: usize,
 }
 
 impl ChaCha20 {
-    /// Make a new instance of ChaCha20 from an index in the keystream.
+    /// Make a new instance of `ChaCha20` from an index in the keystream.
     pub const fn new(key: Key, nonce: Nonce, seek: u32) -> Self {
         let block_count = seek / 64;
         let seek_offset_bytes = (seek % 64) as usize;
         Self { key, nonce, block_count, seek_offset_bytes }
     }
 
-    /// Make a new instance of ChaCha20 from a block in the keystream.
+    /// Make a new instance of `ChaCha20` from a block in the keystream.
     pub const fn new_from_block(key: Key, nonce: Nonce, block: u32) -> Self {
         Self { key, nonce, block_count: block, seek_offset_bytes: 0 }
     }
 
     /// Gets the keystream for a specific block.
+    #[cfg(not(chacha20_poly1305_fuzz))]
     #[inline(always)]
     fn keystream_at_block(&self, block: u32) -> [u8; 64] {
         let mut state = State::new(self.key, self.nonce, block);
@@ -284,7 +286,12 @@ impl ChaCha20 {
         state.keystream()
     }
 
+    /// Gets the keystream for a specific block.
+    #[cfg(chacha20_poly1305_fuzz)]
+    fn keystream_at_block(&self, _block: u32) -> [u8; 64] { [0u8; 64] }
+
     /// Apply the keystream to a buffer updating the cipher block state as necessary.
+    #[cfg(not(chacha20_poly1305_fuzz))]
     pub fn apply_keystream(&mut self, buffer: &mut [u8]) {
         // If we have an initial offset, handle the first partial block to get back to alignment.
         let remaining_buffer = if self.seek_offset_bytes != 0 {
@@ -331,6 +338,10 @@ impl ChaCha20 {
         }
     }
 
+    /// Apply the keystream to a buffer updating the cipher block state as necessary.
+    #[cfg(chacha20_poly1305_fuzz)]
+    pub fn apply_keystream(&mut self, _buffer: &mut [u8]) {}
+
     /// Gets the keystream for specified block.
     pub fn get_keystream(&self, block: u32) -> [u8; 64] { self.keystream_at_block(block) }
 
@@ -350,9 +361,7 @@ impl ChaCha20 {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use alloc::vec::Vec;
-
-    use hex::prelude::*;
+    use hex::{hex, DisplayHex as _};
 
     use super::*;
 
@@ -360,19 +369,19 @@ mod tests {
     fn chacha_block() {
         let mut state = State {
             matrix: [
-                U32x4([0x61707865, 0x3320646e, 0x79622d32, 0x6b206574]),
-                U32x4([0x03020100, 0x07060504, 0x0b0a0908, 0x0f0e0d0c]),
-                U32x4([0x13121110, 0x17161514, 0x1b1a1918, 0x1f1e1d1c]),
-                U32x4([0x00000001, 0x09000000, 0x4a000000, 0x00000000]),
+                U32x4([0x6170_7865, 0x3320_646e, 0x7962_2d32, 0x6b20_6574]),
+                U32x4([0x0302_0100, 0x0706_0504, 0x0b0a_0908, 0x0f0e_0d0c]),
+                U32x4([0x1312_1110, 0x1716_1514, 0x1b1a_1918, 0x1f1e_1d1c]),
+                U32x4([0x0000_0001, 0x0900_0000, 0x4a00_0000, 0x0000_0000]),
             ],
         };
         state.chacha_block();
 
         let expected = [
-            U32x4([0xe4e7f110, 0x15593bd1, 0x1fdd0f50, 0xc47120a3]),
-            U32x4([0xc7f4d1c7, 0x0368c033, 0x9aaa2204, 0x4e6cd4c3]),
-            U32x4([0x466482d2, 0x09aa9f07, 0x05d7c214, 0xa2028bd9]),
-            U32x4([0xd19c12b5, 0xb94e16de, 0xe883d0cb, 0x4e3c50a2]),
+            U32x4([0xe4e7_f110, 0x1559_3bd1, 0x1fdd_0f50, 0xc471_20a3]),
+            U32x4([0xc7f4_d1c7, 0x0368_c033, 0x9aaa_2204, 0x4e6c_d4c3]),
+            U32x4([0x4664_82d2, 0x09aa_9f07, 0x05d7_c214, 0xa202_8bd9]),
+            U32x4([0xd19c_12b5, 0xb94e_16de, 0xe883_d0cb, 0x4e3c_50a2]),
         ];
 
         for (actual, expected) in state.matrix.iter().zip(expected.iter()) {
@@ -382,12 +391,8 @@ mod tests {
 
     #[test]
     fn prepare_state() {
-        let key =
-            Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-                .unwrap()
-                .try_into()
-                .unwrap());
-        let nonce = Nonce(Vec::from_hex("000000090000004a00000000").unwrap().try_into().unwrap());
+        let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
+        let nonce = Nonce(hex!("000000090000004a00000000"));
         let count = 1;
         let state = State::new(key, nonce, count);
         assert_eq!(state.matrix[1].0[0].to_be_bytes().to_lower_hex_string(), "03020100");
@@ -399,12 +404,8 @@ mod tests {
 
     #[test]
     fn small_plaintext() {
-        let key =
-            Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-                .unwrap()
-                .try_into()
-                .unwrap());
-        let nonce = Nonce(Vec::from_hex("000000090000004a00000000").unwrap().try_into().unwrap());
+        let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
+        let nonce = Nonce(hex!("000000090000004a00000000"));
         let count = 1;
         let mut chacha = ChaCha20::new(key, nonce, count);
         let mut binding = [8; 3];
@@ -416,12 +417,8 @@ mod tests {
 
     #[test]
     fn modulo_64() {
-        let key =
-            Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-                .unwrap()
-                .try_into()
-                .unwrap());
-        let nonce = Nonce(Vec::from_hex("000000090000004a00000000").unwrap().try_into().unwrap());
+        let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
+        let nonce = Nonce(hex!("000000090000004a00000000"));
         let count = 1;
         let mut chacha = ChaCha20::new(key, nonce, count);
         let mut binding = [8; 64];
@@ -431,40 +428,34 @@ mod tests {
         assert_eq!([8; 64], binding);
     }
 
+    #[cfg(not(chacha20_poly1305_fuzz))]
     #[test]
     fn rfc_standard() {
-        let key =
-            Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-                .unwrap()
-                .try_into()
-                .unwrap());
-        let nonce = Nonce(Vec::from_hex("000000000000004a00000000").unwrap().try_into().unwrap());
+        let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
+        let nonce = Nonce(hex!("000000000000004a00000000"));
         let count = 64;
         let mut chacha = ChaCha20::new(key, nonce, count);
         let mut binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
         let to = binding;
         chacha.apply_keystream(&mut binding[..]);
-        assert_eq!(binding[..], Vec::from_hex("6e2e359a2568f98041ba0728dd0d6981e97e7aec1d4360c20a27afccfd9fae0bf91b65c5524733ab8f593dabcd62b3571639d624e65152ab8f530c359f0861d807ca0dbf500d6a6156a38e088a22b65e52bc514d16ccf806818ce91ab77937365af90bbf74a35be6b40b8eedf2785e42874d").unwrap());
+        assert_eq!(binding[..], hex!("6e2e359a2568f98041ba0728dd0d6981e97e7aec1d4360c20a27afccfd9fae0bf91b65c5524733ab8f593dabcd62b3571639d624e65152ab8f530c359f0861d807ca0dbf500d6a6156a38e088a22b65e52bc514d16ccf806818ce91ab77937365af90bbf74a35be6b40b8eedf2785e42874d"));
         let mut chacha = ChaCha20::new(key, nonce, count);
         chacha.apply_keystream(&mut binding[..]);
         let binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
         assert_eq!(binding, to);
     }
 
+    #[cfg(not(chacha20_poly1305_fuzz))]
     #[test]
     fn new_from_block() {
-        let key =
-            Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-                .unwrap()
-                .try_into()
-                .unwrap());
-        let nonce = Nonce(Vec::from_hex("000000000000004a00000000").unwrap().try_into().unwrap());
+        let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
+        let nonce = Nonce(hex!("000000000000004a00000000"));
         let block: u32 = 1;
         let mut chacha = ChaCha20::new_from_block(key, nonce, block);
         let mut binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
         let to = binding;
         chacha.apply_keystream(&mut binding[..]);
-        assert_eq!(binding[..], Vec::from_hex("6e2e359a2568f98041ba0728dd0d6981e97e7aec1d4360c20a27afccfd9fae0bf91b65c5524733ab8f593dabcd62b3571639d624e65152ab8f530c359f0861d807ca0dbf500d6a6156a38e088a22b65e52bc514d16ccf806818ce91ab77937365af90bbf74a35be6b40b8eedf2785e42874d").unwrap());
+        assert_eq!(binding[..], hex!("6e2e359a2568f98041ba0728dd0d6981e97e7aec1d4360c20a27afccfd9fae0bf91b65c5524733ab8f593dabcd62b3571639d624e65152ab8f530c359f0861d807ca0dbf500d6a6156a38e088a22b65e52bc514d16ccf806818ce91ab77937365af90bbf74a35be6b40b8eedf2785e42874d"));
         chacha.block(block);
         chacha.apply_keystream(&mut binding[..]);
         let binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
@@ -473,12 +464,8 @@ mod tests {
 
     #[test]
     fn multiple_partial_applies() {
-        let key =
-            Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-                .unwrap()
-                .try_into()
-                .unwrap());
-        let nonce = Nonce(Vec::from_hex("000000000000004a00000000").unwrap().try_into().unwrap());
+        let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
+        let nonce = Nonce(hex!("000000000000004a00000000"));
 
         // Create two instances, one for a full single pass and one for chunked partial calls.
         let mut chacha_full = ChaCha20::new(key, nonce, 0);

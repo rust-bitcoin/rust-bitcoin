@@ -3,9 +3,8 @@
 //! Demonstrate creating a transaction that spends to and from p2tr outputs.
 
 use bitcoin::ext::*;
-use bitcoin::key::{Keypair, TapTweak, TweakedKeypair, UntweakedPublicKey};
+use bitcoin::key::{Keypair, PrivateKey, TapTweak, TweakedKeypair, UntweakedPublicKey};
 use bitcoin::locktime::absolute;
-use bitcoin::secp256k1::{rand, SecretKey};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::{
     transaction, Address, Amount, Network, OutPoint, ScriptPubKeyBuf, ScriptSigBuf, Sequence,
@@ -19,7 +18,7 @@ const CHANGE_AMOUNT: Amount = Amount::from_sat_u32(14_999_000); // 1000 sat fee.
 fn main() {
     // Get a keypair we control. In a real application these would come from a stored secret.
     let keypair = senders_keys();
-    let (internal_key, _parity) = keypair.x_only_public_key();
+    let internal_key = keypair.to_x_only_public_key();
 
     // Get an unspent output that is locked to the key above that we control.
     // In a real application these would come from the chain.
@@ -65,12 +64,9 @@ fn main() {
         .taproot_key_spend_signature_hash(input_index, &prevouts, sighash_type)
         .expect("failed to construct sighash");
 
-    // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
+    // Sign the sighash and update the witness stack.
     let tweaked: TweakedKeypair = keypair.tap_tweak(None);
-    let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), tweaked.as_keypair());
-
-    // Update the witness stack.
-    let signature = bitcoin::taproot::Signature { signature, sighash_type };
+    let signature = sighash.sign_key_spend(&tweaked, sighash_type);
     *sighasher.witness_mut(input_index).unwrap() = Witness::p2tr_key_spend(&signature);
 
     // Get the signed transaction.
@@ -84,8 +80,8 @@ fn main() {
 ///
 /// In a real application these would be actual secrets.
 fn senders_keys() -> Keypair {
-    let sk = SecretKey::new(&mut rand::rng());
-    Keypair::from_secret_key(&sk)
+    let sk = PrivateKey::generate();
+    Keypair::from_private_key(&sk)
 }
 
 /// A dummy address for the receiver.

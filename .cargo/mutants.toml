@@ -11,7 +11,8 @@ exclude_re = [
     "deserialize", # Skip serde mutation tests
     "serde_details::<impl de::Visitor<'_>", # Skip serde mutation tests
     "Iterator", # Mutating operations in an iterator can result in an infinite loop
-    "<impl .*Decodable for .*>::decoder", # Mutant replacing Default::default() is equivalent to returning new()
+    "Decode::decoder", # Mutant replacing Self::Decoder::default() with Default::default() is equivalent
+    "<impl .*Decode for .*>::decoder", # Mutant replacing Default::default() is equivalent to returning new()
     "<impl .*Decoder for .*>::read_limit", # Function is for optimization and does not need to be tested.
 
 
@@ -23,6 +24,7 @@ exclude_re = [
     "units/.* dec_width", # Replacing num /= 10 with num %=10 in a loop causes a timeout due to infinite loop
     # src/locktime/relative.rs
     "units/.* LockTime::to_consensus_u32", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "units/.* CompactTarget::to_hex", # Deprecated
     "units/.* FeeRate::fee_vb", # Deprecated
     "units/.* FeeRate::fee_wu", # Deprecated
     "units/.* SignedAmount::checked_abs", # Deprecated
@@ -34,6 +36,7 @@ exclude_re = [
     "units/.* Height::to_consensus_u32", # Deprecated
     "units/.* Sequence::to_hex", # Deprecated
     "units/.* Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "units/.* \\| with \\^ in Target::to_compact_lossy", # compact | (size << 24). compact and size are bitwise independent, so impossible to tell ^ from |.
 
     # primitives
     "primitives/.* Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
@@ -43,7 +46,6 @@ exclude_re = [
     "primitives/.* decode_cursor", # Mutating operations in decode_cursor can result in an infinite loop
     "primitives/.* fmt_debug", # Mutants from formatting/display changes
     "primitives/.* fmt_debug_pretty", # Mutants from formatting/display changes
-    "primitives/.* CompactTarget::to_hex", # Deprecated
     "primitives/.* Script::to_hex", # Deprecated
     "primitives/.* Script<T>::to_hex", # Deprecated
     "primitives/.* ScriptBuf::to_hex", # Deprecated
@@ -52,8 +54,24 @@ exclude_re = [
     "primitives/.* <impl Encoder for .*Encoder<'_>>::advance", # Replacing the return with true causes an infinite loop.
     "primitives/.* <impl Decoder for WitnessDecoder>::push_bytes", # Replacing == with != causes an infinite loop
     "primitives/.* WitnessDecoder::resize_if_needed", # Replacing *= with += still resizes the buffer making the mutant untestable.
+    "primitives/.* WitnessDecoder::reserve_batch", # Mutations cause an infinite loop
+    "primitives/.* <impl encoding::Encoder for WitnessesEncoder<'_>>::advance -> bool", # Replacing with `true` cause an infinite loop
+    "primitives/.* <impl encoding::Encoder for WitnessEncoder<'_>>::advance -> bool", # Replacing with `true` cause an infinite loop
+    "primitives/.* == with != in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # Replacing == with != causes an infinite loop
     "primitives/.* replace \\+ with \\* in MerkleNode::calculate_root", # Replacing + with * causes an infinite loop
     "primitives/.* replace == with != in MerkleNode::calculate_root", # Replacing == with != isn't caught unless alloc is disabled.
+    "primitives/.* replace \\* with \\+ in <impl encoding::Decoder for WitnessDecoder>::end", # reserve(witness_elements * 4) only reserves capacity
+    "primitives/.* replace \\* with / in <impl encoding::Decoder for WitnessDecoder>::end", # reserve(witness_elements * 4) only reserves capacity
+    "primitives/.* replace && with \\|\\| in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # reserve_exact only reserves capacity
+    "primitives/.* replace \\+ with \\* in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # reserve_exact only reserves capacity
+    "primitives/.* replace \\* with \\+ in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # reserve_exact only reserves capacity
+    "primitives/.* replace \\* with / in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # reserve_exact only reserves capacity
+    # TODO: remove after x86 SIMD support lands (https://github.com/rust-bitcoin/rust-bitcoin/issues/5540)
+    "primitives/.* calculate_root_batched", # Behind cfg(target_arch = "aarch64"), not compiled on x86_64 CI runner
+    "primitives/.* <impl MerkleNode for TxMerkleNode>::calculate_root", # Behind cfg(target_arch = "aarch64"), not compiled on x86_64 CI runner
+    "primitives/.* <impl MerkleNode for WitnessMerkleNode>::calculate_root", # Behind cfg(target_arch = "aarch64"), not compiled on x86_64 CI runner
+    "primitives/.* replace \\% with \\+ in ScriptBuf<T>::push_slice_no_opt", # as u8 truncation makes >= 0x100 impossible to test
+    "primitives/.* replace \\|\\| with && in Script<T>::witness_version", # && is impossible, and every byte is rejected by the length checks
 
     # consensus_encoding - most of these are for mutations in the logic used to determine when to stop encoding or decoding.
     "consensus_encoding/.* <impl Decoder for ArrayDecoder<N>>::push_bytes", # Mutations cause an infinite loop
@@ -63,4 +81,10 @@ exclude_re = [
     "consensus_encoding/.* decode_from_slice", # Mutations cause an infinite loop
     "consensus_encoding/.* decode_from_read", # Mutations cause an infinite loop
     "consensus_encoding/.* <impl Decoder for .*>::push_bytes", # Mutations cause an infinite loop
+    "consensus_encoding/.* <impl Encoder for .*>::advance", # Replacing the return with true causes an infinite loop.
+    "consensus_encoding/.* EncoderStatus::has_more", # Replacing with true causes an infinite loop
+    "consensus_encoding/.* DecoderStatus::is_ready", # Replacing with true causes an infinite loop
+    "consensus_encoding/.* delete ! in drain_to_vec", # Causes an infinite loop.
+    "consensus_encoding/.* delete ! in drain_to_writer", # Causes an infinite loop.
+    "consensus_encoding/.* ExactSizeEncoder::is_empty", # Too trivial to test.
 ]

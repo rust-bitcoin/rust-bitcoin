@@ -10,16 +10,16 @@ permissions: {}
 
 jobs:
   zizmor:
-    name: zizmor latest via PyPI
+    name: zizmor via PyPI
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v5
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v5
 
       - name: Run zizmor 🌈
-        run: uvx zizmor .
+        run: uvx zizmor@1.22.0 .

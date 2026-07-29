@@ -13,12 +13,9 @@ bitcoin/target
 hashes/target
 
 # Test artifacts
-bitcoin/dep_test
 mutants.out*
-
-# Fuzz artifacts
-hfuzz_target
-hfuzz_workspace
+fuzz/coverage
 
 # Local tooling
 .maintainer-tools
+Cargo.lock.backup

@@ -15,7 +15,7 @@ jobs:
       pull-requests: write
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0 # we need full history for cargo semver-checks
           persist-credentials: false
@@ -23,9 +23,9 @@ jobs:
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Select stable-version"
         run: |
-          rustup default $(cat ./.github/workflows/stable-version)
+          rustup default $(cargo metadata --format-version 1 | jq -r '.metadata.rbmt.toolchains.stable')
       - name: "Install cargo-binstall"
-        uses: cargo-bins/cargo-binstall@b3f755e95653da9a2d25b99154edfdbd5b356d0a # v1.15.10
+        uses: cargo-bins/cargo-binstall@aaa84a43aec4955a42c5ffc65d258961e39f276e # v1.19.1
       - name: "Binstall pinned cargo-semver-checks"
         run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
       - name: "Run semver checker script"
@@ -43,7 +43,7 @@ jobs:
           echo "$PR_NUMBER" > ./semver-break
       - name: "Save breaking state"
         if: ${{ hashFiles('semver-break') != '' }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: semver-break
           path: semver-break
@@ -58,16 +58,16 @@ jobs:
       pull-requests: write
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: "Install Rustup"
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Select stable-version"
         run: |
-          rustup default $(cat ./.github/workflows/stable-version)
+          rustup default $(cargo metadata --format-version 1 | jq -r '.metadata.rbmt.toolchains.stable')
       - name: "Install cargo-binstall"
-        uses: cargo-bins/cargo-binstall@b3f755e95653da9a2d25b99154edfdbd5b356d0a # v1.15.10
+        uses: cargo-bins/cargo-binstall@aaa84a43aec4955a42c5ffc65d258961e39f276e # v1.19.1
       - name: "Binstall pinned cargo-semver-checks"
         run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
       - name: "Run semver checker script"

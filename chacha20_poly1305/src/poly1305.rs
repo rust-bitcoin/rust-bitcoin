@@ -2,17 +2,18 @@
 
 //! Poly1305 one-time message authenticator from RFC8439.
 //!
-//! Heavily inspired by the ["Donna"](https://github.com/floodyberry/poly1305-donna/blob/master/poly1305-donna-32.h) implementation in C
+//! Heavily inspired by the [`Donna`](https://github.com/floodyberry/poly1305-donna/blob/master/poly1305-donna-32.h) implementation in C
 //! and Loup Vaillant's [Poly1305 design article](https://loup-vaillant.fr/tutorials/poly1305-design).
 
 /// 2^26 for the 26-bit limbs.
-const BITMASK: u32 = 0x03ffffff;
+const BITMASK: u32 = 0x03ff_ffff;
 /// Number is encoded in five 26-bit limbs.
 const CARRY: u32 = 26;
 
 /// Poly1305 authenticator takes a 32-byte one-time key and a message and produces a 16-byte tag.
 ///
 /// 64-bit constant time multiplication and addition implementation.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Poly1305 {
     /// r part of the secret key.
     r: [u32; 5],
@@ -28,13 +29,14 @@ pub struct Poly1305 {
 
 impl Poly1305 {
     /// Initializes authenticator with a 32-byte one-time secret key.
+    #[cfg(not(chacha20_poly1305_fuzz))]
     pub const fn new(key: [u8; 32]) -> Self {
         // Taken from Donna. Assigns r to a 26-bit 5-limb number while simultaneously 'clamping' r.
-        let r0 = u32::from_le_bytes([key[0], key[1], key[2], key[3]]) & 0x3ffffff;
-        let r1 = (u32::from_le_bytes([key[3], key[4], key[5], key[6]]) >> 2) & 0x03ffff03;
-        let r2 = (u32::from_le_bytes([key[6], key[7], key[8], key[9]]) >> 4) & 0x03ffc0ff;
-        let r3 = (u32::from_le_bytes([key[9], key[10], key[11], key[12]]) >> 6) & 0x03f03fff;
-        let r4 = (u32::from_le_bytes([key[12], key[13], key[14], key[15]]) >> 8) & 0x000fffff;
+        let r0 = u32::from_le_bytes([key[0], key[1], key[2], key[3]]) & 0x03ff_ffff;
+        let r1 = (u32::from_le_bytes([key[3], key[4], key[5], key[6]]) >> 2) & 0x03ff_ff03;
+        let r2 = (u32::from_le_bytes([key[6], key[7], key[8], key[9]]) >> 4) & 0x03ff_c0ff;
+        let r3 = (u32::from_le_bytes([key[9], key[10], key[11], key[12]]) >> 6) & 0x03f0_3fff;
+        let r4 = (u32::from_le_bytes([key[12], key[13], key[14], key[15]]) >> 8) & 0x000f_ffff;
 
         let s0 = u32::from_le_bytes([key[16], key[17], key[18], key[19]]);
         let s1 = u32::from_le_bytes([key[20], key[21], key[22], key[23]]);
@@ -50,7 +52,20 @@ impl Poly1305 {
         }
     }
 
+    /// Initializes authenticator with a 32-byte one-time secret key.
+    #[cfg(chacha20_poly1305_fuzz)]
+    pub const fn new(key: [u8; 32]) -> Self {
+        let mut tag = [0u8; 16];
+        let mut i = 0;
+        while i < 16 {
+            tag[i] = key[i];
+            i += 1;
+        }
+        Self { r: [0; 5], s: [0; 4], acc: [0; 5], leftovers: tag, leftovers_len: 0 }
+    }
+
     /// Adds message to be authenticated, can be called multiple times before creating tag.
+    #[cfg(not(chacha20_poly1305_fuzz))]
     pub fn input(&mut self, message: &[u8]) {
         // Process previous leftovers if the message is long enough to fill the leftovers buffer. If
         // the message is too short then it will just be added to the leftovers at the end. Now if there
@@ -95,7 +110,12 @@ impl Poly1305 {
         }
     }
 
+    /// Adds message to be authenticated, can be called multiple times before creating tag.
+    #[cfg(chacha20_poly1305_fuzz)]
+    pub fn input(&mut self, _message: &[u8]) {}
+
     /// Generates authentication tag.
+    #[cfg(not(chacha20_poly1305_fuzz))]
     pub fn tag(mut self) -> [u8; 16] {
         // Add any remaining leftovers to accumulator.
         if self.leftovers_len > 0 {
@@ -142,7 +162,7 @@ impl Poly1305 {
         // a + s
         let mut tag: [u64; 4] = [0; 4];
         for i in 0..4 {
-            tag[i] = a[i] as u64 + self.s[i] as u64;
+            tag[i] = u64::from(a[i]) + u64::from(self.s[i]);
         }
 
         // Carry.
@@ -159,6 +179,10 @@ impl Poly1305 {
         ret
     }
 
+    /// Generates authentication tag.
+    #[cfg(chacha20_poly1305_fuzz)]
+    pub fn tag(self) -> [u8; 16] { self.leftovers }
+
     fn r_times_a(&mut self) {
         // Multiply and reduce.
         // While this looks complicated, it is a variation of schoolbook multiplication,
@@ -168,7 +192,7 @@ impl Poly1305 {
             for (j, t) in t.iter_mut().enumerate() {
                 let modulus: u64 = if i > j { 5 } else { 1 };
                 let start = (5 - i) % 5;
-                *t += modulus * self.r[i] as u64 * self.acc[(start + j) % 5] as u64;
+                *t += modulus * u64::from(self.r[i]) * u64::from(self.acc[(start + j) % 5]);
             }
         }
         // Carry.
@@ -223,19 +247,14 @@ fn _print_acc(num: &[u32; 5]) {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use alloc::vec::Vec;
-
-    use hex::prelude::*;
+    use hex::{hex, DisplayHex as _};
 
     use super::*;
 
+    #[cfg(not(chacha20_poly1305_fuzz))]
     #[test]
     fn rfc7539() {
-        let key = Vec::from_hex("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b")
-            .unwrap()
-            .as_slice()
-            .try_into()
-            .unwrap();
+        let key = hex!("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b");
         let mut poly = Poly1305::new(key);
         let message = b"Cryptographic Forum Research Group";
         poly.input(message);

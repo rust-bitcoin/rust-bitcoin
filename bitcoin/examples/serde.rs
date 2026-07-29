@@ -4,8 +4,6 @@
 //! For integer types that can have multiple units we typically provide a few different modules.
 
 use bitcoin::block::{Header, Version};
-use bitcoin::consensus::serde::Hex;
-use bitcoin::consensus::{self};
 use bitcoin::{
     amount, fee_rate, Amount, BlockHash, BlockTime, CompactTarget, FeeRate, TxMerkleNode,
 };
@@ -13,19 +11,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Foo {
-    /// Consensus encoded into hex is often the best option.
-    #[serde(with = "consensus::serde::With::<Hex>")]
-    header: Header,
-
-    /// This works but it's little-endian which may be hard to read.
+    /// Use `serde_as_consensus` for any type that implements `encoding::{Decodable, Encodable}`.
     ///
-    /// Integer wrapper types are more readable if they explicitly use a unit.
-    #[serde(with = "consensus::serde::With::<Hex>")]
-    this: Amount,
+    /// Consensus encode then use hex or binary depending on the serializer.
+    #[serde(with = "encoding::serde_as_consensus")]
+    header: Header,
 
     /// `Amount` can use sats or bitcoin (`as_btc`).
     #[serde(with = "amount::serde::as_sat")]
-    that: Amount,
+    amount: Amount,
 
     /// `FeeRate` can use kilo weight units or virtual bytes, both floor and ceil.
     #[serde(with = "fee_rate::serde::as_sat_per_kwu_floor")]
@@ -33,12 +27,7 @@ pub struct Foo {
 }
 
 fn main() {
-    let f = Foo {
-        header: dummy_header(),
-        this: Amount::ONE_SAT,
-        that: Amount::ONE_BTC,
-        fee_rate: FeeRate::DUST,
-    };
+    let f = Foo { header: dummy_header(), amount: Amount::ONE_BTC, fee_rate: FeeRate::DUST };
 
     let s = serde_json::to_string(&f).unwrap();
     println!("{s}");

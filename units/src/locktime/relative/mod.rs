@@ -14,15 +14,17 @@ use core::{convert, fmt};
 use arbitrary::{Arbitrary, Unstructured};
 use internals::const_casts;
 
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 #[cfg(doc)]
 use crate::relative;
-use crate::{parse_int, BlockHeight, BlockMtp, Sequence};
+use crate::{BlockHeight, BlockMtp, Sequence};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-    DisabledLockTimeError, InvalidHeightError, InvalidTimeError, IsSatisfiedByError,
-    IsSatisfiedByHeightError, IsSatisfiedByTimeError, TimeOverflowError,
+    DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError, InvalidHeightError,
+    InvalidTimeError, IsSatisfiedByError, IsSatisfiedByHeightError, IsSatisfiedByTimeError,
+    TimeOverflowError,
 };
 
 /// A relative lock time value, representing either a block height or time (512 second intervals).
@@ -198,7 +200,8 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// If `chain_tip` as not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    #[inline]
     pub fn is_satisfied_by(
         self,
         chain_tip_height: BlockHeight,
@@ -218,9 +221,6 @@ impl LockTime {
 
     /// Returns true if an output with this locktime can be spent in the next block.
     ///
-    /// If this function returns true then an output with this locktime can be spent in the next
-    /// block.
-    ///
     /// # Errors
     ///
     /// Returns an error if this lock is not lock-by-height.
@@ -234,14 +234,12 @@ impl LockTime {
             Self::Blocks(blocks) => blocks
                 .is_satisfied_by(chain_tip, utxo_mined_at)
                 .map_err(IsSatisfiedByHeightError::Satisfaction),
-            Self::Time(time) => Err(IsSatisfiedByHeightError::Incompatible(time)),
+            Self::Time(time) =>
+                Err(IsSatisfiedByHeightError::Incompatible(IncompatibleHeightError(time))),
         }
     }
 
     /// Returns true if an output with this locktime can be spent in the next block.
-    ///
-    /// If this function returns true then an output with this locktime can be spent in the next
-    /// block.
     ///
     /// # Errors
     ///
@@ -257,7 +255,8 @@ impl LockTime {
             Self::Time(time) => time
                 .is_satisfied_by(chain_tip, utxo_mined_at)
                 .map_err(IsSatisfiedByTimeError::Satisfaction),
-            Self::Blocks(blocks) => Err(IsSatisfiedByTimeError::Incompatible(blocks)),
+            Self::Blocks(blocks) =>
+                Err(IsSatisfiedByTimeError::Incompatible(IncompatibleTimeError(blocks))),
         }
     }
 
@@ -321,11 +320,7 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn is_implied_by_sequence(self, other: Sequence) -> bool {
-        if let Ok(other) = Self::from_sequence(other) {
-            self.is_implied_by(other)
-        } else {
-            false
-        }
+        Self::from_sequence(other).is_ok_and(|other| self.is_implied_by(other))
     }
 }
 
@@ -368,6 +363,7 @@ impl From<LockTime> for Sequence {
 
 #[cfg(feature = "serde")]
 impl serde::Serialize for LockTime {
+    #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -378,6 +374,7 @@ impl serde::Serialize for LockTime {
 
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for LockTime {
+    #[inline]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -386,10 +383,6 @@ impl<'de> serde::Deserialize<'de> for LockTime {
             .and_then(|n| Self::from_consensus(n).map_err(serde::de::Error::custom))
     }
 }
-
-#[deprecated(since = "1.0.0-rc.0", note = "use `NumberOfBlocks` instead")]
-#[doc(hidden)]
-pub type Height = NumberOfBlocks;
 
 /// A relative lock time lock-by-height value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -414,46 +407,47 @@ impl NumberOfBlocks {
     #[must_use]
     pub const fn to_height(self) -> u16 { self.0 }
 
-    /// Returns the inner `u16` value.
+    /// Constructs a new `NumberOfBlocks` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a block count or it does not
+    /// include the `0x` prefix.
     #[inline]
-    #[must_use]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `to_height` instead")]
-    #[doc(hidden)]
-    pub const fn value(self) -> u16 { self.0 }
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let block_count = parse_int::hex_u16_prefixed(s)?;
+        Ok(Self::from_height(block_count))
+    }
 
-    /// Returns the `u32` value used to encode this locktime in an nSequence field or
-    /// argument to `OP_CHECKSEQUENCEVERIFY`.
-    #[deprecated(
-        since = "1.0.0-rc.0",
-        note = "use `LockTime::from` followed by `to_consensus_u32` instead"
-    )]
-    pub const fn to_consensus_u32(self) -> u32 {
-        self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+    /// Constructs a new `NumberOfBlocks` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a block count or if it includes
+    /// the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        let block_count = parse_int::hex_u16_unprefixed(s)?;
+        Ok(Self::from_height(block_count))
     }
 
     /// Returns true if an output locked by height can be spent in the next block.
     ///
     /// # Errors
     ///
-    /// If `chain_tip` as not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockHeight,
         utxo_mined_at: crate::BlockHeight,
     ) -> Result<bool, InvalidHeightError> {
-        match chain_tip.checked_sub(utxo_mined_at) {
-            Some(diff) => {
-                if diff.to_u32() == u32::MAX {
-                    // Weird but ok none the less - protects against overflow below.
-                    return Ok(true);
-                }
-                // +1 because the next block will have height 1 higher than `chain_tip`.
-                Ok(u32::from(self.to_height()) <= diff.to_u32() + 1)
-            }
-            None => Err(InvalidHeightError { chain_tip, utxo_mined_at }),
-        }
+        chain_tip.checked_sub(utxo_mined_at)
+            .ok_or(InvalidHeightError { chain_tip, utxo_mined_at })
+            .map(|diff| u32::from(self.to_height()) <= diff.to_u32())
     }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(NumberOfBlocks);
 
 impl From<u16> for NumberOfBlocks {
     #[inline]
@@ -463,12 +457,9 @@ impl From<u16> for NumberOfBlocks {
 parse_int::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from);
 
 impl fmt::Display for NumberOfBlocks {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
-
-#[deprecated(since = "1.0.0-rc.0", note = "use `NumberOf512Seconds` instead")]
-#[doc(hidden)]
-pub type Time = NumberOf512Seconds;
 
 /// A relative lock time lock-by-time value.
 ///
@@ -483,7 +474,7 @@ impl NumberOf512Seconds {
     /// The minimum relative block time (0), can be included in any block.
     pub const MIN: Self = Self::ZERO;
 
-    /// The maximum relative block time (33,554,432 seconds or approx 388 days).
+    /// The maximum relative block time (33,553,920 seconds or approx 388 days).
     pub const MAX: Self = Self(u16::MAX);
 
     /// Constructs a new [`NumberOf512Seconds`] using time intervals where each interval is
@@ -536,47 +527,53 @@ impl NumberOf512Seconds {
     #[inline]
     pub const fn to_seconds(self) -> u32 { const_casts::u16_to_u32(self.0) * 512 }
 
-    /// Returns the inner `u16` value.
+    /// Constructs a new `NumberOf512Seconds` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a number of 512 second intervals
+    /// or it does not include the `0x` prefix.
     #[inline]
-    #[must_use]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `to_512_second_intervals` instead")]
-    #[doc(hidden)]
-    pub const fn value(self) -> u16 { self.0 }
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let block_count = parse_int::hex_u16_prefixed(s)?;
+        Ok(Self::from_512_second_intervals(block_count))
+    }
 
-    /// Returns the `u32` value used to encode this locktime in an nSequence field or
-    /// argument to `OP_CHECKSEQUENCEVERIFY`.
-    #[deprecated(
-        since = "1.0.0-rc.0",
-        note = "use `LockTime::from` followed by `to_consensus_u32` instead"
-    )]
-    pub const fn to_consensus_u32(self) -> u32 {
-        (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+    /// Constructs a new `NumberOf512Seconds` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a number of 512 second intervals
+    /// or if it includes the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        let block_count = parse_int::hex_u16_unprefixed(s)?;
+        Ok(Self::from_512_second_intervals(block_count))
     }
 
     /// Returns true if an output locked by time can be spent in the next block.
     ///
     /// # Errors
     ///
-    /// If `chain_tip` as not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockMtp,
         utxo_mined_at: crate::BlockMtp,
     ) -> Result<bool, InvalidTimeError> {
-        match chain_tip.checked_sub(utxo_mined_at) {
-            Some(diff) => {
-                // The locktime check in Core during block validation uses the MTP of the previous
-                // block - which is `chain_tip` here.
-                Ok(self.to_seconds() <= diff.to_u32())
-            }
-            None => Err(InvalidTimeError { chain_tip, utxo_mined_at }),
-        }
+        chain_tip
+            .checked_sub(utxo_mined_at)
+            .ok_or(InvalidTimeError { chain_tip, utxo_mined_at })
+            .map(|diff| self.to_seconds() <= diff.to_u32())
     }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(NumberOf512Seconds);
 
 parse_int::impl_parse_str_from_int_infallible!(NumberOf512Seconds, u16, from_512_second_intervals);
 
 impl fmt::Display for NumberOf512Seconds {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
@@ -781,8 +778,24 @@ mod tests {
         let err = lock_by_time.is_satisfied_by_height(chain_tip, mined_at).unwrap_err();
 
         let expected_time = NumberOf512Seconds::from_512_second_intervals(70);
-        assert_eq!(err, IsSatisfiedByHeightError::Incompatible(expected_time));
+        assert_eq!(
+            err,
+            IsSatisfiedByHeightError::Incompatible(IncompatibleHeightError(expected_time))
+        );
         assert!(!format!("{}", err).is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn invalid_height_error() {
+        // If chain tip precedes mined_at, should return an invalid height error
+        let mined_at = BlockHeight::from_u32(900_000);
+        let chain_tip = BlockHeight::from_u32(800_000);
+
+        let block_count = NumberOfBlocks::from_height(70); // Arbitrary value.
+        let err = block_count.is_satisfied_by(chain_tip, mined_at).unwrap_err();
+
+        assert!(matches!(err, InvalidHeightError { chain_tip: _, utxo_mined_at: _ }));
     }
 
     #[test]
@@ -796,8 +809,24 @@ mod tests {
         let err = lock_by_height.is_satisfied_by_time(chain_tip, mined_at).unwrap_err();
 
         let expected_height = NumberOfBlocks::from(10);
-        assert_eq!(err, IsSatisfiedByTimeError::Incompatible(expected_height));
+        assert_eq!(
+            err,
+            IsSatisfiedByTimeError::Incompatible(IncompatibleTimeError(expected_height))
+        );
         assert!(!format!("{}", err).is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn invalid_time_error() {
+        // If chain tip precedes mined_at, should return an invalid time error
+        let mined_at = BlockMtp::from_u32(1_734_567_890);
+        let chain_tip = BlockMtp::from_u32(1_600_000_000);
+
+        let time_interval = NumberOf512Seconds::from_512_second_intervals(10); // Arbitrary value.
+        let err = time_interval.is_satisfied_by(chain_tip, mined_at).unwrap_err();
+
+        assert!(matches!(err, InvalidTimeError { chain_tip: _, utxo_mined_at: _ }));
     }
 
     #[test]
@@ -821,7 +850,7 @@ mod tests {
         let lock1 = LockTime::Blocks(NumberOfBlocks::from(10));
         assert!(lock1.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
-        let lock2 = LockTime::Blocks(NumberOfBlocks::from(21));
+        let lock2 = LockTime::Blocks(NumberOfBlocks::from(20));
         assert!(lock2.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
         let lock3 = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(10));
@@ -863,7 +892,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(deprecated_in_future)]
     fn sanity_check() {
         assert_eq!(LockTime::from(NumberOfBlocks::MAX).to_consensus_u32(), u32::from(u16::MAX));
         assert_eq!(
@@ -955,47 +983,57 @@ mod tests {
 
         // Test case 1: Satisfaction (current_mtp >= utxo_mtp + required_seconds)
         // 10 intervals × 512 seconds = 5120 seconds
-        let time_lock = NumberOf512Seconds::from_512_second_intervals(10);
+        let time_lock = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(10));
         let chain_state1 = BlockMtp::new(timestamps);
         let utxo_state1 = BlockMtp::new(utxo_timestamps);
-        assert!(time_lock.is_satisfied_by(chain_state1, utxo_state1).unwrap());
+        assert!(time_lock.is_satisfied_by_time(chain_state1, utxo_state1).unwrap());
 
         // Test case 2: Not satisfied (current_mtp < utxo_mtp + required_seconds)
         let chain_state2 = BlockMtp::new(timestamps2);
         let utxo_state2 = BlockMtp::new(utxo_timestamps2);
-        assert!(!time_lock.is_satisfied_by(chain_state2, utxo_state2).unwrap());
+        assert!(!time_lock.is_satisfied_by_time(chain_state2, utxo_state2).unwrap());
 
         // Test case 3: Test with a larger value (100 intervals = 51200 seconds)
-        let larger_lock = NumberOf512Seconds::from_512_second_intervals(100);
+        let larger_lock = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(100));
         let chain_state3 = BlockMtp::new(timestamps3);
         let utxo_state3 = BlockMtp::new(utxo_timestamps3);
-        assert!(larger_lock.is_satisfied_by(chain_state3, utxo_state3).unwrap());
+        assert!(larger_lock.is_satisfied_by_time(chain_state3, utxo_state3).unwrap());
 
-        // Test case 4: Overflow handling - tests that is_satisfied_by handles overflow gracefully
-        let max_time_lock = NumberOf512Seconds::MAX;
+        // Test case 4: Overflow handling - tests that is_satisfied_by_time handles overflow gracefully
+        let max_time_lock = LockTime::Time(NumberOf512Seconds::MAX);
         let chain_state4 = BlockMtp::new(timestamps);
         let utxo_state4 = BlockMtp::new(utxo_timestamps);
-        assert!(!max_time_lock.is_satisfied_by(chain_state4, utxo_state4).unwrap());
+        assert!(!max_time_lock.is_satisfied_by_time(chain_state4, utxo_state4).unwrap());
     }
 
     #[test]
     fn test_height_chain_state() {
-        let height_lock = NumberOfBlocks(10);
+        let height_lock = LockTime::Blocks(NumberOfBlocks(10));
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
-        let chain_state1 = BlockHeight::from_u32(89);
+        let chain_state1 = BlockHeight::from_u32(90);
         let utxo_state1 = BlockHeight::from_u32(80);
-        assert!(height_lock.is_satisfied_by(chain_state1, utxo_state1).unwrap());
+        assert!(height_lock.is_satisfied_by_height(chain_state1, utxo_state1).unwrap());
 
         // Test case 2: Not satisfied (current_height < utxo_height + required)
-        let chain_state2 = BlockHeight::from_u32(88);
+        let chain_state2 = BlockHeight::from_u32(89);
         let utxo_state2 = BlockHeight::from_u32(80);
-        assert!(!height_lock.is_satisfied_by(chain_state2, utxo_state2).unwrap());
+        assert!(!height_lock.is_satisfied_by_height(chain_state2, utxo_state2).unwrap());
 
-        // Test case 3: Overflow handling - tests that is_satisfied_by handles overflow gracefully
-        let max_height_lock = NumberOfBlocks::MAX;
+        // Test case 3: Overflow handling - tests that is_satisfied_by_height handles overflow gracefully
+        let max_height_lock = LockTime::Blocks(NumberOfBlocks::MAX);
         let chain_state3 = BlockHeight::from_u32(1000);
         let utxo_state3 = BlockHeight::from_u32(80);
-        assert!(!max_height_lock.is_satisfied_by(chain_state3, utxo_state3).unwrap());
+        assert!(!max_height_lock.is_satisfied_by_height(chain_state3, utxo_state3).unwrap());
+    }
+
+    #[test]
+    fn test_max_height_satisfaction() {
+        // If the difference between these two is u32::MAX, we should get Ok(true)
+        let mined_at = BlockHeight::from_u32(u32::MIN);
+        let chain_tip = BlockHeight::from_u32(u32::MAX);
+
+        let block_height = NumberOfBlocks::from(10); // Arbitrary value.
+        assert!(block_height.is_satisfied_by(chain_tip, mined_at).unwrap());
     }
 }

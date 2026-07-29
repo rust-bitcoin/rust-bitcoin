@@ -3,14 +3,14 @@
 #![cfg(feature = "std")]
 
 use bitcoin_consensus_encoding as encoding;
-use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
+use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encode, Encoder2, SliceEncoder};
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// An encoder that uses an inner `ArrayEncoder`.
-    pub struct TestArrayEncoder(ArrayEncoder<4>);
+    pub struct TestArrayEncoder<'e>(ArrayEncoder<4>);
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// An encoder that uses an inner `BytesEncoder`.
     pub struct TestBytesEncoder<'e>(BytesEncoder<'e>);
 }
@@ -20,10 +20,10 @@ fn array_encoder() {
     #[derive(Debug, Default, Clone)]
     pub struct Test(u32);
 
-    impl Encodable for Test {
-        type Encoder<'e> = TestArrayEncoder;
+    impl Encode for Test {
+        type Encoder<'e> = TestArrayEncoder<'e>;
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
+            TestArrayEncoder::new(ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
         }
     }
 
@@ -40,14 +40,14 @@ fn bytes_encoder_without_length_prefix() {
     #[derive(Debug, Default, Clone)]
     pub struct Test(Vec<u8>);
 
-    impl Encodable for Test {
+    impl Encode for Test {
         type Encoder<'e>
             = TestBytesEncoder<'e>
         where
             Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestBytesEncoder(BytesEncoder::without_length_prefix(self.0.as_ref()))
+            TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.0.as_ref()))
         }
     }
 
@@ -67,12 +67,12 @@ fn two_encoder() {
         b: Vec<u8>,
     }
 
-    impl Encodable for Test {
+    impl Encode for Test {
         type Encoder<'e> = Encoder2<TestBytesEncoder<'e>, TestBytesEncoder<'e>>;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            let a = TestBytesEncoder(BytesEncoder::without_length_prefix(self.a.as_ref()));
-            let b = TestBytesEncoder(BytesEncoder::without_length_prefix(self.b.as_ref()));
+            let a = TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.a.as_ref()));
+            let b = TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.b.as_ref()));
 
             Encoder2::new(a, b)
         }
@@ -96,14 +96,14 @@ fn slice_encoder() {
         pub struct TestEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, Inner>>);
     }
 
-    impl Encodable for Test {
-        type Encoder<'a>
-            = TestEncoder<'a>
+    impl Encode for Test {
+        type Encoder<'e>
+            = TestEncoder<'e>
         where
-            Self: 'a;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestEncoder(Encoder2::new(
+            TestEncoder::new(Encoder2::new(
                 CompactSizeEncoder::new(self.0.len()),
                 SliceEncoder::without_length_prefix(&self.0),
             ))
@@ -113,16 +113,16 @@ fn slice_encoder() {
     #[derive(Debug, Default, Clone)]
     pub struct Inner(u32);
 
-    encoding::encoder_newtype! {
+    encoding::encoder_newtype_exact! {
         /// The encoder for the [`Inner`] type.
-        pub struct InnerArrayEncoder(ArrayEncoder<4>);
+        pub struct InnerArrayEncoder<'e>(ArrayEncoder<4>);
     }
 
-    impl Encodable for Inner {
-        type Encoder<'e> = InnerArrayEncoder;
+    impl Encode for Inner {
+        type Encoder<'e> = InnerArrayEncoder<'e>;
         fn encoder(&self) -> Self::Encoder<'_> {
             // Big-endian to make reading the test assertion easier.
-            InnerArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_be_bytes()))
+            InnerArrayEncoder::new(ArrayEncoder::without_length_prefix(self.0.to_be_bytes()))
         }
     }
 

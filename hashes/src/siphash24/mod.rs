@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SipHash 2-4 implementation.
+//! `SipHash` 2-4 implementation.
+
+#![allow(clippy::unreadable_literal)]
 
 use core::{cmp, mem};
 
 use crate::HashEngine as _;
 
 crate::internal_macros::hash_type_no_default! {
-    64,
-    false,
-    "Output of the SipHash24 hash function."
+    /// Output of the `SipHash24` hash function.
+    pub struct Hash([u8; 8]);
+
+    const DISPLAY_BACKWARD: bool = false;
 }
 
 macro_rules! compress {
@@ -50,120 +53,8 @@ macro_rules! load_int_le {
     }};
 }
 
-/// Internal state of the [`HashEngine`].
-#[derive(Debug, Clone)]
-pub struct State {
-    // v0, v2 and v1, v3 show up in pairs in the algorithm,
-    // and simd implementations of SipHash will use vectors
-    // of v02 and v13. By placing them in this order in the struct,
-    // the compiler can pick up on just a few simd optimizations by itself.
-    v0: u64,
-    v2: u64,
-    v1: u64,
-    v3: u64,
-}
-
-/// Engine to compute the SipHash24 hash function.
-#[derive(Debug, Clone)]
-pub struct HashEngine {
-    k0: u64,
-    k1: u64,
-    bytes_hashed: u64, // how many bytes we've processed
-    state: State,      // hash State
-    tail: u64,         // unprocessed bytes le
-    ntail: usize,      // how many bytes in tail are valid
-}
-
-impl HashEngine {
-    /// Constructs a new SipHash24 engine with keys.
-    #[inline]
-    pub const fn with_keys(k0: u64, k1: u64) -> Self {
-        Self {
-            k0,
-            k1,
-            bytes_hashed: 0,
-            state: State {
-                v0: k0 ^ 0x736f6d6570736575,
-                v1: k1 ^ 0x646f72616e646f6d,
-                v2: k0 ^ 0x6c7967656e657261,
-                v3: k1 ^ 0x7465646279746573,
-            },
-            tail: 0,
-            ntail: 0,
-        }
-    }
-
-    /// Retrieves the keys of this engine.
-    pub fn keys(&self) -> (u64, u64) { (self.k0, self.k1) }
-
-    #[inline]
-    fn c_rounds(state: &mut State) {
-        compress!(state);
-        compress!(state);
-    }
-
-    #[inline]
-    fn d_rounds(state: &mut State) {
-        compress!(state);
-        compress!(state);
-        compress!(state);
-        compress!(state);
-    }
-}
-
-impl crate::HashEngine for HashEngine {
-    type Hash = Hash;
-    type Bytes = [u8; 8];
-    const BLOCK_SIZE: usize = 8;
-
-    #[inline]
-    fn input(&mut self, msg: &[u8]) {
-        let bytes_hashed = msg.len();
-        self.bytes_hashed += bytes_hashed as u64; // Cast usize to u64 is ok.
-
-        let mut needed = 0;
-
-        if self.ntail != 0 {
-            needed = 8 - self.ntail;
-            self.tail |=
-                unsafe { u8to64_le(msg, 0, cmp::min(bytes_hashed, needed)) } << (8 * self.ntail);
-            if bytes_hashed < needed {
-                self.ntail += bytes_hashed;
-                return;
-            } else {
-                self.state.v3 ^= self.tail;
-                Self::c_rounds(&mut self.state);
-                self.state.v0 ^= self.tail;
-                self.ntail = 0;
-            }
-        }
-
-        // Buffered tail is now flushed, process new input.
-        let len = bytes_hashed - needed;
-        let left = len & 0x7;
-
-        let mut i = needed;
-        while i < len - left {
-            let mi = unsafe { load_int_le!(msg, i, u64) };
-
-            self.state.v3 ^= mi;
-            Self::c_rounds(&mut self.state);
-            self.state.v0 ^= mi;
-
-            i += 8;
-        }
-
-        self.tail = unsafe { u8to64_le(msg, i, left) };
-        self.ntail = left;
-    }
-
-    fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
-
-    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
-}
-
 impl Hash {
-    /// Constructs a new SipHash24 engine with keys.
+    /// Constructs a new `SipHash24` engine with keys.
     pub fn engine(k0: u64, k1: u64) -> HashEngine { HashEngine::with_keys(k0, k1) }
 
     /// Produces a hash from the current state of a given engine.
@@ -172,7 +63,7 @@ impl Hash {
 
     #[cfg(hashes_fuzz)]
     pub fn from_engine(e: HashEngine) -> Self {
-        let state = e.state.clone();
+        let state = e.state;
         Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
     }
 
@@ -214,6 +105,116 @@ impl Hash {
     pub fn from_u64(hash: u64) -> Self { Self(hash.to_le_bytes()) }
 }
 
+/// Internal state of the [`HashEngine`].
+#[derive(Debug, Clone)]
+struct State {
+    // v0, v2 and v1, v3 show up in pairs in the algorithm,
+    // and simd implementations of SipHash will use vectors
+    // of v02 and v13. By placing them in this order in the struct,
+    // the compiler can pick up on just a few simd optimizations by itself.
+    v0: u64,
+    v2: u64,
+    v1: u64,
+    v3: u64,
+}
+
+/// Engine to compute the `SipHash24` hash function.
+#[derive(Debug, Clone)]
+pub struct HashEngine {
+    k0: u64,
+    k1: u64,
+    bytes_hashed: u64, // how many bytes we've processed
+    state: State,      // hash State
+    tail: u64,         // unprocessed bytes le
+    ntail: usize,      // how many bytes in tail are valid
+}
+
+impl HashEngine {
+    /// Constructs a new `SipHash24` engine with keys.
+    #[inline]
+    pub const fn with_keys(k0: u64, k1: u64) -> Self {
+        Self {
+            k0,
+            k1,
+            bytes_hashed: 0,
+            state: State {
+                v0: k0 ^ 0x736f6d6570736575,
+                v1: k1 ^ 0x646f72616e646f6d,
+                v2: k0 ^ 0x6c7967656e657261,
+                v3: k1 ^ 0x7465646279746573,
+            },
+            tail: 0,
+            ntail: 0,
+        }
+    }
+
+    /// Retrieves the keys of this engine.
+    pub fn keys(&self) -> (u64, u64) { (self.k0, self.k1) }
+
+    #[inline]
+    fn c_rounds(state: &mut State) {
+        compress!(state);
+        compress!(state);
+    }
+
+    #[inline]
+    fn d_rounds(state: &mut State) {
+        compress!(state);
+        compress!(state);
+        compress!(state);
+        compress!(state);
+    }
+}
+
+impl crate::HashEngine for HashEngine {
+    type Hash = Hash;
+    const BLOCK_SIZE: usize = 8;
+
+    #[inline]
+    fn input(&mut self, msg: &[u8]) {
+        let bytes_hashed = msg.len();
+        self.bytes_hashed += bytes_hashed as u64; // Cast usize to u64 is ok.
+
+        let mut needed = 0;
+
+        if self.ntail != 0 {
+            needed = 8 - self.ntail;
+            self.tail |=
+                unsafe { u8to64_le(msg, 0, cmp::min(bytes_hashed, needed)) } << (8 * self.ntail);
+            if bytes_hashed < needed {
+                self.ntail += bytes_hashed;
+                return;
+            }
+            self.state.v3 ^= self.tail;
+            Self::c_rounds(&mut self.state);
+            self.state.v0 ^= self.tail;
+            self.ntail = 0;
+        }
+
+        // Buffered tail is now flushed, process new input.
+        let len = bytes_hashed - needed;
+        let left = len & 0x7;
+
+        let mut i = needed;
+        while i < len - left {
+            let mi = unsafe { load_int_le!(msg, i, u64) };
+
+            self.state.v3 ^= mi;
+            Self::c_rounds(&mut self.state);
+            self.state.v0 ^= mi;
+
+            i += 8;
+        }
+
+        self.tail = unsafe { u8to64_le(msg, i, left) };
+        self.ntail = left;
+    }
+
+    fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
+
+    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
+}
+
 /// Loads a u64 using up to 7 bytes of a byte slice.
 ///
 /// Unsafe because: unchecked indexing at `start..start+len`.
@@ -228,7 +229,7 @@ unsafe fn u8to64_le(buf: &[u8], start: usize, len: usize) -> u64 {
     }
     if i + 1 < len {
         out |= u64::from(load_int_le!(buf, start + i, u16)) << (i * 8);
-        i += 2
+        i += 2;
     }
     if i < len {
         out |= u64::from(*buf.get_unchecked(start + i)) << (i * 8);

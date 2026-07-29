@@ -2,21 +2,29 @@
 
 //! Test composition of encoders and decoders.
 
-use bitcoin_consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, BytesEncoder, Decodable, Decoder, Decoder2, Decoder2Error,
-    Decoder6, Encodable, Encoder, Encoder2, Encoder3, Encoder6, UnexpectedEofError,
+use bitcoin_consensus_encoding as encoding;
+#[cfg(feature = "alloc")]
+use encoding::{
+    check_decode, check_encoder, drain_to_vec, encode_to_vec, ArrayEncoder, BytesEncoder, Decode,
+    Encode, Encoder2, Encoder3, Encoder6,
+};
+use encoding::{
+    ArrayDecoder, Decoder, Decoder2, Decoder2Error, Decoder6, DecoderStatus, UnexpectedEofError,
 };
 
+#[cfg(feature = "alloc")]
 const EMPTY: &[u8] = &[];
 
 // A simple composite type that encodes as [4 bytes] + [2 bytes].
+#[cfg(feature = "alloc")]
 #[derive(Debug, PartialEq, Eq)]
 struct CompositeData {
     first: [u8; 4],
     second: [u8; 2],
 }
 
-impl Encodable for CompositeData {
+#[cfg(feature = "alloc")]
+impl Encode for CompositeData {
     type Encoder<'e> = Encoder2<ArrayEncoder<4>, ArrayEncoder<2>>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -28,15 +36,18 @@ impl Encodable for CompositeData {
 }
 
 /// A unified error type for [`CompositeDataDecoder`].
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum CompositeError {
     Eof(UnexpectedEofError),
 }
 
+#[cfg(feature = "alloc")]
 impl From<UnexpectedEofError> for CompositeError {
     fn from(eof: UnexpectedEofError) -> Self { Self::Eof(eof) }
 }
 
+#[cfg(feature = "alloc")]
 impl core::fmt::Display for CompositeError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -46,21 +57,18 @@ impl core::fmt::Display for CompositeError {
 }
 
 /// A wrapper decoder that converts the tuple output to [`CompositeData`].
+#[cfg(feature = "alloc")]
+#[derive(Default)]
 struct CompositeDataDecoder {
     inner: Decoder2<ArrayDecoder<4>, ArrayDecoder<2>>,
 }
 
-impl CompositeDataDecoder {
-    fn new() -> Self {
-        Self { inner: Decoder2::new(ArrayDecoder::<4>::new(), ArrayDecoder::<2>::new()) }
-    }
-}
-
+#[cfg(feature = "alloc")]
 impl Decoder for CompositeDataDecoder {
     type Output = CompositeData;
     type Error = CompositeError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes).map_err(|error| match error {
             Decoder2Error::First(e) | Decoder2Error::Second(e) => CompositeError::Eof(e),
         })
@@ -76,35 +84,23 @@ impl Decoder for CompositeDataDecoder {
     fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
-impl Decodable for CompositeData {
+#[cfg(feature = "alloc")]
+impl Decode for CompositeData {
     type Decoder = CompositeDataDecoder;
-
-    fn decoder() -> Self::Decoder { CompositeDataDecoder::new() }
 }
 
+#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn composition_chain() {
     let original = CompositeData { first: [0x01, 0x02, 0x03, 0x04], second: [0x05, 0x06] };
-    // Encode using the pull encoder.
-    let mut encoder = original.encoder();
-    let mut encoded_bytes = Vec::new();
-    loop {
-        encoded_bytes.extend_from_slice(encoder.current_chunk());
-        if !encoder.advance() {
-            break;
-        }
-    }
-    // Decode using the push decoder.
-    let mut decoder = CompositeData::decoder();
-    let mut bytes = &encoded_bytes[..];
-    let needs_more = decoder.push_bytes(&mut bytes).unwrap();
-    assert!(!needs_more, "CompositeData decoder should be ready to end");
-    assert_eq!(bytes, EMPTY);
-    let decoded = decoder.end().unwrap();
-    assert_eq!(original, decoded);
+    let encoded_bytes = encode_to_vec(&original);
+    check_decode(&encoded_bytes, &original);
 }
 
+#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn composition_nested() {
     let data = b"abcdef";
     let mut encoder6 = Encoder6::new(
@@ -116,13 +112,7 @@ fn composition_nested() {
         ArrayEncoder::without_length_prefix([data[5]]),
     );
 
-    let mut encoded_bytes = Vec::new();
-    loop {
-        encoded_bytes.extend_from_slice(encoder6.current_chunk());
-        if !encoder6.advance() {
-            break;
-        }
-    }
+    let encoded_bytes = drain_to_vec(&mut encoder6);
     assert_eq!(encoded_bytes, data);
 
     let mut decoder6: Decoder6<_, _, _, _, _, _> = Decoder6::new(
@@ -134,8 +124,8 @@ fn composition_nested() {
         ArrayDecoder::<1>::new(),
     );
     let mut bytes = &encoded_bytes[..];
-    let needs_more = decoder6.push_bytes(&mut bytes).unwrap();
-    assert!(!needs_more, "Decoder6 should be ready to end");
+    let status = decoder6.push_bytes(&mut bytes).unwrap();
+    assert!(status.is_ready(), "Decoder6 should be ready to end");
     assert_eq!(bytes, EMPTY);
     let (first, second, third, fourth, fifth, sixth) = decoder6.end().unwrap();
     assert_eq!(first, [data[0]]);
@@ -154,8 +144,8 @@ fn composition_extra_bytes() {
     let mut bytes = &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08][..];
     let original_len = bytes.len();
 
-    let needs_more = decoder2.push_bytes(&mut bytes).unwrap();
-    assert!(!needs_more, "Decoder2 should be ready to end after consuming all needed bytes");
+    let status = decoder2.push_bytes(&mut bytes).unwrap();
+    assert!(status.is_ready(), "Decoder2 should be ready to end after consuming all needed bytes");
 
     let consumed = original_len - bytes.len();
     assert_eq!(consumed, 5, "Decoder2 should consume exactly 5 bytes");
@@ -219,7 +209,7 @@ fn composition_error_unification() {
         type Output = ([u8; 1], [u8; 1]);
         type Error = NestedError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
             self.inner.push_bytes(bytes).map_err(|error| match error {
                 Decoder2Error::First(e) | Decoder2Error::Second(e) => NestedError::from(e),
             })
@@ -248,7 +238,7 @@ fn composition_error_unification() {
         type Output = [u8; 4];
         type Error = TopLevelError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
             Ok(self.inner.push_bytes(bytes)?)
         }
 
@@ -274,7 +264,10 @@ fn composition_error_unification() {
         type Output = [u8; 1];
         type Error = NestedError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        fn push_bytes(
+            &mut self,
+            bytes: &mut &[u8],
+        ) -> Result<encoding::DecoderStatus, Self::Error> {
             self.inner.push_bytes(bytes).map_err(NestedError::from)
         }
 
@@ -321,6 +314,7 @@ fn composition_error_unification() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn empty_encoders() {
     let bytes = [0x01, 2, 3, 4];
     let mut encoder = Encoder3::new(
@@ -329,16 +323,5 @@ fn empty_encoders() {
         BytesEncoder::without_length_prefix(&bytes[2..]),
     );
 
-    assert_eq!(encoder.current_chunk(), &[1, 2][..]);
-    assert!(encoder.advance());
-
-    // Still have to advance over empty slice.
-    assert!(encoder.current_chunk().is_empty());
-    assert!(encoder.advance());
-
-    assert_eq!(encoder.current_chunk(), &[3, 4][..]);
-    assert!(!encoder.advance());
-
-    // Exhausted.
-    assert!(encoder.current_chunk().is_empty());
+    check_encoder(&mut encoder, &bytes);
 }

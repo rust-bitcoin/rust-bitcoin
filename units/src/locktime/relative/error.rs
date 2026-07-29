@@ -2,6 +2,7 @@
 
 //! Error types for the relative locktime module.
 
+use core::convert::Infallible;
 use core::fmt;
 
 use internals::write_err;
@@ -20,6 +21,10 @@ impl DisabledLockTimeError {
     pub fn disabled_locktime_value(&self) -> u32 { self.0 }
 }
 
+impl From<Infallible> for DisabledLockTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for DisabledLockTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -28,7 +33,13 @@ impl fmt::Display for DisabledLockTimeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for DisabledLockTimeError {}
+impl std::error::Error for DisabledLockTimeError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
+}
 
 /// Error returned when attempting to satisfy lock fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -37,6 +48,10 @@ pub enum IsSatisfiedByError {
     Blocks(InvalidHeightError),
     /// Error when attempting to satisfy lock by time.
     Time(InvalidTimeError),
+}
+
+impl From<Infallible> for IsSatisfiedByError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for IsSatisfiedByError {
@@ -51,6 +66,7 @@ impl fmt::Display for IsSatisfiedByError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
             Self::Blocks(ref e) => Some(e),
@@ -65,8 +81,11 @@ pub enum IsSatisfiedByHeightError {
     /// Satisfaction of the lock height value failed.
     Satisfaction(InvalidHeightError),
     /// Tried to satisfy a lock-by-height locktime using seconds.
-    // TODO: Hide inner value in a new struct error type.
-    Incompatible(NumberOf512Seconds),
+    Incompatible(IncompatibleHeightError),
+}
+
+impl From<Infallible> for IsSatisfiedByHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for IsSatisfiedByHeightError {
@@ -74,19 +93,42 @@ impl fmt::Display for IsSatisfiedByHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
-            Self::Incompatible(time) =>
-                write!(f, "tried to satisfy a lock-by-height locktime using seconds {}", time),
+            Self::Incompatible(ref e) => write_err!(f, "incompatible"; e),
         }
     }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByHeightError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
             Self::Satisfaction(ref e) => Some(e),
-            Self::Incompatible(_) => None,
+            Self::Incompatible(ref e) => Some(e),
         }
+    }
+}
+
+/// Error returned when `is_satisfied_by_height` fails with a block time.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleHeightError(pub(crate) NumberOf512Seconds);
+
+impl From<Infallible> for IncompatibleHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for IncompatibleHeightError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "tried to satisfy a lock-by-height locktime using seconds {}", self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleHeightError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
     }
 }
 
@@ -96,8 +138,11 @@ pub enum IsSatisfiedByTimeError {
     /// Satisfaction of the lock time value failed.
     Satisfaction(InvalidTimeError),
     /// Tried to satisfy a lock-by-time locktime using number of blocks.
-    // TODO: Hide inner value in a new struct error type.
-    Incompatible(NumberOfBlocks),
+    Incompatible(IncompatibleTimeError),
+}
+
+impl From<Infallible> for IsSatisfiedByTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for IsSatisfiedByTimeError {
@@ -105,19 +150,42 @@ impl fmt::Display for IsSatisfiedByTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
-            Self::Incompatible(blocks) =>
-                write!(f, "tried to satisfy a lock-by-time locktime using blocks {}", blocks),
+            Self::Incompatible(ref e) => write_err!(f, "incompatible"; e),
         }
     }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByTimeError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
             Self::Satisfaction(ref e) => Some(e),
-            Self::Incompatible(_) => None,
+            Self::Incompatible(ref e) => Some(e),
         }
+    }
+}
+
+/// Error returned when `is_satisfied_by_time` fails with a block height.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleTimeError(pub(crate) NumberOfBlocks);
+
+impl From<Infallible> for IncompatibleTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for IncompatibleTimeError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "tried to satisfy a lock-by-time locktime using blocks {}", self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleTimeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
     }
 }
 
@@ -127,6 +195,10 @@ pub struct TimeOverflowError {
     /// Time interval value in seconds that overflowed.
     // Private because we maintain an invariant that the `seconds` value does actually overflow.
     pub(crate) seconds: u32,
+}
+
+impl From<Infallible> for TimeOverflowError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for TimeOverflowError {
@@ -140,7 +212,13 @@ impl fmt::Display for TimeOverflowError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for TimeOverflowError {}
+impl std::error::Error for TimeOverflowError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { seconds: _ } = self;
+        None
+    }
+}
 
 /// Error returned when `NumberOfBlocks::is_satisfied_by` is incorrectly called.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -151,6 +229,10 @@ pub struct InvalidHeightError {
     pub(crate) utxo_mined_at: crate::BlockHeight,
 }
 
+impl From<Infallible> for InvalidHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for InvalidHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_mined_at: {}", self.chain_tip, self.utxo_mined_at
@@ -159,7 +241,13 @@ impl fmt::Display for InvalidHeightError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for InvalidHeightError {}
+impl std::error::Error for InvalidHeightError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { chain_tip: _, utxo_mined_at: _ } = self;
+        None
+    }
+}
 
 /// Error returned when `NumberOf512Seconds::is_satisfied_by` is incorrectly called.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -170,6 +258,10 @@ pub struct InvalidTimeError {
     pub(crate) utxo_mined_at: crate::BlockMtp,
 }
 
+impl From<Infallible> for InvalidTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for InvalidTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_mined_at: {}", self.chain_tip, self.utxo_mined_at
@@ -178,4 +270,121 @@ impl fmt::Display for InvalidTimeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for InvalidTimeError {}
+impl std::error::Error for InvalidTimeError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { chain_tip: _, utxo_mined_at: _ } = self;
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
+    #[cfg(feature = "alloc")]
+    use crate::{
+        locktime::relative::{LockTime, NumberOf512Seconds, NumberOfBlocks},
+        BlockHeight, BlockMtp, BlockMtpInterval, Sequence,
+    };
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // DisabledLockTimeError - parse disabled lock time
+        let disabled = Sequence::MAX; // Sequence with disable flag set
+        let e = LockTime::from_sequence(disabled).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // TimeOverflowError - time too large for relative locktime
+        let too_big = BlockMtpInterval::MAX;
+        let e = too_big.to_relative_mtp_interval_floor().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // InvalidHeightError - is_satisfied_by with invalid args
+        let blocks = NumberOfBlocks::from(10u16);
+        let e = blocks
+            .is_satisfied_by(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // InvalidTimeError - is_satisfied_by with invalid args
+        let time = NumberOf512Seconds::from_512_second_intervals(10);
+        let e = time.is_satisfied_by(BlockMtp::from_u32(5), BlockMtp::from_u32(10)).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // IsSatisfiedBy*Error
+        let time_lock = LockTime::from_512_second_intervals(10);
+        let height_lock = LockTime::from_height(10);
+
+        // IsSatisfiedByError - wraps InvalidHeightError or InvalidTimeError
+        // Error when chain_tip < utxo_mined_at (args wrong way around)
+        // blocks type
+        let e = height_lock
+            .is_satisfied_by(
+                BlockHeight::from_u32(5),
+                BlockMtp::ZERO,
+                BlockHeight::from_u32(10),
+                BlockMtp::ZERO,
+            )
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // time type
+        let e = time_lock
+            .is_satisfied_by(
+                BlockHeight::ZERO,
+                BlockMtp::from_u32(5),
+                BlockHeight::ZERO,
+                BlockMtp::from_u32(10),
+            )
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // IsSatisfiedByHeightError
+        // Incompatible type
+        let e = time_lock
+            .is_satisfied_by_height(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // Satisfaction type
+        let e = height_lock
+            .is_satisfied_by_height(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // IsSatisfiedByTimeError
+        // Incompatible type
+        let e = height_lock
+            .is_satisfied_by_time(BlockMtp::from_u32(5), BlockMtp::from_u32(10))
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // Satisfaction type
+        let e = time_lock
+            .is_satisfied_by_time(BlockMtp::from_u32(5), BlockMtp::from_u32(10))
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+    }
+}

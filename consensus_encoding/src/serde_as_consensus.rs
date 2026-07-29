@@ -1,0 +1,325 @@
+// SPDX-License-Identifier: CC0-1.0
+
+// Methods are an implementation of a standardized serde-specific signature.
+#![allow(missing_docs)]
+#![allow(clippy::missing_errors_doc)]
+
+//! `serde` serialize and deserialize types using consensus encoding.
+//!
+//! Use with `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus")]`.
+//!
+//! This module works with any type `T` that implements both [`Encode`] and [`Decode`].
+//! In human-readable formats (like JSON), the value is serialized as a hex string.
+//! In non-human-readable formats (like bincode), raw bytes are used.
+
+use core::fmt;
+use core::marker::PhantomData;
+
+use hex::DisplayHex as _;
+use serde::{de, Deserializer, Serializer};
+
+use crate::{Decode, Encode, Encoder as _};
+
+/// Serializes a type as a consensus-encoded hex string.
+///
+/// # Type Parameters
+///
+/// * `T` - The type to serialize, must implement [`Encode`] and [`Decode`]
+/// * `S` - The serializer type
+pub fn serialize<T, S>(value: &T, s: S) -> Result<S::Ok, S::Error>
+where
+    T: Encode + Decode,
+    S: Serializer,
+{
+    if s.is_human_readable() {
+        struct ConsensusHex<'a, T>(&'a T);
+
+        impl<T: Encode> fmt::Display for ConsensusHex<'_, T> {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                let mut encoder = self.0.encoder();
+                loop {
+                    fmt::Display::fmt(&encoder.current_chunk().as_hex(), f)?;
+                    if encoder.advance().has_finished() {
+                        return Ok(());
+                    }
+                }
+            }
+        }
+
+        s.collect_str(&ConsensusHex(value))
+    } else {
+        // For non-human-readable formats, serialize as bytes.
+        let bytes = crate::encode_to_vec(value);
+        s.serialize_bytes(&bytes)
+    }
+}
+
+/// Deserializes a type from a consensus-encoded hex string.
+///
+/// # Type Parameters
+///
+/// * `T` - The type to deserialize, must implement [`Encode`] and [`Decode`]
+/// * `D` - The deserializer type
+pub fn deserialize<'d, T, D>(d: D) -> Result<T, D::Error>
+where
+    T: Encode + Decode,
+    D: Deserializer<'d>,
+{
+    if d.is_human_readable() {
+        use alloc::string::String;
+
+        use serde::Deserialize;
+
+        let hex_str = String::deserialize(d)?;
+        crate::decode_from_hex(&hex_str)
+            .map_err(|_| de::Error::custom("failed to decode hex string"))
+    } else {
+        // For non-human-readable formats, deserialize from bytes
+        struct BytesVisitor<T>(PhantomData<T>);
+
+        impl<'de, T> serde::de::Visitor<'de> for BytesVisitor<T>
+        where
+            T: Encode + Decode,
+        {
+            type Value = T;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a byte array")
+            }
+
+            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                crate::decode_from_slice(v)
+                    .map_err(|_| serde::de::Error::custom("failed to decode from bytes"))
+            }
+
+            fn visit_byte_buf<E>(self, v: alloc::vec::Vec<u8>) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                crate::decode_from_slice(&v)
+                    .map_err(|_| serde::de::Error::custom("failed to decode from bytes"))
+            }
+        }
+
+        d.deserialize_bytes(BytesVisitor(PhantomData))
+    }
+}
+
+pub mod opt {
+    //! `serde` serialize and deserialize `Option<T>`.
+    //!
+    //! Note: This module does not produce consensus-encoded options (i.e., with a length prefix
+    //! of 0 or 1), it defers to the data format's serialization.
+    //!
+    //! This module is designed for serializing and deserializing objects that implement
+    //! `Encode`/`Decode` when wrapped in an `Option`. Use with
+    //! `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::opt")]`.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! # use bitcoin_consensus_encoding::{Encode, Decode, ArrayEncoder, ArrayDecoder, Decoder, DecoderStatus};
+    //! # #[derive(Debug, PartialEq)]
+    //! # struct MyType([u8; 4]);
+    //! # impl Encode for MyType {
+    //! #     type Encoder<'e> = ArrayEncoder<4>;
+    //! #     fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
+    //! # }
+    //! # struct MyTypeDecoder(ArrayDecoder<4>);
+    //! # impl Default for MyTypeDecoder {
+    //! #     fn default() -> Self { MyTypeDecoder(ArrayDecoder::new()) }
+    //! # }
+    //! # impl Decoder for MyTypeDecoder {
+    //! #     type Output = MyType;
+    //! #     type Error = bitcoin_consensus_encoding::UnexpectedEofError;
+    //! #     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> { self.0.push_bytes(bytes) }
+    //! #     fn end(self) -> Result<Self::Output, Self::Error> { self.0.end().map(MyType) }
+    //! #     fn read_limit(&self) -> usize { self.0.read_limit() }
+    //! # }
+    //! # impl Decode for MyType {
+    //! #     type Decoder = MyTypeDecoder;
+    //! # }
+    //! use serde::{Deserialize, Serialize};
+    //!
+    //! #[derive(Serialize, Deserialize)]
+    //! struct MyStruct {
+    //!     #[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::opt")]
+    //!     field: Option<MyType>,
+    //! }
+    //! ```
+
+    use core::fmt;
+    use core::marker::PhantomData;
+
+    use serde::{de, Deserializer, Serializer};
+
+    use crate::{Decode, Encode};
+
+    #[allow(clippy::ref_option)] // API forced by serde.
+    pub fn serialize<T, S>(t: &Option<T>, s: S) -> Result<S::Ok, S::Error>
+    where
+        T: Encode + Decode,
+        S: Serializer,
+    {
+        struct AsConsensus<'a, T>(&'a T);
+
+        impl<T: Encode + Decode> serde::Serialize for AsConsensus<'_, T> {
+            fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                super::serialize(self.0, s)
+            }
+        }
+
+        match *t {
+            Some(ref t) => s.serialize_some(&AsConsensus(t)),
+            None => s.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'d, T, D>(d: D) -> Result<Option<T>, D::Error>
+    where
+        T: Encode + Decode,
+        D: Deserializer<'d>,
+    {
+        struct OptVisitor<X>(PhantomData<X>);
+
+        impl<'de, X> de::Visitor<'de> for OptVisitor<X>
+        where
+            X: Encode + Decode,
+        {
+            type Value = Option<X>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                write!(formatter, "an Option<T> where T: encoding::Decode")
+            }
+
+            fn visit_none<E>(self) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(None)
+            }
+
+            fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                Ok(Some(super::deserialize(d)?))
+            }
+        }
+        d.deserialize_option(OptVisitor::<T>(PhantomData))
+    }
+}
+
+pub mod vec {
+    //! `serde` serialize and deserialize `Vec<T>`.
+    //!
+    //! Note: This module does not produce consensus-encoded vectors (i.e., with a length prefix),
+    //! it defers to the data format's vector serialization.
+    //!
+    //! It is designed for serializing and deserializing objects that implement `Encode`/`Decode`
+    //! when wrapped in a `Vec`. Use with
+    //! `#[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::vec")]`.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! # use bitcoin_consensus_encoding::{Encode, Decode, ArrayEncoder, ArrayDecoder, Decoder, DecoderStatus};
+    //! # #[derive(Debug, PartialEq)]
+    //! # struct MyType([u8; 2]);
+    //! # impl Encode for MyType {
+    //! #     type Encoder<'e> = ArrayEncoder<2>;
+    //! #     fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
+    //! # }
+    //! # struct MyTypeDecoder(ArrayDecoder<2>);
+    //! # impl Default for MyTypeDecoder {
+    //! #     fn default() -> Self { MyTypeDecoder(ArrayDecoder::new()) }
+    //! # }
+    //! # impl Decoder for MyTypeDecoder {
+    //! #     type Output = MyType;
+    //! #     type Error = bitcoin_consensus_encoding::UnexpectedEofError;
+    //! #     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> { self.0.push_bytes(bytes) }
+    //! #     fn end(self) -> Result<Self::Output, Self::Error> { self.0.end().map(MyType) }
+    //! #     fn read_limit(&self) -> usize { self.0.read_limit() }
+    //! # }
+    //! # impl Decode for MyType {
+    //! #     type Decoder = MyTypeDecoder;
+    //! # }
+    //! use serde::{Deserialize, Serialize};
+    //!
+    //! #[derive(Serialize, Deserialize)]
+    //! struct MyStruct {
+    //!     #[serde(with = "bitcoin_consensus_encoding::serde_as_consensus::vec")]
+    //!     items: Vec<MyType>,
+    //! }
+    //! ```
+
+    use alloc::vec::Vec;
+    use core::fmt;
+    use core::marker::PhantomData;
+
+    use serde::{de, Deserializer, Serializer};
+
+    use crate::{Decode, Encode};
+
+    pub fn serialize<T, S>(v: &[T], s: S) -> Result<S::Ok, S::Error>
+    where
+        T: Encode + Decode,
+        S: Serializer,
+    {
+        struct AsConsensus<'a, T>(&'a T);
+
+        impl<T: Encode + Decode> serde::Serialize for AsConsensus<'_, T> {
+            fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                super::serialize(self.0, s)
+            }
+        }
+
+        s.collect_seq(v.iter().map(|item| AsConsensus(item)))
+    }
+
+    pub fn deserialize<'d, T, D>(d: D) -> Result<Vec<T>, D::Error>
+    where
+        T: Encode + Decode,
+        D: Deserializer<'d>,
+    {
+        struct VecVisitor<X>(PhantomData<X>);
+
+        impl<'de, X> de::Visitor<'de> for VecVisitor<X>
+        where
+            X: Encode + Decode,
+        {
+            type Value = Vec<X>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                write!(formatter, "a sequence of consensus-encodable items")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::SeqAccess<'de>,
+            {
+                struct Wrap<X>(X);
+
+                impl<'de, X> de::Deserialize<'de> for Wrap<X>
+                where
+                    X: Encode + Decode,
+                {
+                    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                        super::deserialize::<X, D>(d).map(Wrap)
+                    }
+                }
+
+                let mut out = Vec::new();
+                while let Some(Wrap(item)) = seq.next_element::<Wrap<X>>()? {
+                    out.push(item);
+                }
+                Ok(out)
+            }
+        }
+
+        d.deserialize_seq(VecVisitor::<T>(PhantomData))
+    }
+}

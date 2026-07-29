@@ -110,6 +110,18 @@ macro_rules! impl_serde(
 #[cfg(feature = "serde")]
 pub(in crate::hash_types) use impl_serde;
 
+macro_rules! impl_debug {
+    ($ty:ident) => {
+        impl core::fmt::Debug for HashType {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                f.debug_tuple(stringify!($ty)).field(&self.0).finish()
+            }
+        }
+    };
+}
+pub(in crate::hash_types) use impl_debug;
+
 /// Functions used by serde impls of all hashes.
 #[cfg(feature = "serde")]
 pub mod serde_details {
@@ -189,10 +201,22 @@ pub mod serde_details {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "serde")]
+    const DUMMY_TXID_HEX_STR: &str =
+        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389";
+
     // Creates an arbitrary dummy hash type object.
     #[cfg(feature = "serde")]
-    fn dummy_test_case() -> Txid {
-        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse::<Txid>().unwrap()
+    fn dummy_test_case() -> Txid { DUMMY_TXID_HEX_STR.parse::<Txid>().unwrap() }
+
+    #[cfg(feature = "alloc")]
+    fn ab_test_case() -> (Txid, &'static str) {
+        let mut a = [0xab; 32];
+        a[0] = 0xff; // Just so we can see which way the array is printing.
+        let tc = Txid::from_byte_array(a);
+        let want = "Txid(bitcoin_hashes::sha256d::Hash(abababababababababababababababababababababababababababababababff))";
+
+        (tc, want)
     }
 
     #[test]
@@ -214,24 +238,139 @@ mod tests {
     }
 
     #[test]
-    // This is solely to test that we can debug print WITH "hex" so its ok to require "alloc".
+    // This is solely to test that we can debug print WITH and WITHOUT "hex" so its ok to require "alloc".
     #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
     fn debug() {
-        let tc = Txid::from_byte_array([0xab; 32]);
+        let (tc, want) = ab_test_case();
         let got = alloc::format!("{:?}", tc);
-        let want = "abababababababababababababababababababababababababababababababab";
         assert_eq!(got, want);
     }
 
     #[test]
-    // This is solely to test that we can debug print WITHOUT "hex" so its ok to require "alloc".
-    #[cfg(feature = "alloc")]
-    #[cfg(not(feature = "hex"))]
-    fn debug() {
-        let tc = Txid::from_byte_array([0xab; 32]);
-        let got = alloc::format!("{:?}", tc);
-        let want = "abababababababababababababababababababababababababababababababab";
-        assert_eq!(got, want);
+    fn as_ref_and_borrow_match_as_byte_array() {
+        let tc = Txid::from_byte_array([0x11; 32]);
+
+        let as_array: &[u8; 32] = tc.as_ref();
+        let as_slice: &[u8] = tc.as_ref();
+        let borrowed: &[u8; 32] = core::borrow::Borrow::<[u8; 32]>::borrow(&tc);
+        let borrowed_slice: &[u8] = core::borrow::Borrow::<[u8]>::borrow(&tc);
+
+        assert_eq!(as_array, tc.as_byte_array());
+        assert_eq!(borrowed, tc.as_byte_array());
+        assert_eq!(as_slice, tc.as_byte_array());
+        assert_eq!(borrowed_slice, tc.as_byte_array());
+    }
+
+    macro_rules! byte_array_roundtrip_test {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr $(, $check:ident)?);* $(;)?) => {
+            $(
+                #[test]
+                fn $name() {
+                    let bytes = [$byte; $len];
+                    let value = $ty::from_byte_array(bytes);
+
+                    assert_eq!(value.to_byte_array(), bytes);
+                    $(
+                        let _ = stringify!($check);
+                        assert_eq!(value.as_byte_array(), &bytes);
+                    )?
+                }
+            )*
+        }
+    }
+
+    #[rustfmt::skip]
+    byte_array_roundtrip_test! {
+        txid_byte_array_roundtrip, Txid, 32, 0x12;
+        ntxid_byte_array_roundtrip, Ntxid, 32, 0x13, as_byte_array;
+        wtxid_byte_array_roundtrip, Wtxid, 32, 0x14, as_byte_array;
+        block_hash_byte_array_roundtrip, BlockHash, 32, 0x15;
+        tx_merkle_node_byte_array_roundtrip, TxMerkleNode, 32, 0x16;
+        witness_merkle_node_byte_array_roundtrip, WitnessMerkleNode, 32, 0x17;
+        witness_commitment_byte_array_roundtrip, WitnessCommitment, 32, 0x18, as_byte_array;
+        script_hash_byte_array_roundtrip, ScriptHash, 20, 0x19, as_byte_array;
+        wscript_hash_byte_array_roundtrip, WScriptHash, 32, 0x1a, as_byte_array;
+    }
+
+    macro_rules! hex_roundtrip_test_display {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr);* $(;)?) => {
+            $(
+                #[test]
+                #[cfg(feature = "hex")]
+                fn $name() {
+                    let value = $ty::from_byte_array([$byte; $len]);
+                    let parsed = alloc::format!("{value}").parse::<$ty>().unwrap();
+
+                    assert_eq!(parsed, value);
+                }
+            )*
+        };
+    }
+
+    macro_rules! hex_roundtrip_test_lower_hex {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr);* $(;)?) => {
+            $(
+                #[test]
+                #[cfg(feature = "hex")]
+                fn $name() {
+                    let value = $ty::from_byte_array([$byte; $len]);
+                    let parsed = alloc::format!("{value:x}").parse::<$ty>().unwrap();
+
+                    assert_eq!(parsed, value);
+                }
+            )*
+        };
+    }
+
+    macro_rules! hex_roundtrip_test_upper_hex {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr);* $(;)?) => {
+            $(
+                #[test]
+                #[cfg(feature = "hex")]
+                fn $name() {
+                    let value = $ty::from_byte_array([$byte; $len]);
+                    let parsed = alloc::format!("{:X}", value).parse::<$ty>().unwrap();
+
+                    assert_eq!(parsed, value);
+                }
+            )*
+        };
+    }
+
+    #[rustfmt::skip]
+    hex_roundtrip_test_display! {
+        txid_display_roundtrip, Txid, 32, 0x1b;
+        ntxid_display_roundtrip, Ntxid, 32, 0x23;
+        wtxid_display_roundtrip, Wtxid, 32, 0x24;
+        block_hash_display_roundtrip, BlockHash, 32, 0x25;
+        tx_merkle_node_display_roundtrip, TxMerkleNode, 32, 0x26;
+        witness_merkle_node_display_roundtrip, WitnessMerkleNode, 32, 0x27;
+        witness_commitment_display_roundtrip, WitnessCommitment, 32, 0x28;
+        script_hash_display_roundtrip, ScriptHash, 20, 0x29;
+        wscript_hash_display_roundtrip, WScriptHash, 32, 0x2a;
+    }
+
+    #[rustfmt::skip]
+    hex_roundtrip_test_lower_hex! {
+        ntxid_lower_hex_roundtrip, Ntxid, 32, 0x1c;
+        block_hash_lower_hex_roundtrip, BlockHash, 32, 0x1d;
+        tx_merkle_node_lower_hex_roundtrip, TxMerkleNode, 32, 0x1e;
+        witness_merkle_node_lower_hex_roundtrip, WitnessMerkleNode, 32, 0x1f;
+        witness_commitment_lower_hex_roundtrip, WitnessCommitment, 32, 0x20;
+        script_hash_lower_hex_roundtrip, ScriptHash, 20, 0x21;
+        wscript_hash_lower_hex_roundtrip, WScriptHash, 32, 0x22;
+    }
+
+    #[rustfmt::skip]
+    hex_roundtrip_test_upper_hex! {
+        txid_upper_hex_roundtrip, Txid, 32, 0x2b;
+        ntxid_upper_hex_roundtrip, Ntxid, 32, 0x2c;
+        wtxid_upper_hex_roundtrip, Wtxid, 32, 0x2d;
+        block_hash_upper_hex_roundtrip, BlockHash, 32, 0x2e;
+        tx_merkle_node_upper_hex_roundtrip, TxMerkleNode, 32, 0x2f;
+        witness_merkle_node_upper_hex_roundtrip, WitnessMerkleNode, 32, 0x30;
+        witness_commitment_upper_hex_roundtrip, WitnessCommitment, 32, 0x31;
+        script_hash_upper_hex_roundtrip, ScriptHash, 20, 0x32;
+        wscript_hash_upper_hex_roundtrip, WScriptHash, 32, 0x33;
     }
 }

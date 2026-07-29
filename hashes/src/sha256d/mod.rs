@@ -1,17 +1,27 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SHA256d implementation (double SHA256).
+//! `SHA256d` implementation (double SHA256).
 
 use crate::sha256;
 
 crate::internal_macros::general_hash_type! {
-    256,
-    true,
-    "Output of the SHA256d hash function."
+    /// Output of the `SHA256d` hash function.
+    pub struct Hash([u8; 32]);
+
+    const DISPLAY_BACKWARD: bool = true;
 }
 
 impl Hash {
-    /// Finalize a hash engine to produce a hash.
+    /// Computes double-SHA256 of multiple 64-byte blocks in parallel.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `outputs.len() != inputs.len()`.
+    pub fn hash_64_many(outputs: &mut [[u8; 32]], inputs: &[[u8; 64]]) {
+        sha256::HashEngine::sha256d_64(outputs, inputs);
+    }
+
+    /// Finalizes a hash engine to produce a hash.
     pub fn from_engine(e: HashEngine) -> Self {
         let sha2 = sha256::Hash::from_engine(e.0);
         let sha2d = sha256::Hash::hash(sha2.as_byte_array());
@@ -22,12 +32,12 @@ impl Hash {
     }
 }
 
-/// Engine to compute SHA256d hash function.
+/// Engine to compute `SHA256d` hash function.
 #[derive(Debug, Clone)]
 pub struct HashEngine(sha256::HashEngine);
 
 impl HashEngine {
-    /// Constructs a new SHA256d hash engine.
+    /// Constructs a new `SHA256d` hash engine.
     pub const fn new() -> Self { Self(sha256::HashEngine::new()) }
 }
 
@@ -37,7 +47,6 @@ impl Default for HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
-    type Bytes = [u8; 32];
     const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
 
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
@@ -95,7 +104,7 @@ mod tests {
             let manual_hash = sha256d::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
 
-            // Hash by computing a sha256 then `hash_again`ing it
+            // Hash by computing a SHA256 then `hash_again`ing it
             let sha2_hash = sha256::Hash::hash(test.input.as_bytes());
             let sha2d_hash = sha2_hash.hash_again();
             assert_eq!(hash, sha2d_hash);
@@ -113,7 +122,7 @@ mod tests {
         let hash = sha256d::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
         let roundtrip = hex.parse::<sha256d::Hash>().expect("failed to parse hex");
-        assert_eq!(roundtrip, hash)
+        assert_eq!(roundtrip, hash);
     }
 
     #[test]
@@ -135,5 +144,29 @@ mod tests {
             &hash.readable(),
             &[Token::Str("6cfb35868c4465b7c289d7d5641563aa973db6a929655282a7bf95c8257f53ef")],
         );
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn hash_64_many() {
+        for count in 0..=32 {
+            let inputs: alloc::vec::Vec<[u8; 64]> = (0..count)
+                .map(|i: usize| {
+                    let mut block = [0u8; 64];
+                    for (j, byte) in block.iter_mut().enumerate() {
+                        *byte = (i * 64 + j) as u8;
+                    }
+                    block
+                })
+                .collect();
+
+            let expected: alloc::vec::Vec<[u8; 32]> =
+                inputs.iter().map(|inp| sha256d::hash(inp).to_byte_array()).collect();
+
+            let mut outputs = alloc::vec![[0u8; 32]; count];
+            sha256d::Hash::hash_64_many(&mut outputs, &inputs);
+
+            assert_eq!(outputs, expected);
+        }
     }
 }

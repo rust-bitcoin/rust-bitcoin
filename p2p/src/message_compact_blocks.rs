@@ -5,9 +5,11 @@
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::{ArrayDecoder, ArrayEncoder, Decoder2, Encoder2};
 
-use crate::bip152;
-use crate::consensus::impl_consensus_encoding;
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::SendCmpctDecoderError;
 
 /// sendcmpct message
 #[derive(PartialEq, Eq, Clone, Debug, Copy, PartialOrd, Ord, Hash)]
@@ -17,61 +19,114 @@ pub struct SendCmpct {
     /// Compact Blocks protocol version number.
     pub version: u64,
 }
-impl_consensus_encoding!(SendCmpct, send_compact, version);
 
-/// cmpctblock message
-///
-/// Note that the rules for validation before relaying compact blocks is
-/// different from headers and regular block messages. Thus, you shouldn't use
-/// compact blocks when relying on an upstream full node to have validated data
-/// being forwarded to you.
-#[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
-pub struct CmpctBlock {
-    /// The Compact Block.
-    pub compact_block: bip152::HeaderAndShortIds,
+encoding::encoder_newtype_exact! {
+    /// Encoder type for the [`SendCmpct`] message.
+    #[derive(Debug, Clone)]
+    pub struct SendCmpctEncoder<'e>(Encoder2<ArrayEncoder<1>, ArrayEncoder<8>>);
 }
-impl_consensus_encoding!(CmpctBlock, compact_block);
 
-/// getblocktxn message
-#[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
-pub struct GetBlockTxn {
-    /// The block transactions request.
-    pub txs_request: bip152::BlockTransactionsRequest,
-}
-impl_consensus_encoding!(GetBlockTxn, txs_request);
+impl encoding::Encode for SendCmpct {
+    type Encoder<'e> = SendCmpctEncoder<'e>;
 
-/// blocktxn message
-#[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
-pub struct BlockTxn {
-    /// The requested block transactions.
-    pub transactions: bip152::BlockTransactions,
+    fn encoder(&self) -> Self::Encoder<'_> {
+        SendCmpctEncoder::new(Encoder2::new(
+            ArrayEncoder::without_length_prefix([u8::from(self.send_compact)]),
+            ArrayEncoder::without_length_prefix(self.version.to_le_bytes()),
+        ))
+    }
 }
-impl_consensus_encoding!(BlockTxn, transactions);
+
+type SendCmpctInnerDecoder = Decoder2<ArrayDecoder<1>, ArrayDecoder<8>>;
+
+crate::decoder_newtype! {
+    /// Decoder type for the [`SendCmpct`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct SendCmpctDecoder(SendCmpctInnerDecoder);
+
+    fn map_push_bytes_err(e: <SendCmpctInnerDecoder as encoding::Decoder>::Error) -> SendCmpctDecoderError {
+        SendCmpctDecoderError::eof(e)
+    }
+
+    fn end(
+        result: Result<([u8; 1], [u8; 8]), <SendCmpctInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<SendCmpct, SendCmpctDecoderError> {
+        let (send_cmpct, version) = result.map_err(SendCmpctDecoderError::eof)?;
+
+        if send_cmpct[0] == 1 || send_cmpct[0] == 0 {
+            let send_compact = u8::from_le_bytes(send_cmpct) != 0;
+            Ok(SendCmpct { send_compact, version: u64::from_le_bytes(version) })
+        } else {
+            Err(SendCmpctDecoderError::invalid_mode())
+        }
+    }
+}
+
+impl encoding::Decode for SendCmpct {
+    type Decoder = SendCmpctDecoder;
+}
+
+/// Error types for [`SendCmpct`] messages.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    use internals::write_err;
+
+    use crate::message_compact_blocks::SendCmpctInnerDecoder;
+
+    /// Errors occurring when decoding a [`SendCmpct`] message.
+    ///
+    /// [`SendCmpct`]: super::SendCmpct
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct SendCmpctDecoderError(pub(super) SendCmpctDecoderErrorInner);
+
+    impl SendCmpctDecoderError {
+        /// Constructs an EOF error.
+        #[inline]
+        pub(super) fn eof(e: <SendCmpctInnerDecoder as encoding::Decoder>::Error) -> Self {
+            Self(SendCmpctDecoderErrorInner::UnexpectedEof(e))
+        }
+        /// Constructs an invalid mode error.
+        #[inline]
+        pub(super) fn invalid_mode() -> Self { Self(SendCmpctDecoderErrorInner::InvalidMode) }
+    }
+
+    /// Errors occuring when decoding a [`SendCmpct`] message.
+    ///
+    /// [`SendCmpct`]: super::SendCmpct
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(super) enum SendCmpctDecoderErrorInner {
+        /// First byte was not a boolean value (0 or 1).
+        InvalidMode,
+        /// `UnexpectedEofError` Error by way of associated type on `ArrayDecoder<N>`.
+        UnexpectedEof(<super::SendCmpctInnerDecoder as encoding::Decoder>::Error),
+    }
+
+    impl From<Infallible> for SendCmpctDecoderError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for SendCmpctDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write_err!(f, "sendcmpct error"; self)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for SendCmpctDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self.0 {
+                SendCmpctDecoderErrorInner::InvalidMode => None,
+                SendCmpctDecoderErrorInner::UnexpectedEof(ref e) => Some(e),
+            }
+        }
+    }
+}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for SendCmpct {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self { send_compact: u.arbitrary()?, version: u.arbitrary()? })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for CmpctBlock {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self { compact_block: u.arbitrary()? })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for GetBlockTxn {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self { txs_request: u.arbitrary()? })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for BlockTxn {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self { transactions: u.arbitrary()? })
     }
 }

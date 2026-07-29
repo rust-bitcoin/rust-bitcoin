@@ -7,14 +7,14 @@
 //! single transaction.
 
 use crate::block::{self, Block, Checked};
-use crate::internal_macros::impl_array_newtype_stringify;
 use crate::locktime::absolute;
 use crate::network::{Network, Params};
 use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
+use crate::script::{self, BuilderExt as _, BuilderExtPriv as _};
 use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
-use crate::{script, Amount, BlockHash, BlockTime, Sequence, TestnetVersion};
+use crate::{Amount, BlockHash, BlockTime, Sequence, TestnetVersion};
 
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
@@ -28,13 +28,13 @@ pub const WITNESS_SCALE_FACTOR: usize = units::weight::WITNESS_SCALE_FACTOR;
 /// The maximum allowed number of signature check operations in a block.
 pub const MAX_BLOCK_SIGOPS_COST: i64 = 80_000;
 /// Mainnet (bitcoin) pubkey address prefix.
-pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0; // 0x00
+pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = addresses::PUBKEY_ADDRESS_PREFIX_MAIN; // 0x00
 /// Mainnet (bitcoin) script address prefix.
-pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5; // 0x05
+pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = addresses::SCRIPT_ADDRESS_PREFIX_MAIN; // 0x05
 /// Test (testnet, signet, regtest) pubkey address prefix.
-pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
+pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = addresses::PUBKEY_ADDRESS_PREFIX_TEST; // 0x6f
 /// Test (testnet, signet, regtest) script address prefix.
-pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
+pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = addresses::SCRIPT_ADDRESS_PREFIX_TEST; // 0xc4
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = primitives::script::MAX_REDEEM_SCRIPT_SIZE; // 520
 /// The maximum allowed redeem script size of the witness script.
@@ -162,6 +162,18 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
             transactions,
         )
         .assume_checked(witness_root),
+        Network::Testnet(_) => Block::new_unchecked(
+            block::Header {
+                version: block::Version::ONE,
+                prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
+                merkle_root,
+                time: BlockTime::from_u32(1296688602),
+                bits: CompactTarget::from_consensus(0x1d00ffff),
+                nonce: 414098458,
+            },
+            transactions,
+        )
+        .assume_checked(witness_root),
         Network::Signet => Block::new_unchecked(
             block::Header {
                 version: block::Version::ONE,
@@ -192,7 +204,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
 /// The uniquely identifying hash of the target blockchain.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainHash([u8; 32]);
-internals::impl_array_newtype!(ChainHash, u8, 32);
+impl_array_newtype!(ChainHash, u8, 32);
 impl_array_newtype_stringify!(ChainHash, 32);
 
 impl ChainHash {
@@ -238,6 +250,7 @@ impl ChainHash {
             Network::Bitcoin => Self::BITCOIN,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
         }
@@ -252,6 +265,7 @@ impl ChainHash {
             Network::Bitcoin => Self::BITCOIN,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
         }
@@ -270,10 +284,12 @@ impl ChainHash {
 
 #[cfg(test)]
 mod test {
-    use hex_lit::hex;
+    use alloc::string::ToString;
+
+    use hex::hex;
 
     use super::*;
-    use crate::consensus::encode::serialize;
+    use crate::encoding::encode_to_vec;
     use crate::network::params;
     use crate::Txid;
 
@@ -285,12 +301,12 @@ mod test {
         assert_eq!(gen.inputs.len(), 1);
         assert_eq!(gen.inputs[0].previous_output.txid, Txid::COINBASE_PREVOUT);
         assert_eq!(gen.inputs[0].previous_output.vout, 0xFFFFFFFF);
-        assert_eq!(serialize(&gen.inputs[0].script_sig),
+        assert_eq!(encode_to_vec(gen.inputs[0].script_sig.as_script()),
                    hex!("4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73"));
 
         assert_eq!(gen.inputs[0].sequence, Sequence::MAX);
         assert_eq!(gen.outputs.len(), 1);
-        assert_eq!(serialize(&gen.outputs[0].script_pubkey),
+        assert_eq!(encode_to_vec(gen.outputs[0].script_pubkey.as_script()),
                    hex!("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"));
         assert_eq!(gen.outputs[0].amount, "50 BTC".parse::<Amount>().unwrap());
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
@@ -374,9 +390,9 @@ mod test {
     fn chain_hash_and_genesis_block(network: Network) {
         use hashes::sha256;
 
-        // The genesis block hash is a double-sha256 and it is displayed backwards.
+        // The genesis block hash is a double-SHA256 and it is displayed backwards.
         let genesis_hash = genesis_block(network).block_hash();
-        // We abuse the sha256 hash here so we get a LowerHex impl that does not print the hex backwards.
+        // We abuse the SHA256 hash here so we get a LowerHex impl that does not print the hex backwards.
         let hash = sha256::Hash::from_byte_array(genesis_hash.to_byte_array());
         let want = format!("{:02x}", hash);
 
