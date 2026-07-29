@@ -228,12 +228,6 @@ impl Sequence {
 
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Sequence);
 
-impl Default for Sequence {
-    /// The default value of sequence is 0xffffffff.
-    #[inline]
-    fn default() -> Self { Self::MAX }
-}
-
 impl From<Sequence> for u32 {
     #[inline]
     fn from(sequence: Sequence) -> Self { sequence.0 }

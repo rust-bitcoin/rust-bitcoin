@@ -207,7 +207,6 @@ struct Default {
     c3: ScriptSigBuf,
     c4: TapScriptBuf,
     c5: WitnessScriptBuf,
-    d: Sequence,
     e: Witness,
 }
 
@@ -431,7 +430,6 @@ fn regression_default() {
         c3: ScriptSigBuf::from_bytes(Vec::new()),
         c4: TapScriptBuf::from_bytes(Vec::new()),
         c5: WitnessScriptBuf::from_bytes(Vec::new()),
-        d: Sequence::MAX,
         e: Witness::new(),
     };
     assert_eq!(got, want);

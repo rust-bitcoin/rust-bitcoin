@@ -129,7 +129,6 @@ struct Default {
     d: BlockMtpInterval,
     e: relative::NumberOf512Seconds,
     f: relative::NumberOfBlocks,
-    g: Sequence,
 }
 
 /// A struct that includes all public error types (excl. decode errors).
@@ -436,7 +435,6 @@ fn regression_default() {
         d: BlockMtpInterval::ZERO,
         e: relative::NumberOf512Seconds::ZERO,
         f: relative::NumberOfBlocks::ZERO,
-        g: Sequence::MAX,
     };
     assert_eq!(got, want);
 }

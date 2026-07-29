@@ -58,11 +58,11 @@ mod fuzz {
     wrap_for_checks!(BlockMtpInterval);
     wrap_for_checks!(NumberOf512Seconds);
     wrap_for_checks!(NumberOfBlocks);
-    wrap_for_checks!(Sequence);
     wrap_for_checks!(SignedAmount);
 
     // Structs that need defaults
     wrap_for_checks!(BlockHeight, super::BlockHeight::MIN);
+    wrap_for_checks!(Sequence, super::Sequence::MAX);
     wrap_for_checks!(BlockMtp, super::BlockMtp::from_u32(1_742_979_600)); // 26 Mar 2025 9:00 UTC
     wrap_for_checks!(BlockTime, super::BlockTime::from(1_742_979_600)); // 26 Mar 2025 9:00 UTC
     wrap_for_checks!(FeeRate, super::FeeRate::BROADCAST_MIN);
