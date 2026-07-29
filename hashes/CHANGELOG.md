@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-30
+
+* Add several methods for computing `sha256::Midstate` values in const contexts [#6646](https://github.com/rust-bitcoin/rust-bitcoin/pull/6646)
+
 ## [1.1.0] - 2026-07-15
 
 * Add `with_input` method to `HashEngine` for convenient one-shot hashing [#6411](https://github.com/rust-bitcoin/rust-bitcoin/pull/6411)
@@ -373,7 +377,8 @@ Note that we have stopped re-exporting the `core` crate when compiling without `
 
 * Initial release
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-1.1.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-1.2.0...HEAD
+[1.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-1.1.0...bitcoin_hashes-1.2.0
 [1.1.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-1.0.0...bitcoin_hashes-1.1.0
 [1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.21.0...bitcoin_hashes-1.0.0
 [0.21.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.20.0...bitcoin_hashes-0.21.0
