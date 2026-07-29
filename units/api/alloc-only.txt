@@ -7368,7 +7368,7 @@ impl<T> core::convert::From<T> for bitcoin_units::result::error::NumOpError
   pub fn bitcoin_units::result::error::NumOpError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::result::error::NumOpError]
 pub mod bitcoin_units::sequence
 pub mod bitcoin_units::sequence::error
-pub struct bitcoin_units::sequence::Sequence(pub u32)
+pub struct bitcoin_units::sequence::Sequence(_)
 impl bitcoin_units::sequence::Sequence
 pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_AND_RBF: Self
 pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_NO_RBF: Self
@@ -9467,7 +9467,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::FeeRate where T: core::clo
   pub unsafe fn bitcoin_units::FeeRate::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::FeeRate where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::FeeRate
   pub fn bitcoin_units::FeeRate::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::FeeRate]
-pub struct bitcoin_units::Sequence(pub u32)
+pub struct bitcoin_units::Sequence(_)
 impl bitcoin_units::sequence::Sequence
 pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_AND_RBF: Self
 pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_NO_RBF: Self

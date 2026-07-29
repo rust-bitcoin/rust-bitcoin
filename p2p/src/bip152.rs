@@ -852,7 +852,7 @@ mod test {
             inputs: vec![TxIn {
                 previous_output: OutPoint { txid: dummy_txid, vout: 0 },
                 script_sig: ScriptSigBuf::new(),
-                sequence: Sequence(1),
+                sequence: Sequence::from_consensus(1),
                 witness: Witness::new(),
             }],
             outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
