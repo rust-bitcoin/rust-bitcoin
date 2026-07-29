@@ -243,3 +243,10 @@ mod wasm_tests {
         engine_with_state();
     }
 }
+
+#[test]
+fn initial_midstate() {
+    let mid1 = Midstate::SHA256_IV;
+    let mid2 = super::HashEngine::new().midstate().unwrap();
+    assert_eq!(mid1, mid2);
+}

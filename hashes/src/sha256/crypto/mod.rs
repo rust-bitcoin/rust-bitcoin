@@ -149,17 +149,21 @@ impl Midstate {
         w
     }
 
-    pub(super) const fn compute_midstate_unoptimized(bytes: &[u8], finalize: bool) -> Self {
-        let mut state = [
-            0x6a09e667u32,
-            0xbb67ae85,
-            0x3c6ef372,
-            0xa54ff53a,
-            0x510e527f,
-            0x9b05688c,
-            0x1f83d9ab,
-            0x5be0cd19,
-        ];
+    #[rustfmt::skip]
+    const fn bytes_to_state(&self) -> [u32; 8] {
+        const fn be_bytes_to_u32(bytes: &[u8], offs: usize) -> u32 {
+            u32::from_be_bytes([bytes[offs], bytes[offs + 1], bytes[offs + 2], bytes[offs + 3]])
+        }
+        [
+            be_bytes_to_u32(&self.bytes, 0), be_bytes_to_u32(&self.bytes, 4),
+            be_bytes_to_u32(&self.bytes, 8), be_bytes_to_u32(&self.bytes, 12),
+            be_bytes_to_u32(&self.bytes, 16), be_bytes_to_u32(&self.bytes, 20),
+            be_bytes_to_u32(&self.bytes, 24), be_bytes_to_u32(&self.bytes, 28),
+        ]
+    }
+
+    pub(super) const fn update_midstate_unoptimized(self, bytes: &[u8], finalize: bool) -> Self {
+        let mut state = self.bytes_to_state();
 
         let num_chunks = (bytes.len() + 9).div_ceil(64);
         let mut chunk = 0;
@@ -294,7 +298,7 @@ impl Midstate {
             output[i * 4 + 3] = (state[i + 0] >> 0) as u8;
             i += 1;
         }
-        Self { bytes: output, bytes_hashed: bytes.len() as u64 }
+        Self { bytes: output, bytes_hashed: self.bytes_hashed + bytes.len() as u64 }
     }
 }
 
