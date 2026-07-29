@@ -185,6 +185,16 @@ struct DecoderErrors {
     e: time::BlockTimeDecoderError,
 }
 
+/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
+#[test]
+fn all_types_implement_send_sync() {
+    fn is_send_sync<T: Send + Sync>() {}
+
+    is_send_sync::<Enums>();
+    is_send_sync::<Errors>();
+    is_send_sync::<Structs>();
+}
+
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
