@@ -5,6 +5,7 @@ authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "Tobin C. Harding <me@t
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
 homepage = "https://rust-bitcoin.org"
+documentation = "https://docs.rs/bitcoin-units"
 description = "Basic Bitcoin numeric units such as amount"
 categories = ["cryptography::cryptocurrencies"]
 keywords = ["bitcoin", "newtypes", "no-std"]
