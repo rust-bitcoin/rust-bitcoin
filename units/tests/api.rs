@@ -200,48 +200,30 @@ fn all_types_implement_send_sync() {
 #[test]
 fn c_debug_nonempty() {
     let t = Types::new();
+    // TODO: Test error types.
+    // let errors = Errors::new();
 
-    let debug = format!("{:?}", t.a.a);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.b);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.c);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.d);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.e);
-    assert!(!debug.is_empty());
+    assert!(!format!("{:?}", t.a.a).is_empty());
+    assert!(!format!("{:?}", t.a.b).is_empty());
+    assert!(!format!("{:?}", t.a.c).is_empty());
+    assert!(!format!("{:?}", t.a.d).is_empty());
+    assert!(!format!("{:?}", t.a.e).is_empty());
 
-    let debug = format!("{:?}", t.b.a);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.c);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.d);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.e);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.f);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.g);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.h);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.i);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.j);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.k);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.l);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.m);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.n);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.o);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.p);
-    assert!(!debug.is_empty());
+    assert!(!format!("{:?}", t.b.a).is_empty());
+    assert!(!format!("{:?}", t.b.c).is_empty());
+    assert!(!format!("{:?}", t.b.d).is_empty());
+    assert!(!format!("{:?}", t.b.e).is_empty());
+    assert!(!format!("{:?}", t.b.f).is_empty());
+    assert!(!format!("{:?}", t.b.g).is_empty());
+    assert!(!format!("{:?}", t.b.h).is_empty());
+    assert!(!format!("{:?}", t.b.i).is_empty());
+    assert!(!format!("{:?}", t.b.j).is_empty());
+    assert!(!format!("{:?}", t.b.k).is_empty());
+    assert!(!format!("{:?}", t.b.l).is_empty());
+    assert!(!format!("{:?}", t.b.m).is_empty());
+    assert!(!format!("{:?}", t.b.n).is_empty());
+    assert!(!format!("{:?}", t.b.o).is_empty());
+    assert!(!format!("{:?}", t.b.p).is_empty());
 }
 
 /// C-GOOD-ERR: Tests that all public error types implement Display.
