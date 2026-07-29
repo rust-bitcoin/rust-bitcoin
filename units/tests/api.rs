@@ -229,36 +229,46 @@ fn c_debug_nonempty() {
 /// C-GOOD-ERR: Tests that all public error types implement Display.
 #[test]
 fn c_good_err_display() {
-    use core::fmt;
+    fn assert_display<T: core::fmt::Display>() {}
 
-    fn assert_display<T: fmt::Display>() {}
-
-    assert_display::<amount::error::InputTooLargeError>();
-    assert_display::<amount::error::InvalidCharacterError>();
-    assert_display::<amount::error::MissingDenominationError>();
-    assert_display::<amount::error::MissingDigitsError>();
-    assert_display::<amount::error::OutOfRangeError>();
-    assert_display::<amount::error::ParseAmountError>();
-    assert_display::<amount::error::ParseDenominationError>();
-    assert_display::<amount::error::ParseError>();
-    assert_display::<amount::error::PossiblyConfusingDenominationError>();
-    assert_display::<amount::error::TooPreciseError>();
-    assert_display::<amount::error::UnknownDenominationError>();
+    assert_display::<amount::ParseError>();
+    assert_display::<amount::ParseAmountError>();
+    assert_display::<amount::OutOfRangeError>();
+    assert_display::<amount::TooPreciseError>();
+    assert_display::<amount::InputTooLargeError>();
+    assert_display::<amount::MissingDigitsError>();
+    assert_display::<amount::InvalidCharacterError>();
+    assert_display::<amount::BadPositionError>();
+    assert_display::<amount::MissingDenominationError>();
+    assert_display::<amount::UnknownDenominationError>();
+    assert_display::<amount::PossiblyConfusingDenominationError>();
+    assert_display::<amount::AmountDecoderError>();
     assert_display::<block::TooBigForRelativeHeightError>();
+    assert_display::<block::BlockHeightDecoderError>();
     #[cfg(feature = "serde")]
     assert_display::<fee_rate::serde::OverflowError>();
-    assert_display::<locktime::absolute::ConversionError>();
+    assert_display::<locktime::absolute::LockTimeDecoderError>();
+    assert_display::<locktime::absolute::IncompatibleHeightError>();
+    assert_display::<locktime::absolute::IncompatibleTimeError>();
     assert_display::<locktime::absolute::ParseHeightError>();
     assert_display::<locktime::absolute::ParseTimeError>();
+    assert_display::<locktime::absolute::ConversionError>();
+    assert_display::<locktime::relative::DisabledLockTimeError>();
+    assert_display::<locktime::relative::IncompatibleHeightError>();
+    assert_display::<locktime::relative::IncompatibleTimeError>();
+    assert_display::<locktime::relative::TimeOverflowError>();
     assert_display::<locktime::relative::InvalidHeightError>();
     assert_display::<locktime::relative::InvalidTimeError>();
-    assert_display::<locktime::relative::TimeOverflowError>();
     assert_display::<parse_int::ParseIntError>();
     assert_display::<parse_int::PrefixedHexError>();
     assert_display::<parse_int::UnprefixedHexError>();
     #[cfg(feature = "encoding")]
     assert_display::<pow::CompactTargetDecoderError>();
+    assert_display::<pow::ParseWorkError>();
+    assert_display::<pow::ParseTargetError>();
     assert_display::<result::NumOpError>();
+    assert_display::<sequence::SequenceDecoderError>();
+    assert_display::<time::BlockTimeDecoderError>();
 }
 
 /// C-OBJECT: Tests that traits are object-safe where appropriate.
