@@ -160,6 +160,27 @@ impl From<WitnessVersion> for Opcode {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for WitnessVersion {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u8(self.to_num())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for WitnessVersion {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let version = u8::deserialize(deserializer)?;
+        Self::try_from(version).map_err(serde::de::Error::custom)
+    }
+}
+
 /// Error types for the segwit version number.
 pub mod error {
     use core::convert::Infallible;
