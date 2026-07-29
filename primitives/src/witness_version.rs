@@ -314,6 +314,30 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "serde")]
+    fn witness_version_serde_round_trip() {
+        for version in 0u8..=16 {
+            let wv = WitnessVersion::try_from(version).unwrap();
+
+            let json = serde_json::to_string(&wv).unwrap();
+            assert_eq!(json, format!("{}", version));
+            assert_eq!(serde_json::from_str::<WitnessVersion>(&json).unwrap(), wv);
+
+            let bin = bincode::serialize(&wv).unwrap();
+            assert_eq!(bin, bincode::serialize(&version).unwrap());
+            assert_eq!(bincode::deserialize::<WitnessVersion>(&bin).unwrap(), wv);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn witness_version_serde_invalid() {
+        assert!(serde_json::from_str::<WitnessVersion>("17").is_err());
+        assert!(serde_json::from_str::<WitnessVersion>("255").is_err());
+        assert!(serde_json::from_str::<WitnessVersion>("-1").is_err());
+    }
+
+    #[test]
     fn witness_version_opcode_round_trip() {
         for version in 0u8..=16 {
             let wv = WitnessVersion::try_from(version).unwrap();
