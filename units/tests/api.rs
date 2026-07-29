@@ -186,6 +186,16 @@ struct DecoderErrors {
     f: time::BlockTimeDecoderError,
 }
 
+/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
+#[test]
+fn all_types_implement_send_sync() {
+    fn is_send_sync<T: Send + Sync>() {}
+
+    is_send_sync::<Enums>();
+    is_send_sync::<Errors>();
+    is_send_sync::<Structs>();
+}
+
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
@@ -232,21 +242,6 @@ fn c_debug_nonempty() {
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.b.p);
     assert!(!debug.is_empty());
-}
-
-/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
-#[test]
-fn c_send_sync() {
-    fn assert_send<T: Send>() {}
-    fn assert_sync<T: Sync>() {}
-
-    //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
-    assert_send::<Types>();
-    assert_sync::<Types>();
-
-    // Error types should implement the Send and Sync traits (C-GOOD-ERR).
-    assert_send::<Errors>();
-    assert_sync::<Errors>();
 }
 
 /// C-GOOD-ERR: Tests that all public error types implement Display.
