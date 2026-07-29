@@ -144,11 +144,8 @@ impl FeeRate {
     #[inline]
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat_per_mvb().checked_mul(rhs) {
-            Some(res) => Some(Self::from_sat_per_mvb(res)),
-            None => None,
-        }
+        let Some(sat_mvb) = self.to_sat_per_mvb().checked_mul(rhs) else { return None };
+        Some(Self::from_sat_per_mvb(sat_mvb))
     }
 
     /// Checked division.
@@ -157,11 +154,8 @@ impl FeeRate {
     #[inline]
     #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat_per_mvb().checked_div(rhs) {
-            Some(res) => Some(Self::from_sat_per_mvb(res)),
-            None => None,
-        }
+        let Some(sat_mvb) = self.to_sat_per_mvb().checked_div(rhs) else { return None };
+        Some(Self::from_sat_per_mvb(sat_mvb))
     }
 
     /// Checked addition.
@@ -170,11 +164,10 @@ impl FeeRate {
     #[inline]
     #[must_use]
     pub const fn checked_add(self, rhs: Self) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat_per_mvb().checked_add(rhs.to_sat_per_mvb()) {
-            Some(res) => Some(Self::from_sat_per_mvb(res)),
-            None => None,
-        }
+        let Some(sat_mvb) = self.to_sat_per_mvb().checked_add(rhs.to_sat_per_mvb()) else {
+            return None;
+        };
+        Some(Self::from_sat_per_mvb(sat_mvb))
     }
 
     /// Checked subtraction.
@@ -183,11 +176,10 @@ impl FeeRate {
     #[inline]
     #[must_use]
     pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_sat_per_mvb().checked_sub(rhs.to_sat_per_mvb()) {
-            Some(res) => Some(Self::from_sat_per_mvb(res)),
-            None => None,
-        }
+        let Some(sat_mvb) = self.to_sat_per_mvb().checked_sub(rhs.to_sat_per_mvb()) else {
+            return None;
+        };
+        Some(Self::from_sat_per_mvb(sat_mvb))
     }
 
     /// Calculates the fee by multiplying this fee rate by weight.

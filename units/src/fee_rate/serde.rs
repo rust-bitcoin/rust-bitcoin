@@ -57,17 +57,14 @@ pub mod as_sat_per_kwu_floor {
 
         use core::fmt;
 
-        use serde::{de, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serialize, Serializer};
 
         use crate::FeeRate;
 
         #[inline]
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
-            match *f {
-                Some(f) => s.serialize_some(&f.to_sat_per_kwu_floor()),
-                None => s.serialize_none(),
-            }
+            f.map(FeeRate::to_sat_per_kwu_floor).serialize(s)
         }
 
         pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Option<FeeRate>, D::Error> {
@@ -184,17 +181,14 @@ pub mod as_sat_per_vb_floor {
 
         use core::fmt;
 
-        use serde::{de, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serialize, Serializer};
 
         use crate::fee_rate::FeeRate;
 
         #[inline]
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
-            match *f {
-                Some(f) => s.serialize_some(&f.to_sat_per_vb_floor()),
-                None => s.serialize_none(),
-            }
+            f.map(FeeRate::to_sat_per_vb_floor).serialize(s)
         }
 
         pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Option<FeeRate>, D::Error> {
@@ -312,17 +306,14 @@ pub mod as_sat_per_vb_ceil {
 
         use core::fmt;
 
-        use serde::{de, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serialize, Serializer};
 
         use crate::fee_rate::FeeRate;
 
         #[inline]
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
-            match *f {
-                Some(f) => s.serialize_some(&f.to_sat_per_vb_ceil()),
-                None => s.serialize_none(),
-            }
+            f.map(FeeRate::to_sat_per_vb_ceil).serialize(s)
         }
 
         pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Option<FeeRate>, D::Error> {

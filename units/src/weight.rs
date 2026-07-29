@@ -65,21 +65,15 @@ impl Weight {
     /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
     #[inline]
     pub const fn from_kwu(wu: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match wu.checked_mul(1000) {
-            Some(wu) => Some(Self::from_wu(wu)),
-            None => None,
-        }
+        let Some(wu) = wu.checked_mul(1000) else { return None };
+        Some(Self::from_wu(wu))
     }
 
     /// Constructs a new [`Weight`] from virtual bytes, returning [`None`] if an overflow occurred.
     #[inline]
     pub const fn from_vb(vb: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
-            Some(wu) => Some(Self::from_wu(wu)),
-            None => None,
-        }
+        let Some(wu) = vb.checked_mul(Self::WITNESS_SCALE_FACTOR) else { return None };
+        Some(Self::from_wu(wu))
     }
 
     /// Constructs a new [`Weight`] from virtual bytes without an overflow check.
@@ -138,11 +132,8 @@ impl Weight {
     #[inline]
     #[must_use]
     pub const fn checked_add(self, rhs: Self) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_wu().checked_add(rhs.to_wu()) {
-            Some(wu) => Some(Self::from_wu(wu)),
-            None => None,
-        }
+        let Some(wu) = self.to_wu().checked_add(rhs.to_wu()) else { return None };
+        Some(Self::from_wu(wu))
     }
 
     /// Checked subtraction.
@@ -151,11 +142,8 @@ impl Weight {
     #[inline]
     #[must_use]
     pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_wu().checked_sub(rhs.to_wu()) {
-            Some(wu) => Some(Self::from_wu(wu)),
-            None => None,
-        }
+        let Some(wu) = self.to_wu().checked_sub(rhs.to_wu()) else { return None };
+        Some(Self::from_wu(wu))
     }
 
     /// Checked multiplication.
@@ -164,11 +152,8 @@ impl Weight {
     #[inline]
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_wu().checked_mul(rhs) {
-            Some(wu) => Some(Self::from_wu(wu)),
-            None => None,
-        }
+        let Some(wu) = self.to_wu().checked_mul(rhs) else { return None };
+        Some(Self::from_wu(wu))
     }
 
     /// Checked division.
@@ -177,11 +162,8 @@ impl Weight {
     #[inline]
     #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match self.to_wu().checked_div(rhs) {
-            Some(wu) => Some(Self::from_wu(wu)),
-            None => None,
-        }
+        let Some(wu) = self.to_wu().checked_div(rhs) else { return None };
+        Some(Self::from_wu(wu))
     }
 
     /// Checked fee rate multiplication.
