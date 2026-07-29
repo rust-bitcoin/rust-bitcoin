@@ -18,13 +18,24 @@ use bitcoin_units::{
 };
 
 /// A struct that includes all public non-error enums.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
+/// C-COMMON-TRAITS: `Copy`, `Clone`, `Debug`, `PartialEq`, `Eq`
+// None of these implement `PartialOrd` or `Ord`.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 struct Enums {
     a: amount::Denomination,
     b: absolute::LockTime,
     c: relative::LockTime,
     d: result::MathOp,
     e: result::NumOpResult<Amount>,
+}
+
+/// An enum that includes all public non-error enums that implement `Hash`.
+/// C-COMMON-TRAITS: `Hash`
+#[derive(Hash)]
+struct EnumsHash {
+    a: amount::Denomination,
+    b: absolute::LockTime,
+    c: relative::LockTime,
 }
 
 impl Enums {
@@ -40,12 +51,12 @@ impl Enums {
 }
 
 /// A struct that includes all public non-error structs.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
-                 // Does not include encoders and decoders.
+/// C-COMMON-TRAITS: `Copy`, `Clone`, `Debug`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+// Does not include encoders, decoders, or `amount::Display`.
 struct Structs {
     // Full path to show alphabetic sort order.
     a: amount::Amount,
-    b: amount::Display,
     c: amount::SignedAmount,
     d: block::BlockHeight,
     e: block::BlockHeightInterval,
@@ -66,7 +77,6 @@ impl Structs {
     fn max() -> Self {
         Self {
             a: Amount::MAX,
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::MAX,
             d: BlockHeight::MAX,
             e: BlockHeightInterval::MAX,
@@ -96,28 +106,6 @@ impl Types {
     fn new() -> Self { Self { a: Enums::new(), b: Structs::max() } }
 }
 
-/// A struct that includes all public non-error non-helper structs.
-// C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct CommonTraits {
-    // Full path to show alphabetic sort order.
-    a: amount::Amount,
-    // b: amount::Display,
-    c: amount::SignedAmount,
-    d: block::BlockHeight,
-    e: block::BlockHeightInterval,
-    f: block::BlockMtp,
-    g: block::BlockMtpInterval,
-    h: fee_rate::FeeRate,
-    i: locktime::absolute::Height,
-    j: locktime::absolute::MedianTimePast,
-    k: locktime::relative::NumberOf512Seconds,
-    l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
-}
-
 /// A struct that includes all types that implement `Default`.
 #[derive(Debug, Default, PartialEq, Eq)] // C-COMMON-TRAITS: `Default`
 struct Default {
@@ -133,32 +121,44 @@ struct Default {
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
-    a: amount::error::InputTooLargeError,
-    b: amount::error::InvalidCharacterError,
-    c: amount::error::MissingDenominationError,
-    d: amount::error::MissingDigitsError,
-    e: amount::error::OutOfRangeError,
-    f: amount::error::ParseAmountError,
-    g: amount::error::ParseDenominationError,
-    h: amount::error::ParseError,
-    i: amount::error::PossiblyConfusingDenominationError,
-    j: amount::error::TooPreciseError,
-    k: amount::error::UnknownDenominationError,
-    l: block::TooBigForRelativeHeightError,
+    a: amount::ParseError,
+    b: amount::ParseAmountError,
+    c: amount::OutOfRangeError,
+    d: amount::TooPreciseError,
+    e: amount::InputTooLargeError,
+    f: amount::MissingDigitsError,
+    g: amount::InvalidCharacterError,
+    h: amount::BadPositionError,
+    i: amount::MissingDenominationError,
+    j: amount::UnknownDenominationError,
+    k: amount::PossiblyConfusingDenominationError,
+    l: amount::AmountDecoderError,
+    m: block::TooBigForRelativeHeightError,
+    n:block::BlockHeightDecoderError,
     #[cfg(feature = "serde")]
-    m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
+    o: fee_rate::serde::OverflowError,
+    p: locktime::absolute::LockTimeDecoderError,
+    q: locktime::absolute::IncompatibleHeightError,
+    r: locktime::absolute::IncompatibleTimeError,
+    s: locktime::absolute::ParseHeightError,
+    t: locktime::absolute::ParseTimeError,
+    u: locktime::absolute::ConversionError,
+    v: locktime::relative::DisabledLockTimeError,
+    w: locktime::relative::IncompatibleHeightError,
+    x: locktime::relative::IncompatibleTimeError,
+    y: locktime::relative::TimeOverflowError,
+    z: locktime::relative::InvalidHeightError,
+    aa: locktime::relative::InvalidTimeError,
+    ab: parse_int::ParseIntError,
+    ac: parse_int::PrefixedHexError,
+    ad: parse_int::UnprefixedHexError,
     #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
+    ae: pow::CompactTargetDecoderError,
+    af: pow::ParseWorkError,
+    ag: pow::ParseTargetError,
+    ah: result::NumOpError,
+    ai: sequence::SequenceDecoderError,
+    aj: time::BlockTimeDecoderError,
 }
 
 /// A struct that includes all public decoder types.
@@ -181,8 +181,9 @@ struct DecoderErrors {
     a: amount::error::AmountDecoderError,
     b: block::BlockHeightDecoderError,
     c: locktime::absolute::LockTimeDecoderError,
-    d: sequence::SequenceDecoderError,
-    e: time::BlockTimeDecoderError,
+    d: pow::CompactTargetDecoderError,
+    e: sequence::SequenceDecoderError,
+    f: time::BlockTimeDecoderError,
 }
 
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
@@ -202,8 +203,6 @@ fn c_debug_nonempty() {
     assert!(!debug.is_empty());
 
     let debug = format!("{:?}", t.b.a);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.b);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.b.c);
     assert!(!debug.is_empty());
@@ -541,8 +540,6 @@ impl<'a> Arbitrary<'a> for Structs {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = Self {
             a: Amount::arbitrary(u)?,
-            // Skip the `Display` type.
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::arbitrary(u)?,
             d: BlockHeight::arbitrary(u)?,
             e: BlockHeightInterval::arbitrary(u)?,
