@@ -39,7 +39,7 @@
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
-// For 0.32.x releases only.
+// For 0.32.xx releases only.
 #![allow(deprecated)]
 
 // Disable 16-bit support at least for now as we can't guarantee it yet.
