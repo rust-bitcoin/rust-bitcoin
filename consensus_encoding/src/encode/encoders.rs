@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Collection of "standard encoders".
+//! Primitive and combinator encoder types.
 //!
-//! These encoders should not be used directly. Instead, when implementing the [`super::Encode`]
-//! trait on a type, you should define a newtype around one or more of these encoders, and pass
-//! through the [`Encoder`] implementation to your newtype. This avoids leaking encoding
-//! implementation details to the users of your type.
+//! These encoders should not be used directly. Instead, you should define a newtype around one or
+//! more of these encoders, and pass through the [`Encoder`] implementation to your newtype. This
+//! avoids leaking encoding implementation details to the users of your type.
 //!
 //! For implementing these newtypes, we provide the [`encoder_newtype`] and
 //! [`encoder_newtype_exact`] macros.
@@ -116,7 +115,7 @@ impl<const N: usize> ExactSizeEncoder for ArrayRefEncoder<'_, N> {
     fn len(&self) -> usize { self.arr.len() }
 }
 
-/// An encoder for a list of encodable types.
+/// An encoder for a list of consensus encodable types.
 pub struct SliceEncoder<'e, T: Encode> {
     /// The list of references to the objects we are encoding.
     sl: &'e [T],
@@ -191,7 +190,7 @@ impl<T: Encode> Encoder for SliceEncoder<'_, T> {
     }
 }
 
-/// An encoder for a list of encodable types, including a length prefix.
+/// An encoder for a list of consensus encodable types, including a length prefix.
 pub struct PrefixedSliceEncoder<'e, T: Encode>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, T>>);
 
 impl<'e, T: Encode> PrefixedSliceEncoder<'e, T> {
