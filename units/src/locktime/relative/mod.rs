@@ -434,14 +434,23 @@ impl NumberOfBlocks {
 
     /// Returns true if an output locked by height can be spent in the next block.
     ///
+    /// `chain_tip` can be any height from the block prior to `utxo_mined_at` onwards i.e., we
+    /// support a pair of parent/child transactions going into the mempool at the same time.
+    ///
     /// # Errors
     ///
-    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip` is not valid for `utxo_mined_at` i.e., if you get the args mixed up.
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockHeight,
         utxo_mined_at: crate::BlockHeight,
     ) -> Result<bool, InvalidHeightError> {
+        // We want 0-value relative timelocks to be able to go into transactions in the
+        //  mempool if their parent is also in the mempool.
+        if u64::from(utxo_mined_at.to_u32()) == u64::from(chain_tip.to_u32()) + 1 {
+            return Ok(self.to_height() == 0);
+        }
+
         chain_tip
             .checked_sub(utxo_mined_at)
             .ok_or(InvalidHeightError { chain_tip, utxo_mined_at })
