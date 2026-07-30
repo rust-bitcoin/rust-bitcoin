@@ -1082,6 +1082,16 @@ mod tests {
     }
 
     #[test]
+    fn parent_child_can_be_mined_in_the_same_block() {
+        let height_lock = LockTime::Blocks(NumberOfBlocks(0));
+
+        let chain_state = BlockHeight::from_u32(99);
+        let utxo_state = BlockHeight::from_u32(100);
+
+        assert!(height_lock.is_satisfied_by_height(chain_state, utxo_state).unwrap());
+    }
+
+    #[test]
     fn satisfied_by_height_boundary() {
         for n in [0, 2, 5, 9, 20, u16::MAX] {
             let lock = NumberOfBlocks::from_height(n);
