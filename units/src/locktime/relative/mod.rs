@@ -13,6 +13,8 @@ use core::{convert, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::const_casts;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 #[cfg(doc)]
@@ -459,6 +461,27 @@ impl fmt::Display for NumberOfBlocks {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
+#[cfg(feature = "serde")]
+impl Serialize for NumberOfBlocks {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u16::serialize(&self.to_height(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for NumberOfBlocks {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_height(u16::deserialize(d)?))
+    }
+}
 
 /// A relative lock time lock-by-time value.
 ///
@@ -574,6 +597,28 @@ parse_int::impl_parse_str_from_int_infallible!(NumberOf512Seconds, u16, from_512
 impl fmt::Display for NumberOf512Seconds {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for NumberOf512Seconds {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u16::serialize(&self.to_512_second_intervals(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for NumberOf512Seconds {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_512_second_intervals(u16::deserialize(d)?))
+    }
 }
 
 #[cfg(feature = "arbitrary")]
