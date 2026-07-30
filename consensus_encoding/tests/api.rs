@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Test the API surface of `consensus_encoding`.
+//! Test the API surface (not functionality) of `bitcoin-consensus-encoding`.
 //!
-//! The point of these tests is to check the API surface as opposed to test the API functionality.
-//!
-//! ref: <https://rust-lang.github.io/api-guidelines/about.html>
+//! See [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/about.html) and the [rust-bitcoin policies](../../docs/policy.md).
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
@@ -153,9 +151,10 @@ struct Errors {
     h: UnexpectedEofError,
 }
 
+/// C-DEBUG-NONEMPTY: Tests that `ReadError` has non-empty Debug.
 #[test]
 #[cfg(feature = "std")]
-fn api_can_call_debug_on_read_error() {
+fn c_debug_nonempty_read_error() {
     use std::io::{BufReader, Cursor};
 
     let s = String::new();
@@ -166,9 +165,9 @@ fn api_can_call_debug_on_read_error() {
     assert!(!debug.is_empty()); // We don't check this for other errors.
 }
 
-// `Debug` representation is never empty (C-DEBUG-NONEMPTY).
+/// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
-fn api_all_non_error_types_have_non_empty_debug() {
+fn c_debug_nonempty() {
     static ARR: [u8; 4] = [0u8; 4];
 
     let debug = format!("{:?}", ArrayDecoder::<4>::default());
@@ -213,8 +212,9 @@ fn api_all_non_error_types_have_non_empty_debug() {
     }
 }
 
+/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
 #[test]
-fn all_types_implement_send_sync() {
+fn c_send_sync() {
     fn assert_send<T: Send>() {}
     fn assert_sync<T: Sync>() {}
 
@@ -227,8 +227,9 @@ fn all_types_implement_send_sync() {
     assert_sync::<Errors>();
 }
 
+/// C-GOOD-ERR: Tests that all public error types implement Display.
 #[test]
-fn api_all_error_types_implement_display() {
+fn c_good_err_display() {
     fn assert_display<T: fmt::Display>() {}
 
     #[cfg(feature = "std")]
@@ -245,8 +246,23 @@ fn api_all_error_types_implement_display() {
     assert_display::<UnexpectedEofError>();
 }
 
+/// C-OBJECT: Tests that traits are object-safe where appropriate.
 #[test]
-fn api_all_error_types_implement_from_infallible() {
+fn c_object() {
+    // If this builds then traits are dyn compatible.
+    struct Traits {
+        a: Box<dyn encoding::Encoder>,
+        b: Box<dyn encoding::ExactSizeEncoder>,
+    }
+    // The following traits are not dyn compatible:
+    // - `Encode`: has a GAT (`type Encoder<'e>`)
+    // - `Decode`: has an associated type (`type Decoder`)
+    // - `Decoder`: has a `Sized` bound
+}
+
+/// P-ERROR-INFALLIBLE: Tests that error types implement `From<Infallible>`.
+#[test]
+fn p_error_infallible() {
     fn assert_from_infallible<T: From<Infallible>>() {}
 
     assert_from_infallible::<DecodeError<UnexpectedEofError>>();
@@ -259,17 +275,4 @@ fn api_all_error_types_implement_from_infallible() {
     #[cfg(feature = "alloc")]
     assert_from_infallible::<VecDecoderError<UnexpectedEofError>>();
     assert_from_infallible::<UnexpectedEofError>();
-}
-
-#[test]
-fn dyn_compatible() {
-    // If this builds then traits are dyn compatible.
-    struct Traits {
-        a: Box<dyn encoding::Encoder>,
-        b: Box<dyn encoding::ExactSizeEncoder>,
-    }
-    // The following traits are not dyn compatible:
-    // - `Encode`: has a GAT (`type Encoder<'e>`)
-    // - `Decode`: has an associated type (`type Decoder`)
-    // - `Decoder`: has a `Sized` bound
 }

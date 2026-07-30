@@ -1,8 +1,6 @@
-//! Test the API surface of `io`.
+//! Test the API surface (not functionality) of `bitcoin-io`.
 //!
-//! The point of these tests is to check the API surface as opposed to test the API functionality.
-//!
-//! ref: <https://rust-lang.github.io/api-guidelines/about.html>
+//! See [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/about.html) and the [rust-bitcoin policies](../../docs/policy.md).
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
@@ -108,9 +106,9 @@ struct Errors {
     a: io::Error,
 }
 
-// `Debug` representation is never empty (C-DEBUG-NONEMPTY).
+/// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
-fn api_all_non_error_types_have_non_empty_debug() {
+fn c_debug_nonempty() {
     let t = Types::new();
 
     let debug = format!("{:?}", t.a.a);
@@ -129,8 +127,9 @@ fn api_all_non_error_types_have_non_empty_debug() {
     assert!(!debug.is_empty());
 }
 
+/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
 #[test]
-fn all_non_error_types_implement_send_sync() {
+fn c_send_sync() {
     fn assert_send<T: Send>() {}
     fn assert_sync<T: Sync>() {}
 
@@ -143,8 +142,9 @@ fn all_non_error_types_implement_send_sync() {
     assert_sync::<Errors>();
 }
 
+/// C-OBJECT: Tests that traits are object-safe where appropriate.
 #[test]
-fn dyn_compatible() {
+fn c_object() {
     // Sanity check, these are all dyn compatible.
     struct StdlibTraits {
         p: Box<dyn std::io::Read>,

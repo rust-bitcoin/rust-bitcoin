@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Test the API surface of `hashes`.
+//! Test the API surface (not functionality) of `bitcoin_hashes`.
 //!
-//! The point of these tests is to check the API surface as opposed to test the API functionality.
-//!
-//! ref: <https://rust-lang.github.io/api-guidelines/about.html>
+//! See [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/about.html) and the [rust-bitcoin policies](../../docs/policy.md).
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(deprecated)]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
+
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
 
 // Import using module style e.g., `sha256::Hash`.
 use bitcoin_hashes::{
@@ -170,25 +171,9 @@ struct Errors {
     c: sha256::MidstateError,
 }
 
+/// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
-fn api_can_use_modules_from_crate_root() {
-    use bitcoin_hashes::{
-        hash160, hkdf, hmac, muhash, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512,
-        sha512_256, siphash24,
-    };
-}
-
-#[test]
-fn api_can_use_alias_from_crate_root() {
-    use bitcoin_hashes::{
-        Hash160, Hkdf, Hmac, MuHash, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384, Sha512,
-        Sha512_256, Siphash24,
-    };
-}
-
-// `Debug` representation is never empty (C-DEBUG-NONEMPTY).
-#[test]
-fn api_all_non_error_types_have_non_empty_debug() {
+fn c_debug_nonempty() {
     macro_rules! check_debug {
         ($t:tt; $($field:tt),* $(,)?) => {
             $(
@@ -213,9 +198,9 @@ fn api_all_non_error_types_have_non_empty_debug() {
     check_debug!(t; a);
 }
 
-// Public error `Debug` representation is never empty (C-DEBUG-NONEMPTY).
+/// C-DEBUG-NONEMPTY: Tests that all public error types have non-empty Debug.
 #[test]
-fn api_all_public_error_types_have_non_empty_debug() {
+fn c_debug_nonempty_errors() {
     // HKDF is capped at 255 output blocks, so one byte past that limit must error.
     let mut okm = vec![0_u8; 255 * 32 + 1];
     let err = Hkdf::<sha256::HashEngine>::new(&[], &[]).expand(&[], &mut okm).unwrap_err();
@@ -229,8 +214,9 @@ fn api_all_public_error_types_have_non_empty_debug() {
     assert!(!debug.is_empty());
 }
 
+/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
 #[test]
-fn all_types_implement_send_sync() {
+fn c_send_sync() {
     fn assert_send<T: Send>() {}
     fn assert_sync<T: Sync>() {}
 
@@ -249,19 +235,19 @@ fn all_types_implement_send_sync() {
     assert_sync::<Errors>();
 }
 
-// Error types should implement `std::error::Error` (C-GOOD-ERR).
+/// C-GOOD-ERR: Tests that all public error types implement [`std::error::Error`].
 #[cfg(feature = "std")]
 #[test]
-fn all_error_types_implement_error() {
+fn c_good_err_error() {
     fn assert_error<T: std::error::Error>() {}
 
     assert_error::<hkdf::MaxLengthError>();
     assert_error::<sha256::MidstateError>();
 }
 
-// This is for documentation and so anyone can play with these if they want.
+/// C-OBJECT: Tests that traits are object-safe where appropriate.
 #[test]
-fn dyn_compatible() {
+fn c_object() {
     // use bitcoin_hashes::{sha256t, HashEngine, Hash, IsByteArray};
 
     // struct Traits {
@@ -271,4 +257,49 @@ fn dyn_compatible() {
     //     c: Box<dyn IsByteArray>,
     //     d: Box<dyn sha256t::Tag>,
     // }
+}
+
+/// C-SERDE: Tests that serde traits are implemented where expected.
+#[test]
+#[cfg(feature = "serde")]
+fn c_serde() {
+    fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
+
+    assert_serde::<Sha256>();
+    assert_serde::<Sha256d>();
+    assert_serde::<Hash160>();
+    assert_serde::<Ripemd160>();
+    assert_serde::<Sha1>();
+    assert_serde::<Sha384>();
+    assert_serde::<Sha512>();
+    assert_serde::<Sha512_256>();
+    assert_serde::<Sha3_256>();
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that modules are exported from the crate root.
+#[test]
+fn p_consistent_exports_modules() {
+    use bitcoin_hashes::{
+        hash160, hkdf, hmac, muhash, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512,
+        sha512_256, siphash24,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that type aliases are exported from the crate root.
+#[test]
+fn p_consistent_exports_aliases() {
+    use bitcoin_hashes::{
+        Hash160, Hkdf, Hmac, MuHash, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384, Sha512,
+        Sha512_256, Siphash24,
+    };
+}
+
+/// P-ARBITRARY: Tests that public types implement `Arbitrary`.
+#[test]
+#[cfg(feature = "arbitrary")]
+fn p_arbitrary() {
+    fn assert_arbitrary<T: for<'a> Arbitrary<'a>>() {}
+
+    assert_arbitrary::<Sha256>();
+    assert_arbitrary::<Sha256d>();
 }

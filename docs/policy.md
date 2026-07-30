@@ -1,10 +1,34 @@
-# Coding policy for the rust-bitcoin repository
+# Coding Policy for `rust-bitcoin`
 
 We have various `rust-bitcoin` specific coding styles and conventions that are
 grouped here loosely under the term 'policy'. These are things we try to adhere
 to but that you should not need to worry too much about if you are a new
 contributor. Think of this as a place to collect group knowledge that exists in
 the various PRs over the last few years.
+
+## Table of Contents
+
+- [Import statements](#import-statements)
+- [Re-exports](#re-exports)
+  - [pub extern crates](#pub-extern-crates)
+  - [Special treatment of `bitcoin`, `primitives`, `units`](#special-treatment-of-bitcoin-primitives-units)
+  - [Usage of re-exports](#usage-of-re-exports)
+- [Consistent Exports (P-CONSISTENT-EXPORTS)](#consistent-exports-p-consistent-exports)
+- [Return `Self`](#return-self)
+- [Errors](#errors)
+  - [`From<Infallible>` (P-ERROR-INFALLIBLE)](#frominfallible-p-error-infallible)
+- [`expect` messages](#expect-messages)
+- [Rustdocs](#rustdocs)
+  - [Links](#links)
+  - [Examples](#examples)
+- [Derives](#derives)
+- [Attributes](#attributes)
+- [BIP References](#bip-references)
+  - [Exceptions](#exceptions)
+- [Arbitrary Implementations (P-ARBITRARY)](#arbitrary-implementations-p-arbitrary)
+- [Decoder Implementations (P-DECODERS)](#decoder-implementations-p-decoders)
+- [Default Values (P-DEFAULT-CHANGE)](#default-values-p-default-change)
+- [Licensing](#licensing)
 
 ## Import statements
 
@@ -124,6 +148,10 @@ policy is to use types from the highest crate available i.e `use crate::Foo` not
 
 This is enforced by CI.
 
+## Consistent Exports (P-CONSISTENT-EXPORTS)
+
+Root package exports and module exports should remain consistent in stable crates. Once a type, function, or module is publicly exported, removing or changing its visibility in a later version is a breaking change. Carefully consider what should be part of the public API.
+
 ## Return `Self`
 
 Use `Self` as the return type instead of naming the type. When constructing the return value use
@@ -180,9 +208,9 @@ More specifically an error should
 - implement Display using `write_err!()` macro if a variant contains an inner error source.
 - have `Error` suffix on error types (structs and enums).
 - not have `Error` suffix on enum variants.
-- call `internals::impl_from_infallible!`.
 - implement `std::error::Error` if they are public (feature gated on "std").
 - have messages in lower case, except for proper nouns and variable names.
+- implement `From<Infallible>` (more on that below).
 
 ```rust
 /// Documentation for the `Error` type.
@@ -195,12 +223,19 @@ pub enum Error {
     B,
 }
 
-internals::impl_from_infallible!(Error);
-
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 ```
 
 All errors that live in an `error` module (eg, `foo/error.rs`) and appear in a public function in
 `foo` module should be available from `foo` i.e., should be re-exported from `foo/mod.rs`.
+
+### `From<Infallible>` (P-ERROR-INFALLIBLE)
+
+All public error types should implement `From<Infallible>` to allow callers to seamlessly convert an operation that can never fail into one that is structurally designed to handle errors.
+
+[`Infallible`](https://doc.rust-lang.org/std/convert/enum.Infallible.html) is a "temporary" (years long) type system hack which should hopefully be replaced in the future by [a rust language feature](https://github.com/rust-lang/rfcs/blob/master/text/1216-bang-type.md). Implementing `Infallible` on rust-bitcoin errors allows callers to take advantage now and avoid orphan rule issues.
 
 ## `expect` messages
 
@@ -376,6 +411,21 @@ When referring to Bitcoin Improvement Proposals (BIPs) in documentation, comment
 Module names, function names, variable names, and file names must keep their existing lowercase/underscore format. Do not rename them to match the formal BIP style:
 - Module names: `bip32`, `bip152` (keep lowercase)
 - Function names: `bip32_derivation`, `bip_341_tests` (keep existing format)
+
+## Arbitrary Implementations (P-ARBITRARY)
+
+Public types should implement the `Arbitrary` trait when a package has an `arbitrary` feature. This ensures helpful fuzz types for users to fuzz their own types built on the primitives exported by rust-bitcoin.
+
+## Decoder Implementations (P-DECODERS)
+
+Public decoder types defined with `bitcoin-consensus-encoding` follow standard conventions to ensure consistent API design for encoding/decoding infrastructure across the library.
+
+1. **`Default`** - Decoders should have a default constructor.
+2. **`new()` method** - Decoders should provide an explicit `new()` constructor method.
+
+## Default Values (P-DEFAULT-CHANGE)
+
+Default values should not change between versions, as this is a breaking change.
 
 ## Licensing
 
