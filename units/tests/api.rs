@@ -148,20 +148,21 @@ struct Errors {
     j: amount::error::TooPreciseError,
     k: amount::error::UnknownDenominationError,
     l: block::TooBigForRelativeHeightError,
+    m: fee_rate::FromFloatError,
     #[cfg(feature = "serde")]
-    m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
+    n: fee_rate::serde::OverflowError,
+    o: locktime::absolute::ConversionError,
+    p: locktime::absolute::ParseHeightError,
+    q: locktime::absolute::ParseTimeError,
+    r: locktime::relative::InvalidHeightError,
+    s: locktime::relative::InvalidTimeError,
+    t: locktime::relative::TimeOverflowError,
+    u: parse_int::ParseIntError,
+    v: parse_int::PrefixedHexError,
+    w: parse_int::UnprefixedHexError,
     #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
+    x: pow::CompactTargetDecoderError,
+    y: result::NumOpError,
 }
 
 /// A struct that includes all public decoder types.
@@ -242,7 +243,7 @@ fn api_can_use_all_types_from_module_sequence() {
 fn api_can_use_all_types_from_module_fee_rate() {
     #[cfg(feature = "serde")]
     use bitcoin_units::fee_rate::serde::OverflowError;
-    use bitcoin_units::fee_rate::FeeRate;
+    use bitcoin_units::fee_rate::{FeeRate, FromFloatError};
 }
 
 #[test]
