@@ -28,7 +28,7 @@ use crate::{Decode, Encode, Encoder as _};
 /// * `S` - The serializer type
 pub fn serialize<T, S>(value: &T, s: S) -> Result<S::Ok, S::Error>
 where
-    T: Encode + Decode,
+    T: Encode,
     S: Serializer,
 {
     if s.is_human_readable() {
@@ -62,7 +62,7 @@ where
 /// * `D` - The deserializer type
 pub fn deserialize<'d, T, D>(d: D) -> Result<T, D::Error>
 where
-    T: Encode + Decode,
+    T: Decode,
     D: Deserializer<'d>,
 {
     if d.is_human_readable() {
@@ -79,7 +79,7 @@ where
 
         impl<'de, T> serde::de::Visitor<'de> for BytesVisitor<T>
         where
-            T: Encode + Decode,
+            T: Decode,
         {
             type Value = T;
 
@@ -161,12 +161,12 @@ pub mod opt {
     #[allow(clippy::ref_option)] // API forced by serde.
     pub fn serialize<T, S>(t: &Option<T>, s: S) -> Result<S::Ok, S::Error>
     where
-        T: Encode + Decode,
+        T: Encode,
         S: Serializer,
     {
         struct AsConsensus<'a, T>(&'a T);
 
-        impl<T: Encode + Decode> serde::Serialize for AsConsensus<'_, T> {
+        impl<T: Encode> serde::Serialize for AsConsensus<'_, T> {
             fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 super::serialize(self.0, s)
             }
@@ -180,14 +180,14 @@ pub mod opt {
 
     pub fn deserialize<'d, T, D>(d: D) -> Result<Option<T>, D::Error>
     where
-        T: Encode + Decode,
+        T: Decode,
         D: Deserializer<'d>,
     {
         struct OptVisitor<X>(PhantomData<X>);
 
         impl<'de, X> de::Visitor<'de> for OptVisitor<X>
         where
-            X: Encode + Decode,
+            X: Decode,
         {
             type Value = Option<X>;
 
@@ -266,12 +266,12 @@ pub mod vec {
 
     pub fn serialize<T, S>(v: &[T], s: S) -> Result<S::Ok, S::Error>
     where
-        T: Encode + Decode,
+        T: Encode,
         S: Serializer,
     {
         struct AsConsensus<'a, T>(&'a T);
 
-        impl<T: Encode + Decode> serde::Serialize for AsConsensus<'_, T> {
+        impl<T: Encode> serde::Serialize for AsConsensus<'_, T> {
             fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 super::serialize(self.0, s)
             }
@@ -282,14 +282,14 @@ pub mod vec {
 
     pub fn deserialize<'d, T, D>(d: D) -> Result<Vec<T>, D::Error>
     where
-        T: Encode + Decode,
+        T: Decode,
         D: Deserializer<'d>,
     {
         struct VecVisitor<X>(PhantomData<X>);
 
         impl<'de, X> de::Visitor<'de> for VecVisitor<X>
         where
-            X: Encode + Decode,
+            X: Decode,
         {
             type Value = Vec<X>;
 
@@ -305,7 +305,7 @@ pub mod vec {
 
                 impl<'de, X> de::Deserialize<'de> for Wrap<X>
                 where
-                    X: Encode + Decode,
+                    X: Decode,
                 {
                     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
                         super::deserialize::<X, D>(d).map(Wrap)
