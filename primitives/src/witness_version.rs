@@ -81,6 +81,26 @@ impl fmt::Display for WitnessVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", *self as u8) }
 }
 
+impl fmt::LowerHex for WitnessVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.to_num(), f) }
+}
+
+impl fmt::UpperHex for WitnessVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.to_num(), f) }
+}
+
+impl fmt::Octal for WitnessVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Octal::fmt(&self.to_num(), f) }
+}
+
+impl fmt::Binary for WitnessVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Binary::fmt(&self.to_num(), f) }
+}
+
 impl FromStr for WitnessVersion {
     type Err = ParseWitnessVersionError;
 
@@ -214,7 +234,7 @@ pub mod error {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
-    use alloc::string::ToString;
+    use alloc::format;
 
     use super::*;
     use crate::opcodes::OP_PUSHDATA4;
@@ -229,11 +249,23 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn witness_version_display() {
-        assert_eq!(WitnessVersion::V0.to_string(), "0");
-        assert_eq!(WitnessVersion::V1.to_string(), "1");
-        assert_eq!(WitnessVersion::V10.to_string(), "10");
-        assert_eq!(WitnessVersion::V16.to_string(), "16");
+    fn witness_version_fmt() {
+        assert_eq!(format!("{}", WitnessVersion::V0), "0");
+        assert_eq!(format!("{}", WitnessVersion::V1), "1");
+        assert_eq!(format!("{}", WitnessVersion::V10), "10");
+        assert_eq!(format!("{}", WitnessVersion::V16), "16");
+
+        assert_eq!(format!("{:x}", WitnessVersion::V10), "a");
+        assert_eq!(format!("{:x}", WitnessVersion::V16), "10");
+
+        assert_eq!(format!("{:X}", WitnessVersion::V10), "A");
+        assert_eq!(format!("{:X}", WitnessVersion::V16), "10");
+
+        assert_eq!(format!("{:o}", WitnessVersion::V10), "12");
+        assert_eq!(format!("{:o}", WitnessVersion::V16), "20");
+
+        assert_eq!(format!("{:b}", WitnessVersion::V10), "1010");
+        assert_eq!(format!("{:b}", WitnessVersion::V16), "10000");
     }
 
     #[test]
