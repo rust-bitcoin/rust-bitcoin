@@ -5391,6 +5391,7 @@ pub fn bitcoin_units::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub fn bitcoin_units::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError> where Self: core::marker::Sized
 pub fn bitcoin_units::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError> where Self: core::marker::Sized
 pub const fn bitcoin_units::pow::CompactTarget::to_consensus(self) -> u32
+pub fn bitcoin_units::pow::CompactTarget::to_target(self) -> bitcoin_units::pow::Target
 impl core::clone::Clone for bitcoin_units::pow::CompactTarget
   pub fn bitcoin_units::pow::CompactTarget::clone(&self) -> bitcoin_units::pow::CompactTarget [impl: impl core::clone::Clone for bitcoin_units::pow::CompactTarget]
 impl core::cmp::Eq for bitcoin_units::pow::CompactTarget
@@ -9210,6 +9211,7 @@ pub fn bitcoin_units::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub fn bitcoin_units::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError> where Self: core::marker::Sized
 pub fn bitcoin_units::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError> where Self: core::marker::Sized
 pub const fn bitcoin_units::pow::CompactTarget::to_consensus(self) -> u32
+pub fn bitcoin_units::pow::CompactTarget::to_target(self) -> bitcoin_units::pow::Target
 impl core::clone::Clone for bitcoin_units::pow::CompactTarget
   pub fn bitcoin_units::pow::CompactTarget::clone(&self) -> bitcoin_units::pow::CompactTarget [impl: impl core::clone::Clone for bitcoin_units::pow::CompactTarget]
 impl core::cmp::Eq for bitcoin_units::pow::CompactTarget
