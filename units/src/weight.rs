@@ -564,6 +564,16 @@ mod tests {
     }
 
     #[test]
+    fn weight_algebra() {
+        let a = Weight::from_wu(700);
+        let b = Weight::from_wu(300);
+        let d = a / b;
+        let r = a % b;
+
+        assert_eq!(a, d * b + r);
+    }
+
+    #[test]
     fn iter_sum() {
         let values = [
             Weight::from_wu(10),
