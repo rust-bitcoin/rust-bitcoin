@@ -81,7 +81,7 @@ pub trait Validation: sealed::Validation + Sync + Send + Sized + Unpin {
 ///
 /// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
 #[cfg(feature = "alloc")]
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Block<V = Unchecked>
 where
     V: Validation,
@@ -251,6 +251,16 @@ impl<V: Validation> Block<V> {
     #[inline]
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
 }
+
+#[cfg(feature = "alloc")]
+impl<V: Validation> PartialEq for Block<V> {
+    fn eq(&self, other: &Self) -> bool {
+        self.header == other.header && self.transactions == other.transactions
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<V: Validation> Eq for Block<V> {}
 
 #[cfg(feature = "alloc")]
 impl From<Block> for BlockHash {
@@ -1712,6 +1722,84 @@ mod tests {
         .unwrap();
         let expected = WitnessMerkleNode::from_byte_array(exp_bytes);
         assert_eq!(result, (true, Some(expected)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_eq() {
+        let coinbase = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn::EMPTY_COINBASE],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::script::ScriptBuf::new(),
+            }],
+        };
+
+        let header = dummy_header();
+        let other_header = Header { nonce: header.nonce + 1, ..header };
+
+        assert_eq!(
+            Block::new_unchecked(header, vec![coinbase.clone()]),
+            Block::new_unchecked(header, vec![coinbase.clone()]),
+        );
+
+        assert_ne!(
+            Block::new_unchecked(header, vec![coinbase.clone()]),
+            Block::new_unchecked(other_header, vec![coinbase.clone()]),
+        );
+
+        assert_ne!(
+            Block::new_unchecked(header, vec![coinbase.clone()]),
+            Block::new_unchecked(header, vec![coinbase.clone(), coinbase]),
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn checked_block_eq_ignores_cached_witness_root() {
+        let mut txin = crate::TxIn::EMPTY_COINBASE;
+        txin.witness.push([11u8; 32]);
+
+        let script_pubkey_bytes = hex::decode_to_array::<38>(
+            "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
+        )
+        .unwrap();
+        let tx1 = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![txin],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
+            }],
+        };
+        let tx2 = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn::EMPTY_COINBASE],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::script::ScriptBuf::new(),
+            }],
+        };
+
+        let transactions = vec![tx1, tx2];
+        let mut header = dummy_header();
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+        let block = Block::new_unchecked(header, transactions);
+
+        let validated = block.clone().validate().unwrap();
+        assert!(validated.cached_witness_root().is_some());
+        let assumed = block.assume_checked(None);
+        assert!(assumed.cached_witness_root().is_none());
+
+        assert_eq!(validated.header(), assumed.header());
+        assert_eq!(validated.transactions(), assumed.transactions());
+        assert_eq!(encoding::encode_to_vec(&validated), encoding::encode_to_vec(&assumed));
+        assert_eq!(validated, assumed);
     }
 
     #[test]
