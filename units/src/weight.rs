@@ -233,9 +233,9 @@ crate::internal_macros::impl_op_for_references! {
         fn rem(self, rhs: u64) -> Self::Output { Weight::from_wu(self.to_wu() % rhs) }
     }
     impl ops::Rem<Weight> for Weight {
-        type Output = u64;
+        type Output = Weight;
 
-        fn rem(self, rhs: Weight) -> Self::Output { self.to_wu() % rhs.to_wu() }
+        fn rem(self, rhs: Weight) -> Self::Output { Weight::from_wu(self.to_wu() % rhs.to_wu()) }
     }
     impl ops::Div<NonZeroU64> for Weight {
         type Output = Weight;
@@ -550,7 +550,7 @@ mod tests {
         let weight3 = Weight::from_wu(3);
 
         let remainder = weight10 % weight3;
-        assert_eq!(remainder, 1);
+        assert_eq!(remainder, Weight::from_wu(1));
 
         let remainder = weight10 % 3;
         assert_eq!(remainder, Weight::from_wu(1));
@@ -561,6 +561,16 @@ mod tests {
         let mut weight = Weight::from_wu(10);
         weight %= 3;
         assert_eq!(weight, Weight::from_wu(1));
+    }
+
+    #[test]
+    fn weight_algebra() {
+        let a = Weight::from_wu(700);
+        let b = Weight::from_wu(300);
+        let d = a / b;
+        let r = a % b;
+
+        assert_eq!(a, d * b + r);
     }
 
     #[test]

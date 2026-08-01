@@ -6880,7 +6880,7 @@ impl core::ops::arith::Mul<u64> for bitcoin_units::Weight
 impl core::ops::arith::MulAssign<u64> for bitcoin_units::Weight
   pub fn bitcoin_units::Weight::mul_assign(&mut self, rhs: u64) [impl: impl core::ops::arith::MulAssign<u64> for bitcoin_units::Weight]
 impl core::ops::arith::Rem for bitcoin_units::Weight
-  pub type bitcoin_units::Weight::Output = u64 [impl: impl core::ops::arith::Rem for bitcoin_units::Weight]
+  pub type bitcoin_units::Weight::Output = bitcoin_units::Weight [impl: impl core::ops::arith::Rem for bitcoin_units::Weight]
   pub fn bitcoin_units::Weight::rem(self, rhs: bitcoin_units::Weight) -> Self::Output [impl: impl core::ops::arith::Rem for bitcoin_units::Weight]
 impl core::ops::arith::Rem<&bitcoin_units::Weight> for bitcoin_units::Weight
   pub type bitcoin_units::Weight::Output = <bitcoin_units::Weight as core::ops::arith::Rem>::Output [impl: impl core::ops::arith::Rem<&bitcoin_units::Weight> for bitcoin_units::Weight]
@@ -9080,7 +9080,7 @@ impl core::ops::arith::Mul<u64> for bitcoin_units::Weight
 impl core::ops::arith::MulAssign<u64> for bitcoin_units::Weight
   pub fn bitcoin_units::Weight::mul_assign(&mut self, rhs: u64) [impl: impl core::ops::arith::MulAssign<u64> for bitcoin_units::Weight]
 impl core::ops::arith::Rem for bitcoin_units::Weight
-  pub type bitcoin_units::Weight::Output = u64 [impl: impl core::ops::arith::Rem for bitcoin_units::Weight]
+  pub type bitcoin_units::Weight::Output = bitcoin_units::Weight [impl: impl core::ops::arith::Rem for bitcoin_units::Weight]
   pub fn bitcoin_units::Weight::rem(self, rhs: bitcoin_units::Weight) -> Self::Output [impl: impl core::ops::arith::Rem for bitcoin_units::Weight]
 impl core::ops::arith::Rem<&bitcoin_units::Weight> for bitcoin_units::Weight
   pub type bitcoin_units::Weight::Output = <bitcoin_units::Weight as core::ops::arith::Rem>::Output [impl: impl core::ops::arith::Rem<&bitcoin_units::Weight> for bitcoin_units::Weight]
