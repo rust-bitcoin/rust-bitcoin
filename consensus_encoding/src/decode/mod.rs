@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Consensus Decoding Traits
-
 pub mod decoders;
 
 #[cfg(feature = "hex")]
@@ -10,7 +8,7 @@ use crate::error::{FromHexError, FromHexErrorInner};
 use crate::ReadError;
 use crate::{DecodeError, UnconsumedError};
 
-/// A Bitcoin object which can be consensus-decoded using a push decoder.
+/// A Bitcoin object which can be consensus decoded using a push decoder.
 ///
 /// To decode something, create a [`Self::Decoder`] and push byte slices into it with
 /// [`Decoder::push_bytes`], then call [`Decoder::end`] to get the result.
@@ -51,7 +49,7 @@ pub trait Decode {
     fn decoder() -> Self::Decoder { Self::Decoder::default() }
 }
 
-/// A push decoder for a consensus-decodable object.
+/// A push decoder that consumes bytes in chunks.
 pub trait Decoder: Sized {
     /// The type that this decoder produces when decoding is complete.
     type Output;
@@ -132,7 +130,7 @@ impl DecoderStatus {
     pub fn is_ready(&self) -> bool { matches!(self, Self::Ready) }
 }
 
-/// Decodes an object from a hex string without heap allocations.
+/// Decodes a consensus decodable type from a hex string without heap allocations.
 ///
 /// # Errors
 ///
@@ -232,7 +230,7 @@ fn decode_from_hex_internal<D: Decoder>(
     }
 }
 
-/// Decodes an object from a byte slice.
+/// Decodes a consensus decodable type from a byte slice.
 ///
 /// # Errors
 ///
@@ -278,7 +276,7 @@ fn decode_from_slice_internal<D: Decoder>(
     }
 }
 
-/// Decodes an object from an unbounded byte slice.
+/// Decodes a consensus decodable type from an unbounded byte slice.
 ///
 /// Unlike [`decode_from_slice`], this function will not error if the slice contains additional
 /// bytes that are not required to decode. Furthermore, the byte slice reference provided to this
@@ -332,7 +330,7 @@ fn decode_from_slice_unbounded_internal<D: Decoder>(
     decoder.end()
 }
 
-/// Decodes an object from a buffered reader.
+/// Decodes a consensus decodable type from a buffered reader.
 ///
 /// # Performance
 ///
@@ -412,7 +410,7 @@ where
     }
 }
 
-/// Decodes an object from an unbuffered reader using a fixed-size buffer.
+/// Decodes a consensus decodable type from an unbuffered reader using a fixed-size buffer.
 ///
 /// For most use cases, prefer [`decode_from_read`] with a [`std::io::BufReader`]. This function is
 /// only needed when you have an unbuffered reader which you cannot wrap. It will probably have
@@ -440,7 +438,7 @@ where
     decode_from_read_unbuffered_with::<T, R, 4096>(reader)
 }
 
-/// Decodes an object from an unbuffered reader using a custom-sized buffer.
+/// Decodes a consensus decodable type from an unbuffered reader using a custom-sized buffer.
 ///
 /// For most use cases, prefer [`decode_from_read`] with a [`std::io::BufReader`]. This function is
 /// only needed when you have an unbuffered reader which you cannot wrap. It will probably have
@@ -493,7 +491,7 @@ where
     decoder.end().map_err(ReadError::Decode)
 }
 
-/// Checks that the given bytes decode to the expected value, panicking if they don't.
+/// Checks that the given bytes decode to the expected consensus decodable value, panicking if they don't.
 ///
 /// This is intended for tests only.
 ///

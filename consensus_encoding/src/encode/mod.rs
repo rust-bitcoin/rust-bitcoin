@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Consensus Encoding Traits
-
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 use alloc::string::String;
@@ -10,7 +8,7 @@ use alloc::vec::Vec;
 
 pub mod encoders;
 
-/// A Bitcoin object which can be consensus-encoded.
+/// A Bitcoin object which can be consensus encoded.
 ///
 /// To encode something, use the [`Self::encoder`] method to obtain a [`Self::Encoder`], which will
 /// behave like an iterator yielding byte slices.
@@ -50,7 +48,7 @@ pub trait Encode {
     fn encoder(&self) -> Self::Encoder<'_>;
 }
 
-/// An encoder for a consensus-encodable object.
+/// A pull based encoder that yields bytes in chunks.
 ///
 /// The consumers of a type implementing this encoder trait should generally use it in a loop like
 /// this:
@@ -316,7 +314,7 @@ pub trait ExactSizeEncoder: Encoder {
     fn is_empty(&self) -> bool { self.len() == 0 }
 }
 
-/// Encodes an object into a vector.
+/// Encodes a consensus encodable type into a vector.
 #[cfg(feature = "alloc")]
 pub fn encode_to_vec<T>(object: &T) -> Vec<u8>
 where
@@ -342,7 +340,7 @@ where
     vec
 }
 
-/// Encodes an object into a hex string.
+/// Encodes a consensus encodable type into a hex string.
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 pub fn encode_to_hex<T>(object: &T, case: hex::Case) -> String
@@ -364,7 +362,7 @@ where
     hex_iter.flatten().map(char::from).collect()
 }
 
-/// Encodes an object to a standard I/O writer.
+/// Encodes a consensus encodable type to a standard I/O writer.
 ///
 /// # Performance
 ///
@@ -407,7 +405,7 @@ where
     Ok(())
 }
 
-/// Checks that the given `value` encodes to `expected`, panicking if it doesn't.
+/// Checks that a consensus encodable `value` encodes to `expected`, panicking if it doesn't.
 ///
 /// Note that the function does not impose any requirements on chunking - whether the encoded bytes
 /// are returned as a few large chunks or they are many smaller chunks makes no difference (other

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Primitive decoders.
+//! Primitive and combinator decoder types.
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
@@ -141,7 +141,7 @@ impl Decoder for ByteVecDecoder {
     }
 }
 
-/// A decoder that decodes a vector of `T`s.
+/// A decoder for a vector of consensus decodable types.
 ///
 /// The vector encoding must start with the number of items in the vector, encoded as a compact
 /// size.
