@@ -79,7 +79,7 @@ while :; do
     if [ "$cycle_mode" = true ]; then
       chrt_cmd='chrt -i 0'
     fi
-    RUSTFLAGS="$RUSTFLAGS $fuzz_rustflags" $chrt_cmd cargo +nightly fuzz run "$targetName" -- -max_total_time="$max_total_time"
+    RUSTFLAGS="${RUSTFLAGS:-} ${fuzz_rustflags}" $chrt_cmd cargo +nightly fuzz run "$targetName" -- -max_total_time="$max_total_time"
 
     echo "Minimizing corpus for target $targetName"
     cargo +nightly fuzz cmin "$targetName"
