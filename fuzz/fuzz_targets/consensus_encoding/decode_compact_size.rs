@@ -1,7 +1,7 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
-use bitcoin_consensus_encoding::{CompactSizeDecoder, Decoder};
+use bitcoin::encoding::{CompactSizeDecoder, Decoder};
 use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
