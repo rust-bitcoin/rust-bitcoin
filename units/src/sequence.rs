@@ -33,7 +33,7 @@ pub use self::error::SequenceDecoderError;
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Sequence(pub u32);
+pub struct Sequence(u32);
 
 impl Sequence {
     /// The maximum allowable sequence number.
@@ -227,12 +227,6 @@ impl Sequence {
 }
 
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Sequence);
-
-impl Default for Sequence {
-    /// The default value of sequence is 0xffffffff.
-    #[inline]
-    fn default() -> Self { Self::MAX }
-}
 
 impl From<Sequence> for u32 {
     #[inline]
