@@ -418,7 +418,10 @@ impl encoding::Decoder for WitnessDecoder {
                 }
 
                 // Take ownership of the decoder so we can consume it.
-                let decoder = core::mem::take(&mut self.element_length_decoder);
+                let decoder = core::mem::replace(
+                    &mut self.element_length_decoder,
+                    CompactSizeDecoder::new_with_limit(MAX_WITNESS_ITEM_SIZE),
+                );
                 let element_length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
 
                 // keep the element length prefix in the content area.
@@ -1850,5 +1853,27 @@ mod test {
         // No massive allocation occurred.
         assert_eq!(dec.content.len(), 5);
         assert!(dec.content.capacity() < 100_000);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn element_length_limit_applies_to_every_element() {
+        // 4_000_001, which exceeds `MAX_WITNESS_ITEM_SIZE` but is below the default 32MB compact
+        // size limit. It is therefore only rejected if each element gets a correctly limited
+        // decoder, rather than the first one alone.
+        const OVERSIZED: [u8; 5] = [0xFE, 0x01, 0x09, 0x3D, 0x00];
+
+        // As the first element.
+        let mut encoded = vec![0x01];
+        encoded.extend_from_slice(&OVERSIZED);
+        let mut dec = WitnessDecoder::new();
+        assert!(dec.push_bytes(&mut encoded.as_slice()).is_err());
+
+        // And as a later element, which used to be accepted because the length decoder was
+        // replaced with an unlimited-by-comparison default one after the first element.
+        let mut encoded = vec![0x02, 0x00];
+        encoded.extend_from_slice(&OVERSIZED);
+        let mut dec = WitnessDecoder::new();
+        assert!(dec.push_bytes(&mut encoded.as_slice()).is_err());
     }
 }
