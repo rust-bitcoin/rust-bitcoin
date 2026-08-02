@@ -257,6 +257,11 @@ impl CompactTarget {
     #[inline]
     pub const fn to_consensus(self) -> u32 { self.0 }
 
+    /// Computes the [`Target`] value from this compact representation.
+    ///
+    /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
+    pub fn to_target(self) -> Target { Target::from_compact(self) }
+
     /// Constructs a new `CompactTarget` from a prefixed hex string.
     ///
     /// # Errors
@@ -1322,7 +1327,7 @@ mod tests {
     fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
 
     #[test]
-    fn target_from_compact() {
+    fn compact_to_target() {
         // (nBits, target)
         let tests = [
             (0x0100_3456_u32, 0x00_u64), // High bit set.
@@ -1339,20 +1344,20 @@ mod tests {
 
         for (n_bits, target) in tests {
             let want = Target(U256::from(target));
-            let got = Target::from_compact(CompactTarget::from_consensus(n_bits));
+            let got = CompactTarget::from_consensus(n_bits).to_target();
             assert_eq!(got, want);
         }
     }
 
     #[test]
-    fn target_from_compact_overflow_boundaries() {
+    fn compact_to_target_overflow_boundaries() {
         let tests = [
             (0x2100_FFFF_u32, Target(U256::from(0xFFFF_u32) << 240)),
             (0x2200_00FF_u32, Target(U256::from(0xFF_u32) << 248)),
         ];
 
         for (n_bits, want) in tests {
-            let got = Target::from_compact(CompactTarget::from_consensus(n_bits));
+            let got = CompactTarget::from_consensus(n_bits).to_target();
             assert_eq!(got, want);
         }
     }
