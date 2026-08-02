@@ -1,5 +1,5 @@
-# This workflow is triggered on completion of a CI job. It handles adding
-# labels to the PR which triggered the job. It is a separate workflow from
+# This workflow is triggered on completion of CI and semver check jobs. It handles adding
+# labels and comments to the PR which triggered the job. It is a separate workflow from
 # the CI workflow itself in order to follow security best practices.
 #
 # Since only workflows on the default branch (`master`) can be triggered, this
@@ -9,7 +9,7 @@
 
 on:   # yamllint disable-line rule:truthy
   workflow_run:  # zizmor: ignore[dangerous-triggers]
-    workflows: [Continuous integration]
+    workflows: [Continuous integration, Check semver breaks]
     types: [completed]
 
 name: CI Labeller
@@ -40,3 +40,12 @@ jobs:
           exit_code=$(tail -n1 api-diff)
           toggle=$([ "$exit_code" -eq 0 ] && echo "--remove-label" || echo "--add-label")
           gh pr edit $issue_number $toggle "API diff"
+      # The semver break artifact must have the PR number on the first line.
+      - name: "Comment and Label on API break"
+        if: ${{ hashFiles('semver-break') != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          issue_number=$(cat semver-break)
+          gh pr comment $issue_number --body 'API BREAKING CHANGE DETECTED!'
+          gh pr edit $issue_number --add-label "API break"
