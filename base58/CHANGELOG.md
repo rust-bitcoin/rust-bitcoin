@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-03
+
+- Replace encoding functions with optional-alloc `Base58CkString` [6505](https://github.com/rust-bitcoin/rust-bitcoin/pull/6505)
+- Upgrade to stable `bitcoin_hashes` dependency
+
 ## [0.4.0] - 2025-01-08
 
 - Update to latest `hashes 0.20.0`
@@ -40,7 +45,8 @@
 Initial release of the `base58ck` crate. This crate was cut out of
 `rust-bitcoin` and cleaned up for release as a separate crate.
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.4.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.5.0...HEAD
+[0.5.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.4.0...base58ck-0.5.0
 [0.4.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.3.0...base58ck-0.4.0
 [0.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.2.0...base58ck-0.3.0
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/base58ck-0.1.100...base58ck-0.2.0
