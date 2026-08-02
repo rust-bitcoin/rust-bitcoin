@@ -22,6 +22,21 @@
 ///
 /// The generated `Display` reports the field name (``error decoding `script_sig` field``).
 macro_rules! decoder_error {
+    // ----- arity 3 -----
+    (
+        $(#[$attr:meta])*
+        $vis:vis enum $name:ident from Decoder3<$d0:ty, $d1:ty, $d2:ty $(,)?> {
+            $(#[$a0:meta])* $f0:ident: $e0:ty => $v0:ident,
+            $(#[$a1:meta])* $f1:ident: $e1:ty => $v1:ident,
+            $(#[$a2:meta])* $f2:ident: $e2:ty => $v2:ident $(,)?
+        }
+    ) => {
+        crate::decoder_error!(@build $(#[$attr])* $vis $name; Decoder3Error;
+            (First,  [$(#[$a0])*], $f0, $v0, $d0, $e0),
+            (Second, [$(#[$a1])*], $f1, $v1, $d1, $e1),
+            (Third,  [$(#[$a2])*], $f2, $v2, $d2, $e2),
+        );
+    };
     // ----- arity 6 -----
     (
         $(#[$attr:meta])*
