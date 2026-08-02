@@ -40,12 +40,17 @@ jobs:
           exit_code=$(tail -n1 api-diff)
           toggle=$([ "$exit_code" -eq 0 ] && echo "--remove-label" || echo "--add-label")
           gh pr edit $issue_number $toggle "API diff"
-      # The semver break artifact must have the PR number on the first line.
-      - name: "Comment and Label on API break"
+      # The semver break artifact must have the PR number on the first line,
+      # and the exit code of the semver check on the second line.
+      - name: "Toggle API break Label"
         if: ${{ hashFiles('semver-break') != '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          issue_number=$(cat semver-break)
-          gh pr comment $issue_number --body 'API BREAKING CHANGE DETECTED!'
-          gh pr edit $issue_number --add-label "API break"
+          issue_number=$(head -n1 semver-break)
+          exit_code=$(tail -n1 semver-break)
+          toggle=$([ "$exit_code" -eq 0 ] && echo "--remove-label" || echo "--add-label")
+          gh pr edit $issue_number $toggle "API break"
+          if [ "$exit_code" -ne 0 ]; then
+            gh pr comment $issue_number --body 'API BREAKING CHANGE DETECTED!'
+          fi
