@@ -12,7 +12,6 @@ use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
-
 use bitcoin_network_kind::{Network, NetworkKind, ParseNetworkError, TestnetVersion};
 
 /// A struct that includes all public non-error enums.
