@@ -7,7 +7,7 @@ use libfuzzer_sys::fuzz_target;
 fn main() {}
 
 fn do_test(data: &[u8]) {
-    let _: Result<p2p::address::AddrV2, _> = bitcoin_consensus_encoding::decode_from_slice(data);
+    let _: Result<p2p::address::AddrV2, _> = bitcoin::encoding::decode_from_slice(data);
 }
 
 fuzz_target!(|data| {
