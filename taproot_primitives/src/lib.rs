@@ -91,7 +91,9 @@ impl encoding::Encode for TapLeafHash {
     type Encoder<'e> = TapLeafHashEncoder<'e>;
     #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
-        TapLeafHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(self.as_byte_array()))
+        TapLeafHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(
+            self.as_byte_array(),
+        ))
     }
 }
 

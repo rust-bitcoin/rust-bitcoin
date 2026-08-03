@@ -12,7 +12,6 @@
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
-
 // Import using module style e.g., `sha256::Hash`.
 use bitcoin_hashes::{
     hash160, hash_newtype, hkdf, hmac, ripemd160, sha1, sha256, sha256d, sha256t, sha256t_tag,
