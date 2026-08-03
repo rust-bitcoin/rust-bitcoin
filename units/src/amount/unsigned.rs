@@ -268,6 +268,7 @@ impl Amount {
     #[inline]
     #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
+        let value = if value == 0.0 { 0.0 } else { value };
         if value < 0.0 {
             return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
                 OutOfRangeError::negative(),

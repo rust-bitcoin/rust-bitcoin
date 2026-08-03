@@ -365,6 +365,8 @@ fn floating_point() {
     let f = Amount::from_float_in;
     let sf = SignedAmount::from_float_in;
 
+    assert_eq!(f(0.0, D::Bitcoin), Ok(sat(0)));
+    assert_eq!(f(-0.0, D::Bitcoin), Ok(sat(0)));
     assert_eq!(f(11.22, D::Bitcoin), Ok(sat(1_122_000_000)));
     assert_eq!(sf(-11.22, D::MilliBitcoin), Ok(ssat(-1_122_000)));
     assert_eq!(f(11.22, D::Bit), Ok(sat(1122)));
