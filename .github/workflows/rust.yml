@@ -57,7 +57,25 @@ jobs:
           fetch-depth: 0 # History required for API diff.
       - uses: ./.github/actions/setup-rbmt
       - name: "Run API check"
-        run: cargo rbmt api --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
+        id: api_check
+        run: |
+          set +e
+          cargo rbmt api --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+      - name: "Save API diff state"
+        if: github.event_name == 'pull_request'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXIT_CODE: ${{ steps.api_check.outputs.exit_code }}
+        run: |
+          echo "$PR_NUMBER" > api-diff
+          echo "$EXIT_CODE" >> api-diff
+      - name: "Upload API diff state"
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: api-diff
+          path: api-diff
 
   Bench:
     runs-on: ubuntu-24.04
