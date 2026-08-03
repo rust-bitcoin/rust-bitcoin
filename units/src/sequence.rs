@@ -215,7 +215,7 @@ impl Sequence {
         if self.is_time_locked() {
             Some(LockTime::from(NumberOf512Seconds::from_512_second_intervals(lock_value)))
         } else {
-            Some(LockTime::from(NumberOfBlocks::from(lock_value)))
+            Some(LockTime::from(NumberOfBlocks::from_height(lock_value)))
         }
     }
 
