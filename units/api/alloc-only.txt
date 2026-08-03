@@ -4883,8 +4883,6 @@ impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for 
   pub fn bitcoin_units::block::BlockHeightInterval::from(h: bitcoin_units::locktime::relative::NumberOfBlocks) -> Self [impl: impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::block::BlockHeightInterval]
 impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::locktime::relative::LockTime
   pub fn bitcoin_units::locktime::relative::LockTime::from(h: bitcoin_units::locktime::relative::NumberOfBlocks) -> Self [impl: impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::locktime::relative::LockTime]
-impl core::convert::From<u16> for bitcoin_units::locktime::relative::NumberOfBlocks
-  pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from(value: u16) -> Self [impl: impl core::convert::From<u16> for bitcoin_units::locktime::relative::NumberOfBlocks]
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOfBlocks
   pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError [impl: impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOfBlocks]
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: &str) -> core::result::Result<Self, Self::Error> [impl: impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOfBlocks]
@@ -6654,8 +6652,6 @@ impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for 
   pub fn bitcoin_units::block::BlockHeightInterval::from(h: bitcoin_units::locktime::relative::NumberOfBlocks) -> Self [impl: impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::block::BlockHeightInterval]
 impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::locktime::relative::LockTime
   pub fn bitcoin_units::locktime::relative::LockTime::from(h: bitcoin_units::locktime::relative::NumberOfBlocks) -> Self [impl: impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::locktime::relative::LockTime]
-impl core::convert::From<u16> for bitcoin_units::locktime::relative::NumberOfBlocks
-  pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from(value: u16) -> Self [impl: impl core::convert::From<u16> for bitcoin_units::locktime::relative::NumberOfBlocks]
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOfBlocks
   pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError [impl: impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOfBlocks]
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: &str) -> core::result::Result<Self, Self::Error> [impl: impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOfBlocks]
