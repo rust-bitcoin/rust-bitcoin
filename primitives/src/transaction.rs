@@ -695,6 +695,59 @@ enum IsSegwit {
     No,
 }
 
+/// Encodes the witnesses from a list of inputs.
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone)]
+struct WitnessesEncoder<'e> {
+    inputs: &'e [TxIn],
+    /// Encoder for the current witness being encoded.
+    cur_enc: Option<WitnessEncoder<'e>>,
+}
+
+#[cfg(feature = "alloc")]
+impl<'e> WitnessesEncoder<'e> {
+    /// Constructs a new encoder for all witnesses in a list of transaction inputs.
+    pub fn new(inputs: &'e [TxIn]) -> Self {
+        Self { inputs, cur_enc: inputs.first().map(|input| input.witness.encoder()) }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl encoding::Encoder for WitnessesEncoder<'_> {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] {
+        self.cur_enc.as_ref().map(WitnessEncoder::current_chunk).unwrap_or_default()
+    }
+
+    #[inline]
+    fn advance(&mut self) -> EncoderStatus {
+        let Some(cur) = self.cur_enc.as_mut() else {
+            return EncoderStatus::Finished;
+        };
+
+        loop {
+            // On subsequent calls, attempt to advance the current encoder and return
+            // success if this succeeds.
+            if cur.advance().has_more() {
+                return EncoderStatus::HasMore;
+            }
+            // self.inputs guaranteed to be non-empty if cur_enc is non-None.
+            self.inputs = &self.inputs[1..];
+
+            // If advancing the current encoder failed, attempt to move to the next encoder.
+            if let Some(input) = self.inputs.first() {
+                *cur = input.witness.encoder();
+                if !cur.current_chunk().is_empty() {
+                    return EncoderStatus::HasMore;
+                }
+            } else {
+                self.cur_enc = None; // shortcut the next call to advance()
+                return EncoderStatus::Finished;
+            }
+        }
+    }
+}
+
 /// How many times we have state transitioned to encoding a witness (zero-based).
 #[cfg(feature = "alloc")]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -767,59 +820,6 @@ impl encoding::Encode for TxIn {
             self.script_sig.encoder(),
             self.sequence.encoder(),
         ))
-    }
-}
-
-/// Encodes the witnesses from a list of inputs.
-#[cfg(feature = "alloc")]
-#[derive(Debug, Clone)]
-pub struct WitnessesEncoder<'e> {
-    inputs: &'e [TxIn],
-    /// Encoder for the current witness being encoded.
-    cur_enc: Option<WitnessEncoder<'e>>,
-}
-
-#[cfg(feature = "alloc")]
-impl<'e> WitnessesEncoder<'e> {
-    /// Constructs a new encoder for all witnesses in a list of transaction inputs.
-    pub fn new(inputs: &'e [TxIn]) -> Self {
-        Self { inputs, cur_enc: inputs.first().map(|input| input.witness.encoder()) }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl encoding::Encoder for WitnessesEncoder<'_> {
-    #[inline]
-    fn current_chunk(&self) -> &[u8] {
-        self.cur_enc.as_ref().map(WitnessEncoder::current_chunk).unwrap_or_default()
-    }
-
-    #[inline]
-    fn advance(&mut self) -> EncoderStatus {
-        let Some(cur) = self.cur_enc.as_mut() else {
-            return EncoderStatus::Finished;
-        };
-
-        loop {
-            // On subsequent calls, attempt to advance the current encoder and return
-            // success if this succeeds.
-            if cur.advance().has_more() {
-                return EncoderStatus::HasMore;
-            }
-            // self.inputs guaranteed to be non-empty if cur_enc is non-None.
-            self.inputs = &self.inputs[1..];
-
-            // If advancing the current encoder failed, attempt to move to the next encoder.
-            if let Some(input) = self.inputs.first() {
-                *cur = input.witness.encoder();
-                if !cur.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.cur_enc = None; // shortcut the next call to advance()
-                return EncoderStatus::Finished;
-            }
-        }
     }
 }
 

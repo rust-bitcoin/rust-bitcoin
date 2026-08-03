@@ -36,7 +36,7 @@ pub use primitives::transaction::BlockHashDecoderError;
 pub use primitives::transaction::{
     BlockHashDecoder, Ntxid, OutPoint, OutPointDecoder, OutPointEncoder, Transaction,
     TransactionDecoder, TransactionEncoder, TxIn, TxInDecoder, TxInEncoder, TxOut, TxOutDecoder,
-    TxOutEncoder, Txid, Version, VersionDecoder, VersionEncoder, WitnessesEncoder, Wtxid,
+    TxOutEncoder, Txid, Version, VersionDecoder, VersionEncoder, Wtxid,
 };
 
 #[doc(no_inline)]
