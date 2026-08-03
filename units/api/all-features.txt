@@ -477,8 +477,12 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::He
 impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Height
   pub type bitcoin_units::locktime::absolute::Height::Err = bitcoin_units::locktime::absolute::error::ParseHeightError [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Height]
   pub fn bitcoin_units::locktime::absolute::Height::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Height]
+impl serde::ser::Serialize for bitcoin_units::locktime::absolute::Height
+  pub fn bitcoin_units::locktime::absolute::Height::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_units::locktime::absolute::Height]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Height
   pub fn bitcoin_units::locktime::absolute::Height::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Height]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::Height
+  pub fn bitcoin_units::locktime::absolute::Height::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::Height]
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::Height
 impl core::marker::Send for bitcoin_units::locktime::absolute::Height
 impl core::marker::Sync for bitcoin_units::locktime::absolute::Height
@@ -510,6 +514,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::Height
   pub unsafe fn bitcoin_units::locktime::absolute::Height::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::Height where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::Height
   pub fn bitcoin_units::locktime::absolute::Height::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::Height]
+impl<T> serde::de::DeserializeOwned for bitcoin_units::locktime::absolute::Height where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_units::absolute::IncompatibleHeightError
 impl bitcoin_units::locktime::absolute::error::IncompatibleHeightError
 pub fn bitcoin_units::locktime::absolute::error::IncompatibleHeightError::incompatible(&self) -> bitcoin_units::locktime::absolute::Height
@@ -791,8 +796,12 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::Me
 impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::MedianTimePast
   pub type bitcoin_units::locktime::absolute::MedianTimePast::Err = bitcoin_units::locktime::absolute::error::ParseTimeError [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::MedianTimePast]
   pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::MedianTimePast]
+impl serde::ser::Serialize for bitcoin_units::locktime::absolute::MedianTimePast
+  pub fn bitcoin_units::locktime::absolute::MedianTimePast::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_units::locktime::absolute::MedianTimePast]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::MedianTimePast
   pub fn bitcoin_units::locktime::absolute::MedianTimePast::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::MedianTimePast]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::MedianTimePast
+  pub fn bitcoin_units::locktime::absolute::MedianTimePast::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::MedianTimePast]
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::marker::Send for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::marker::Sync for bitcoin_units::locktime::absolute::MedianTimePast
@@ -824,6 +833,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::Median
   pub unsafe fn bitcoin_units::locktime::absolute::MedianTimePast::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::MedianTimePast where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::MedianTimePast
   pub fn bitcoin_units::locktime::absolute::MedianTimePast::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::MedianTimePast]
+impl<T> serde::de::DeserializeOwned for bitcoin_units::locktime::absolute::MedianTimePast where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_units::absolute::ParseHeightError(_)
 impl core::clone::Clone for bitcoin_units::locktime::absolute::error::ParseHeightError
   pub fn bitcoin_units::locktime::absolute::error::ParseHeightError::clone(&self) -> bitcoin_units::locktime::absolute::error::ParseHeightError [impl: impl core::clone::Clone for bitcoin_units::locktime::absolute::error::ParseHeightError]
@@ -4512,8 +4522,12 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::He
 impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Height
   pub type bitcoin_units::locktime::absolute::Height::Err = bitcoin_units::locktime::absolute::error::ParseHeightError [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Height]
   pub fn bitcoin_units::locktime::absolute::Height::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Height]
+impl serde::ser::Serialize for bitcoin_units::locktime::absolute::Height
+  pub fn bitcoin_units::locktime::absolute::Height::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_units::locktime::absolute::Height]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Height
   pub fn bitcoin_units::locktime::absolute::Height::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Height]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::Height
+  pub fn bitcoin_units::locktime::absolute::Height::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::Height]
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::Height
 impl core::marker::Send for bitcoin_units::locktime::absolute::Height
 impl core::marker::Sync for bitcoin_units::locktime::absolute::Height
@@ -4545,6 +4559,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::Height
   pub unsafe fn bitcoin_units::locktime::absolute::Height::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::Height where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::Height
   pub fn bitcoin_units::locktime::absolute::Height::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::Height]
+impl<T> serde::de::DeserializeOwned for bitcoin_units::locktime::absolute::Height where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_units::locktime::absolute::IncompatibleHeightError
 impl bitcoin_units::locktime::absolute::error::IncompatibleHeightError
 pub fn bitcoin_units::locktime::absolute::error::IncompatibleHeightError::incompatible(&self) -> bitcoin_units::locktime::absolute::Height
@@ -4826,8 +4841,12 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::Me
 impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::MedianTimePast
   pub type bitcoin_units::locktime::absolute::MedianTimePast::Err = bitcoin_units::locktime::absolute::error::ParseTimeError [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::MedianTimePast]
   pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::MedianTimePast]
+impl serde::ser::Serialize for bitcoin_units::locktime::absolute::MedianTimePast
+  pub fn bitcoin_units::locktime::absolute::MedianTimePast::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_units::locktime::absolute::MedianTimePast]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::MedianTimePast
   pub fn bitcoin_units::locktime::absolute::MedianTimePast::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::MedianTimePast]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::MedianTimePast
+  pub fn bitcoin_units::locktime::absolute::MedianTimePast::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::MedianTimePast]
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::marker::Send for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::marker::Sync for bitcoin_units::locktime::absolute::MedianTimePast
@@ -4859,6 +4878,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::Median
   pub unsafe fn bitcoin_units::locktime::absolute::MedianTimePast::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::MedianTimePast where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::MedianTimePast
   pub fn bitcoin_units::locktime::absolute::MedianTimePast::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::MedianTimePast]
+impl<T> serde::de::DeserializeOwned for bitcoin_units::locktime::absolute::MedianTimePast where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_units::locktime::absolute::ParseHeightError(_)
 impl core::clone::Clone for bitcoin_units::locktime::absolute::error::ParseHeightError
   pub fn bitcoin_units::locktime::absolute::error::ParseHeightError::clone(&self) -> bitcoin_units::locktime::absolute::error::ParseHeightError [impl: impl core::clone::Clone for bitcoin_units::locktime::absolute::error::ParseHeightError]
@@ -5892,8 +5912,12 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::Nu
 impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOf512Seconds
   pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Err = bitcoin_units::parse_int::error::ParseIntError [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOf512Seconds]
   pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOf512Seconds]
+impl serde::ser::Serialize for bitcoin_units::locktime::relative::NumberOf512Seconds
+  pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_units::locktime::relative::NumberOf512Seconds]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOf512Seconds
   pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOf512Seconds]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::NumberOf512Seconds
+  pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::NumberOf512Seconds]
 impl core::marker::Freeze for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Send for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Sync for bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -5925,6 +5949,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::relative::Number
   pub unsafe fn bitcoin_units::locktime::relative::NumberOf512Seconds::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::relative::NumberOf512Seconds where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::locktime::relative::NumberOf512Seconds
   pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::locktime::relative::NumberOf512Seconds]
+impl<T> serde::de::DeserializeOwned for bitcoin_units::locktime::relative::NumberOf512Seconds where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_units::locktime::relative::NumberOfBlocks(_)
 impl bitcoin_units::locktime::relative::NumberOfBlocks
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MAX: Self
@@ -5983,8 +6008,12 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::Nu
 impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOfBlocks
   pub type bitcoin_units::locktime::relative::NumberOfBlocks::Err = bitcoin_units::parse_int::error::ParseIntError [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOfBlocks]
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOfBlocks]
+impl serde::ser::Serialize for bitcoin_units::locktime::relative::NumberOfBlocks
+  pub fn bitcoin_units::locktime::relative::NumberOfBlocks::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_units::locktime::relative::NumberOfBlocks]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOfBlocks
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOfBlocks]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::NumberOfBlocks
+  pub fn bitcoin_units::locktime::relative::NumberOfBlocks::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::NumberOfBlocks]
 impl core::marker::Freeze for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::marker::Send for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::marker::Sync for bitcoin_units::locktime::relative::NumberOfBlocks
@@ -6016,6 +6045,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::relative::Number
   pub unsafe fn bitcoin_units::locktime::relative::NumberOfBlocks::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::relative::NumberOfBlocks where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::locktime::relative::NumberOfBlocks
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::locktime::relative::NumberOfBlocks]
+impl<T> serde::de::DeserializeOwned for bitcoin_units::locktime::relative::NumberOfBlocks where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_units::locktime::relative::TimeOverflowError
 impl core::clone::Clone for bitcoin_units::locktime::relative::error::TimeOverflowError
   pub fn bitcoin_units::locktime::relative::error::TimeOverflowError::clone(&self) -> bitcoin_units::locktime::relative::error::TimeOverflowError [impl: impl core::clone::Clone for bitcoin_units::locktime::relative::error::TimeOverflowError]
@@ -7928,8 +7958,12 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::Nu
 impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOf512Seconds
   pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Err = bitcoin_units::parse_int::error::ParseIntError [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOf512Seconds]
   pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOf512Seconds]
+impl serde::ser::Serialize for bitcoin_units::locktime::relative::NumberOf512Seconds
+  pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_units::locktime::relative::NumberOf512Seconds]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOf512Seconds
   pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOf512Seconds]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::NumberOf512Seconds
+  pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::NumberOf512Seconds]
 impl core::marker::Freeze for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Send for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Sync for bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -7961,6 +7995,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::relative::Number
   pub unsafe fn bitcoin_units::locktime::relative::NumberOf512Seconds::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::relative::NumberOf512Seconds where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::locktime::relative::NumberOf512Seconds
   pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::locktime::relative::NumberOf512Seconds]
+impl<T> serde::de::DeserializeOwned for bitcoin_units::locktime::relative::NumberOf512Seconds where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_units::relative::NumberOfBlocks(_)
 impl bitcoin_units::locktime::relative::NumberOfBlocks
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MAX: Self
@@ -8019,8 +8054,12 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::Nu
 impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOfBlocks
   pub type bitcoin_units::locktime::relative::NumberOfBlocks::Err = bitcoin_units::parse_int::error::ParseIntError [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOfBlocks]
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOfBlocks]
+impl serde::ser::Serialize for bitcoin_units::locktime::relative::NumberOfBlocks
+  pub fn bitcoin_units::locktime::relative::NumberOfBlocks::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_units::locktime::relative::NumberOfBlocks]
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOfBlocks
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOfBlocks]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::NumberOfBlocks
+  pub fn bitcoin_units::locktime::relative::NumberOfBlocks::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::NumberOfBlocks]
 impl core::marker::Freeze for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::marker::Send for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::marker::Sync for bitcoin_units::locktime::relative::NumberOfBlocks
@@ -8052,6 +8091,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::relative::Number
   pub unsafe fn bitcoin_units::locktime::relative::NumberOfBlocks::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::relative::NumberOfBlocks where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::locktime::relative::NumberOfBlocks
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::locktime::relative::NumberOfBlocks]
+impl<T> serde::de::DeserializeOwned for bitcoin_units::locktime::relative::NumberOfBlocks where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_units::relative::TimeOverflowError
 impl core::clone::Clone for bitcoin_units::locktime::relative::error::TimeOverflowError
   pub fn bitcoin_units::locktime::relative::error::TimeOverflowError::clone(&self) -> bitcoin_units::locktime::relative::error::TimeOverflowError [impl: impl core::clone::Clone for bitcoin_units::locktime::relative::error::TimeOverflowError]
