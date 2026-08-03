@@ -154,7 +154,9 @@ check_semver_breaks() {
     # work correctly while keeping the baseline repo lightweight.
     local baseline_dir
     baseline_dir=$(mktemp -d)
-    trap 'git -C "$WORKSPACE_ROOT" worktree remove "$baseline_dir"' RETURN
+    # Capture variables now for the trap since they are local.
+    # shellcheck disable=SC2064
+    trap "git -C $WORKSPACE_ROOT worktree remove ${baseline_dir}" EXIT
     git -C "$WORKSPACE_ROOT" worktree add "$baseline_dir" "$BASELINE_COMMIT"
 
     local has_breaks=false

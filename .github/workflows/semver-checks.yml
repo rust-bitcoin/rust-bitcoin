@@ -33,12 +33,14 @@ jobs:
         run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
       - name: "Run semver checks"
         id: semver
-        continue-on-error: true
-        run: ./contrib/check-semver.sh ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set +e
+          ./contrib/check-semver.sh ${{ github.event.pull_request.base.sha || github.event.before }}
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
       - name: "Save breaking state"
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          EXIT_CODE: ${{ steps.semver.exit_code }}
+          EXIT_CODE: ${{ steps.semver.outputs.exit_code }}
         run: |
           echo "$PR_NUMBER" > semver-break
           echo "$EXIT_CODE" >> semver-break
@@ -48,5 +50,5 @@ jobs:
           name: semver-break
           path: semver-break
       - name: "Fail on breaks to stable packages"
-        if: ${{ steps.semver.exit_code == 1 }}
+        if: ${{ steps.semver.outputs.exit_code == 1 }}
         run: exit 1
