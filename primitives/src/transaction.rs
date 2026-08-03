@@ -746,12 +746,8 @@ impl TxIn {
 }
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`TxIn`] type.
-    #[derive(Debug, Clone)]
-    pub struct TxInEncoder<'e>(
-        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
-    );
+impl encoding::Decode for TxIn {
+    type Decoder = TxInDecoder;
 }
 
 #[cfg(feature = "alloc")]
@@ -824,6 +820,15 @@ impl encoding::Encoder for WitnessesEncoder<'_> {
 }
 
 #[cfg(feature = "alloc")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TxIn`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxInEncoder<'e>(
+        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
+    );
+}
+
+#[cfg(feature = "alloc")]
 type TxInInnerDecoder = Decoder3<OutPointDecoder, ScriptSigBufDecoder, SequenceDecoder>;
 
 #[cfg(feature = "alloc")]
@@ -849,11 +854,6 @@ crate::decoder_newtype! {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl encoding::Decode for TxIn {
-    type Decoder = TxInDecoder;
-}
-
 /// Bitcoin transaction output.
 ///
 /// Defines new coins to be created as a result of the transaction,
@@ -875,13 +875,6 @@ pub struct TxOut {
 }
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`TxOut`] type.
-    #[derive(Debug, Clone)]
-    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>);
-}
-
-#[cfg(feature = "alloc")]
 impl encoding::Encode for TxOut {
     type Encoder<'e>
         = TxOutEncoder<'e>
@@ -891,6 +884,18 @@ impl encoding::Encode for TxOut {
     fn encoder(&self) -> Self::Encoder<'_> {
         TxOutEncoder::new(Encoder2::new(self.amount.encoder(), self.script_pubkey.encoder()))
     }
+}
+
+#[cfg(feature = "alloc")]
+impl encoding::Decode for TxOut {
+    type Decoder = TxOutDecoder;
+}
+
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TxOut`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>);
 }
 
 #[cfg(feature = "alloc")]
@@ -915,11 +920,6 @@ crate::decoder_newtype! {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl encoding::Decode for TxOut {
-    type Decoder = TxOutDecoder;
-}
-
 /// A reference to a transaction output.
 ///
 /// # Bitcoin Core References
@@ -942,26 +942,6 @@ impl OutPoint {
     /// This is used as the dummy input for coinbase transactions because they don't have any
     /// previous outputs. In other words, does not point to a real transaction.
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
-}
-
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`OutPoint`] type.
-    #[derive(Debug, Clone)]
-    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
-}
-
-impl encoding::Encode for OutPoint {
-    type Encoder<'e>
-        = OutPointEncoder<'e>
-    where
-        Self: 'e;
-
-    fn encoder(&self) -> Self::Encoder<'_> {
-        OutPointEncoder::new(Encoder2::new(
-            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
-            ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
-        ))
-    }
 }
 
 #[cfg(feature = "hex")]
@@ -1012,6 +992,30 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     parse_int::int_from_str(s).map_err(ParseOutPointError::Vout)
 }
 
+impl encoding::Encode for OutPoint {
+    type Encoder<'e>
+        = OutPointEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        OutPointEncoder::new(Encoder2::new(
+            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
+            ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
+        ))
+    }
+}
+
+impl encoding::Decode for OutPoint {
+    type Decoder = OutPointDecoder;
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`OutPoint`] type.
+    #[derive(Debug, Clone)]
+    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
+}
+
 crate::decoder_newtype! {
     /// The decoder for the [`OutPoint`] type.
     // 32 for the txid + 4 for the vout
@@ -1030,10 +1034,6 @@ crate::decoder_newtype! {
 
         Ok(OutPoint { txid, vout })
     }
-}
-
-impl encoding::Decode for OutPoint {
-    type Decoder = OutPointDecoder;
 }
 
 #[cfg(feature = "serde")]
@@ -1226,12 +1226,6 @@ impl From<Version> for u32 {
     fn from(version: Version) -> Self { version.0 }
 }
 
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Version`] type.
-    #[derive(Debug, Clone)]
-    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
-}
-
 impl encoding::Encode for Version {
     type Encoder<'e> = VersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -1239,6 +1233,16 @@ impl encoding::Encode for Version {
             self.to_u32().to_le_bytes(),
         ))
     }
+}
+
+impl encoding::Decode for Version {
+    type Decoder = VersionDecoder;
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Version`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 crate::decoder_newtype! {
@@ -1254,10 +1258,6 @@ crate::decoder_newtype! {
         let n = u32::from_le_bytes(bytes);
         Ok(Version::maybe_non_standard(n))
     }
-}
-
-impl encoding::Decode for Version {
-    type Decoder = VersionDecoder;
 }
 
 /// Error types for Bitcoin transactions.
