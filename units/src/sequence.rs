@@ -150,7 +150,7 @@ impl Sequence {
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Constructs a new relative lock-time using block height.
+    /// Constructs a new relative lock-time using a count of blocks.
     #[inline]
     pub fn from_height(height: u16) -> Self { Self(u32::from(height)) }
 
