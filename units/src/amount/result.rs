@@ -405,6 +405,41 @@ mod tests {
     }
 
     #[test]
+    fn test_rem_assign_amount() {
+        let sat = Amount::from_sat_u32(50);
+        let mut res = sat + sat;
+        res %= 30_u64;
+        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(10)));
+
+        res %= &4_u64;
+        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(2)));
+
+        res %= 0_u64;
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+
+        res %= 5_u64;
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+    }
+
+    #[test]
+    fn test_rem_assign_signed_amount() {
+        let ssat = SignedAmount::from_sat_i32(-50);
+
+        let mut res = ssat + ssat;
+        res %= 30_i64;
+        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-10)));
+
+        res %= &4_i64;
+        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-2)));
+
+        res %= 0_i64;
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+
+        res %= 5_i64;
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+    }
+
+    #[test]
     fn test_op_assign_amount_error() {
         let mut res: NumOpResult<Amount> = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
 
