@@ -29,12 +29,16 @@ jobs:
         with:
           # The workflow which completed a CI run and needs PR labels.
           run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Assume labeller artifacts are single files.
+          merge-multiple: true
       # The API diff label artifact must have the PR number on the first line,
       # and the exit code of the diff detection on the second line.
       - name: "Toggle API diff Label"
         if: ${{ hashFiles('api-diff') != '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           issue_number=$(head -n1 api-diff)
           exit_code=$(tail -n1 api-diff)
@@ -46,6 +50,7 @@ jobs:
         if: ${{ hashFiles('semver-break') != '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           issue_number=$(head -n1 semver-break)
           exit_code=$(tail -n1 semver-break)
