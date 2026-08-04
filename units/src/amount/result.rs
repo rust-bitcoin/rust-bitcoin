@@ -9,7 +9,8 @@ use NumOpResult as R;
 
 use super::{Amount, SignedAmount};
 use crate::internal_macros::{
-    impl_add_assign_for_results, impl_div_assign, impl_mul_assign, impl_sub_assign_for_results,
+    impl_add_assign_for_results, impl_div_assign, impl_mul_assign, impl_rem_assign,
+    impl_sub_assign_for_results,
 };
 use crate::result::{MathOp, NumOpError, NumOpResult, OptionExt};
 
@@ -199,6 +200,8 @@ impl_mul_assign!(NumOpResult<Amount>, u64);
 impl_mul_assign!(NumOpResult<SignedAmount>, i64);
 impl_div_assign!(NumOpResult<Amount>, u64);
 impl_div_assign!(NumOpResult<SignedAmount>, i64);
+impl_rem_assign!(NumOpResult<Amount>, u64);
+impl_rem_assign!(NumOpResult<SignedAmount>, i64);
 
 impl_add_assign_for_results!(Amount);
 impl_add_assign_for_results!(SignedAmount);
