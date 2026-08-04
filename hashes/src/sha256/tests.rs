@@ -243,3 +243,49 @@ mod wasm_tests {
         engine_with_state();
     }
 }
+
+#[test]
+fn initial_midstate() {
+    let mid1 = Midstate::SHA256_IV;
+    let mid2 = super::HashEngine::new().midstate().unwrap();
+    assert_eq!(mid1, mid2);
+}
+
+#[test]
+fn midstate_updates() {
+    #[rustfmt::skip]
+    static BLOB: [u8; 64] = [
+        0xb4, 0x9c, 0x4e, 0xa4, 0x9a, 0xe6, 0x23, 0xa8,
+        0xaa, 0x63, 0x15, 0x64, 0xd5, 0xd7, 0x89, 0xc2,
+        0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6, 0x3d, 0x97,
+        0x18, 0x84, 0xe4, 0x72, 0x40, 0x4e, 0xf4, 0x5a,
+        0xb7, 0x65, 0x44, 0x8c, 0x86, 0x35, 0xfb, 0x6c,
+        0x88, 0x52, 0x7f, 0x7d, 0x8a, 0x06, 0x94, 0x20,
+        0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7,
+        0x8f, 0xf1, 0xf7, 0xa9, 0xd5, 0x69, 0x09, 0x59,
+    ];
+    let (blob1, blob2) = BLOB.split_at(32);
+    let (blob1, blob2) =
+        (<&[u8; 32]>::try_from(blob1).unwrap(), <&[u8; 32]>::try_from(blob2).unwrap());
+
+    let midstate1 = Midstate::SHA256_IV.update_2x32_unoptimized(blob1, blob2);
+    let midstate2 = Midstate::SHA256_IV.update_64_unoptimized(&BLOB);
+    let midstate3 = Midstate::SHA256_IV.update_64(&BLOB);
+
+    assert_eq!(midstate1, midstate2);
+    assert_eq!(midstate1, midstate3);
+
+    let hash1 = midstate1.to_engine().finalize();
+    let hash2 = super::HashEngine::new().with_input(&BLOB).finalize();
+    assert_eq!(hash1, hash2);
+
+    let final1 = midstate1.update_2x32_unoptimized(blob1, blob2);
+    let final2 = midstate1.update_64_unoptimized(&BLOB);
+    let final3 = midstate1.update_64(&BLOB);
+
+    assert_eq!(final1, final2);
+    assert_eq!(final1, final3);
+    let hash1 = final1.to_engine().finalize();
+    let hash2 = super::HashEngine::new().with_input(&BLOB).with_input(&BLOB).finalize();
+    assert_eq!(hash1, hash2);
+}

@@ -70,7 +70,7 @@ impl Hash {
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
     pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
-        Self(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
+        Self(Midstate::SHA256_IV.update_midstate_unoptimized(bytes, true).bytes)
     }
 }
 
@@ -197,6 +197,20 @@ pub struct Midstate {
 }
 
 impl Midstate {
+    /// The midstate obtained by creating a new hash engine and immediately extracting its midstate.
+    #[rustfmt::skip]
+    pub const SHA256_IV: Self = Self {
+        // You can visually verify this value by just squishing the groups of 4 bytes together into
+        // u32s then comparing the result to the first line of HashEngine::new.
+        bytes: [
+            0x6a, 0x09, 0xe6, 0x67, 0xbb, 0x67, 0xae, 0x85,
+            0x3c, 0x6e, 0xf3, 0x72, 0xa5, 0x4f, 0xf5, 0x3a,
+            0x51, 0x0e, 0x52, 0x7f, 0x9b, 0x05, 0x68, 0x8c,
+            0x1f, 0x83, 0xd9, 0xab, 0x5b, 0xe0, 0xcd, 0x19,
+        ],
+        bytes_hashed: 0,
+    };
+
     /// Constructs a new [`Midstate`] from the `state` and the `bytes_hashed` to get to that state.
     ///
     /// # Panics
@@ -225,6 +239,46 @@ impl Midstate {
         HashEngine { buffer: [0; BLOCK_SIZE], h: ret, bytes_hashed: self.bytes_hashed }
     }
 
+    /// Updates a [`Midstate`] by hashing exactly 64 bytes (one SHA256 block).
+    #[must_use]
+    pub fn update_64(self, bytes: &[u8; 64]) -> Self {
+        let mut eng = self.to_engine();
+        HashEngine::process_blocks(&mut eng.h, bytes);
+        eng.bytes_hashed += 64;
+        eng.midstate_unchecked()
+    }
+
+    /// Updates a [`Midstate`] by hashing exactly 64 bytes (one SHA256 block).
+    ///
+    /// Warning: this function is inefficient. It should be only used in `const` context. In
+    /// other contexts, use [`Self::update_64`].
+    #[must_use]
+    pub const fn update_64_unoptimized(self, bytes: &[u8; 64]) -> Self {
+        self.update_midstate_unoptimized(bytes, false)
+    }
+
+    /// Updates a [`Midstate`] by hashing exactly 64 bytes (one SHA256 block), split into halves.
+    ///
+    /// Warning: this function is inefficient. It should be only used in `const` context. In
+    /// other contexts, concatenate your arrays and then use [`Self::update_64`].
+    #[must_use]
+    pub const fn update_2x32_unoptimized(self, left: &[u8; 32], right: &[u8; 32]) -> Self {
+        // This method basically only exists because it's extremely hard to put two arrays
+        // together into one in a const context, so we can't tell users to call update_64.
+        //
+        // In Rust 1.83 we will be able to use split_at_mut to define a 64-byte array and
+        // split it into two 32-byte slices, then in 1.87 we can use copy_from_slice to
+        // copy into each of those. Though that might not actually save any LOC..
+        let mut bytes = [0; 64];
+        let mut i = 0;
+        while i < 32 {
+            bytes[i] = left[i];
+            bytes[i + 32] = right[i];
+            i += 1;
+        }
+        self.update_64_unoptimized(&bytes)
+    }
+
     /// Constructs a new midstate for tagged hashes.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
@@ -234,13 +288,7 @@ impl Midstate {
     #[must_use]
     pub const fn hash_tag(tag: &[u8]) -> Self {
         let hash = Hash::hash_unoptimized(tag);
-        let mut buf = [0u8; 64];
-        let mut i = 0usize;
-        while i < buf.len() {
-            buf[i] = hash.0[i % hash.0.len()];
-            i += 1;
-        }
-        Self::compute_midstate_unoptimized(&buf, false)
+        Self::SHA256_IV.update_2x32_unoptimized(&hash.0, &hash.0)
     }
 }
 

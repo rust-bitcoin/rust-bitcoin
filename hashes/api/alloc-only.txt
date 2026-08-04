@@ -838,11 +838,15 @@ impl<T> core::convert::From<T> for bitcoin_hashes::sha256::HashEngine
   pub fn bitcoin_hashes::sha256::HashEngine::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_hashes::sha256::HashEngine]
 pub struct bitcoin_hashes::sha256::Midstate
 impl bitcoin_hashes::sha256::Midstate
+pub const bitcoin_hashes::sha256::Midstate::SHA256_IV: Self
 pub const fn bitcoin_hashes::sha256::Midstate::as_parts(&self) -> (&[u8; 32], u64)
 pub const fn bitcoin_hashes::sha256::Midstate::hash_tag(tag: &[u8]) -> Self
 pub const fn bitcoin_hashes::sha256::Midstate::new(state: [u8; 32], bytes_hashed: u64) -> Self
 pub fn bitcoin_hashes::sha256::Midstate::to_engine(self) -> bitcoin_hashes::sha256::HashEngine
 pub const fn bitcoin_hashes::sha256::Midstate::to_parts(self) -> ([u8; 32], u64)
+pub const fn bitcoin_hashes::sha256::Midstate::update_2x32_unoptimized(self, left: &[u8; 32], right: &[u8; 32]) -> Self
+pub fn bitcoin_hashes::sha256::Midstate::update_64(self, bytes: &[u8; 64]) -> Self
+pub const fn bitcoin_hashes::sha256::Midstate::update_64_unoptimized(self, bytes: &[u8; 64]) -> Self
 impl core::clone::Clone for bitcoin_hashes::sha256::Midstate
   pub fn bitcoin_hashes::sha256::Midstate::clone(&self) -> bitcoin_hashes::sha256::Midstate [impl: impl core::clone::Clone for bitcoin_hashes::sha256::Midstate]
 impl core::cmp::Eq for bitcoin_hashes::sha256::Midstate
