@@ -60,6 +60,21 @@ jobs:
           RUSTFLAGS: --cfg=bench
         run: cargo rbmt run --toolchain nightly -- bench
 
+  Fuzz:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Check fuzz targets"
+        working-directory: fuzz
+        run: |
+          cargo install --locked cargo-fuzz@0.13.2
+          cargo rbmt run --toolchain nightly --lockfile existing -- fuzz check
+
   Prerelease:
     runs-on: ubuntu-24.04
     permissions:

@@ -12,6 +12,9 @@ publish = false
 [package.metadata]
 cargo-fuzz = true
 
+[package.metadata.rbmt.toolchains]
+nightly = "nightly-2026-07-21"
+
 [dependencies]
 # We shouldn't need an explicit version on the next line, but Andrew's tools
 # choke on it otherwise. See https://github.com/nix-community/crate2nix/issues/373
