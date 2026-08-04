@@ -308,7 +308,7 @@ impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
     #[inline]
     fn try_from(h: BlockHeightInterval) -> Result<Self, Self::Error> {
         u16::try_from(h.to_u32())
-            .map(Self::from)
+            .map(Self::from_height)
             .map_err(|_| TooBigForRelativeHeightError(h.into()))
     }
 }
@@ -709,7 +709,7 @@ mod tests {
         assert_eq!(interval, 100);
 
         let interval_from_height: BlockHeightInterval =
-            relative::NumberOfBlocks::from(10u16).into();
+            relative::NumberOfBlocks::from_height(10).into();
         assert_eq!(interval_from_height.to_u32(), 10u32);
 
         let invalid_height_greater =

@@ -309,7 +309,7 @@ mod tests {
         assert!(e.source().is_none());
 
         // InvalidHeightError - is_satisfied_by with invalid args
-        let blocks = NumberOfBlocks::from(10u16);
+        let blocks = NumberOfBlocks::from_height(10);
         let e = blocks
             .is_satisfied_by(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
             .unwrap_err();

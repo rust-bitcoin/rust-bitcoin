@@ -451,12 +451,7 @@ impl NumberOfBlocks {
 
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(NumberOfBlocks);
 
-impl From<u16> for NumberOfBlocks {
-    #[inline]
-    fn from(value: u16) -> Self { Self(value) }
-}
-
-parse_int::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from);
+parse_int::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from_height);
 
 impl fmt::Display for NumberOfBlocks {
     #[inline]
@@ -703,8 +698,8 @@ mod tests {
 
     #[test]
     fn parses_correctly_to_height_or_time() {
-        let height1 = NumberOfBlocks::from(10);
-        let height2 = NumberOfBlocks::from(11);
+        let height1 = NumberOfBlocks::from_height(10);
+        let height2 = NumberOfBlocks::from_height(11);
         let time1 = NumberOf512Seconds::from_512_second_intervals(70);
         let time2 = NumberOf512Seconds::from_512_second_intervals(71);
 
@@ -728,12 +723,12 @@ mod tests {
 
     #[test]
     fn height_correctly_implies() {
-        let height = NumberOfBlocks::from(10);
+        let height = NumberOfBlocks::from_height(10);
         let lock_by_height = LockTime::from(height);
 
-        assert!(!lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from(9))));
-        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from(10))));
-        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from(11))));
+        assert!(!lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_height(9))));
+        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_height(10))));
+        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_height(11))));
     }
 
     #[test]
@@ -751,7 +746,7 @@ mod tests {
 
     #[test]
     fn sequence_correctly_implies() {
-        let height = NumberOfBlocks::from(10);
+        let height = NumberOfBlocks::from_height(10);
         let time = NumberOf512Seconds::from_512_second_intervals(70);
 
         let lock_by_height = LockTime::from(height);
@@ -774,7 +769,7 @@ mod tests {
     #[test]
     fn incorrect_units_do_not_imply() {
         let time = NumberOf512Seconds::from_512_second_intervals(70);
-        let height = NumberOfBlocks::from(10);
+        let height = NumberOfBlocks::from_height(10);
 
         let lock_by_time = LockTime::from(time);
         assert!(!lock_by_time.is_implied_by(LockTime::from(height)));
@@ -853,7 +848,7 @@ mod tests {
         let lock_by_height = LockTime::from_height(10); // Arbitrary value.
         let err = lock_by_height.is_satisfied_by_time(chain_tip, mined_at).unwrap_err();
 
-        let expected_height = NumberOfBlocks::from(10);
+        let expected_height = NumberOfBlocks::from_height(10);
         assert_eq!(
             err,
             IsSatisfiedByTimeError::Incompatible(IncompatibleTimeError(expected_height))
@@ -892,10 +887,10 @@ mod tests {
         let utxo_height = BlockHeight::from_u32(80);
         let utxo_mtp = BlockMtp::new(utxo_timestamps);
 
-        let lock1 = LockTime::Blocks(NumberOfBlocks::from(10));
+        let lock1 = LockTime::Blocks(NumberOfBlocks::from_height(10));
         assert!(lock1.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
-        let lock2 = LockTime::Blocks(NumberOfBlocks::from(21));
+        let lock2 = LockTime::Blocks(NumberOfBlocks::from_height(21));
         assert!(lock2.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
         let lock3 = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(10));
@@ -1100,7 +1095,7 @@ mod tests {
         let mined_at = BlockHeight::from_u32(u32::MIN);
         let chain_tip = BlockHeight::from_u32(u32::MAX);
 
-        let block_height = NumberOfBlocks::from(10); // Arbitrary value.
+        let block_height = NumberOfBlocks::from_height(10); // Arbitrary value.
         assert!(block_height.is_satisfied_by(chain_tip, mined_at).unwrap());
     }
 }
