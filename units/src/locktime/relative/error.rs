@@ -326,7 +326,7 @@ mod tests {
 
         // IsSatisfiedBy*Error
         let time_lock = LockTime::from_512_second_intervals(10);
-        let height_lock = LockTime::from_height(10);
+        let height_lock = LockTime::from_block_count(10);
 
         // IsSatisfiedByError - wraps InvalidHeightError or InvalidTimeError
         // Error when chain_tip < utxo_mined_at (args wrong way around)
