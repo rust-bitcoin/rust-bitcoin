@@ -12,8 +12,12 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod filter;
 mod hash_types;
 
+pub use self::filter::{
+    BasicFilter, BuildError, DecodeError, BASIC_FILTER_M, BASIC_FILTER_P, BASIC_FILTER_TYPE,
+};
 pub use self::hash_types::{
     FilterHash, FilterHashDecoder, FilterHashDecoderError, FilterHashEncoder, FilterHeader,
     FilterHeaderDecoder, FilterHeaderDecoderError, FilterHeaderEncoder,
