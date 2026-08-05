@@ -1635,7 +1635,7 @@ pub mod error {
     #[cfg(feature = "alloc")]
     pub enum FromWifError {
         /// A base58 decoding error.
-        Base58(base58::Error),
+        Base58(base58::DecodeCheckError),
         /// Base58 decoded data was an invalid length.
         InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Base58 decoded data contained an invalid address version byte.
