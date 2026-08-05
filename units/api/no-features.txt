@@ -1317,6 +1317,10 @@ impl core::ops::arith::Div<u64> for &bitcoin_units::Amount
 impl core::ops::arith::Div<u64> for bitcoin_units::Amount
   pub type bitcoin_units::Amount::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount> [impl: impl core::ops::arith::Div<u64> for bitcoin_units::Amount]
   pub fn bitcoin_units::Amount::div(self, rhs: u64) -> Self::Output [impl: impl core::ops::arith::Div<u64> for bitcoin_units::Amount]
+impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<u64>> for bitcoin_units::Amount
+  pub fn bitcoin_units::Amount::div_assign(&mut self, rhs: &core::num::nonzero::NonZeroU64) [impl: impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<u64>> for bitcoin_units::Amount]
+impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<u64>> for bitcoin_units::Amount
+  pub fn bitcoin_units::Amount::div_assign(&mut self, rhs: core::num::nonzero::NonZeroU64) [impl: impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<u64>> for bitcoin_units::Amount]
 impl core::ops::arith::Mul<&bitcoin_units::Amount> for u64
   pub type u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Amount>>::Output [impl: impl core::ops::arith::Mul<&bitcoin_units::Amount> for u64]
   pub fn u64::mul(self, rhs: &bitcoin_units::Amount) -> Self::Output [impl: impl core::ops::arith::Mul<&bitcoin_units::Amount> for u64]
@@ -1931,6 +1935,10 @@ impl core::ops::arith::Div<i64> for &bitcoin_units::SignedAmount
 impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount
   pub type bitcoin_units::SignedAmount::Output = bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> [impl: impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount]
   pub fn bitcoin_units::SignedAmount::div(self, rhs: i64) -> Self::Output [impl: impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount]
+impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<i64>> for bitcoin_units::SignedAmount
+  pub fn bitcoin_units::SignedAmount::div_assign(&mut self, rhs: &core::num::nonzero::NonZeroI64) [impl: impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<i64>> for bitcoin_units::SignedAmount]
+impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<i64>> for bitcoin_units::SignedAmount
+  pub fn bitcoin_units::SignedAmount::div_assign(&mut self, rhs: core::num::nonzero::NonZeroI64) [impl: impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<i64>> for bitcoin_units::SignedAmount]
 impl core::ops::arith::Mul<&bitcoin_units::SignedAmount> for i64
   pub type i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::SignedAmount>>::Output [impl: impl core::ops::arith::Mul<&bitcoin_units::SignedAmount> for i64]
   pub fn i64::mul(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output [impl: impl core::ops::arith::Mul<&bitcoin_units::SignedAmount> for i64]
@@ -6127,6 +6135,12 @@ impl core::ops::arith::Div<&bitcoin_units::result::NumOpResult<bitcoin_units::We
 impl core::ops::arith::Div<&bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>>>::Output [impl: impl core::ops::arith::Div<&bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output [impl: impl core::ops::arith::Div<&bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::Div<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub type bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<core::num::nonzero::NonZero<i64>>>::Output [impl: impl core::ops::arith::Div<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &core::num::nonzero::NonZeroI64) -> Self::Output [impl: impl core::ops::arith::Div<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::Div<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output [impl: impl core::ops::arith::Div<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &core::num::nonzero::NonZeroU64) -> Self::Output [impl: impl core::ops::arith::Div<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl core::ops::arith::Div<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub type bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<i64>>::Output [impl: impl core::ops::arith::Div<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &i64) -> Self::Output [impl: impl core::ops::arith::Div<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
@@ -6169,6 +6183,18 @@ impl core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Wei
 impl core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate> [impl: impl core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output [impl: impl core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub type &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<core::num::nonzero::NonZero<i64>>>::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+  pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: core::num::nonzero::NonZeroI64) -> Self::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub type bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: core::num::nonzero::NonZeroI64) -> Self::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub type &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+  pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: core::num::nonzero::NonZeroU64) -> Self::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount> [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: core::num::nonzero::NonZeroU64) -> Self::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl core::ops::arith::Div<i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub type &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<i64>>::Output [impl: impl core::ops::arith::Div<i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
   pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: i64) -> Self::Output [impl: impl core::ops::arith::Div<i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
@@ -6181,10 +6207,18 @@ impl core::ops::arith::Div<u64> for &bitcoin_units::result::NumOpResult<bitcoin_
 impl core::ops::arith::Div<u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount> [impl: impl core::ops::arith::Div<u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: u64) -> Self::Output [impl: impl core::ops::arith::Div<u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: &core::num::nonzero::NonZeroI64) [impl: impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div_assign(&mut self, rhs: &core::num::nonzero::NonZeroU64) [impl: impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl core::ops::arith::DivAssign<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: &i64) [impl: impl core::ops::arith::DivAssign<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
 impl core::ops::arith::DivAssign<&u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div_assign(&mut self, rhs: &u64) [impl: impl core::ops::arith::DivAssign<&u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: core::num::nonzero::NonZeroI64) [impl: impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div_assign(&mut self, rhs: core::num::nonzero::NonZeroU64) [impl: impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl core::ops::arith::DivAssign<i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: i64) [impl: impl core::ops::arith::DivAssign<i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
 impl core::ops::arith::DivAssign<u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
@@ -6379,6 +6413,12 @@ impl<'a> core::ops::arith::Div<&'a bitcoin_units::result::NumOpResult<bitcoin_un
 impl<'a> core::ops::arith::Div<&'a bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub type &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>>>::Output [impl: impl<'a> core::ops::arith::Div<&'a bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
   pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output [impl: impl<'a> core::ops::arith::Div<&'a bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub type &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<core::num::nonzero::NonZero<i64>>>::Output [impl: impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+  pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &core::num::nonzero::NonZeroI64) -> Self::Output [impl: impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub type &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output [impl: impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+  pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &core::num::nonzero::NonZeroU64) -> Self::Output [impl: impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl<'a> core::ops::arith::Div<&'a i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub type &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<i64>>::Output [impl: impl<'a> core::ops::arith::Div<&'a i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
   pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &i64) -> Self::Output [impl: impl<'a> core::ops::arith::Div<&'a i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
@@ -7062,6 +7102,12 @@ impl core::ops::arith::Div<&bitcoin_units::result::NumOpResult<bitcoin_units::We
 impl core::ops::arith::Div<&bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>>>::Output [impl: impl core::ops::arith::Div<&bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output [impl: impl core::ops::arith::Div<&bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::Div<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub type bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<core::num::nonzero::NonZero<i64>>>::Output [impl: impl core::ops::arith::Div<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &core::num::nonzero::NonZeroI64) -> Self::Output [impl: impl core::ops::arith::Div<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::Div<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output [impl: impl core::ops::arith::Div<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &core::num::nonzero::NonZeroU64) -> Self::Output [impl: impl core::ops::arith::Div<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl core::ops::arith::Div<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub type bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<i64>>::Output [impl: impl core::ops::arith::Div<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &i64) -> Self::Output [impl: impl core::ops::arith::Div<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
@@ -7104,6 +7150,18 @@ impl core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Wei
 impl core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate> [impl: impl core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output [impl: impl core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub type &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<core::num::nonzero::NonZero<i64>>>::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+  pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: core::num::nonzero::NonZeroI64) -> Self::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub type bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: core::num::nonzero::NonZeroI64) -> Self::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub type &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+  pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: core::num::nonzero::NonZeroU64) -> Self::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount> [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: core::num::nonzero::NonZeroU64) -> Self::Output [impl: impl core::ops::arith::Div<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl core::ops::arith::Div<i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub type &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<i64>>::Output [impl: impl core::ops::arith::Div<i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
   pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: i64) -> Self::Output [impl: impl core::ops::arith::Div<i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
@@ -7116,10 +7174,18 @@ impl core::ops::arith::Div<u64> for &bitcoin_units::result::NumOpResult<bitcoin_
 impl core::ops::arith::Div<u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub type bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount> [impl: impl core::ops::arith::Div<u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: u64) -> Self::Output [impl: impl core::ops::arith::Div<u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: &core::num::nonzero::NonZeroI64) [impl: impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div_assign(&mut self, rhs: &core::num::nonzero::NonZeroU64) [impl: impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl core::ops::arith::DivAssign<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: &i64) [impl: impl core::ops::arith::DivAssign<&i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
 impl core::ops::arith::DivAssign<&u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div_assign(&mut self, rhs: &u64) [impl: impl core::ops::arith::DivAssign<&u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: core::num::nonzero::NonZeroI64) [impl: impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<i64>> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div_assign(&mut self, rhs: core::num::nonzero::NonZeroU64) [impl: impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<u64>> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl core::ops::arith::DivAssign<i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: i64) [impl: impl core::ops::arith::DivAssign<i64> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
 impl core::ops::arith::DivAssign<u64> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
@@ -7314,6 +7380,12 @@ impl<'a> core::ops::arith::Div<&'a bitcoin_units::result::NumOpResult<bitcoin_un
 impl<'a> core::ops::arith::Div<&'a bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
   pub type &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<bitcoin_units::result::NumOpResult<bitcoin_units::Weight>>>::Output [impl: impl<'a> core::ops::arith::Div<&'a bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
   pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output [impl: impl<'a> core::ops::arith::Div<&'a bitcoin_units::result::NumOpResult<bitcoin_units::Weight>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
+  pub type &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<core::num::nonzero::NonZero<i64>>>::Output [impl: impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+  pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &core::num::nonzero::NonZeroI64) -> Self::Output [impl: impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<i64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
+impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+  pub type &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output [impl: impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
+  pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &core::num::nonzero::NonZeroU64) -> Self::Output [impl: impl<'a> core::ops::arith::Div<&'a core::num::nonzero::NonZero<u64>> for &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>]
 impl<'a> core::ops::arith::Div<&'a i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
   pub type &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<i64>>::Output [impl: impl<'a> core::ops::arith::Div<&'a i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
   pub fn &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &i64) -> Self::Output [impl: impl<'a> core::ops::arith::Div<&'a i64> for &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>]
@@ -7596,6 +7668,10 @@ impl core::ops::arith::Div<u64> for &bitcoin_units::Amount
 impl core::ops::arith::Div<u64> for bitcoin_units::Amount
   pub type bitcoin_units::Amount::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount> [impl: impl core::ops::arith::Div<u64> for bitcoin_units::Amount]
   pub fn bitcoin_units::Amount::div(self, rhs: u64) -> Self::Output [impl: impl core::ops::arith::Div<u64> for bitcoin_units::Amount]
+impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<u64>> for bitcoin_units::Amount
+  pub fn bitcoin_units::Amount::div_assign(&mut self, rhs: &core::num::nonzero::NonZeroU64) [impl: impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<u64>> for bitcoin_units::Amount]
+impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<u64>> for bitcoin_units::Amount
+  pub fn bitcoin_units::Amount::div_assign(&mut self, rhs: core::num::nonzero::NonZeroU64) [impl: impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<u64>> for bitcoin_units::Amount]
 impl core::ops::arith::Mul<&bitcoin_units::Amount> for u64
   pub type u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Amount>>::Output [impl: impl core::ops::arith::Mul<&bitcoin_units::Amount> for u64]
   pub fn u64::mul(self, rhs: &bitcoin_units::Amount) -> Self::Output [impl: impl core::ops::arith::Mul<&bitcoin_units::Amount> for u64]
@@ -8739,6 +8815,10 @@ impl core::ops::arith::Div<i64> for &bitcoin_units::SignedAmount
 impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount
   pub type bitcoin_units::SignedAmount::Output = bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount> [impl: impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount]
   pub fn bitcoin_units::SignedAmount::div(self, rhs: i64) -> Self::Output [impl: impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount]
+impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<i64>> for bitcoin_units::SignedAmount
+  pub fn bitcoin_units::SignedAmount::div_assign(&mut self, rhs: &core::num::nonzero::NonZeroI64) [impl: impl core::ops::arith::DivAssign<&core::num::nonzero::NonZero<i64>> for bitcoin_units::SignedAmount]
+impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<i64>> for bitcoin_units::SignedAmount
+  pub fn bitcoin_units::SignedAmount::div_assign(&mut self, rhs: core::num::nonzero::NonZeroI64) [impl: impl core::ops::arith::DivAssign<core::num::nonzero::NonZero<i64>> for bitcoin_units::SignedAmount]
 impl core::ops::arith::Mul<&bitcoin_units::SignedAmount> for i64
   pub type i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::SignedAmount>>::Output [impl: impl core::ops::arith::Mul<&bitcoin_units::SignedAmount> for i64]
   pub fn i64::mul(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output [impl: impl core::ops::arith::Mul<&bitcoin_units::SignedAmount> for i64]
