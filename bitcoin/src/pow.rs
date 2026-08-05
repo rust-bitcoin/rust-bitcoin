@@ -12,6 +12,8 @@ use core::convert::Infallible;
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 use io::{Read, Write};
 use units::parse;
 
@@ -66,6 +68,18 @@ macro_rules! do_impl {
             #[doc = "` to a little-endian byte array."]
             #[inline]
             pub fn to_le_bytes(self) -> [u8; 32] { self.0.to_le_bytes() }
+
+            /// Converts pre-1.0 type to a stable type.
+            #[cfg(feature = "compat")]
+            pub fn to_stable(self) -> stable::$ty {
+                stable::$ty::from_be_bytes(self.to_be_bytes())
+            }
+
+            /// Converts a stable type to a pre-1.0 type.
+            #[cfg(feature = "compat")]
+            pub fn from_stable(stable: stable::$ty) -> Self {
+                Self::from_be_bytes(stable.to_be_bytes())
+            }
         }
 
         impl fmt::Display for $ty {
@@ -447,6 +461,18 @@ impl CompactTarget {
 
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
     pub fn to_consensus(self) -> u32 { self.0 }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::CompactTarget {
+        stable::CompactTarget::from_consensus(self.to_consensus())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::CompactTarget) -> Self {
+        Self::from_consensus(stable.to_consensus())
+    }
 }
 
 impl From<CompactTarget> for Target {
