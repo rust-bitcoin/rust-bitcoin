@@ -98,7 +98,7 @@ static PUSH_BYTES: PushBytesBuf = PushBytesBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
 
 /// Public structs that derive common traits.
-// C-COMMON-TRAITS excluding `Debug`, `Default`, `Display`, `Ord`, `PartialOrd`, `Hash`.
+// C-COMMON-TRAITS excluding `Copy`, `Debug`, `Default`, `Display`, `Ord`, `PartialOrd`, `Hash`.
 #[derive(Clone, PartialEq, Eq)]
 struct CommonTraits {
     a: block::Block<Checked>,
@@ -146,6 +146,32 @@ struct CommonTraits {
     ae6: script::WitnessScriptTag,
     af1: block::Checked,
     af2: block::Unchecked,
+}
+
+/// A struct that includes all types that implement `Copy`.
+#[derive(Copy, Clone)] // C-COMMON-TRAITS: `Copy`
+struct Copy {
+    a: block::Header,
+    b: block::Version,
+    c: block::BlockHash,
+    d: block::WitnessCommitment,
+    e: merkle_tree::TxMerkleNode,
+    f: merkle_tree::WitnessMerkleNode,
+    g1: pow::CompactTarget,
+    g2: pow::Target,
+    g3: pow::Work,
+    h: ScriptHash,
+    i: WScriptHash,
+    j: Sequence,
+    k: OutPoint,
+    l: Txid,
+    m: Wtxid,
+    n: transaction::Ntxid,
+    o: transaction::Version,
+    p: opcodes::Opcode,
+    q: absolute::LockTime,
+    r: relative::LockTime,
+    s: witness_version::WitnessVersion,
 }
 
 /// A struct that includes all types that implement `Clone`.
@@ -211,7 +237,7 @@ struct Clone<'a> {
 }
 
 /// Public structs that derive common traits.
-// C-COMMON-TRAITS excluding `Clone`, `Debug`, `Default`, and `Display`
+// C-COMMON-TRAITS excluding `Clone`, `Copy`, `Debug`, `Default`, and `Display`
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Ord {
     // a: block::Block<Checked>,
