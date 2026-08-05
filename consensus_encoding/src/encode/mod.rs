@@ -7,6 +7,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 pub mod encoders;
+pub mod iter;
 
 /// A Bitcoin object which can be consensus encoded.
 ///
