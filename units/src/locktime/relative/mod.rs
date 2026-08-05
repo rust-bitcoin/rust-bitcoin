@@ -108,7 +108,7 @@ impl LockTime {
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
         match self {
-            Self::Blocks(ref h) => u32::from(h.to_height()),
+            Self::Blocks(ref h) => u32::from(h.to_count()),
             Self::Time(ref t) => Sequence::LOCK_TYPE_MASK | u32::from(t.to_512_second_intervals()),
         }
     }
@@ -145,7 +145,7 @@ impl LockTime {
 
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
-    pub const fn from_height(n: u16) -> Self { Self::Blocks(NumberOfBlocks::from_height(n)) }
+    pub const fn from_height(n: u16) -> Self { Self::Blocks(NumberOfBlocks::from_count(n)) }
 
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
     ///
@@ -404,12 +404,12 @@ impl NumberOfBlocks {
 
     /// Constructs a new [`NumberOfBlocks`] using a count of blocks.
     #[inline]
-    pub const fn from_height(blocks: u16) -> Self { Self(blocks) }
+    pub const fn from_count(blocks: u16) -> Self { Self(blocks) }
 
     /// Express the [`NumberOfBlocks`] as a count of blocks.
     #[inline]
     #[must_use]
-    pub const fn to_height(self) -> u16 { self.0 }
+    pub const fn to_count(self) -> u16 { self.0 }
 
     /// Constructs a new `NumberOfBlocks` from a prefixed hex string.
     ///
@@ -420,7 +420,7 @@ impl NumberOfBlocks {
     #[inline]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let block_count = parse_int::hex_u16_prefixed(s)?;
-        Ok(Self::from_height(block_count))
+        Ok(Self::from_count(block_count))
     }
 
     /// Constructs a new `NumberOfBlocks` from an unprefixed hex string.
@@ -432,7 +432,7 @@ impl NumberOfBlocks {
     #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let block_count = parse_int::hex_u16_unprefixed(s)?;
-        Ok(Self::from_height(block_count))
+        Ok(Self::from_count(block_count))
     }
 
     /// Returns true if an output locked by a block count can be spent in the next block.
@@ -448,13 +448,13 @@ impl NumberOfBlocks {
         chain_tip
             .checked_sub(utxo_mined_at)
             .ok_or(InvalidHeightError { chain_tip, utxo_mined_at })
-            .map(|diff| u32::from(self.to_height()).saturating_sub(1) <= diff.to_u32())
+            .map(|diff| u32::from(self.to_count()).saturating_sub(1) <= diff.to_u32())
     }
 }
 
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(NumberOfBlocks);
 
-parse_int::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from_height);
+parse_int::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from_count);
 
 impl fmt::Display for NumberOfBlocks {
     #[inline]
@@ -467,7 +467,7 @@ impl Serialize for NumberOfBlocks {
     where
         S: Serializer,
     {
-        u16::serialize(&self.to_height(), s)
+        u16::serialize(&self.to_count(), s)
     }
 }
 
@@ -478,7 +478,7 @@ impl<'de> Deserialize<'de> for NumberOfBlocks {
     where
         D: Deserializer<'de>,
     {
-        Ok(Self::from_height(u16::deserialize(d)?))
+        Ok(Self::from_count(u16::deserialize(d)?))
     }
 }
 
@@ -640,7 +640,7 @@ impl<'a> Arbitrary<'a> for NumberOfBlocks {
         match choice {
             0 => Ok(Self::MIN),
             1 => Ok(Self::MAX),
-            _ => Ok(Self::from_height(u16::arbitrary(u)?)),
+            _ => Ok(Self::from_count(u16::arbitrary(u)?)),
         }
     }
 }
@@ -701,8 +701,8 @@ mod tests {
 
     #[test]
     fn parses_correctly_to_height_or_time() {
-        let height1 = NumberOfBlocks::from_height(10);
-        let height2 = NumberOfBlocks::from_height(11);
+        let height1 = NumberOfBlocks::from_count(10);
+        let height2 = NumberOfBlocks::from_count(11);
         let time1 = NumberOf512Seconds::from_512_second_intervals(70);
         let time2 = NumberOf512Seconds::from_512_second_intervals(71);
 
@@ -726,12 +726,12 @@ mod tests {
 
     #[test]
     fn height_correctly_implies() {
-        let height = NumberOfBlocks::from_height(10);
+        let height = NumberOfBlocks::from_count(10);
         let lock_by_height = LockTime::from(height);
 
-        assert!(!lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_height(9))));
-        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_height(10))));
-        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_height(11))));
+        assert!(!lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_count(9))));
+        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_count(10))));
+        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from_count(11))));
     }
 
     #[test]
@@ -749,7 +749,7 @@ mod tests {
 
     #[test]
     fn sequence_correctly_implies() {
-        let height = NumberOfBlocks::from_height(10);
+        let height = NumberOfBlocks::from_count(10);
         let time = NumberOf512Seconds::from_512_second_intervals(70);
 
         let lock_by_height = LockTime::from(height);
@@ -772,7 +772,7 @@ mod tests {
     #[test]
     fn incorrect_units_do_not_imply() {
         let time = NumberOf512Seconds::from_512_second_intervals(70);
-        let height = NumberOfBlocks::from_height(10);
+        let height = NumberOfBlocks::from_count(10);
 
         let lock_by_time = LockTime::from(time);
         assert!(!lock_by_time.is_implied_by(LockTime::from(height)));
@@ -835,7 +835,7 @@ mod tests {
         let mined_at = BlockHeight::from_u32(900_000);
         let chain_tip = BlockHeight::from_u32(800_000);
 
-        let block_count = NumberOfBlocks::from_height(70); // Arbitrary value.
+        let block_count = NumberOfBlocks::from_count(70); // Arbitrary value.
         let err = block_count.is_satisfied_by(chain_tip, mined_at).unwrap_err();
 
         assert!(matches!(err, InvalidHeightError { chain_tip: _, utxo_mined_at: _ }));
@@ -851,7 +851,7 @@ mod tests {
         let lock_by_height = LockTime::from_height(10); // Arbitrary value.
         let err = lock_by_height.is_satisfied_by_time(chain_tip, mined_at).unwrap_err();
 
-        let expected_height = NumberOfBlocks::from_height(10);
+        let expected_height = NumberOfBlocks::from_count(10);
         assert_eq!(
             err,
             IsSatisfiedByTimeError::Incompatible(IncompatibleTimeError(expected_height))
@@ -890,10 +890,10 @@ mod tests {
         let utxo_height = BlockHeight::from_u32(80);
         let utxo_mtp = BlockMtp::new(utxo_timestamps);
 
-        let lock1 = LockTime::Blocks(NumberOfBlocks::from_height(10));
+        let lock1 = LockTime::Blocks(NumberOfBlocks::from_count(10));
         assert!(lock1.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
-        let lock2 = LockTime::Blocks(NumberOfBlocks::from_height(21));
+        let lock2 = LockTime::Blocks(NumberOfBlocks::from_count(21));
         assert!(lock2.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp).unwrap());
 
         let lock3 = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(10));
@@ -1073,7 +1073,7 @@ mod tests {
     #[test]
     fn satisfied_by_height_boundary() {
         for n in [0, 2, 5, 9, 20, u16::MAX] {
-            let lock = NumberOfBlocks::from_height(n);
+            let lock = NumberOfBlocks::from_count(n);
             let mined_at = BlockHeight::from_u32(100);
 
             let first_spendable_tip = BlockHeight::from_u32(100 + u32::from(n).saturating_sub(1));
@@ -1098,7 +1098,7 @@ mod tests {
         let mined_at = BlockHeight::from_u32(u32::MIN);
         let chain_tip = BlockHeight::from_u32(u32::MAX);
 
-        let block_height = NumberOfBlocks::from_height(10); // Arbitrary value.
+        let block_height = NumberOfBlocks::from_count(10); // Arbitrary value.
         assert!(block_height.is_satisfied_by(chain_tip, mined_at).unwrap());
     }
 }
