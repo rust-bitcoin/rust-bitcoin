@@ -124,6 +124,8 @@ dependencies = [
  "bitcoin-internals 0.6.0",
  "bitcoin-primitives",
  "bitcoin_hashes 1.2.0",
+ "hex-conservative 1.1.0",
+ "serde_json",
 ]
 
 [[package]]
