@@ -91,8 +91,10 @@ struct Structs<'a> {
 static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
 static SCRIPT_SIG: ScriptSigBuf = ScriptSigBuf::new();
 static SCRIPT_PUB_KEY: ScriptPubKeyBuf = ScriptPubKeyBuf::new();
+static SIGNET_BLOCK_SCRIPT: SignetBlockScriptBuf = SignetBlockScriptBuf::new();
 static TAP_SCRIPT: TapScriptBuf = TapScriptBuf::new();
 static WITNESS_SCRIPT: WitnessScriptBuf = WitnessScriptBuf::new();
+static PUSH_BYTES: PushBytesBuf = PushBytesBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
 
 /// Public structs that derive common traits.
@@ -345,7 +347,8 @@ fn c_debug_nonempty() {
     // All the enums.
     check_debug! {
         absolute::LockTime::ZERO;
-        relative::LockTime::ZERO
+        relative::LockTime::ZERO;
+        witness_version::WitnessVersion::V0
     };
 
     // We abuse `Arbitrary` here to get a quick and dirty instance.
@@ -364,9 +367,12 @@ fn c_debug_nonempty() {
         merkle_tree::TxMerkleNode::from_byte_array(BYTES);
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
         pow::CompactTarget::arbitrary(&mut u).unwrap();
+        pow::Target::MAX;
+        pow::Target::MAX.to_work();
         REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
         SCRIPT_PUB_KEY.as_script();
+        SIGNET_BLOCK_SCRIPT.as_script();
         TAP_SCRIPT.as_script();
         WITNESS_SCRIPT.as_script();
         ScriptHash::from_script(&REDEEM_SCRIPT).unwrap();
@@ -374,6 +380,7 @@ fn c_debug_nonempty() {
         REDEEM_SCRIPT.clone();
         SCRIPT_SIG.clone();
         SCRIPT_PUB_KEY.clone();
+        SIGNET_BLOCK_SCRIPT.clone();
         TAP_SCRIPT.clone();
         WITNESS_SCRIPT.clone();
         Sequence::arbitrary(&mut u).unwrap();
@@ -386,7 +393,28 @@ fn c_debug_nonempty() {
         transaction.compute_ntxid();
         transaction.version;
         Witness::arbitrary(&mut u).unwrap();
-        // ad: witness::Iter<'a>,
+        Witness::arbitrary(&mut u).unwrap().iter();
+        Builder::<ScriptSigTag>::new();
+        PUSH_BYTES.as_push_bytes();
+        PUSH_BYTES.clone();
+        opcodes::Opcode::from_u8(0x51);
+    };
+
+    // All the decoders.
+    check_debug! {
+        block::BlockDecoder::new();
+        block::BlockHashDecoder::new();
+        block::HeaderDecoder::new();
+        block::VersionDecoder::new();
+        merkle_tree::TxMerkleNodeDecoder::new();
+        ScriptPubKeyBufDecoder::new();
+        ScriptSigBufDecoder::new();
+        transaction::OutPointDecoder::new();
+        transaction::TransactionDecoder::new();
+        transaction::TxInDecoder::new();
+        transaction::TxOutDecoder::new();
+        transaction::VersionDecoder::new();
+        witness::WitnessDecoder::new();
     };
 }
 
@@ -427,13 +455,32 @@ fn c_good_err_display() {
 
     fn assert_display<T: fmt::Display>() {}
 
-    assert_display::<transaction::ParseOutPointError>();
+    assert_display::<block::BlockDecoderError>();
+    assert_display::<block::BlockHashDecoderError>();
+    assert_display::<block::BlockHeightDecoderError>();
+    assert_display::<block::HeaderDecoderError>();
+    assert_display::<block::InvalidBlockError>();
+    assert_display::<block::TooBigForRelativeHeightError>();
+    assert_display::<block::VersionDecoderError>();
+    assert_display::<merkle_tree::TxMerkleNodeDecoderError>();
     assert_display::<relative::error::DisabledLockTimeError>();
     assert_display::<relative::error::IsSatisfiedByError>();
     assert_display::<relative::error::IsSatisfiedByHeightError>();
     assert_display::<relative::error::IsSatisfiedByTimeError>();
+    assert_display::<script::PushBytesError>();
     assert_display::<script::RedeemScriptSizeError>();
+    assert_display::<script::ScriptBufDecoderError>();
     assert_display::<script::WitnessScriptSizeError>();
+    assert_display::<transaction::OutPointDecoderError>();
+    assert_display::<transaction::ParseOutPointError>();
+    assert_display::<transaction::TransactionDecoderError>();
+    assert_display::<transaction::TxInDecoderError>();
+    assert_display::<transaction::TxOutDecoderError>();
+    assert_display::<transaction::VersionDecoderError>();
+    assert_display::<witness::UnexpectedEofError>();
+    assert_display::<witness::WitnessDecoderError>();
+    assert_display::<witness_version::InvalidWitnessVersionError>();
+    assert_display::<witness_version::ParseWitnessVersionError>();
 }
 
 /// C-SERDE: Tests that serde traits are implemented where expected.
@@ -442,7 +489,22 @@ fn c_good_err_display() {
 fn c_serde() {
     fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
 
+    assert_serde::<block::BlockHash>();
     assert_serde::<block::Version>();
+    assert_serde::<block::WitnessCommitment>();
+    assert_serde::<merkle_tree::TxMerkleNode>();
+    assert_serde::<merkle_tree::WitnessMerkleNode>();
+    assert_serde::<RedeemScriptBuf>();
+    assert_serde::<ScriptPubKeyBuf>();
+    assert_serde::<ScriptSigBuf>();
+    assert_serde::<SignetBlockScriptBuf>();
+    assert_serde::<TapScriptBuf>();
+    assert_serde::<WitnessScriptBuf>();
+    assert_serde::<ScriptHash>();
+    assert_serde::<WScriptHash>();
+    assert_serde::<Txid>();
+    assert_serde::<Wtxid>();
+    assert_serde::<transaction::Ntxid>();
     assert_serde::<transaction::Version>();
     assert_serde::<OutPoint>();
     assert_serde::<Witness>();
