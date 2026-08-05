@@ -6540,6 +6540,10 @@ impl core::marker::StructuralPartialEq for bitcoin_primitives::witness_version::
 impl core::str::traits::FromStr for bitcoin_primitives::witness_version::WitnessVersion
   pub type bitcoin_primitives::witness_version::WitnessVersion::Err = bitcoin_primitives::witness_version::error::ParseWitnessVersionError [impl: impl core::str::traits::FromStr for bitcoin_primitives::witness_version::WitnessVersion]
   pub fn bitcoin_primitives::witness_version::WitnessVersion::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_primitives::witness_version::WitnessVersion]
+impl serde::ser::Serialize for bitcoin_primitives::witness_version::WitnessVersion
+  pub fn bitcoin_primitives::witness_version::WitnessVersion::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_primitives::witness_version::WitnessVersion]
+impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::witness_version::WitnessVersion
+  pub fn bitcoin_primitives::witness_version::WitnessVersion::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::marker::Freeze for bitcoin_primitives::witness_version::WitnessVersion
 impl core::marker::Send for bitcoin_primitives::witness_version::WitnessVersion
 impl core::marker::Sync for bitcoin_primitives::witness_version::WitnessVersion
@@ -6571,6 +6575,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::Witn
   pub unsafe fn bitcoin_primitives::witness_version::WitnessVersion::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_primitives::witness_version::WitnessVersion where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::WitnessVersion
   pub fn bitcoin_primitives::witness_version::WitnessVersion::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_primitives::witness_version::WitnessVersion]
+impl<T> serde::de::DeserializeOwned for bitcoin_primitives::witness_version::WitnessVersion where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_primitives::witness_version::InvalidWitnessVersionError
 impl bitcoin_primitives::witness_version::error::InvalidWitnessVersionError
 pub fn bitcoin_primitives::witness_version::error::InvalidWitnessVersionError::invalid_version(&self) -> u8

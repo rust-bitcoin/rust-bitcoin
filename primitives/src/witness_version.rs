@@ -160,6 +160,27 @@ impl From<WitnessVersion> for Opcode {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for WitnessVersion {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u8(self.to_num())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for WitnessVersion {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let version = u8::deserialize(deserializer)?;
+        Self::try_from(version).map_err(serde::de::Error::custom)
+    }
+}
+
 /// Error types for the segwit version number.
 pub mod error {
     use core::convert::Infallible;
@@ -290,6 +311,30 @@ mod tests {
         assert_eq!(Opcode::from(WitnessVersion::V0), OP_PUSHBYTES_0);
         assert_eq!(Opcode::from(WitnessVersion::V1), OP_1);
         assert_eq!(Opcode::from(WitnessVersion::V16), OP_16);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn witness_version_serde_round_trip() {
+        for version in 0u8..=16 {
+            let wv = WitnessVersion::try_from(version).unwrap();
+
+            let json = serde_json::to_string(&wv).unwrap();
+            assert_eq!(json, format!("{}", version));
+            assert_eq!(serde_json::from_str::<WitnessVersion>(&json).unwrap(), wv);
+
+            let bin = bincode::serialize(&wv).unwrap();
+            assert_eq!(bin, bincode::serialize(&version).unwrap());
+            assert_eq!(bincode::deserialize::<WitnessVersion>(&bin).unwrap(), wv);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn witness_version_serde_invalid() {
+        assert!(serde_json::from_str::<WitnessVersion>("17").is_err());
+        assert!(serde_json::from_str::<WitnessVersion>("255").is_err());
+        assert!(serde_json::from_str::<WitnessVersion>("-1").is_err());
     }
 
     #[test]
