@@ -143,27 +143,6 @@ fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Er
     Ok(())
 }
 
-/// Decodes a base58-encoded string into a byte vector.
-///
-/// # Errors
-///
-/// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
-#[cfg(feature = "alloc")]
-pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
-    // 11/15 is just over log_256(58)
-    let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
-    build_base256(data, &mut scratch).map_err(|e| match e {
-        Base256Error::Buffer(_) => unreachable!("Vec cannot fail try_push"),
-        Base256Error::InvalidChar(err) => err,
-    })?;
-
-    // Copy leading zeroes directly
-    let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).map(|_| 0).collect();
-    // Copy rest of string
-    ret.extend(scratch.into_iter().rev());
-    Ok(ret)
-}
-
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 ///
 /// # Errors
@@ -186,7 +165,18 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 /// ```
 #[cfg(feature = "alloc")]
 pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
-    let mut ret: Vec<u8> = decode(data)?;
+    // 11/15 is just over log_256(58)
+    let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
+    build_base256(data, &mut scratch).map_err(|e| match e {
+        Base256Error::Buffer(_) => unreachable!("Vec cannot fail try_push"),
+        Base256Error::InvalidChar(err) => err,
+    })?;
+
+    // Copy leading zeroes directly
+    let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).map(|_| 0).collect();
+    // Copy rest of string
+    ret.extend(scratch.into_iter().rev());
+
     let (remaining, &data_check) =
         ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
 
