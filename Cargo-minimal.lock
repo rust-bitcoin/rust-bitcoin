@@ -25,7 +25,7 @@ dependencies = [
 
 [[package]]
 name = "base58ck"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bitcoin-internals 0.6.0",
  "bitcoin_hashes 1.2.0",
@@ -77,7 +77,7 @@ name = "bitcoin"
 version = "0.33.0-beta"
 dependencies = [
  "arbitrary",
- "base58ck 0.4.0",
+ "base58ck 0.5.0",
  "base64",
  "bech32",
  "bincode",
@@ -104,7 +104,7 @@ dependencies = [
 name = "bitcoin-addresses"
 version = "0.0.0"
 dependencies = [
- "base58ck 0.4.0",
+ "base58ck 0.5.0",
  "bech32",
  "bitcoin-crypto",
  "bitcoin-internals 0.6.0",
@@ -144,7 +144,7 @@ name = "bitcoin-crypto"
 version = "0.2.0"
 dependencies = [
  "arbitrary",
- "base58ck 0.4.0",
+ "base58ck 0.5.0",
  "bitcoin-internals 0.6.0",
  "bitcoin-network-kind",
  "bitcoin-primitives",
@@ -212,7 +212,7 @@ name = "bitcoin-key-expression"
 version = "0.1.0"
 dependencies = [
  "arbitrary",
- "base58ck 0.4.0",
+ "base58ck 0.5.0",
  "bincode",
  "bitcoin-crypto",
  "bitcoin-internals 0.6.0",
