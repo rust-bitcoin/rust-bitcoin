@@ -16,14 +16,16 @@ extern crate alloc;
 use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{
-    self, PushBytes, ScriptHash, ScriptPubKeyBufDecoder, ScriptSigBufDecoder, WScriptHash,
+    self, Builder, PushBytes, PushBytesBuf, RedeemScriptTag, ScriptHash, ScriptPubKeyBufDecoder,
+    ScriptPubKeyTag, ScriptSigBufDecoder, ScriptSigTag, SignetBlockScriptTag, TapScriptTag,
+    WScriptHash, WitnessScriptTag,
 };
 use bitcoin_primitives::{
-    absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
-    RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, TapScript,
-    TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
+    absolute, block, merkle_tree, opcodes, pow, relative, transaction, witness, witness_version,
+    OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig,
+    ScriptSigBuf, Sequence, SignetBlockScript, SignetBlockScriptBuf, TapScript, TapScriptBuf,
+    Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
 };
-use hashes::sha256t;
 
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
@@ -32,6 +34,13 @@ struct Enums {
     b: block::Unchecked,
     c: absolute::LockTime,
     d: relative::LockTime,
+    e: script::RedeemScriptTag, // Script tags are empty enums.
+    f: script::ScriptPubKeyTag,
+    g: script::ScriptSigTag,
+    h: script::SignetBlockScriptTag,
+    i: script::TapScriptTag,
+    j: script::WitnessScriptTag,
+    k: witness_version::WitnessVersion,
 }
 
 /// A struct that includes all public non-error structs.
@@ -45,12 +54,15 @@ struct Structs<'a> {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
+    i1: pow::CompactTarget,
+    i2: pow::Target,
+    i3: pow::Work,
     j1: &'a RedeemScript,
     j2: &'a ScriptPubKey,
     j3: &'a ScriptSig,
     j4: &'a TapScript,
     j5: &'a WitnessScript,
+    j6: &'a SignetBlockScript,
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
@@ -58,6 +70,7 @@ struct Structs<'a> {
     m3: ScriptSigBuf,
     m4: TapScriptBuf,
     m5: WitnessScriptBuf,
+    m6: SignetBlockScriptBuf,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -68,7 +81,11 @@ struct Structs<'a> {
     u: transaction::Ntxid,
     v: transaction::Version,
     w: Witness,
-    // x: witness::Iter<'a>,
+    x: witness::Iter<'a>,
+    y: Builder<ScriptSigTag>,
+    z1: &'a PushBytes,
+    z2: PushBytesBuf,
+    aa: opcodes::Opcode,
 }
 
 static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
@@ -90,7 +107,9 @@ struct CommonTraits {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
+    i1: pow::CompactTarget,
+    i2: pow::Target,
+    i3: pow::Work,
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
@@ -99,6 +118,7 @@ struct CommonTraits {
     m3: ScriptSigBuf,
     m4: TapScriptBuf,
     m5: WitnessScriptBuf,
+    m6: SignetBlockScriptBuf,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -110,6 +130,20 @@ struct CommonTraits {
     v: transaction::Version,
     w: Witness,
     // x: witness::Iter<'a>,
+    y: Builder<ScriptSigTag>,
+    z: PushBytesBuf,
+    aa: opcodes::Opcode,
+    ab: absolute::LockTime,
+    ac: relative::LockTime,
+    ad: witness_version::WitnessVersion,
+    ae1: script::RedeemScriptTag,
+    ae2: script::ScriptPubKeyTag,
+    ae3: script::ScriptSigTag,
+    ae4: script::SignetBlockScriptTag,
+    ae5: script::TapScriptTag,
+    ae6: script::WitnessScriptTag,
+    af1: block::Checked,
+    af2: block::Unchecked,
 }
 
 /// A struct that includes all types that implement `Clone`.
@@ -123,7 +157,9 @@ struct Clone<'a> {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
+    i1: pow::CompactTarget,
+    i2: pow::Target,
+    i3: pow::Work,
     // j: &'a Script,
     #[cfg(feature = "alloc")]
     j0: alloc::boxed::Box<PushBytes>,
@@ -144,6 +180,7 @@ struct Clone<'a> {
     m3: ScriptSigBuf,
     m4: TapScriptBuf,
     m5: WitnessScriptBuf,
+    m6: SignetBlockScriptBuf,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -155,6 +192,20 @@ struct Clone<'a> {
     v: transaction::Version,
     w: Witness,
     x: witness::Iter<'a>,
+    y: Builder<ScriptSigTag>,
+    z: PushBytesBuf,
+    aa: opcodes::Opcode,
+    ab: absolute::LockTime,
+    ac: relative::LockTime,
+    ad: witness_version::WitnessVersion,
+    ae1: script::RedeemScriptTag,
+    ae2: script::ScriptPubKeyTag,
+    ae3: script::ScriptSigTag,
+    ae4: script::SignetBlockScriptTag,
+    ae5: script::TapScriptTag,
+    ae6: script::WitnessScriptTag,
+    af1: block::Checked,
+    af2: block::Unchecked,
 }
 
 /// Public structs that derive common traits.
@@ -169,7 +220,9 @@ struct Ord {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
+    i1: pow::CompactTarget,
+    i2: pow::Target,
+    i3: pow::Work,
     // j: &'a Script,  // Doesn't implement `Clone`.
     k: ScriptHash,
     l: WScriptHash,
@@ -178,6 +231,7 @@ struct Ord {
     m3: ScriptSigBuf,
     m4: TapScriptBuf,
     m5: WitnessScriptBuf,
+    m6: SignetBlockScriptBuf,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -189,6 +243,20 @@ struct Ord {
     v: transaction::Version,
     w: Witness,
     // x: witness::Iter<'a>,
+    // y: Builder<ScriptSigTag>, // Doesn't implement `Ord` or `Hash`.
+    z: PushBytesBuf,
+    // aa: opcodes::Opcode, // Deliberately does not implement `Ord` (see type docs).
+    // ab: absolute::LockTime, // Deliberately does not implement `Ord` (see type docs).
+    // ac: relative::LockTime, // Deliberately does not implement `Ord` (see type docs).
+    ad: witness_version::WitnessVersion,
+    ae1: script::RedeemScriptTag,
+    ae2: script::ScriptPubKeyTag,
+    ae3: script::ScriptSigTag,
+    ae4: script::SignetBlockScriptTag,
+    ae5: script::TapScriptTag,
+    ae6: script::WitnessScriptTag,
+    af1: block::Checked,
+    af2: block::Unchecked,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -200,12 +268,16 @@ struct Default {
     b3: &'static ScriptSig,
     b4: &'static TapScript,
     b5: &'static WitnessScript,
+    b6: &'static SignetBlockScript,
     c1: RedeemScriptBuf,
     c2: ScriptPubKeyBuf,
     c3: ScriptSigBuf,
     c4: TapScriptBuf,
     c5: WitnessScriptBuf,
+    c6: SignetBlockScriptBuf,
     e: Witness,
+    f: Builder<ScriptSigTag>,
+    g: PushBytesBuf,
 }
 
 /// A struct that includes all public decoder types.
@@ -230,13 +302,32 @@ struct Decoders {
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
-    a: transaction::ParseOutPointError,
-    b: relative::error::DisabledLockTimeError,
-    c: relative::error::IsSatisfiedByError,
-    d: relative::error::IsSatisfiedByHeightError,
-    e: relative::error::IsSatisfiedByTimeError,
-    f: script::RedeemScriptSizeError,
-    g: script::WitnessScriptSizeError,
+    a: block::BlockDecoderError,
+    b: block::BlockHashDecoderError,
+    c: block::BlockHeightDecoderError,
+    d: block::HeaderDecoderError,
+    e: block::InvalidBlockError,
+    f: block::TooBigForRelativeHeightError,
+    g: block::VersionDecoderError,
+    h: merkle_tree::TxMerkleNodeDecoderError,
+    i: relative::error::DisabledLockTimeError,
+    j: relative::error::IsSatisfiedByError,
+    k: relative::error::IsSatisfiedByHeightError,
+    l: relative::error::IsSatisfiedByTimeError,
+    m: script::PushBytesError,
+    n: script::RedeemScriptSizeError,
+    o: script::ScriptBufDecoderError,
+    p: script::WitnessScriptSizeError,
+    q: transaction::OutPointDecoderError,
+    r: transaction::ParseOutPointError,
+    s: transaction::TransactionDecoderError,
+    t: transaction::TxInDecoderError,
+    u: transaction::TxOutDecoderError,
+    v: transaction::VersionDecoderError,
+    w: witness::UnexpectedEofError,
+    x: witness::WitnessDecoderError,
+    y: witness_version::InvalidWitnessVersionError,
+    z: witness_version::ParseWitnessVersionError,
 }
 
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
@@ -323,6 +414,9 @@ fn c_object() {
     struct Traits {
         // These traits are explicitly not dyn compatible.
         // a: Box<dyn block::Validation>,
+        b: alloc::boxed::Box<dyn script::PushBytesErrorReport>,
+        c: alloc::boxed::Box<dyn script::ScriptHashableTag>,
+        d: alloc::boxed::Box<dyn script::Tag>,
     }
 }
 
@@ -365,12 +459,16 @@ fn p_default_change() {
         b3: ScriptSig::from_bytes(&[]),
         b4: TapScript::from_bytes(&[]),
         b5: WitnessScript::from_bytes(&[]),
+        b6: SignetBlockScript::from_bytes(&[]),
         c1: RedeemScriptBuf::from_bytes(Vec::new()),
         c2: ScriptPubKeyBuf::from_bytes(Vec::new()),
         c3: ScriptSigBuf::from_bytes(Vec::new()),
         c4: TapScriptBuf::from_bytes(Vec::new()),
         c5: WitnessScriptBuf::from_bytes(Vec::new()),
+        c6: SignetBlockScriptBuf::from_bytes(Vec::new()),
         e: Witness::new(),
+        f: Builder::new(),
+        g: PushBytesBuf::new(),
     };
     assert_eq!(got, want);
 }
