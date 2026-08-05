@@ -453,11 +453,36 @@ fn p_consistent_exports_crate_types() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `locktime` module.
 #[test]
 fn p_consistent_exports_locktime() {
-    use bitcoin_primitives::locktime::relative::error::{
-        DisabledLockTimeError, InvalidHeightError, InvalidTimeError,
-    };
-    use bitcoin_primitives::locktime::relative::LockTime;
     use bitcoin_primitives::locktime::{absolute, relative};
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `locktime::absolute` module.
+#[test]
+fn p_consistent_exports_locktime_absolute() {
+    use bitcoin_primitives::locktime::absolute::error::{
+        ConversionError as _, IncompatibleHeightError as _, IncompatibleTimeError as _,
+        LockTimeDecoderError as _, ParseHeightError as _, ParseTimeError as _,
+    };
+    use bitcoin_primitives::locktime::absolute::{
+        ConversionError, Height, IncompatibleHeightError, IncompatibleTimeError, LockTime,
+        LockTimeDecoder, LockTimeDecoderError, LockTimeEncoder, MedianTimePast, ParseHeightError,
+        ParseTimeError,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `locktime::relative` module.
+#[test]
+fn p_consistent_exports_locktime_relative() {
+    use bitcoin_primitives::locktime::relative::error::{
+        DisabledLockTimeError as _, IncompatibleHeightError as _, IncompatibleTimeError as _,
+        InvalidHeightError as _, InvalidTimeError as _, IsSatisfiedByError as _,
+        IsSatisfiedByHeightError as _, IsSatisfiedByTimeError as _, TimeOverflowError as _,
+    };
+    use bitcoin_primitives::locktime::relative::{
+        DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError, InvalidHeightError,
+        InvalidTimeError, IsSatisfiedByError, IsSatisfiedByHeightError, IsSatisfiedByTimeError,
+        LockTime, NumberOf512Seconds, NumberOfBlocks, TimeOverflowError,
+    };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `script` module.
