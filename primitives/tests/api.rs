@@ -326,7 +326,8 @@ struct Encoders<'a> {
 }
 
 /// A struct that includes all public decoder types.
-#[derive(Default)] // All decoders implement `Default` (P-DECODERS).
+// All public types implement `Debug` (C-DEBUG), all decoders implement `Default` (P-DECODERS).
+#[derive(Debug, Default)]
 struct Decoders {
     a: block::BlockDecoder,
     b: block::BlockHashDecoder,
