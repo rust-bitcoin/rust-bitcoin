@@ -396,15 +396,17 @@ fn p_decoders_implement_new() {
 /// P-CONSISTENT-EXPORTS: Tests that units modules can be used from the crate root.
 #[test]
 fn p_consistent_exports_units_modules() {
-    use bitcoin_primitives::{amount, block, fee_rate, locktime, weight};
+    use bitcoin_primitives::{
+        amount, block, fee_rate, locktime, parse_int, pow, result, sequence, time, weight,
+    };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that units type aliases can be used from the crate root.
 #[test]
 fn p_consistent_exports_units_types() {
     use bitcoin_primitives::{
-        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
-        NumOpResult, Sequence, SignedAmount, Weight,
+        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime,
+        CompactTarget, FeeRate, NumOpResult, Sequence, SignedAmount, Target, Weight, Work,
     };
 }
 
@@ -431,8 +433,8 @@ fn p_consistent_exports_units_amount_error() {
 #[test]
 fn p_consistent_exports_crate_modules() {
     use bitcoin_primitives::{
-        amount, block, fee_rate, locktime, merkle_tree, parse_int, pow, result, script, sequence,
-        time, transaction, weight, witness,
+        amount, block, fee_rate, locktime, merkle_tree, opcodes, parse_int, pow, result, script,
+        sequence, time, transaction, weight, witness, witness_version,
     };
 }
 
@@ -442,9 +444,9 @@ fn p_consistent_exports_crate_types() {
     use bitcoin_primitives::{
         Block, BlockChecked, BlockHash, BlockHeader, BlockUnchecked, BlockValidation, BlockVersion,
         CompactTarget, OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf,
-        ScriptSig, ScriptSigBuf, Sequence, TapScript, TapScriptBuf, Transaction,
-        TransactionVersion, TxIn, TxOut, Txid, Witness, WitnessCommitment, WitnessScript,
-        WitnessScriptBuf, Wtxid,
+        ScriptSig, ScriptSigBuf, Sequence, SignetBlockScript, SignetBlockScriptBuf, TapScript,
+        TapScriptBuf, Transaction, TransactionVersion, TxIn, TxOut, Txid, Witness,
+        WitnessCommitment, WitnessScript, WitnessScriptBuf, Wtxid,
     };
 }
 
@@ -461,44 +463,68 @@ fn p_consistent_exports_locktime() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `script` module.
 #[test]
 fn p_consistent_exports_script() {
+    use bitcoin_primitives::script::error::{
+        PushBytesError as _, RedeemScriptSizeError as _, ScriptBufDecoderError as _, WitnessScriptSizeError as _,
+    };
     use bitcoin_primitives::script::{
-        RedeemScriptSizeError, ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash,
-        ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, WScriptHash,
-        WitnessScriptSizeError,
+        Builder, PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, RedeemScript,
+        RedeemScriptBuf, RedeemScriptSizeError, RedeemScriptTag, Script, ScriptBuf,
+        ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash, ScriptHashableTag,
+        ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufDecoder, ScriptPubKeyTag, ScriptSig,
+        ScriptSigBuf, ScriptSigBufDecoder, ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf,
+        SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash,
+        WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
     };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `block` module.
 #[test]
 fn p_consistent_exports_block() {
+    use bitcoin_primitives::block::error::{
+        BlockDecoderError as _, BlockHashDecoderError as _, BlockHeightDecoderError as _, HeaderDecoderError as _,
+        InvalidBlockError as _, TooBigForRelativeHeightError as _, VersionDecoderError as _,
+    };
     use bitcoin_primitives::block::{
-        BlockDecoder, BlockDecoderError, BlockEncoder, BlockHashDecoder, BlockHashDecoderError,
-        BlockHashEncoder, HeaderDecoder, HeaderEncoder, VersionDecoder, VersionDecoderError,
-        VersionEncoder,
+        Block, BlockDecoder, BlockDecoderError, BlockEncoder, BlockHash, BlockHashDecoder,
+        BlockHashDecoderError, BlockHashEncoder, BlockHeight, BlockHeightDecoder,
+        BlockHeightDecoderError, BlockHeightEncoder, BlockHeightInterval, BlockMtp,
+        BlockMtpInterval, Checked, Header, HeaderDecoder, HeaderDecoderError, HeaderEncoder,
+        InvalidBlockError, TooBigForRelativeHeightError, Unchecked, Validation, Version,
+        VersionDecoder, VersionDecoderError, VersionEncoder, WitnessCommitment,
     };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `merkle_tree` module.
 #[test]
 fn p_consistent_exports_merkle_tree() {
+    use bitcoin_primitives::merkle_tree::error::TxMerkleNodeDecoderError as _;
     use bitcoin_primitives::merkle_tree::{
-        TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
+        TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
+        WitnessMerkleNode,
     };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `transaction` module.
 #[test]
 fn p_consistent_exports_transaction() {
+    use bitcoin_primitives::transaction::error::{
+        OutPointDecoderError as _, ParseOutPointError as _, TransactionDecoderError as _, TxInDecoderError as _,
+        TxOutDecoderError as _, VersionDecoderError as _,
+    };
     use bitcoin_primitives::transaction::{
-        OutPointDecoder, OutPointDecoderError, OutPointEncoder, TransactionDecoder,
-        TransactionDecoderError, TransactionEncoder, TxInDecoder, TxInDecoderError, TxInEncoder,
-        TxOutDecoder, TxOutDecoderError, TxOutEncoder, VersionDecoder, VersionDecoderError,
-        VersionEncoder,
+        BlockHashDecoder, BlockHashDecoderError, Ntxid, OutPoint, OutPointDecoder,
+        OutPointDecoderError, OutPointEncoder, ParseOutPointError, Transaction, TransactionDecoder,
+        TransactionDecoderError, TransactionEncoder, TxIn, TxInDecoder, TxInDecoderError,
+        TxInEncoder, TxOut, TxOutDecoder, TxOutDecoderError, TxOutEncoder, Txid, Version,
+        VersionDecoder, VersionDecoderError, VersionEncoder, Wtxid,
     };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `witness` module.
 #[test]
 fn p_consistent_exports_witness() {
-    use bitcoin_primitives::witness::{WitnessDecoder, WitnessDecoderError, WitnessEncoder};
+    use bitcoin_primitives::witness::error::{UnexpectedEofError as _, WitnessDecoderError as _};
+    use bitcoin_primitives::witness::{
+        Iter, UnexpectedEofError, Witness, WitnessDecoder, WitnessDecoderError, WitnessEncoder,
+    };
 }
