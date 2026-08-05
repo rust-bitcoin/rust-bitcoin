@@ -2,9 +2,12 @@
 
 //! Provides type [`LockTime`] that implements the logic around `nSequence`/`OP_CHECKSEQUENCEVERIFY`.
 //!
-//! There are two types of lock time: lock-by-height and lock-by-time, distinguished by whether bit
-//! 22 of the `u32` consensus value is set. To support these we provide the [`NumberOfBlocks`] and
-//! [`NumberOf512Seconds`] types.
+//! There are two types of lock time: lock-by-block-count and lock-by-time, distinguished by whether
+//! bit 22 of the `u32` consensus value is set. To support these we provide the [`NumberOfBlocks`]
+//! and [`NumberOf512Seconds`] types.
+//!
+//! Note: bitcoin-units uses "block count" rather than "block height" because a relative lock is an
+//! age, a number of blocks elapsed since the UTXO was mined, not a position in the chain.
 
 pub mod error;
 
@@ -29,14 +32,14 @@ pub use self::error::{
     TimeOverflowError,
 };
 
-/// A relative lock time value, representing either a block height or time (512 second intervals).
+/// A relative lock time value, representing either a count of blocks or time (512 second intervals).
 ///
 /// Used for sequence numbers (`nSequence` in Bitcoin Core and `TxIn::sequence`
 /// in `rust-bitcoin`) and also for the argument to opcode `OP_CHECKSEQUENCEVERIFY`.
 ///
 /// # Note on ordering
 ///
-/// Locktimes may be height- or time-based, and these metrics are incommensurate; there is no total
+/// Locktimes may be block- or time-based, and these metrics are incommensurate; there is no total
 /// ordering on locktimes. In order to compare locktimes, instead of using `<` or `>` we provide the
 /// [`LockTime::is_satisfied_by`] API.
 ///
@@ -46,7 +49,7 @@ pub use self::error::{
 /// * [BIP-0112 CHECKSEQUENCEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LockTime {
-    /// A block height lock time value.
+    /// A lock time measured in number of blocks.
     Blocks(NumberOfBlocks),
     /// A 512 second time interval value.
     Time(NumberOf512Seconds),
@@ -75,11 +78,11 @@ impl LockTime {
     /// ```rust
     /// # use bitcoin_units::relative;
     ///
-    /// // Values with bit 22 set to 0 will be interpreted as height-based lock times.
-    /// let height: u32 = 144; // 144 blocks, approx 24h.
-    /// let lock_time = relative::LockTime::from_consensus(height)?;
+    /// // Values with bit 22 set to 0 will be interpreted as block-based lock times.
+    /// let blocks: u32 = 144; // 144 blocks, approx 24h.
+    /// let lock_time = relative::LockTime::from_consensus(blocks)?;
     /// assert!(lock_time.is_block_height());
-    /// assert_eq!(lock_time.to_consensus_u32(), height);
+    /// assert_eq!(lock_time.to_consensus_u32(), blocks);
     ///
     /// // Values with bit 22 set to 1 will be interpreted as time-based lock times.
     /// let time: u32 = 168 | (1 << 22) ; // Bit 22 is 1 with time approx 24h.
@@ -187,7 +190,7 @@ impl LockTime {
         matches!((self, other), (Self::Blocks(_), Self::Blocks(_)) | (Self::Time(_), Self::Time(_)))
     }
 
-    /// Returns true if this lock time value is in units of block height.
+    /// Returns true if this lock time value is in units of blocks.
     #[inline]
     pub const fn is_block_height(self) -> bool { matches!(self, Self::Blocks(_)) }
 
@@ -385,18 +388,18 @@ impl<'de> serde::Deserialize<'de> for LockTime {
     }
 }
 
-/// A relative lock time lock-by-height value.
+/// A relative lock time lock-by-block-count value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NumberOfBlocks(u16);
 
 impl NumberOfBlocks {
-    /// Relative block height 0, can be included in any block.
+    /// A block count of zero, can be included in any block.
     pub const ZERO: Self = Self(0);
 
-    /// The minimum relative block height (0), can be included in any block.
+    /// The minimum block count (0), can be included in any block.
     pub const MIN: Self = Self::ZERO;
 
-    /// The maximum relative block height.
+    /// The maximum block count.
     pub const MAX: Self = Self(u16::MAX);
 
     /// Constructs a new [`NumberOfBlocks`] using a count of blocks.
@@ -432,7 +435,7 @@ impl NumberOfBlocks {
         Ok(Self::from_height(block_count))
     }
 
-    /// Returns true if an output locked by height can be spent in the next block.
+    /// Returns true if an output locked by a block count can be spent in the next block.
     ///
     /// # Errors
     ///
