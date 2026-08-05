@@ -569,14 +569,14 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn base58_decode() {
         // Basics
-        assert_eq!(decode("1").ok(), Some(vec![0u8]));
-        assert_eq!(decode("2").ok(), Some(vec![1u8]));
-        assert_eq!(decode("21").ok(), Some(vec![58u8]));
-        assert_eq!(decode("211").ok(), Some(vec![13u8, 36]));
+        assert_eq!(decode_check("1Wh4bh").ok(), Some(vec![0u8]));
+        assert_eq!(decode_check("BXvDbH").ok(), Some(vec![1u8]));
+        assert_eq!(decode_check("7ZRwjEn").ok(), Some(vec![58u8]));
+        assert_eq!(decode_check("7YY3x3vS").ok(), Some(vec![13u8, 36]));
 
         // Leading zeroes
-        assert_eq!(decode("1211").ok(), Some(vec![0u8, 13, 36]));
-        assert_eq!(decode("111211").ok(), Some(vec![0u8, 0, 0, 13, 36]));
+        assert_eq!(decode_check("17YZPJu4L").ok(), Some(vec![0u8, 13, 36]));
+        assert_eq!(decode_check("1117Yc95rJQ").ok(), Some(vec![0u8, 0, 0, 13, 36]));
 
         // Addresses
         assert_eq!(
@@ -584,7 +584,7 @@ mod tests {
             hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d")
         );
         // Non Base58 char.
-        assert_eq!(decode("¢").unwrap_err(), InvalidCharacterError::new(194));
+        assert_eq!(decode_check("¢").unwrap_err().invalid_character(), Some(194),);
     }
 
     #[test]
