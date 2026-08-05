@@ -416,6 +416,49 @@ mod tests {
     }
 
     #[test]
+    fn test_div_assign_amount_nonzero() {
+        let mut amount = Amount::from_sat_u32(100);
+        amount /= NonZeroU64::new(12).unwrap();
+        assert_eq!(amount, Amount::from_sat_u32(8));
+
+        // Division truncates towards zero.
+        amount /= NonZeroU64::new(10).unwrap();
+        assert_eq!(amount, Amount::ZERO);
+
+        let mut res = amount + Amount::from_sat_u32(100);
+        res /= NonZeroU64::new(4).unwrap();
+        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(25)));
+
+        // An error result stays an error, keeping the original operation.
+        let mut res: NumOpResult<Amount> = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+        res /= NonZeroU64::new(2).unwrap();
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Add)));
+    }
+
+    #[test]
+    fn test_div_assign_signed_amount_nonzero() {
+        let mut ssat = SignedAmount::from_sat_i32(-100);
+        ssat /= NonZeroI64::new(4).unwrap();
+        assert_eq!(ssat, SignedAmount::from_sat_i32(-25));
+
+        ssat /= &NonZeroI64::new(-5).unwrap();
+        assert_eq!(ssat, SignedAmount::from_sat_i32(5));
+
+        // Division truncates towards zero.
+        ssat /= NonZeroI64::new(-10).unwrap();
+        assert_eq!(ssat, SignedAmount::ZERO);
+
+        let mut res = ssat - SignedAmount::from_sat_i32(100);
+        res /= NonZeroI64::new(4).unwrap();
+        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-25)));
+
+        let mut res: NumOpResult<SignedAmount> =
+            NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
+        res /= NonZeroI64::new(2).unwrap();
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Sub)));
+    }
+
+    #[test]
     fn test_op_assign_amount_error() {
         let mut res: NumOpResult<Amount> = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
 
