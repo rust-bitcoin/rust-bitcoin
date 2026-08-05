@@ -529,6 +529,12 @@ fn p_consistent_exports_merkle_tree() {
     };
 }
 
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `opcodes` module.
+#[test]
+fn p_consistent_exports_opcodes() {
+    use bitcoin_primitives::opcodes::{all, Opcode};
+}
+
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `transaction` module.
 #[test]
 fn p_consistent_exports_transaction() {
@@ -551,5 +557,16 @@ fn p_consistent_exports_witness() {
     use bitcoin_primitives::witness::error::{UnexpectedEofError as _, WitnessDecoderError as _};
     use bitcoin_primitives::witness::{
         Iter, UnexpectedEofError, Witness, WitnessDecoder, WitnessDecoderError, WitnessEncoder,
+    };
+}
+
+/// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `witness_version` module.
+#[test]
+fn p_consistent_exports_witness_version() {
+    use bitcoin_primitives::witness_version::error::{
+        InvalidWitnessVersionError as _, ParseWitnessVersionError as _,
+    };
+    use bitcoin_primitives::witness_version::{
+        InvalidWitnessVersionError, ParseWitnessVersionError, WitnessVersion,
     };
 }
