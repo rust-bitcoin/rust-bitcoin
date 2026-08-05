@@ -308,6 +308,23 @@ struct Default {
     g: PushBytesBuf,
 }
 
+/// A struct that includes all public encoder types.
+#[derive(Debug)] // All public types implement Debug (C-DEBUG).
+struct Encoders<'a> {
+    a: block::BlockEncoder<'a>,
+    b: block::BlockHashEncoder<'a>,
+    c: block::HeaderEncoder<'a>,
+    d: block::VersionEncoder<'a>,
+    e: merkle_tree::TxMerkleNodeEncoder<'a>,
+    f: script::ScriptEncoder<'a>,
+    g: transaction::OutPointEncoder<'a>,
+    h: transaction::TransactionEncoder<'a>,
+    i: transaction::TxInEncoder<'a>,
+    j: transaction::TxOutEncoder<'a>,
+    k: transaction::VersionEncoder<'a>,
+    l: witness::WitnessEncoder<'a>,
+}
+
 /// A struct that includes all public decoder types.
 #[derive(Default)] // All decoders implement `Default` (P-DECODERS).
 struct Decoders {
@@ -455,6 +472,10 @@ fn c_send_sync() {
     assert_sync::<Structs>();
     assert_send::<Enums>();
     assert_sync::<Enums>();
+    assert_send::<Encoders>();
+    assert_sync::<Encoders>();
+    assert_send::<Decoders>();
+    assert_sync::<Decoders>();
 
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
     assert_send::<Errors>();
