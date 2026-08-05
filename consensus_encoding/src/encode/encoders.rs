@@ -11,6 +11,7 @@
 
 use core::fmt;
 
+use super::iter::{Encoders, IterEncoder};
 use super::{Encode, Encoder, EncoderStatus, ExactSizeEncoder};
 use crate::CompactSizeEncoder;
 
@@ -116,78 +117,36 @@ impl<const N: usize> ExactSizeEncoder for ArrayRefEncoder<'_, N> {
 }
 
 /// An encoder for a list of consensus encodable types.
-pub struct SliceEncoder<'e, T: Encode> {
-    /// The list of references to the objects we are encoding.
-    sl: &'e [T],
-    /// Encoder for the current object being encoded.
-    cur_enc: Option<T::Encoder<'e>>,
-}
+pub struct SliceEncoder<'e, T: Encode>(IterEncoder<Encoders<'e, T>>);
 
 impl<'e, T: Encode> SliceEncoder<'e, T> {
     /// Constructs an encoder which encodes the slice _without_ adding the length prefix.
     ///
     /// To encode with a length prefix, use [`PrefixedSliceEncoder`] instead.
-    pub fn without_length_prefix(sl: &'e [T]) -> Self {
-        // In this `map` call we cannot remove the closure. Seems to be a bug in the compiler.
-        // Perhaps https://github.com/rust-lang/rust/issues/102540 which is 3 years old with
-        // no replies or even an acknowledgement. We will not bother filing our own issue.
-        Self { sl, cur_enc: sl.first().map(|x| T::encoder(x)) }
-    }
+    pub fn without_length_prefix(sl: &'e [T]) -> Self { Self(IterEncoder::new(Encoders::new(sl))) }
 }
 
-impl<'e, T: Encode> fmt::Debug for SliceEncoder<'e, T>
+impl<'e, T: Encode + 'e> fmt::Debug for SliceEncoder<'e, T>
 where
     T::Encoder<'e>: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SliceEncoder")
-            .field("sl", &self.sl.len())
-            .field("cur_enc", &self.cur_enc)
-            .finish()
+        f.debug_tuple("SliceEncoder").field(&self.0).finish()
     }
 }
 
 // Manual impl rather than #[derive(Clone)] because derive would constrain `where T: Clone`,
 // but `T` itself is never cloned, only the associated type `T::Encoder<'e>`.
-impl<'e, T: Encode> Clone for SliceEncoder<'e, T>
+impl<'e, T: Encode + 'e> Clone for SliceEncoder<'e, T>
 where
     T::Encoder<'e>: Clone,
 {
-    fn clone(&self) -> Self { Self { sl: self.sl, cur_enc: self.cur_enc.clone() } }
+    fn clone(&self) -> Self { Self(self.0.clone()) }
 }
 
 impl<T: Encode> Encoder for SliceEncoder<'_, T> {
-    fn current_chunk(&self) -> &[u8] {
-        // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
-        self.cur_enc.as_ref().map(T::Encoder::current_chunk).unwrap_or_default()
-    }
-
-    fn advance(&mut self) -> EncoderStatus {
-        let Some(cur) = self.cur_enc.as_mut() else {
-            return EncoderStatus::Finished;
-        };
-
-        loop {
-            // On subsequent calls, attempt to advance the current encoder and return
-            // success if this succeeds.
-            if cur.advance().has_more() {
-                return EncoderStatus::HasMore;
-            }
-            // self.sl guaranteed to be non-empty if cur is non-None.
-            self.sl = &self.sl[1..];
-
-            // If advancing the current encoder failed, attempt to move to the next encoder.
-            if let Some(x) = self.sl.first() {
-                *cur = x.encoder();
-                if !cur.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.cur_enc = None; // shortcut the next call to advance()
-                return EncoderStatus::Finished;
-            }
-        }
-    }
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
 /// An encoder for a list of consensus encodable types, including a length prefix.
@@ -204,7 +163,7 @@ impl<'e, T: Encode> PrefixedSliceEncoder<'e, T> {
     }
 }
 
-impl<'e, T: Encode> fmt::Debug for PrefixedSliceEncoder<'e, T>
+impl<'e, T: Encode + 'e> fmt::Debug for PrefixedSliceEncoder<'e, T>
 where
     T::Encoder<'e>: fmt::Debug,
 {
@@ -212,7 +171,7 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.0.fmt(f) }
 }
 
-impl<'e, T: Encode> Clone for PrefixedSliceEncoder<'e, T>
+impl<'e, T: Encode + 'e> Clone for PrefixedSliceEncoder<'e, T>
 where
     T::Encoder<'e>: Clone,
 {
