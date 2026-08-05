@@ -68,6 +68,9 @@
 //!
 //! This crate provides types for encoding and decoding sequences of items. On the decoding side,
 //! [`VecDecoder`] decodes a length-prefixed sequence of consensus encodable types into a `Vec`.
+//! [`VecDecoderWith`] and [`ExactVecDecoderWith`] are the underlying implementations, bound
+//! directly on [`Decoder`] allowing them to be used with decoder types that do not have a
+//! corresponding [`Decode`] implementation.
 //!
 //! On the encoding side, [`SliceEncoder`] and [`PrefixedSliceEncoder`] encode slices of consensus
 //! encodable types without and with a compact-size length prefix respectively.
@@ -111,7 +114,7 @@ pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSize
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
 #[doc(inline)]
-pub use self::decode::decoders::{ByteVecDecoder, VecDecoder};
+pub use self::decode::decoders::{ByteVecDecoder, ExactVecDecoderWith, VecDecoder, VecDecoderWith};
 #[doc(inline)]
 pub use self::decode::{
     check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded,
