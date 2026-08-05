@@ -21,10 +21,10 @@ alloc = ["base58/alloc", "bech32/alloc", "crypto/alloc", "hashes/alloc", "intern
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.5.0", default-features = false, features = [] }
 bech32 = { version = "0.11.0", default-features = false, features = [] }
-crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.2.0", default-features = false, features = ["hex"] }
+crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.3.0", default-features = false, features = ["hex"] }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.0.0", default-features = false, features = ["hex"] }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
-taproot_primitives = { package = "bitcoin-taproot-primitives", path = "../taproot_primitives", version = "0.1.0", default-features = false, features = [] }
+taproot_primitives = { package = "bitcoin-taproot-primitives", path = "../taproot_primitives", version = "0.2.0", default-features = false, features = [] }
 network = { package = "bitcoin-network-kind", path = "../network", version = "1.0.0", default-features = false, features = []}
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.103.0", default-features = false, features = ["hex"] }
 
