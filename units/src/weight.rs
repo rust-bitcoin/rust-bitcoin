@@ -446,15 +446,15 @@ mod tests {
 
     #[test]
     fn to_vb_floor() {
-        assert_eq!(Weight::from_wu(8).to_vbytes_floor(), 2);
-        assert_eq!(Weight::from_wu(9).to_vbytes_floor(), 2);
+        assert_eq!(Weight::from_wu(8).to_vb_floor(), 2);
+        assert_eq!(Weight::from_wu(9).to_vb_floor(), 2);
     }
 
     #[test]
     fn to_vb_ceil() {
-        assert_eq!(Weight::from_wu(4).to_vbytes_ceil(), 1);
-        assert_eq!(Weight::from_wu(5).to_vbytes_ceil(), 2);
-        assert_eq!(Weight::MAX.to_vbytes_ceil(), u64::MAX / Weight::WITNESS_SCALE_FACTOR + 1);
+        assert_eq!(Weight::from_wu(4).to_vb_ceil(), 1);
+        assert_eq!(Weight::from_wu(5).to_vb_ceil(), 2);
+        assert_eq!(Weight::MAX.to_vb_ceil(), u64::MAX / Weight::WITNESS_SCALE_FACTOR + 1);
     }
 
     #[test]
