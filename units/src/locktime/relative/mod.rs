@@ -81,13 +81,13 @@ impl LockTime {
     /// // Values with bit 22 set to 0 will be interpreted as block-based lock times.
     /// let blocks: u32 = 144; // 144 blocks, approx 24h.
     /// let lock_time = relative::LockTime::from_consensus(blocks)?;
-    /// assert!(lock_time.is_block_height());
+    /// assert!(lock_time.is_lock_by_block_count());
     /// assert_eq!(lock_time.to_consensus_u32(), blocks);
     ///
     /// // Values with bit 22 set to 1 will be interpreted as time-based lock times.
     /// let time: u32 = 168 | (1 << 22) ; // Bit 22 is 1 with time approx 24h.
     /// let lock_time = relative::LockTime::from_consensus(time)?;
-    /// assert!(lock_time.is_block_time());
+    /// assert!(lock_time.is_lock_by_block_time());
     /// assert_eq!(lock_time.to_consensus_u32(), time);
     ///
     /// # Ok::<_, relative::error::DisabledLockTimeError>(())
@@ -130,7 +130,7 @@ impl LockTime {
     /// // Interpret a sequence number from a Bitcoin transaction input as a relative lock time
     /// let sequence_number = Sequence::from_consensus(144); // 144 blocks, approx 24h.
     /// let lock_time = relative::LockTime::from_sequence(sequence_number)?;
-    /// assert!(lock_time.is_block_height());
+    /// assert!(lock_time.is_lock_by_block_count());
     ///
     /// # Ok::<_, relative::error::DisabledLockTimeError>(())
     /// ```
@@ -145,7 +145,7 @@ impl LockTime {
 
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
-    pub const fn from_height(n: u16) -> Self { Self::Blocks(NumberOfBlocks::from_count(n)) }
+    pub const fn from_block_count(n: u16) -> Self { Self::Blocks(NumberOfBlocks::from_count(n)) }
 
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
     ///
@@ -192,11 +192,11 @@ impl LockTime {
 
     /// Returns true if this lock time value is in units of blocks.
     #[inline]
-    pub const fn is_block_height(self) -> bool { matches!(self, Self::Blocks(_)) }
+    pub const fn is_lock_by_block_count(self) -> bool { matches!(self, Self::Blocks(_)) }
 
     /// Returns true if this lock time value is in units of time.
     #[inline]
-    pub const fn is_block_time(self) -> bool { !self.is_block_height() }
+    pub const fn is_lock_by_block_time(self) -> bool { !self.is_lock_by_block_count() }
 
     /// Returns true if this [`relative::LockTime`] is satisfied by the given chain state.
     ///
@@ -316,7 +316,7 @@ impl LockTime {
     /// let sequence = Sequence::from_consensus(1 << 22 | 168); // Bit 22 is 1 with time approx 24h.
     /// let lock_time = relative::LockTime::from_sequence(sequence)?;
     /// let input_sequence = Sequence::from_consensus(1 << 22 | 336); // Approx 48h.
-    /// assert!(lock_time.is_block_time());
+    /// assert!(lock_time.is_lock_by_block_time());
     ///
     /// assert!(lock_time.is_implied_by_sequence(input_sequence));
     ///
@@ -671,7 +671,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn display_and_alternate() {
-        let lock_by_height = LockTime::from_height(10);
+        let lock_by_height = LockTime::from_block_count(10);
         let lock_by_time = LockTime::from_512_second_intervals(70);
 
         assert_eq!(format!("{}", lock_by_height), "10");
@@ -711,11 +711,11 @@ mod tests {
         let lock_by_time1 = LockTime::from(time1);
         let lock_by_time2 = LockTime::from(time2);
 
-        assert!(lock_by_height1.is_block_height());
-        assert!(!lock_by_height1.is_block_time());
+        assert!(lock_by_height1.is_lock_by_block_count());
+        assert!(!lock_by_height1.is_lock_by_block_time());
 
-        assert!(!lock_by_time1.is_block_height());
-        assert!(lock_by_time1.is_block_time());
+        assert!(!lock_by_time1.is_lock_by_block_count());
+        assert!(lock_by_time1.is_lock_by_block_time());
 
         // Test is_same_unit() logic
         assert!(lock_by_height1.is_same_unit(lock_by_height2));
@@ -848,7 +848,7 @@ mod tests {
         let mined_at = BlockMtp::from_u32(1_234_567_890);
         let chain_tip = BlockMtp::from_u32(1_600_000_000);
 
-        let lock_by_height = LockTime::from_height(10); // Arbitrary value.
+        let lock_by_height = LockTime::from_block_count(10); // Arbitrary value.
         let err = lock_by_height.is_satisfied_by_time(chain_tip, mined_at).unwrap_err();
 
         let expected_height = NumberOfBlocks::from_count(10);
