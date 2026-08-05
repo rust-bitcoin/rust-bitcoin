@@ -361,6 +361,7 @@ macro_rules! delegate_index {
                 type Output = Self;
 
                 #[inline]
+                #[track_caller]
                 fn index(&self, index: $type) -> &Self::Output {
                     Self::from_bytes(&self.as_bytes()[index])
                 }
