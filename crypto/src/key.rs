@@ -18,7 +18,6 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::hash160;
 #[cfg(feature = "hex")]
 use hex::DisplayHex;
-#[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 use network::NetworkKind;
@@ -35,13 +34,11 @@ use crate::{ecdsa, taproot};
 pub use secp256k1::{constants, Parity};
 #[doc(no_inline)]
 pub use self::error::{
-    FromSecretBytesError, FromSliceError, InvalidAddressVersionError,
-    InvalidBase58PayloadLengthError, InvalidPublicKeyError, ParseKeypairError,
-    ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError, UncompressedPublicKeyError, VerifyError,
+    FromSecretBytesError, FromSliceError, FromWifError, InvalidAddressVersionError,
+    InvalidBase58PayloadLengthError, InvalidPublicKeyError, InvalidWifCompressionFlagError,
+    ParseKeypairError, ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError,
+    UncompressedPublicKeyError, VerifyError,
 };
-#[cfg(feature = "alloc")]
-#[doc(no_inline)]
-pub use self::error::{FromWifError, InvalidWifCompressionFlagError};
 #[cfg(feature = "hex")]
 #[doc(no_inline)]
 pub use self::error::{ParseFullPublicKeyError, ParsePublicKeyError};
@@ -1216,25 +1213,20 @@ impl WifKey {
     ///   data string.
     /// * [`FromWifError::InvalidAddressVersion`] if the network version byte is not main or testnet.
     /// * [`FromWifError::FromSecretBytes`] if the decoded bytes do not parse as a [`PrivateKey`].
-    #[cfg(feature = "alloc")]
     pub fn from_wif(wif: &str) -> Result<Self, FromWifError> {
-        let data = base58::decode_check(wif).map_err(FromWifError::Base58)?;
+        let (compressed, data) =
+            base58::decode_check_to_array::<33>(wif).map(|data| (false, data)).or_else(|_| {
+                let data =
+                    base58::decode_check_to_array::<34>(wif).map_err(FromWifError::Base58)?;
+                let (compressed_flag, data) = data.split_last::<33>();
+                if *compressed_flag != 1 {
+                    return Err(FromWifError::InvalidWifCompressionFlag(
+                        InvalidWifCompressionFlagError { invalid: *compressed_flag },
+                    ));
+                }
 
-        let (compressed, data) = if let Ok(data) = <&[u8; 33]>::try_from(&*data) {
-            (false, data)
-        } else if let Ok(data) = <&[u8; 34]>::try_from(&*data) {
-            let (compressed_flag, data) = data.split_last::<33>();
-            if *compressed_flag != 1 {
-                return Err(FromWifError::InvalidWifCompressionFlag(
-                    InvalidWifCompressionFlagError { invalid: *compressed_flag },
-                ));
-            }
-            (true, data)
-        } else {
-            return Err(FromWifError::InvalidBase58PayloadLength(
-                InvalidBase58PayloadLengthError { length: data.len() },
-            ));
-        };
+                Ok((true, *data))
+            })?;
 
         let (network, key) = data.split_first();
         let network = match *network {
@@ -1262,7 +1254,6 @@ impl WifKey {
 
 // [`WifKey`] intentionally has a `FromStr` without a reciprocal `Display`.
 // Parsing from a WIF string should be convenient, printing secret data should not.
-#[cfg(feature = "alloc")]
 impl FromStr for WifKey {
     type Err = FromWifError;
     #[inline]
@@ -1634,10 +1625,9 @@ pub mod error {
     /// Error generated from WIF key format.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    #[cfg(feature = "alloc")]
     pub enum FromWifError {
         /// A base58 decoding error.
-        Base58(base58::DecodeCheckError),
+        Base58(base58::DecodeCheckArrayError),
         /// Base58 decoded data was an invalid length.
         InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Base58 decoded data contained an invalid address version byte.
@@ -1650,13 +1640,11 @@ pub mod error {
         InvalidWifCompressionFlag(InvalidWifCompressionFlagError),
     }
 
-    #[cfg(feature = "alloc")]
     impl From<Infallible> for FromWifError {
         #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    #[cfg(feature = "alloc")]
     impl fmt::Display for FromWifError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1674,7 +1662,6 @@ pub mod error {
     }
 
     #[cfg(feature = "std")]
-    #[cfg(feature = "alloc")]
     impl std::error::Error for FromWifError {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -1896,26 +1883,22 @@ pub mod error {
 
     /// Invalid compression flag for a WIF key
     #[derive(Debug, Clone, PartialEq, Eq)]
-    #[cfg(feature = "alloc")]
     pub struct InvalidWifCompressionFlagError {
         /// The invalid compression flag.
         pub(crate) invalid: u8,
     }
 
-    #[cfg(feature = "alloc")]
     impl InvalidWifCompressionFlagError {
         /// Returns the invalid compression flag.
         #[inline]
         pub fn invalid_compression_flag(&self) -> u8 { self.invalid }
     }
 
-    #[cfg(feature = "alloc")]
     impl From<Infallible> for InvalidWifCompressionFlagError {
         #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    #[cfg(feature = "alloc")]
     impl fmt::Display for InvalidWifCompressionFlagError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1923,7 +1906,6 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "alloc")]
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidWifCompressionFlagError {
         #[inline]
