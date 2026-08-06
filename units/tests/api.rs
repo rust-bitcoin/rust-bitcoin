@@ -7,8 +7,6 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
@@ -197,26 +195,60 @@ impl Types {
     fn new() -> Self { Self { a: Enums::new(), b: Structs::max() } }
 }
 
-/// A struct that includes all public non-error non-helper structs.
+/// Tests all public non-error non-helper structs implement the common traits.
 // C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct CommonTraits {
+#[test]
+fn c_common_traits() {
     // Full path to show alphabetic sort order.
-    a: amount::Amount,
-    // b: amount::Display,
-    c: amount::SignedAmount,
-    d: block::BlockHeight,
-    e: block::BlockHeightInterval,
-    f: block::BlockMtp,
-    g: block::BlockMtpInterval,
-    h: fee_rate::FeeRate,
-    i: locktime::absolute::Height,
-    j: locktime::absolute::MedianTimePast,
-    k: locktime::relative::NumberOf512Seconds,
-    l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
+    assert_implements!(
+        [
+            amount::Amount,
+            // amount::Display,
+            amount::SignedAmount,
+            block::BlockHeight,
+            block::BlockHeightInterval,
+            block::BlockMtp,
+            block::BlockMtpInterval,
+            fee_rate::FeeRate,
+            locktime::absolute::Height,
+            locktime::absolute::MedianTimePast,
+            locktime::relative::NumberOf512Seconds,
+            locktime::relative::NumberOfBlocks,
+            pow::CompactTarget,
+            time::BlockTime,
+            weight::Weight,
+        ],
+        [Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash]
+    );
+}
+
+/// Tests the traits implemented, and deliberately not implemented, by the public enums.
+#[test]
+fn c_common_traits_enums() {
+    assert_implements!(
+        [
+            amount::Denomination,
+            absolute::LockTime,
+            relative::LockTime,
+            result::MathOp,
+            result::NumOpResult<Amount>,
+        ],
+        [Copy, Clone, Debug, PartialEq, Eq]
+    );
+    assert_implements!([amount::Denomination, absolute::LockTime, relative::LockTime], [Hash]);
+
+    // None of these implement `PartialOrd` or `Ord`.
+    assert_does_not_implement!(
+        [
+            amount::Denomination,
+            absolute::LockTime,
+            relative::LockTime,
+            result::MathOp,
+            result::NumOpResult<Amount>,
+        ],
+        [PartialOrd, Ord]
+    );
+    assert_does_not_implement!([result::MathOp, result::NumOpResult<Amount>], [Hash]);
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -230,60 +262,79 @@ struct Default {
     f: relative::NumberOfBlocks,
 }
 
-/// A struct that includes all public error types (excl. decode errors).
+/// Tests all public error types (excl. decode errors) implement the common traits.
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
-#[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
-struct Errors {
-    a: amount::error::InputTooLargeError,
-    b: amount::error::InvalidCharacterError,
-    c: amount::error::MissingDenominationError,
-    d: amount::error::MissingDigitsError,
-    e: amount::error::OutOfRangeError,
-    f: amount::error::ParseAmountError,
-    g: amount::error::ParseDenominationError,
-    h: amount::error::ParseError,
-    i: amount::error::PossiblyConfusingDenominationError,
-    j: amount::error::TooPreciseError,
-    k: amount::error::UnknownDenominationError,
-    l: block::TooBigForRelativeHeightError,
+#[test]
+fn c_common_traits_errors() {
+    // All public types implement Debug (C-DEBUG).
+    // Error types should implement the Send and Sync traits (C-GOOD-ERR).
+    assert_implements!(
+        [
+            amount::error::InputTooLargeError,
+            amount::error::InvalidCharacterError,
+            amount::error::MissingDenominationError,
+            amount::error::MissingDigitsError,
+            amount::error::OutOfRangeError,
+            amount::error::ParseAmountError,
+            amount::error::ParseDenominationError,
+            amount::error::ParseError,
+            amount::error::PossiblyConfusingDenominationError,
+            amount::error::TooPreciseError,
+            amount::error::UnknownDenominationError,
+            block::TooBigForRelativeHeightError,
+            locktime::absolute::ConversionError,
+            locktime::absolute::ParseHeightError,
+            locktime::absolute::ParseTimeError,
+            locktime::relative::InvalidHeightError,
+            locktime::relative::InvalidTimeError,
+            locktime::relative::TimeOverflowError,
+            parse_int::ParseIntError,
+            parse_int::PrefixedHexError,
+            parse_int::UnprefixedHexError,
+            result::NumOpError,
+        ],
+        [Debug, Clone, PartialEq, Eq, Send, Sync]
+    );
     #[cfg(feature = "serde")]
-    m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
+    assert_implements!(fee_rate::serde::OverflowError, [Debug, Clone, PartialEq, Eq, Send, Sync]);
     #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
+    assert_implements!(pow::CompactTargetDecoderError, [Debug, Clone, PartialEq, Eq, Send, Sync]);
 }
 
-/// A struct that includes all public decoder types.
-#[derive(Default)] // All decoders implement `Default` (P-DECODERS).
+/// Tests all public decoder types implement `Default`.
+#[test]
 #[cfg(feature = "encoding")]
-struct Decoders {
-    a: amount::AmountDecoder,
-    b: block::BlockHeightDecoder,
-    c: locktime::absolute::LockTimeDecoder,
-    d: pow::CompactTargetDecoder,
-    e: sequence::SequenceDecoder,
-    f: time::BlockTimeDecoder,
+fn p_decoders_implement_default() {
+    // All decoders implement `Default` (P-DECODERS).
+    assert_implements!(
+        [
+            amount::AmountDecoder,
+            block::BlockHeightDecoder,
+            locktime::absolute::LockTimeDecoder,
+            pow::CompactTargetDecoder,
+            sequence::SequenceDecoder,
+            time::BlockTimeDecoder,
+        ],
+        [Default]
+    );
 }
 
-/// A struct that includes all public decoder error types.
+/// Tests all public decoder error types implement the common traits.
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
-#[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
+#[test]
 #[cfg(feature = "encoding")]
-struct DecoderErrors {
-    a: amount::error::AmountDecoderError,
-    b: block::BlockHeightDecoderError,
-    c: locktime::absolute::LockTimeDecoderError,
-    d: sequence::SequenceDecoderError,
-    e: time::BlockTimeDecoderError,
+fn c_common_traits_decoder_errors() {
+    // All public types implement Debug (C-DEBUG).
+    assert_implements!(
+        [
+            amount::error::AmountDecoderError,
+            block::BlockHeightDecoderError,
+            locktime::absolute::LockTimeDecoderError,
+            sequence::SequenceDecoderError,
+            time::BlockTimeDecoderError,
+        ],
+        [Debug, Clone, PartialEq, Eq]
+    );
 }
 
 /// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
@@ -292,7 +343,7 @@ fn all_types_implement_send_sync() {
     fn is_send_sync<T: Send + Sync>() {}
 
     is_send_sync::<Enums>();
-    is_send_sync::<Errors>();
+    // Error types are covered in `c_common_traits_errors`.
     is_send_sync::<Structs>();
 }
 
@@ -337,53 +388,55 @@ fn c_send_sync() {
     assert_sync::<Types>();
 
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
-    assert_send::<Errors>();
-    assert_sync::<Errors>();
+    // See `c_common_traits_errors`.
 }
 
 /// C-GOOD-ERR: Tests that all public error types implement Display.
 #[test]
 fn c_good_err_display() {
-    fn assert_display<T: core::fmt::Display>() {}
-
-    assert_display::<amount::ParseError>();
-    assert_display::<amount::ParseAmountError>();
-    assert_display::<amount::OutOfRangeError>();
-    assert_display::<amount::TooPreciseError>();
-    assert_display::<amount::InputTooLargeError>();
-    assert_display::<amount::MissingDigitsError>();
-    assert_display::<amount::InvalidCharacterError>();
-    assert_display::<amount::BadPositionError>();
-    assert_display::<amount::MissingDenominationError>();
-    assert_display::<amount::UnknownDenominationError>();
-    assert_display::<amount::PossiblyConfusingDenominationError>();
-    assert_display::<amount::AmountDecoderError>();
-    assert_display::<block::TooBigForRelativeHeightError>();
-    assert_display::<block::BlockHeightDecoderError>();
+    assert_implements!(
+        [
+            amount::ParseError,
+            amount::ParseAmountError,
+            amount::OutOfRangeError,
+            amount::TooPreciseError,
+            amount::InputTooLargeError,
+            amount::MissingDigitsError,
+            amount::InvalidCharacterError,
+            amount::BadPositionError,
+            amount::MissingDenominationError,
+            amount::UnknownDenominationError,
+            amount::PossiblyConfusingDenominationError,
+            amount::AmountDecoderError,
+            block::TooBigForRelativeHeightError,
+            block::BlockHeightDecoderError,
+            locktime::absolute::LockTimeDecoderError,
+            locktime::absolute::IncompatibleHeightError,
+            locktime::absolute::IncompatibleTimeError,
+            locktime::absolute::ParseHeightError,
+            locktime::absolute::ParseTimeError,
+            locktime::absolute::ConversionError,
+            locktime::relative::DisabledLockTimeError,
+            locktime::relative::IncompatibleHeightError,
+            locktime::relative::IncompatibleTimeError,
+            locktime::relative::TimeOverflowError,
+            locktime::relative::InvalidHeightError,
+            locktime::relative::InvalidTimeError,
+            parse_int::ParseIntError,
+            parse_int::PrefixedHexError,
+            parse_int::UnprefixedHexError,
+            pow::ParseWorkError,
+            pow::ParseTargetError,
+            result::NumOpError,
+            sequence::SequenceDecoderError,
+            time::BlockTimeDecoderError,
+        ],
+        [Display]
+    );
     #[cfg(feature = "serde")]
-    assert_display::<fee_rate::serde::OverflowError>();
-    assert_display::<locktime::absolute::LockTimeDecoderError>();
-    assert_display::<locktime::absolute::IncompatibleHeightError>();
-    assert_display::<locktime::absolute::IncompatibleTimeError>();
-    assert_display::<locktime::absolute::ParseHeightError>();
-    assert_display::<locktime::absolute::ParseTimeError>();
-    assert_display::<locktime::absolute::ConversionError>();
-    assert_display::<locktime::relative::DisabledLockTimeError>();
-    assert_display::<locktime::relative::IncompatibleHeightError>();
-    assert_display::<locktime::relative::IncompatibleTimeError>();
-    assert_display::<locktime::relative::TimeOverflowError>();
-    assert_display::<locktime::relative::InvalidHeightError>();
-    assert_display::<locktime::relative::InvalidTimeError>();
-    assert_display::<parse_int::ParseIntError>();
-    assert_display::<parse_int::PrefixedHexError>();
-    assert_display::<parse_int::UnprefixedHexError>();
+    assert_implements!(fee_rate::serde::OverflowError, [Display]);
     #[cfg(feature = "encoding")]
-    assert_display::<pow::CompactTargetDecoderError>();
-    assert_display::<pow::ParseWorkError>();
-    assert_display::<pow::ParseTargetError>();
-    assert_display::<result::NumOpError>();
-    assert_display::<sequence::SequenceDecoderError>();
-    assert_display::<time::BlockTimeDecoderError>();
+    assert_implements!(pow::CompactTargetDecoderError, [Display]);
 }
 
 /// C-OBJECT: Tests that traits are object-safe where appropriate.
@@ -402,25 +455,30 @@ fn c_object() {
 #[test]
 #[cfg(feature = "serde")]
 fn c_serde() {
-    fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
+    assert_implements!(
+        [
+            absolute::LockTime,
+            relative::LockTime,
+            BlockHeight,
+            BlockHeightInterval,
+            BlockMtp,
+            BlockMtpInterval,
+            locktime::absolute::Height,
+            locktime::absolute::MedianTimePast,
+            locktime::relative::NumberOf512Seconds,
+            locktime::relative::NumberOfBlocks,
+            pow::CompactTarget,
+            BlockTime,
+            Weight,
+            Sequence,
+        ],
+        [Serialize, Deserialize]
+    );
 
-    // assert_serde::<amount::Denomination>();
-    assert_serde::<absolute::LockTime>();
-    assert_serde::<relative::LockTime>();
-    // assert_serde::<result::MathOp>();
-    // assert_serde::<result::NumOpResult<Amount>>();
-    assert_serde::<BlockHeight>();
-    assert_serde::<BlockHeightInterval>();
-    assert_serde::<BlockMtp>();
-    assert_serde::<BlockMtpInterval>();
-    assert_serde::<locktime::absolute::Height>();
-    assert_serde::<locktime::absolute::MedianTimePast>();
-    assert_serde::<locktime::relative::NumberOf512Seconds>();
-    assert_serde::<locktime::relative::NumberOfBlocks>();
-    assert_serde::<pow::CompactTarget>();
-    assert_serde::<BlockTime>();
-    assert_serde::<Weight>();
-    assert_serde::<Sequence>();
+    assert_does_not_implement!(
+        [amount::Denomination, result::MathOp, result::NumOpResult<Amount>],
+        [Serialize, Deserialize]
+    );
 }
 
 macro_rules! assert_format_matches {
@@ -640,50 +698,32 @@ fn p_decoders_implement_new() {
     let _ = time::BlockTimeDecoder::new();
 }
 
+#[test]
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Types {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self { a: Enums::arbitrary(u)?, b: Structs::arbitrary(u)? };
-        Ok(a)
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Structs {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self {
-            a: Amount::arbitrary(u)?,
-            // Skip the `Display` type.
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
-            c: SignedAmount::arbitrary(u)?,
-            d: BlockHeight::arbitrary(u)?,
-            e: BlockHeightInterval::arbitrary(u)?,
-            f: BlockMtp::arbitrary(u)?,
-            g: BlockMtpInterval::arbitrary(u)?,
-            h: FeeRate::arbitrary(u)?,
-            i: absolute::Height::arbitrary(u)?,
-            j: absolute::MedianTimePast::arbitrary(u)?,
-            k: relative::NumberOf512Seconds::arbitrary(u)?,
-            l: relative::NumberOfBlocks::arbitrary(u)?,
-            m: pow::CompactTarget::from_consensus(u.int_in_range(0..=u32::MAX)?),
-            n: sequence::Sequence::arbitrary(u)?,
-            o: BlockTime::arbitrary(u)?,
-            p: Weight::arbitrary(u)?,
-        };
-        Ok(a)
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Enums {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self {
-            a: amount::Denomination::arbitrary(u)?,
-            b: absolute::LockTime::arbitrary(u)?,
-            c: relative::LockTime::arbitrary(u)?,
-            d: result::MathOp::arbitrary(u)?,
-            e: result::NumOpResult::<Amount>::arbitrary(u)?,
-        };
-        Ok(a)
-    }
+fn p_arbitrary() {
+    assert_implements!(
+        [
+            amount::Denomination,
+            absolute::LockTime,
+            relative::LockTime,
+            result::MathOp,
+            result::NumOpResult<Amount>,
+            amount::Amount,
+            amount::SignedAmount,
+            block::BlockHeight,
+            block::BlockHeightInterval,
+            block::BlockMtp,
+            block::BlockMtpInterval,
+            fee_rate::FeeRate,
+            locktime::absolute::Height,
+            locktime::absolute::MedianTimePast,
+            locktime::relative::NumberOf512Seconds,
+            locktime::relative::NumberOfBlocks,
+            pow::CompactTarget,
+            sequence::Sequence,
+            time::BlockTime,
+            weight::Weight,
+        ],
+        [Arbitrary]
+    );
 }
