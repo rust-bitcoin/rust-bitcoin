@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+# [0.103.1] - 2026-08-06
+
+- Explicitly depend on `consensus-encoding 1.1.0`
+
 # [0.103.0] - 2026-07-14
 
 - Move `script_hash` and `wscript_hash` to primitives [#6504](https://github.com/rust-bitcoin/rust-bitcoin/pull/6504)
