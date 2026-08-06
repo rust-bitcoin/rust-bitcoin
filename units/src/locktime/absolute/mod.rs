@@ -88,7 +88,7 @@ pub enum LockTime {
     ///
     /// let block: u32 = 741521;
     /// let n = absolute::LockTime::from_height(block).expect("valid height");
-    /// assert!(n.is_block_height());
+    /// assert!(n.is_lock_by_block_height());
     /// assert_eq!(n.to_consensus_u32(), block);
     /// ```
     Blocks(Height),
@@ -101,7 +101,7 @@ pub enum LockTime {
     ///
     /// let seconds: u32 = 1653195600; // May 22nd, 5am UTC.
     /// let n = absolute::LockTime::from_mtp(seconds).expect("valid time");
-    /// assert!(n.is_block_time());
+    /// assert!(n.is_lock_by_block_time());
     /// assert_eq!(n.to_consensus_u32(), seconds);
     /// ```
     Seconds(MedianTimePast),
@@ -253,11 +253,11 @@ impl LockTime {
 
     /// Returns true if this lock time value is a block height.
     #[inline]
-    pub const fn is_block_height(self) -> bool { matches!(self, Self::Blocks(_)) }
+    pub const fn is_lock_by_block_height(self) -> bool { matches!(self, Self::Blocks(_)) }
 
     /// Returns true if this lock time value is a block time (UNIX timestamp).
     #[inline]
-    pub const fn is_block_time(self) -> bool { !self.is_block_height() }
+    pub const fn is_lock_by_block_time(self) -> bool { !self.is_lock_by_block_height() }
 
     /// Returns true if this timelock constraint is satisfied by the respective `height`/`time`.
     ///
@@ -892,14 +892,14 @@ mod tests {
     fn parses_correctly_to_height_or_time() {
         let lock_by_height = LockTime::from_consensus(750_000);
 
-        assert!(lock_by_height.is_block_height());
-        assert!(!lock_by_height.is_block_time());
+        assert!(lock_by_height.is_lock_by_block_height());
+        assert!(!lock_by_height.is_lock_by_block_time());
 
         let t: u32 = 1_653_195_600; // May 22nd, 5am UTC.
         let lock_by_time = LockTime::from_consensus(t);
 
-        assert!(!lock_by_time.is_block_height());
-        assert!(lock_by_time.is_block_time());
+        assert!(!lock_by_time.is_lock_by_block_height());
+        assert!(lock_by_time.is_lock_by_block_time());
 
         // Test is_same_unit() logic
         assert!(lock_by_height.is_same_unit(LockTime::from_consensus(800_000)));
