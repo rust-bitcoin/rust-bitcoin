@@ -470,7 +470,7 @@ pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::c
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::compute_witness_commitment(&self, witness_reserved_value: &[u8]) -> core::option::Option<(bitcoin_primitives::merkle_tree::WitnessMerkleNode, bitcoin_primitives::WitnessCommitment)>
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::into_parts(self) -> (bitcoin_primitives::block::Header, alloc::vec::Vec<bitcoin_primitives::transaction::Transaction>)
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::new_unchecked(header: bitcoin_primitives::block::Header, transactions: alloc::vec::Vec<bitcoin_primitives::transaction::Transaction>) -> Self
-pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::validate(self) -> core::result::Result<bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>, bitcoin_primitives::block::error::InvalidBlockError>
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::validate(self) -> core::result::Result<bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>, (bitcoin_primitives::block::error::InvalidBlockError, Self)>
 impl<V: bitcoin_primitives::block::Validation> bitcoin_primitives::block::Block<V>
 pub fn bitcoin_primitives::block::Block<V>::block_hash(&self) -> bitcoin_primitives::BlockHash
 impl bitcoin_consensus_encoding::decode::Decode for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
@@ -6267,7 +6267,7 @@ pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::c
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::compute_witness_commitment(&self, witness_reserved_value: &[u8]) -> core::option::Option<(bitcoin_primitives::merkle_tree::WitnessMerkleNode, bitcoin_primitives::WitnessCommitment)>
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::into_parts(self) -> (bitcoin_primitives::block::Header, alloc::vec::Vec<bitcoin_primitives::transaction::Transaction>)
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::new_unchecked(header: bitcoin_primitives::block::Header, transactions: alloc::vec::Vec<bitcoin_primitives::transaction::Transaction>) -> Self
-pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::validate(self) -> core::result::Result<bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>, bitcoin_primitives::block::error::InvalidBlockError>
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::validate(self) -> core::result::Result<bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>, (bitcoin_primitives::block::error::InvalidBlockError, Self)>
 impl<V: bitcoin_primitives::block::Validation> bitcoin_primitives::block::Block<V>
 pub fn bitcoin_primitives::block::Block<V>::block_hash(&self) -> bitcoin_primitives::BlockHash
 impl bitcoin_consensus_encoding::decode::Decode for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
