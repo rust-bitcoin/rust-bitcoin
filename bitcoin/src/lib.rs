@@ -191,6 +191,10 @@ pub mod amount {
     pub use units::amount::{
         Amount, CheckedSum, Denomination, Display, ParseAmountError, SignedAmount,
     };
+    #[cfg(feature = "encoding")]
+    #[doc(inline)]
+    pub use units::amount::{AmountDecoder, AmountDecoderError, AmountEncoder};
+
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
 
