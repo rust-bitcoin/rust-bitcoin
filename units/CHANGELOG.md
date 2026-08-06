@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-06
+
+- Add `Weight::to_vb_*` functions, deprecating `to_vbytes_*` [#6678](https://github.com/rust-bitcoin/rust-bitcoin/pull/6678)
+- Add `CompactTarget::to_consensus_u32` [#6683]()
+
 ## [0.5.0] - 2026-06-09
 
 * Remove `_unchecked` hex parsing function [#6292](https://github.com/rust-bitcoin/rust-bitcoin/pull/6292)
