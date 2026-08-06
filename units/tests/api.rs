@@ -17,6 +17,107 @@ use bitcoin_units::{
     Sequence, SignedAmount, Weight,
 };
 
+/// Detects whether a type implements or not a trait.
+///
+/// Both traits below declare `is_implemented`. Calling through `&&Probe` tries `&Probe` first, so
+/// the `Specialized` impl answers first if the target trait is implemented, otherwise `Fallback` answers.
+/// The traits that tests can check are listed in `probed_traits!`.
+///
+/// Based on [dtolnay's Autoref-based stable specialization](https://github.com/dtolnay/case-studies/blob/master/autoref-specialization/README.md).
+mod trait_probe {
+    use core::marker::PhantomData;
+
+    pub struct Probe<T, M>(pub PhantomData<(T, M)>);
+
+    pub trait Fallback {
+        fn is_implemented(&self) -> bool { false }
+    }
+
+    impl<T, M> Fallback for Probe<T, M> {}
+
+    pub trait Specialized {
+        fn is_implemented(&self) -> bool;
+    }
+
+    /// Gives each trait a marker struct and an impl that detects it.
+    macro_rules! probed_traits {
+        ($($(#[$attr:meta])* $trait_name:ident => ($($bound:tt)+)),+ $(,)?) => {
+            pub mod markers {
+                $($(#[$attr])* pub struct $trait_name;)+
+            }
+
+            $($(#[$attr])* impl<T: $($bound)+> Specialized for &Probe<T, markers::$trait_name> {
+                fn is_implemented(&self) -> bool { true }
+            })+
+        };
+    }
+
+    // Add a trait here to make it usable in the assertions
+    probed_traits! {
+        #[cfg(feature = "arbitrary")]
+        Arbitrary => (for<'a> ::arbitrary::Arbitrary<'a>),
+        Clone => (::core::clone::Clone),
+        Copy => (::core::marker::Copy),
+        Debug => (::core::fmt::Debug),
+        Default => (::core::default::Default),
+        #[cfg(feature = "serde")]
+        Deserialize => (for<'de> ::serde::Deserialize<'de>),
+        Display => (::core::fmt::Display),
+        Eq => (::core::cmp::Eq),
+        Hash => (::core::hash::Hash),
+        Ord => (::core::cmp::Ord),
+        PartialEq => (::core::cmp::PartialEq),
+        PartialOrd => (::core::cmp::PartialOrd),
+        Send => (::core::marker::Send),
+        #[cfg(feature = "serde")]
+        Serialize => (::serde::Serialize),
+        Sync => (::core::marker::Sync),
+    }
+}
+
+/// Asserts each of `$traits` is implemented for `$type`, or is not, according to `$want`.
+macro_rules! assert_trait_impls {
+    ($type:ty, [$($trait_name:ident),+ $(,)?], $want:expr) => {{
+        #[allow(unused_imports)]
+        use trait_probe::{Fallback as _, Specialized as _};
+        $({
+            let probe = trait_probe::Probe::<$type, trait_probe::markers::$trait_name>(
+                core::marker::PhantomData,
+            );
+            // Call through `&&probe` so `&Probe` answers first IF the impl exists.
+            let got = (&&probe).is_implemented();
+            assert!(
+                got == $want,
+                "{} implements {}: got {}, want {}",
+                stringify!($type),
+                stringify!($trait_name),
+                got,
+                $want
+            );
+        })+
+    }};
+}
+
+/// Asserts that each type implements every one of `$traits`.
+macro_rules! assert_implements {
+    ([$($type:ty),+ $(,)?], $traits:tt) => {
+        $(assert_trait_impls!($type, $traits, true);)+
+    };
+    ($type:ty, $traits:tt) => {
+        assert_trait_impls!($type, $traits, true)
+    };
+}
+
+/// Asserts that each type implements none of `$traits`.
+macro_rules! assert_does_not_implement {
+    ([$($type:ty),+ $(,)?], $traits:tt) => {
+        $(assert_trait_impls!($type, $traits, false);)+
+    };
+    ($type:ty, $traits:tt) => {
+        assert_trait_impls!($type, $traits, false)
+    };
+}
+
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
 struct Enums {
