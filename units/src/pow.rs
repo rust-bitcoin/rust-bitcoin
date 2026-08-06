@@ -173,7 +173,7 @@ impl Target {
     ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
     pub fn from_compact(c: CompactTarget) -> Self {
-        let bits = c.to_consensus();
+        let bits = c.to_consensus_u32();
         // This is a floating-point "compact" encoding originally used by
         // OpenSSL, which satoshi put into consensus code, so we're stuck
         // with it. The exponent needs to have 3 subtracted from it, hence
@@ -308,7 +308,7 @@ impl encoding::Encode for CompactTarget {
     #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         CompactTargetEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus().to_le_bytes(),
+            self.to_consensus_u32().to_le_bytes(),
         ))
     }
 }
@@ -1452,7 +1452,7 @@ mod tests {
         let back = t.to_compact_lossy();
         assert_eq!(back, compact); // From/Into sanity check.
 
-        assert_eq!(back.to_consensus(), consensus);
+        assert_eq!(back.to_consensus_u32(), consensus);
     }
 
     #[test]
@@ -1530,7 +1530,7 @@ mod tests {
         let bits: u32 = 0x1d00_ffff;
         let compact_target =
             encoding::decode_from_slice::<CompactTarget>(&bits.to_le_bytes()).unwrap();
-        assert_eq!(compact_target.to_consensus(), bits);
+        assert_eq!(compact_target.to_consensus_u32(), bits);
     }
 
     #[test]
@@ -1582,7 +1582,7 @@ mod tests {
         assert_eq!(format!("{:#o}", compact_target), "0o3500177777");
         assert_eq!(format!("{:b}", compact_target), "11101000000001111111111111111");
         assert_eq!(format!("{:#b}", compact_target), "0b11101000000001111111111111111");
-        assert_eq!(compact_target.to_consensus(), 0x1d00_ffff);
+        assert_eq!(compact_target.to_consensus_u32(), 0x1d00_ffff);
     }
 
     #[test]
