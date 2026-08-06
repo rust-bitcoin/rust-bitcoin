@@ -174,6 +174,19 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 /// * The input contains an invalid base58 character.
 /// * The decoded data is less than 4 bytes (too short for checksum verification).
 /// * The checksum does not match the expected value.
+///
+/// # Examples
+///
+/// ```
+/// use base58ck::decode_check;
+///
+/// let payload = decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH")?;
+/// assert_eq!(payload.len(), 21);
+///
+/// // The checksum is verified, so a corrupted string is rejected.
+/// assert!(decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHG").is_err());
+/// # Ok::<_, base58ck::DecodeCheckError>(())
+/// ```
 #[cfg(feature = "alloc")]
 pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     let mut ret: Vec<u8> = decode(data)?;
@@ -206,6 +219,20 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// * The checksum does not match the expected value.
 /// * The input is longer than 128 characters.
 /// * The decoded payload length is not exactly `N` bytes.
+///
+/// # Examples
+///
+/// ```
+/// use base58ck::decode_check_to_array;
+///
+/// let payload = decode_check_to_array::<21>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH")?;
+/// assert_eq!(payload[0], 0x00); // Mainnet P2PKH version byte.
+///
+/// // Asking for the wrong length is an error. The generic `N` thus doubles as a
+/// // check that the input is the kind of payload you expected.
+/// assert!(decode_check_to_array::<20>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").is_err());
+/// # Ok::<_, base58ck::DecodeCheckArrayError>(())
+/// ```
 #[allow(clippy::missing_panics_doc)] // payload length is checked before cast unwrap
 pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
     // 11/15 is just over log_256(58), so the decoded length never exceeds the input length.
