@@ -251,6 +251,11 @@ impl CompactTarget {
 
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
     #[inline]
+    pub const fn to_consensus_u32(self) -> u32 { self.0 }
+
+    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
+    #[deprecated(since = "0.5.1", note = "use 'to_consensus_u32()' instead")]
+    #[inline]
     pub const fn to_consensus(self) -> u32 { self.0 }
 
     /// Constructs a new `CompactTarget` from a prefixed hex string.
