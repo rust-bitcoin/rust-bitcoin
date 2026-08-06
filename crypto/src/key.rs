@@ -1176,8 +1176,8 @@ impl WifKey {
     ///
     /// Errors if `fmt` cannot be written to.
     #[rustfmt::skip]
-    #[cfg(feature = "alloc")]
     #[inline]
+    #[allow(clippy::missing_panics_doc)] // base58 encode is always valid for known-length encoding.
     pub fn fmt_wif(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 34];
         ret[0] = if self.network_kind.is_mainnet() { 128 } else { 239 };
@@ -1185,9 +1185,11 @@ impl WifKey {
         ret[1..33].copy_from_slice(&self.private_key.as_inner()[..]);
         let privkey = if self.private_key.compressed() {
             ret[33] = 1;
-            base58::Base58CkString::encode_unbounded(&ret[..])
+            base58::Base58CkString::encode(&ret[..])
+                .expect("payload has fixed 34 byte length")
         } else {
-            base58::Base58CkString::encode_unbounded(&ret[..33])
+            base58::Base58CkString::encode(&ret[..33])
+                .expect("payload has fixed 33 byte length")
         };
         fmt.write_str(privkey.as_str())
     }
