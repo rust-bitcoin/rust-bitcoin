@@ -6814,10 +6814,12 @@ impl<T> core::convert::From<T> for bitcoin_units::result::error::NumOpError
   pub fn bitcoin_units::result::error::NumOpError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::result::error::NumOpError]
 #[non_exhaustive] pub enum bitcoin_units::result::MathOp
 pub bitcoin_units::result::MathOp::Add
-pub bitcoin_units::result::MathOp::Div
+pub bitcoin_units::result::MathOp::DivByZero
+pub bitcoin_units::result::MathOp::DivOverflow
 pub bitcoin_units::result::MathOp::Mul
 pub bitcoin_units::result::MathOp::Neg
-pub bitcoin_units::result::MathOp::Rem
+pub bitcoin_units::result::MathOp::RemByZero
+pub bitcoin_units::result::MathOp::RemOverflow
 pub bitcoin_units::result::MathOp::Sub
 impl bitcoin_units::result::MathOp
 pub fn bitcoin_units::result::MathOp::is_addition(self) -> bool
