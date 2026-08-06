@@ -9,7 +9,8 @@ use NumOpResult as R;
 
 use super::{Amount, SignedAmount};
 use crate::internal_macros::{
-    impl_add_assign_for_results, impl_div_assign, impl_mul_assign, impl_sub_assign_for_results,
+    impl_add_assign_for_results, impl_div_assign, impl_mul_assign, impl_rem_assign,
+    impl_sub_assign_for_results,
 };
 use crate::result::{MathOp, NumOpError, NumOpResult, OptionExt};
 
@@ -199,6 +200,8 @@ impl_mul_assign!(NumOpResult<Amount>, u64);
 impl_mul_assign!(NumOpResult<SignedAmount>, i64);
 impl_div_assign!(NumOpResult<Amount>, u64);
 impl_div_assign!(NumOpResult<SignedAmount>, i64);
+impl_rem_assign!(NumOpResult<Amount>, u64);
+impl_rem_assign!(NumOpResult<SignedAmount>, i64);
 
 impl_add_assign_for_results!(Amount);
 impl_add_assign_for_results!(SignedAmount);
@@ -399,6 +402,41 @@ mod tests {
         let sub_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
         res -= sub_err; // Subtract an error result
         assert_eq!(res, sub_err);
+    }
+
+    #[test]
+    fn test_rem_assign_amount() {
+        let sat = Amount::from_sat_u32(50);
+        let mut res = sat + sat;
+        res %= 30_u64;
+        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(10)));
+
+        res %= &4_u64;
+        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(2)));
+
+        res %= 0_u64;
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+
+        res %= 5_u64;
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+    }
+
+    #[test]
+    fn test_rem_assign_signed_amount() {
+        let ssat = SignedAmount::from_sat_i32(-50);
+
+        let mut res = ssat + ssat;
+        res %= 30_i64;
+        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-10)));
+
+        res %= &4_i64;
+        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-2)));
+
+        res %= 0_i64;
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+
+        res %= 5_i64;
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
     }
 
     #[test]

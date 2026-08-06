@@ -191,6 +191,22 @@ macro_rules! impl_div_assign {
 }
 pub(crate) use impl_div_assign;
 
+/// Implement `ops::RemAssign` for `$ty` divided by `$rhs` and `&$rhs`.
+macro_rules! impl_rem_assign {
+    ($ty:ty, $rhs:ident) => {
+        impl core::ops::RemAssign<$rhs> for $ty {
+            #[inline]
+            fn rem_assign(&mut self, rhs: $rhs) { *self = *self % rhs }
+        }
+
+        impl core::ops::RemAssign<&$rhs> for $ty {
+            #[inline]
+            fn rem_assign(&mut self, rhs: &$rhs) { *self = *self % *rhs }
+        }
+    };
+}
+pub(crate) use impl_rem_assign;
+
 /// Implements Lower/UpperHex, Octal and Binary for a new-type `$ty`.
 ///
 /// This macro can be used on raw new-types (e.g. `BlockHeight`), or those encapsulated
