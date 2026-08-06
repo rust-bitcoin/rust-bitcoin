@@ -254,8 +254,13 @@ impl CompactTarget {
     pub fn from_consensus(bits: u32) -> Self { Self(bits) }
 
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
+    #[deprecated(since = "TBD", note = "use 'to_consensus_u32()' instead")]
     #[inline]
     pub const fn to_consensus(self) -> u32 { self.0 }
+
+    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
+    #[inline]
+    pub const fn to_consensus_u32(self) -> u32 { self.0 }
 
     /// Computes the [`Target`] value from this compact representation.
     ///
