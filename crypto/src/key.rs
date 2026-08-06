@@ -35,9 +35,8 @@ pub use secp256k1::{constants, Parity};
 #[doc(no_inline)]
 pub use self::error::{
     FromSecretBytesError, FromSliceError, FromWifError, InvalidAddressVersionError,
-    InvalidBase58PayloadLengthError, InvalidPublicKeyError, InvalidWifCompressionFlagError,
-    ParseKeypairError, ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError,
-    UncompressedPublicKeyError, VerifyError,
+    InvalidPublicKeyError, InvalidWifCompressionFlagError, ParseKeypairError,
+    ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError, UncompressedPublicKeyError, VerifyError,
 };
 #[cfg(feature = "hex")]
 #[doc(no_inline)]
@@ -1206,12 +1205,12 @@ impl WifKey {
     ///
     /// # Errors
     ///
-    /// * [`FromWifError::Base58`] if the string is not a valid base58 encoded string.
-    /// * [`FromWifError::InvalidBase58PayloadLength`] if the decoded base58 data is not 33 or 34
-    ///   bytes long.
-    /// * [`FromWifError::InvalidWifCompressionFlag`] if the compression flag is not 1 for a 34 byte
-    ///   data string.
-    /// * [`FromWifError::InvalidAddressVersion`] if the network version byte is not main or testnet.
+    /// * [`FromWifError::Base58`] if the string is not a valid base58 encoded string or the
+    ///   decoded base58 data is not 33 or 34 bytes long.
+    /// * [`FromWifError::InvalidWifCompressionFlag`] if the compression flag is not 1 for a 34
+    ///   byte data string.
+    /// * [`FromWifError::InvalidAddressVersion`] if the network version byte is not main or
+    ///   testnet.
     /// * [`FromWifError::FromSecretBytes`] if the decoded bytes do not parse as a [`PrivateKey`].
     pub fn from_wif(wif: &str) -> Result<Self, FromWifError> {
         let (compressed, data) =
@@ -1628,8 +1627,6 @@ pub mod error {
     pub enum FromWifError {
         /// A base58 decoding error.
         Base58(base58::DecodeCheckArrayError),
-        /// Base58 decoded data was an invalid length.
-        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Base58 decoded data contained an invalid address version byte.
         InvalidAddressVersion(InvalidAddressVersionError),
         /// Error when decoding the decoded key bytes to a [`PrivateKey`].
@@ -1650,8 +1647,6 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::Base58(ref e) => write_err!(f, "invalid base58"; e),
-                Self::InvalidBase58PayloadLength(ref e) =>
-                    write_err!(f, "decoded base58 data was an invalid length"; e),
                 Self::InvalidAddressVersion(ref e) =>
                     write_err!(f, "decoded base58 data contained an invalid address version byte"; e),
                 Self::FromSecretBytes(ref e) => write_err!(f, "private key validation failed"; e),
@@ -1667,7 +1662,6 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::Base58(ref e) => Some(e),
-                Self::InvalidBase58PayloadLength(ref e) => Some(e),
                 Self::InvalidAddressVersion(ref e) => Some(e),
                 Self::FromSecretBytes(ref e) => Some(e),
                 Self::InvalidWifCompressionFlag(ref e) => Some(e),
@@ -1805,44 +1799,6 @@ pub mod error {
     impl std::error::Error for UncompressedPublicKeyError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self {} = self;
-            None
-        }
-    }
-
-    /// Decoded base58 data was an invalid length.
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct InvalidBase58PayloadLengthError {
-        /// The base58 payload length we got after decoding WIF string.
-        pub(crate) length: usize,
-    }
-
-    impl InvalidBase58PayloadLengthError {
-        /// Returns the invalid payload length.
-        #[inline]
-        pub fn invalid_base58_payload_length(&self) -> usize { self.length }
-    }
-
-    impl From<Infallible> for InvalidBase58PayloadLengthError {
-        #[inline]
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    impl fmt::Display for InvalidBase58PayloadLengthError {
-        #[inline]
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(
-                f,
-                "decoded base58 data was an invalid length: {} (expected 33 or 34)",
-                self.length
-            )
-        }
-    }
-
-    #[cfg(feature = "std")]
-    impl std::error::Error for InvalidBase58PayloadLengthError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { length: _ } = self;
             None
         }
     }

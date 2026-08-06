@@ -12,9 +12,9 @@ use crate::script::{self, WitnessScriptBuf};
 pub use secp256k1::{constants, Parity};
 #[doc(no_inline)]
 pub use crypto::key::{
-    FromSliceError, FromWifError, InvalidAddressVersionError, InvalidBase58PayloadLengthError,
-    InvalidWifCompressionFlagError, ParseFullPublicKeyError, ParseXOnlyPublicKeyError,
-    TweakXOnlyPublicKeyError, UncompressedPublicKeyError,
+    FromSliceError, FromWifError, InvalidAddressVersionError, InvalidWifCompressionFlagError,
+    ParseFullPublicKeyError, ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError,
+    UncompressedPublicKeyError,
 };
 #[doc(inline)]
 pub use crypto::key::{
