@@ -342,10 +342,14 @@ pub enum MathOp {
     Sub,
     /// Multiplication failed ([`core::ops::Mul`] resulted in an invalid value).
     Mul,
-    /// Division failed ([`core::ops::Div`] attempted div-by-zero).
-    Div,
-    /// Calculating the remainder failed ([`core::ops::Rem`] attempted div-by-zero).
-    Rem,
+    /// Division failed because the divisor was zero ([`core::ops::Div`] attempted div-by-zero).
+    DivByZero,
+    /// Division failed because the result would overflow (e.g. `T::MIN / -1`).
+    DivOverflow,
+    /// Calculating the remainder failed because the divisor was zero ([`core::ops::Rem`] attempted div-by-zero).
+    RemByZero,
+    /// Calculating the remainder failed because the result would overflow (e.g. `T::MIN % -1`).
+    RemOverflow,
     /// Negation failed ([`core::ops::Neg`] resulted in an invalid value).
     Neg,
     /// Stops users from casting this enum to an integer.
@@ -357,12 +361,15 @@ pub enum MathOp {
 impl MathOp {
     /// Returns `true` if this operation error'ed due to overflow.
     pub fn is_overflow(self) -> bool {
-        matches!(self, Self::Add | Self::Sub | Self::Mul | Self::Neg)
+        matches!(
+            self,
+            Self::Add | Self::Sub | Self::Mul | Self::Neg | Self::DivOverflow | Self::RemOverflow
+        )
     }
 
     /// Returns `true` if this operation error'ed due to division by zero.
     #[inline]
-    pub fn is_div_by_zero(self) -> bool { !self.is_overflow() }
+    pub fn is_div_by_zero(self) -> bool { matches!(self, Self::DivByZero | Self::RemByZero) }
 
     /// Returns `true` if this operation error'ed due to addition.
     #[inline]
@@ -387,8 +394,10 @@ impl fmt::Display for MathOp {
             Self::Add => write!(f, "add"),
             Self::Sub => write!(f, "sub"),
             Self::Mul => write!(f, "mul"),
-            Self::Div => write!(f, "div"),
-            Self::Rem => write!(f, "rem"),
+            Self::DivByZero => write!(f, "div (by zero)"),
+            Self::DivOverflow => write!(f, "div (overflow)"),
+            Self::RemByZero => write!(f, "rem (by zero)"),
+            Self::RemOverflow => write!(f, "rem (overflow)"),
             Self::Neg => write!(f, "neg"),
             Self::_DoNotUse(infallible) => match infallible {},
         }
@@ -458,13 +467,15 @@ impl<'a, T: Arbitrary<'a>> Arbitrary<'a> for NumOpResult<T> {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for MathOp {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let choice = u.int_in_range(0..=5)?;
+        let choice = u.int_in_range(0..=7)?;
         match choice {
             0 => Ok(Self::Add),
             1 => Ok(Self::Sub),
             2 => Ok(Self::Mul),
-            3 => Ok(Self::Div),
-            4 => Ok(Self::Rem),
+            3 => Ok(Self::DivByZero),
+            4 => Ok(Self::DivOverflow),
+            5 => Ok(Self::RemByZero),
+            6 => Ok(Self::RemOverflow),
             _ => Ok(Self::Neg),
         }
     }
@@ -486,11 +497,15 @@ mod tests {
         assert!(MathOp::Sub.is_overflow());
         assert!(MathOp::Mul.is_overflow());
         assert!(MathOp::Neg.is_overflow());
-        assert!(!MathOp::Div.is_overflow());
-        assert!(!MathOp::Rem.is_overflow());
+        assert!(MathOp::DivOverflow.is_overflow());
+        assert!(MathOp::RemOverflow.is_overflow());
+        assert!(!MathOp::DivByZero.is_overflow());
+        assert!(!MathOp::RemByZero.is_overflow());
 
-        assert!(MathOp::Div.is_div_by_zero());
-        assert!(MathOp::Rem.is_div_by_zero());
+        assert!(MathOp::DivByZero.is_div_by_zero());
+        assert!(MathOp::RemByZero.is_div_by_zero());
+        assert!(!MathOp::DivOverflow.is_div_by_zero());
+        assert!(!MathOp::RemOverflow.is_div_by_zero());
         assert!(!MathOp::Add.is_div_by_zero());
 
         assert!(MathOp::Add.is_addition());
@@ -500,7 +515,7 @@ mod tests {
         assert!(!MathOp::Add.is_subtraction());
 
         assert!(MathOp::Mul.is_multiplication());
-        assert!(!MathOp::Div.is_multiplication());
+        assert!(!MathOp::DivByZero.is_multiplication());
 
         assert!(MathOp::Neg.is_negation());
         assert!(!MathOp::Add.is_negation());
@@ -572,9 +587,11 @@ mod tests {
             NumOpError::while_doing(MathOp::Add),
             NumOpError::while_doing(MathOp::Sub),
             NumOpError::while_doing(MathOp::Mul),
-            NumOpError::while_doing(MathOp::Div),
+            NumOpError::while_doing(MathOp::DivByZero),
+            NumOpError::while_doing(MathOp::DivOverflow),
             NumOpError::while_doing(MathOp::Neg),
-            NumOpError::while_doing(MathOp::Rem),
+            NumOpError::while_doing(MathOp::RemByZero),
+            NumOpError::while_doing(MathOp::RemOverflow),
         ];
         for err in errs {
             assert_eq!(NumOpResult::<Amount>::Error(err).unwrap_err(), err);
