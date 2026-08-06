@@ -1075,7 +1075,7 @@ mod tests {
             + header.prev_blockhash.as_byte_array().len()
             + header.merkle_root.as_byte_array().len()
             + header.time.to_u32().to_le_bytes().len()
-            + header.bits.to_consensus().to_le_bytes().len()
+            + header.bits.to_consensus_u32().to_le_bytes().len()
             + header.nonce.to_le_bytes().len();
 
         assert_eq!(header_size, Header::SIZE);
