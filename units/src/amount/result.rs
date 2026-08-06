@@ -83,7 +83,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Div<u64> for Amount {
         type Output = NumOpResult<Amount>;
 
-        fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error(MathOp::Div) }
+        fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error(MathOp::DivByZero) }
     }
     impl ops::Div<u64> for NumOpResult<Amount> {
         type Output = NumOpResult<Amount>;
@@ -94,7 +94,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<u64>;
 
         fn div(self, rhs: Amount) -> Self::Output {
-            self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathOp::Div)
+            self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathOp::DivByZero)
         }
     }
     impl ops::Div<NonZeroU64> for Amount {
@@ -105,7 +105,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Rem<u64> for Amount {
         type Output = NumOpResult<Amount>;
 
-        fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathOp::Rem) }
+        fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathOp::RemByZero) }
     }
     impl ops::Rem<u64> for NumOpResult<Amount> {
         type Output = NumOpResult<Amount>;
@@ -164,7 +164,11 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Div<i64> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
-        fn div(self, rhs: i64) -> Self::Output { self.checked_div(rhs).valid_or_error(MathOp::Div) }
+        fn div(self, rhs: i64) -> Self::Output {
+            // `i64::checked_div` returns `None` only for `rhs == 0` or `self == i64::MIN && rhs == -1`.
+            let op = if rhs == 0 { MathOp::DivByZero } else { MathOp::DivOverflow };
+            self.checked_div(rhs).valid_or_error(op)
+        }
     }
     impl ops::Div<i64> for NumOpResult<SignedAmount> {
         type Output = NumOpResult<SignedAmount>;
@@ -175,7 +179,8 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<i64>;
 
         fn div(self, rhs: SignedAmount) -> Self::Output {
-            self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathOp::Div)
+            let op = if rhs.to_sat() == 0 { MathOp::DivByZero } else { MathOp::DivOverflow };
+            self.to_sat().checked_div(rhs.to_sat()).valid_or_error(op)
         }
     }
     impl ops::Div<NonZeroI64> for SignedAmount {
@@ -186,7 +191,11 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Rem<i64> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
-        fn rem(self, modulus: i64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathOp::Rem) }
+        fn rem(self, modulus: i64) -> Self::Output {
+            // `i64::checked_rem` returns `None` only for `modulus == 0` or `self == i64::MIN && modulus == -1`.
+            let op = if modulus == 0 { MathOp::RemByZero } else { MathOp::RemOverflow };
+            self.checked_rem(modulus).valid_or_error(op)
+        }
     }
     impl ops::Rem<i64> for NumOpResult<SignedAmount> {
         type Output = NumOpResult<SignedAmount>;
