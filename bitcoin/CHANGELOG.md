@@ -148,6 +148,15 @@ The `serde` serialization for `Psbt` has changed.
 - Change `to_raw_hash()` to `to_byte_array()`.
 - `bitcoin::error::UnprefixedHexError` moved to `bitcoin::parse::UnprefixedHexError`.
 
+## [0.32.102] - 2026-07-06
+
+- Backport: Make `SendCmpct` idempotent [#6525](https://github.com/rust-bitcoin/rust-bitcoin/pull/6525)
+- Add `consensus_encoding` to block/compact-block p2p message types [#6457](https://github.com/rust-bitcoin/rust-bitcoin/pull/6457)
+- Add `consensus_encoding` support to types in `bitcoin-primitives` [#6333](https://github.com/rust-bitcoin/rust-bitcoin/pull/6333)
+- Add `consensus_encoding` support to core p2p message types [#6443](https://github.com/rust-bitcoin/rust-bitcoin/pull/6443)
+- Add `consensus_encoding` support to BIP157/158 filter message types [#6444](https://github.com/rust-bitcoin/rust-bitcoin/pull/6444)
+- Use `write!` in `ParseNetwork` and `UnknownAddressType` error displays [#6386](https://github.com/rust-bitcoin/rust-bitcoin/pull/6386)
+
 ## [0.32.101] - 2026-06-24
 
 **Bump the MSRV to Rust 1.60.0**
@@ -172,6 +181,10 @@ leave room for a bunch of secuity releases up to this number if needed.
 - The would like to later support ergonomic conversion to other 1.0 types (from `bitcoin-units`, and
   and `bitcoin-primitives`) without forcing the whole ecosystem to upgrade.
 - Opens the door to the possibility of doing releases and then using the semver trick.
+
+## [0.32.11] - 2026-07-14
+
+- Backport: Make `SendCmpct` idempotent [#6527](https://github.com/rust-bitcoin/rust-bitcoin/pull/6527)
 
 ## [0.32.10] - 2026-04-23
 
@@ -905,8 +918,10 @@ downstream users to also have a `num` dependency just so they can use `Uint256::
 
 [Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.33.0-beta...HEAD
 [0.33.0-beta]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.100...bitcoin-0.33.0-beta
+[0.32.102]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.101...bitcoin-0.32.102
 [0.32.101]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.100...bitcoin-0.32.101
 [0.32.100]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.10...bitcoin-0.32.100
+[0.32.11]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.10...bitcoin-0.32.11
 [0.32.10]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.9...bitcoin-0.32.10
 [0.32.9]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.8...bitcoin-0.32.9
 [0.32.8]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.7...bitcoin-0.32.8
