@@ -8,6 +8,7 @@ on:
     # - 6am CET
     # - 4pm AEDT
     - cron: '00 05 * * *'
+  workflow_dispatch:
 permissions: {}
 
 jobs:
