@@ -6,6 +6,13 @@ internals/Cargo.lock
 bitcoin/Cargo.lock
 hashes/Cargo.lock
 
+# fuzz/ is its own separate [workspace], sandboxed away from the main
+# workspace's dependency graph (see fuzz/Cargo.toml). Its Cargo.lock is
+# therefore not just a byproduct of the main workspace's Cargo.lock, and
+# needs to be committed so that local-nix-ci (and anyone else pinning
+# fuzz's dependencies) can find and use it.
+!/fuzz/Cargo.lock
+
 # Build artifacts
 target
 internals/target
