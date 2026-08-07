@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-07-28
+
+Semver everything excluding the `parse_int` module from `units 0.5.0` into this release. This is
+inline with our stated policy that we'd try to do this for the later RC releases.
+
 ## [0.4.0] - 2026-05-27
 
 * Add format traits for `Target` and `Work` [#5626](https://github.com/rust-bitcoin/rust-bitcoin/pull/5626)

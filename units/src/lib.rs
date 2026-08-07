@@ -51,19 +51,21 @@ pub mod _export {
     }
 }
 
-mod fee;
-mod internal_macros;
-
-pub mod amount;
-pub mod block;
-pub mod fee_rate;
-pub mod locktime;
+// Keep the whole module even though nothing changed other than removing `hex_*_unchecked()`
+// functions from `parse_int`. All the errors are the same but I (tcharding) wasn't able to work out
+// how to re-export them.
 pub mod parse_int;
-pub mod pow;
-pub mod result;
-pub mod sequence;
-pub mod time;
-pub mod weight;
+
+// Semver everything excluding `parse_int` from `0.5.0`.
+pub use units::amount;
+pub use units::block;
+pub use units::fee_rate;
+pub use units::locktime;
+pub use units::pow;
+pub use units::result;
+pub use units::sequence;
+pub use units::time;
+pub use units::weight;
 
 #[doc(inline)]
 #[rustfmt::skip]
@@ -82,7 +84,3 @@ pub use self::{
 #[deprecated(since = "1.0.0-rc.0", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
-
-// decoder_newtype! macro
-#[cfg(feature = "encoding")]
-include!("../include/decoder_newtype.rs");
