@@ -1,21 +1,14 @@
 # .gitignore for rust-bitcoin repository workspace.
 
-# Lock files
-Cargo.lock
-internals/Cargo.lock
-bitcoin/Cargo.lock
-hashes/Cargo.lock
+# Ignore root lockfile, but track subdirectories for tooling.
+/Cargo.lock
 
 # Build artifacts
 target
-internals/target
-bitcoin/target
-hashes/target
 
 # Test artifacts
 mutants.out*
 fuzz/coverage
 
-# Local tooling
-.maintainer-tools
+# Local tooling (rbmt)
 Cargo.lock.backup
