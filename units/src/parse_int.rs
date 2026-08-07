@@ -225,9 +225,9 @@ pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
     } else if let Some(checked) = s.strip_prefix("0X") {
         Ok(checked)
     } else {
-        Err(PrefixedHexError(error::PrefixedHexErrorInner::MissingPrefix(
-            error::MissingPrefixError::new(s),
-        )))
+        Err(error::MissingPrefixError::new(s))
+            .map_err(error::PrefixedHexErrorInner::MissingPrefix)
+            .map_err(PrefixedHexError)
     }
 }
 
@@ -239,9 +239,9 @@ pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
 #[inline]
 pub fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> {
     if s.starts_with("0x") || s.starts_with("0X") {
-        return Err(UnprefixedHexError(error::UnprefixedHexErrorInner::ContainsPrefix(
-            error::ContainsPrefixError::new(s),
-        )));
+        return Err(error::ContainsPrefixError::new(s))
+            .map_err(error::UnprefixedHexErrorInner::ContainsPrefix)
+            .map_err(UnprefixedHexError);
     }
     Ok(s)
 }

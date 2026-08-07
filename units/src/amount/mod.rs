@@ -178,7 +178,7 @@ impl FromStr for Denomination {
         use self::ParseDenominationError as E;
 
         if CONFUSING_FORMS.contains(&s) {
-            return Err(E::PossiblyConfusing(PossiblyConfusingDenominationError(s.into())));
+            return Err(PossiblyConfusingDenominationError(s.into())).map_err(E::PossiblyConfusing);
         };
 
         let form = Self::forms(s);
@@ -219,9 +219,8 @@ fn parse_signed_to_satoshi(
     denom: Denomination,
 ) -> Result<(bool, SignedAmount), InnerParseError> {
     if s.is_empty() {
-        return Err(InnerParseError::MissingDigits(MissingDigitsError {
-            kind: MissingDigitsKind::Empty,
-        }));
+        return Err(MissingDigitsError { kind: MissingDigitsKind::Empty })
+            .map_err(InnerParseError::MissingDigits);
     }
     if s.len() > INPUT_STRING_LEN_LIMIT {
         return Err(InnerParseError::InputTooLarge(s.len()));
@@ -230,9 +229,8 @@ fn parse_signed_to_satoshi(
     let is_negative = s.starts_with('-');
     if is_negative {
         if s.len() == 1 {
-            return Err(InnerParseError::MissingDigits(MissingDigitsError {
-                kind: MissingDigitsKind::OnlyMinusSign,
-            }));
+            return Err(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign })
+                .map_err(InnerParseError::MissingDigits);
         }
         s = &s[1..];
     }
@@ -251,9 +249,10 @@ fn parse_signed_to_satoshi(
                 match s.parse::<i64>() {
                     Ok(0) => return Ok((is_negative, SignedAmount::ZERO)),
                     _ =>
-                        return Err(InnerParseError::TooPrecise(TooPreciseError {
+                        return Err(TooPreciseError {
                             position: position + usize::from(is_negative),
-                        })),
+                        })
+                        .map_err(InnerParseError::TooPrecise),
                 }
             }
             s = &s[0..s.find('.').unwrap_or(s.len()) - last_n];
@@ -283,26 +282,24 @@ fn parse_signed_to_satoshi(
                     None => None,
                     Some(d) if d < max_decimals => Some(d + 1),
                     _ =>
-                        return Err(InnerParseError::TooPrecise(TooPreciseError {
-                            position: i + usize::from(is_negative),
-                        })),
+                        return Err(TooPreciseError { position: i + usize::from(is_negative) })
+                            .map_err(InnerParseError::TooPrecise),
                 };
                 underscores = None;
             }
             '_' if i == 0 =>
             // Leading underscore
-                return Err(InnerParseError::BadPosition(BadPositionError {
-                    char: '_',
-                    position: i + usize::from(is_negative),
-                })),
+                return Err(BadPositionError { char: '_', position: i + usize::from(is_negative) })
+                    .map_err(InnerParseError::BadPosition),
             '_' => match underscores {
                 None => underscores = Some(1),
                 // Consecutive underscores
                 _ =>
-                    return Err(InnerParseError::BadPosition(BadPositionError {
+                    return Err(BadPositionError {
                         char: '_',
                         position: i + usize::from(is_negative),
-                    })),
+                    })
+                    .map_err(InnerParseError::BadPosition),
             },
             '.' => match decimals {
                 None if max_decimals <= 0 => break,
@@ -312,16 +309,18 @@ fn parse_signed_to_satoshi(
                 }
                 // Double decimal dot.
                 _ =>
-                    return Err(InnerParseError::InvalidCharacter(InvalidCharacterError {
+                    return Err(InvalidCharacterError {
                         invalid_char: '.',
                         position: i + usize::from(is_negative),
-                    })),
+                    })
+                    .map_err(InnerParseError::InvalidCharacter),
             },
             c =>
-                return Err(InnerParseError::InvalidCharacter(InvalidCharacterError {
+                return Err(InvalidCharacterError {
                     invalid_char: c,
                     position: i + usize::from(is_negative),
-                })),
+                })
+                .map_err(InnerParseError::InvalidCharacter),
         }
     }
 
@@ -382,10 +381,12 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     } else {
         let i = s
             .find(|c: char| c.is_alphabetic())
-            .ok_or(ParseError(ParseErrorInner::MissingDenomination(MissingDenominationError)))?;
+            .ok_or(MissingDenominationError)
+            .map_err(ParseErrorInner::MissingDenomination)
+            .map_err(ParseError)?;
         (i, i)
     };
-    Ok((&s[..i], s[j..].parse().map_err(|e| ParseError(ParseErrorInner::Denomination(e)))?))
+    Ok((&s[..i], s[j..].parse().map_err(ParseErrorInner::Denomination).map_err(ParseError)?))
 }
 
 /// Options given by `fmt::Formatter`
