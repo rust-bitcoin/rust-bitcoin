@@ -54,9 +54,10 @@ case "$max_total_time" in
     ;;
 esac
 
-cargo --version
-rustc --version
-cargo install --force --locked --version 0.12.0 cargo-fuzz
+if ! command -v cargo-fuzz &> /dev/null; then
+  echo "ERROR: cargo-fuzz is required but not installed (cargo install --locked cargo-fuzz)"
+  exit 127
+fi
 
 if [ -z "$target" ]; then
   targets=$(cargo fuzz list)

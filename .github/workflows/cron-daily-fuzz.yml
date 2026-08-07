@@ -38,7 +38,7 @@ jobs:
         with:
           toolchain: '1.74.0'
       - name: Install cargo-fuzz
-        run: cargo install --locked --version 0.12.0 cargo-fuzz
+        run: cargo install --locked --force --version 0.12.0 cargo-fuzz
       - name: Fuzz shard ${{ matrix.shard_id }}
         working-directory: fuzz
         shell: bash
