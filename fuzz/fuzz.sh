@@ -10,7 +10,7 @@
 #   -cycle                  Continuous fuzzing: loop through all targets indefinitely,
 #                           running corpus minimization after each target, with low process priority
 
-set -euox pipefail
+set -euo pipefail
 
 target=
 max_total_time=
