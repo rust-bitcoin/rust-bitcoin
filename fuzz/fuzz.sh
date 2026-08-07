@@ -59,6 +59,13 @@ if ! command -v cargo-fuzz &> /dev/null; then
   exit 127
 fi
 
+if ! command -v cargo-rbmt &> /dev/null; then
+  echo "ERROR: cargo-rbmt is required but not installed"
+  exit 127
+fi
+
+nightly_toolchain="$(cargo rbmt toolchains --nightly)"
+
 if [ -z "$target" ]; then
   targets=$(cargo fuzz list)
 else
@@ -80,10 +87,10 @@ while :; do
     if [ "$cycle_mode" = true ]; then
       chrt_cmd='chrt -i 0'
     fi
-    RUSTFLAGS="${RUSTFLAGS:-} ${fuzz_rustflags}" $chrt_cmd cargo +nightly fuzz run "$targetName" -- -max_total_time="$max_total_time"
+    RUSTFLAGS="${RUSTFLAGS:-} ${fuzz_rustflags}" $chrt_cmd cargo +"${nightly_toolchain}" fuzz run "$targetName" -- -max_total_time="$max_total_time"
 
     echo "Minimizing corpus for target $targetName"
-    cargo +nightly fuzz cmin "$targetName"
+    cargo +"${nightly_toolchain}" fuzz cmin "$targetName"
   done
 
   # Exit after one cycle if not in cycle mode.
