@@ -64,6 +64,11 @@ if ! command -v cargo-rbmt &> /dev/null; then
   exit 127
 fi
 
+if [ "$cycle_mode" = true ] && ! command -v chrt &> /dev/null; then
+  echo "ERROR: chrt is required for -cycle mode but not installed"
+  exit 127
+fi
+
 nightly_toolchain="$(cargo rbmt toolchains --nightly)"
 
 if [ -z "$target" ]; then
