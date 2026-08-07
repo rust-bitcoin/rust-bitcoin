@@ -114,13 +114,15 @@ fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Er
     Ok(())
 }
 
-/// Decodes a base58-encoded string into a byte vector.
+/// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 ///
 /// # Errors
 ///
-/// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
+/// * The input contains an invalid base58 character.
+/// * The decoded data is less than 4 bytes (too short for checksum verification).
+/// * The checksum does not match the expected value.
 #[cfg(feature = "alloc")]
-pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
+pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     // 11/15 is just over log_256(58)
     let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
     build_base256(data, &mut scratch).map_err(|e| match e {
@@ -132,19 +134,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).map(|_| 0).collect();
     // Copy rest of string
     ret.extend(scratch.into_iter().rev());
-    Ok(ret)
-}
 
-/// Decodes a base58check-encoded string into a byte vector verifying the checksum.
-///
-/// # Errors
-///
-/// * The input contains an invalid base58 character.
-/// * The decoded data is less than 4 bytes (too short for checksum verification).
-/// * The checksum does not match the expected value.
-#[cfg(feature = "alloc")]
-pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
-    let mut ret: Vec<u8> = decode(data)?;
     let (remaining, &data_check) =
         ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
 
@@ -465,14 +455,14 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn base58_decode() {
         // Basics
-        assert_eq!(decode("1").ok(), Some(vec![0u8]));
-        assert_eq!(decode("2").ok(), Some(vec![1u8]));
-        assert_eq!(decode("21").ok(), Some(vec![58u8]));
-        assert_eq!(decode("211").ok(), Some(vec![13u8, 36]));
+        assert_eq!(decode_check("1Wh4bh").ok(), Some(vec![0u8]));
+        assert_eq!(decode_check("BXvDbH").ok(), Some(vec![1u8]));
+        assert_eq!(decode_check("7ZRwjEn").ok(), Some(vec![58u8]));
+        assert_eq!(decode_check("7YY3x3vS").ok(), Some(vec![13u8, 36]));
 
         // Leading zeroes
-        assert_eq!(decode("1211").ok(), Some(vec![0u8, 13, 36]));
-        assert_eq!(decode("111211").ok(), Some(vec![0u8, 0, 0, 13, 36]));
+        assert_eq!(decode_check("17YZPJu4L").ok(), Some(vec![0u8, 13, 36]));
+        assert_eq!(decode_check("1117Yc95rJQ").ok(), Some(vec![0u8, 0, 0, 13, 36]));
 
         // Addresses
         assert_eq!(
@@ -480,7 +470,7 @@ mod tests {
             hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d")
         );
         // Non Base58 char.
-        assert_eq!(decode("¢").unwrap_err(), InvalidCharacterError::new(194));
+        assert_eq!(decode_check("¢").unwrap_err().invalid_character(), Some(194),);
     }
 
     #[test]
