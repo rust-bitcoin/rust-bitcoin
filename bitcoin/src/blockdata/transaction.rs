@@ -400,7 +400,7 @@ impl TransactionExt for Transaction {
     #[inline]
     fn vsize(&self) -> usize {
         // No overflow because it's computed from data in memory
-        self.weight().to_vbytes_ceil() as usize
+        self.weight().to_vb_ceil() as usize
     }
 
     fn is_explicitly_rbf(&self) -> bool { self.inputs.iter().any(|input| input.sequence.is_rbf()) }

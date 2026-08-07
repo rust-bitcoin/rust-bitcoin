@@ -7573,6 +7573,8 @@ pub const fn bitcoin_units::Weight::from_vb_unchecked(vb: u64) -> Self
 pub const fn bitcoin_units::Weight::mul_by_fee_rate(self, fee_rate: bitcoin_units::FeeRate) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::Weight::to_kwu_ceil(self) -> u64
 pub const fn bitcoin_units::Weight::to_kwu_floor(self) -> u64
+pub const fn bitcoin_units::Weight::to_vb_ceil(self) -> u64
+pub const fn bitcoin_units::Weight::to_vb_floor(self) -> u64
 pub const fn bitcoin_units::Weight::to_vbytes_ceil(self) -> u64
 pub const fn bitcoin_units::Weight::to_vbytes_floor(self) -> u64
 impl bitcoin_units::Weight
@@ -9914,6 +9916,8 @@ pub const fn bitcoin_units::Weight::from_vb_unchecked(vb: u64) -> Self
 pub const fn bitcoin_units::Weight::mul_by_fee_rate(self, fee_rate: bitcoin_units::FeeRate) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::Weight::to_kwu_ceil(self) -> u64
 pub const fn bitcoin_units::Weight::to_kwu_floor(self) -> u64
+pub const fn bitcoin_units::Weight::to_vb_ceil(self) -> u64
+pub const fn bitcoin_units::Weight::to_vb_floor(self) -> u64
 pub const fn bitcoin_units::Weight::to_vbytes_ceil(self) -> u64
 pub const fn bitcoin_units::Weight::to_vbytes_floor(self) -> u64
 impl bitcoin_units::Weight

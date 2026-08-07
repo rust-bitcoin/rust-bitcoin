@@ -120,10 +120,20 @@ impl Weight {
 
     /// Converts to vB rounding down.
     #[inline]
+    pub const fn to_vb_floor(self) -> u64 { self.to_wu() / Self::WITNESS_SCALE_FACTOR }
+
+    /// Converts to vB rounding down.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `to_vb_floor()` instead")]
     pub const fn to_vbytes_floor(self) -> u64 { self.to_wu() / Self::WITNESS_SCALE_FACTOR }
 
     /// Converts to vB rounding up.
     #[inline]
+    pub const fn to_vb_ceil(self) -> u64 { self.to_wu().div_ceil(Self::WITNESS_SCALE_FACTOR) }
+
+    /// Converts to vB rounding up.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `to_vbytes_ceil()` instead")]
     pub const fn to_vbytes_ceil(self) -> u64 { self.to_wu().div_ceil(Self::WITNESS_SCALE_FACTOR) }
 
     /// Checked addition.
@@ -418,15 +428,15 @@ mod tests {
 
     #[test]
     fn to_vb_floor() {
-        assert_eq!(Weight::from_wu(8).to_vbytes_floor(), 2);
-        assert_eq!(Weight::from_wu(9).to_vbytes_floor(), 2);
+        assert_eq!(Weight::from_wu(8).to_vb_floor(), 2);
+        assert_eq!(Weight::from_wu(9).to_vb_floor(), 2);
     }
 
     #[test]
     fn to_vb_ceil() {
-        assert_eq!(Weight::from_wu(4).to_vbytes_ceil(), 1);
-        assert_eq!(Weight::from_wu(5).to_vbytes_ceil(), 2);
-        assert_eq!(Weight::MAX.to_vbytes_ceil(), u64::MAX / Weight::WITNESS_SCALE_FACTOR + 1);
+        assert_eq!(Weight::from_wu(4).to_vb_ceil(), 1);
+        assert_eq!(Weight::from_wu(5).to_vb_ceil(), 2);
+        assert_eq!(Weight::MAX.to_vb_ceil(), u64::MAX / Weight::WITNESS_SCALE_FACTOR + 1);
     }
 
     #[test]
