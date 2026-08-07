@@ -3,15 +3,11 @@ on:   # yamllint disable-line rule:truthy
   push:
     branches:
       - master
-      - 'test-ci/**'
   pull_request:
 
 name: Continuous integration
 
 permissions: {}
-
-env:
-  RBMT_LOG_LEVEL: "progress"
 
 jobs:
   Test:
