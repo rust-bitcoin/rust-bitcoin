@@ -47,47 +47,6 @@ The `serde` serialization for `Psbt` has changed.
 
 - BREAKING: Change `Psbt` serde implementations [#4496](https://github.com/rust-bitcoin/rust-bitcoin/pull/4496)
 
-## [0.32.101] - 2026-06-24
-
-**Bump the MSRV to Rust 1.60.0**
-
-Exposes the new stabilized encoding library through the optional `encoding` feature. Note that enabling it bumps the MSRV to 1.74.0.
-
-- Remove mutagen [#6337](https://github.com/rust-bitcoin/rust-bitcoin/pull/6337)
-- Use `write!` in `ParseNetwork` and `UnknownAddressType` error displays [#6386](https://github.com/rust-bitcoin/rust-bitcoin/pull/6386)
-- Add `consensus_encoding` to types present in units 1.0 [#6184](https://github.com/rust-bitcoin/rust-bitcoin/pull/6184)
-
-## [0.32.100] - 2026-05-26 [YANKED]
-
-> This release was yanked because the MSRV bump to 1.74.0 was too aggressive for some users. See version 0.32.101 for a smaller upgrade to 1.60.0.
-
-**Bump the MSRV to Rust 1.74.0**
-
-Note the version number jump. We jumped to `v0.32.100` when doing the MSRV bump so as to
-leave room for a bunch of secuity releases up to this number if needed.
-
-- Our primary users (BDK and LDK) are at 1.85 already well ahead of `1.74`.
-- We would like to deliver the new sans-IO `consensus_encoding` crate in a point release.
-- The would like to later support ergonomic conversion to other 1.0 types (from `bitcoin-units`, and
-  and `bitcoin-primitives`) without forcing the whole ecosystem to upgrade.
-- Opens the door to the possibility of doing releases and then using the semver trick.
-
-## [0.32.10] - 2026-04-23
-
-- Fix bug in `LeafVerison::Future`'s `Display` output [#6208](https://github.com/rust-bitcoin/rust-bitcoin/pull/6208)
-- Manually revert `VarInt` range check [#6182](https://github.com/rust-bitcoin/rust-bitcoin/pull/6182)
-- Backport - p2p: Add a hash value to `Inventory`'s `Error` variant [#6147](https://github.com/rust-bitcoin/rust-bitcoin/pull/6147)
-- Backport - p2p: Error on `RawNetworkMessage` decode if payload partly consumed [#6140](https://github.com/rust-bitcoin/rust-bitcoin/pull/6140)
-- Backport - p2p: Error on invalid `FeeRate` in `FeeFilter` decode [#6142](https://github.com/rust-bitcoin/rust-bitcoin/pull/6142)
-- Backport - Validate ASCII and preserve embedded nulls in `CommandString` parsing [#6136](https://github.com/rust-bitcoin/rust-bitcoin/pull/6136)
-- Remove the `internals` dependency [#6200](https://github.com/rust-bitcoin/rust-bitcoin/pull/6200)
-
-## [0.32.9] - 2025-03-26
-
-- Backport - Fix `Unknown` `NetworkMessage` encoding [#6106](https://github.com/rust-bitcoin/rust-bitcoin/pull/6106)
-- Backport - `Arbitrary` [#5085](https://github.com/rust-bitcoin/rust-bitcoin/pull/5085)
-- Backport - Add `CompactSize` range check to deserialization [#5921](https://github.com/rust-bitcoin/rust-bitcoin/pull/5921)
-
 ### Changes
 
 - Bump MSRV from 1.63.0 to 1.74.0 for all crates in the repo [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
@@ -188,6 +147,47 @@ leave room for a bunch of secuity releases up to this number if needed.
 - Change `TxIn::default()` to `TxIn::EMPTY_COINBASE` if appropriate.
 - Change `to_raw_hash()` to `to_byte_array()`.
 - `bitcoin::error::UnprefixedHexError` moved to `bitcoin::parse::UnprefixedHexError`.
+
+## [0.32.101] - 2026-06-24
+
+**Bump the MSRV to Rust 1.60.0**
+
+Exposes the new stabilized encoding library through the optional `encoding` feature. Note that enabling it bumps the MSRV to 1.74.0.
+
+- Remove mutagen [#6337](https://github.com/rust-bitcoin/rust-bitcoin/pull/6337)
+- Use `write!` in `ParseNetwork` and `UnknownAddressType` error displays [#6386](https://github.com/rust-bitcoin/rust-bitcoin/pull/6386)
+- Add `consensus_encoding` to types present in units 1.0 [#6184](https://github.com/rust-bitcoin/rust-bitcoin/pull/6184)
+
+## [0.32.100] - 2026-05-26 [YANKED]
+
+> This release was yanked because the MSRV bump to 1.74.0 was too aggressive for some users. See version 0.32.101 for a smaller upgrade to 1.60.0.
+
+**Bump the MSRV to Rust 1.74.0**
+
+Note the version number jump. We jumped to `v0.32.100` when doing the MSRV bump so as to
+leave room for a bunch of secuity releases up to this number if needed.
+
+- Our primary users (BDK and LDK) are at 1.85 already well ahead of `1.74`.
+- We would like to deliver the new sans-IO `consensus_encoding` crate in a point release.
+- The would like to later support ergonomic conversion to other 1.0 types (from `bitcoin-units`, and
+  and `bitcoin-primitives`) without forcing the whole ecosystem to upgrade.
+- Opens the door to the possibility of doing releases and then using the semver trick.
+
+## [0.32.10] - 2026-04-23
+
+- Fix bug in `LeafVerison::Future`'s `Display` output [#6208](https://github.com/rust-bitcoin/rust-bitcoin/pull/6208)
+- Manually revert `VarInt` range check [#6182](https://github.com/rust-bitcoin/rust-bitcoin/pull/6182)
+- Backport - p2p: Add a hash value to `Inventory`'s `Error` variant [#6147](https://github.com/rust-bitcoin/rust-bitcoin/pull/6147)
+- Backport - p2p: Error on `RawNetworkMessage` decode if payload partly consumed [#6140](https://github.com/rust-bitcoin/rust-bitcoin/pull/6140)
+- Backport - p2p: Error on invalid `FeeRate` in `FeeFilter` decode [#6142](https://github.com/rust-bitcoin/rust-bitcoin/pull/6142)
+- Backport - Validate ASCII and preserve embedded nulls in `CommandString` parsing [#6136](https://github.com/rust-bitcoin/rust-bitcoin/pull/6136)
+- Remove the `internals` dependency [#6200](https://github.com/rust-bitcoin/rust-bitcoin/pull/6200)
+
+## [0.32.9] - 2025-03-26
+
+- Backport - Fix `Unknown` `NetworkMessage` encoding [#6106](https://github.com/rust-bitcoin/rust-bitcoin/pull/6106)
+- Backport - `Arbitrary` [#5085](https://github.com/rust-bitcoin/rust-bitcoin/pull/5085)
+- Backport - Add `CompactSize` range check to deserialization [#5921](https://github.com/rust-bitcoin/rust-bitcoin/pull/5921)
 
 ## [0.32.8] - 2025-11-24
 
