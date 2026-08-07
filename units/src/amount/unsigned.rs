@@ -468,10 +468,10 @@ impl Amount {
                     if let Ok(amount) = Self::from_sat(fee_rate) {
                         return FeeRate::from_per_kwu(amount);
                     },
-                None => return R::Error(E::while_doing(MathOp::Div)),
+                None => return R::Error(E::while_doing(MathOp::DivByZero)),
             }
         }
-        // Use `MathOp::Mul` because `Div` implies div by zero.
+        // Use `MathOp::Mul` because the `DivOverflow` specifically means `i32::MIN / -1`.
         R::Error(E::while_doing(MathOp::Mul))
     }
 
@@ -494,7 +494,7 @@ impl Amount {
     pub const fn div_by_weight_ceil(self, weight: Weight) -> NumOpResult<FeeRate> {
         let wu = weight.to_wu();
         if wu == 0 {
-            return R::Error(E::while_doing(MathOp::Div));
+            return R::Error(E::while_doing(MathOp::DivByZero));
         }
 
         // Mul by 1,000 because we use per/kwu.
@@ -505,7 +505,7 @@ impl Amount {
                 return FeeRate::from_per_kwu(amount);
             }
         }
-        // Use `MathOp::Mul` because `Div` implies div by zero.
+        // Use `MathOp::Mul` because the `DivOverflow` specifically means `i32::MIN / -1`.
         R::Error(E::while_doing(MathOp::Mul))
     }
 
@@ -519,7 +519,7 @@ impl Amount {
         let msats = self.to_sat() * 1_000;
         match msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
             Some(wu) => R::Valid(Weight::from_wu(wu)),
-            None => R::Error(E::while_doing(MathOp::Div)),
+            None => R::Error(E::while_doing(MathOp::DivByZero)),
         }
     }
 
@@ -532,7 +532,7 @@ impl Amount {
         let rate = fee_rate.to_sat_per_kwu_ceil();
         // Early return so we do not have to use checked arithmetic below.
         if rate == 0 {
-            return R::Error(E::while_doing(MathOp::Div));
+            return R::Error(E::while_doing(MathOp::DivByZero));
         }
 
         debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
