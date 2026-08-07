@@ -14,6 +14,7 @@ unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(chacha20_pol
 # Exclude lints we don't think are valuable.
 needless_question_mark = "allow" # https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 manual_range_contains = "allow" # More readable than clippy's format.
+unnecessary_map_on_constructor = "allow" # https://github.com/rust-bitcoin/rust-bitcoin/issues/6539
 # Exhaustive list of pedantic clippy lints
 assigning_clones = "warn"
 bool_to_int_with_if = "warn"
