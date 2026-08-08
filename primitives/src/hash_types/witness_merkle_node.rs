@@ -70,7 +70,7 @@ encoding::encoder_newtype_exact! {
     pub struct WitnessMerkleNodeEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`WitnessMerkleNode`] type.
     #[derive(Debug, Clone)]
     pub struct WitnessMerkleNodeDecoder(encoding::ArrayDecoder<32>);

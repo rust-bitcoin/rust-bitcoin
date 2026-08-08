@@ -51,7 +51,7 @@ impl encoding::Encode for SendTxRcnCl {
 
 type SendTxRcnClInnerDecoder = Decoder2<ArrayDecoder<4>, ArrayDecoder<8>>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for a [`SendTxRcnCl`] message.
     #[derive(Debug, Default, Clone)]
     pub struct SendTxRcnClDecoder(SendTxRcnClInnerDecoder);

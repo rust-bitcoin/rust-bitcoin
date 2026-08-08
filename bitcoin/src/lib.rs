@@ -81,9 +81,6 @@ pub extern crate serde;
 
 mod internal_macros;
 
-include!("../include/array_newtype.rs");
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
-
 pub mod ext {
     //! Re-export all the extension traits so downstream can use wildcard imports.
     //!

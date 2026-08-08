@@ -22,7 +22,7 @@ use crate::script::{PushBytes, PushBytesBuf, Script, ScriptHashableTag, MAX_REDE
 pub struct ScriptHash(hash160::Hash);
 
 super::impl_debug!(ScriptHash);
-crate::impl_asref_push_bytes!(ScriptHash);
+internals::impl_asref_push_bytes!(ScriptHash);
 
 impl ScriptHash {
     /// Constructs a new `ScriptHash` after first checking the script size.

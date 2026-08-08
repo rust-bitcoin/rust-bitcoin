@@ -70,7 +70,7 @@ encoding::encoder_newtype_exact! {
     pub struct TxMerkleNodeEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`TxMerkleNode`] type.
     #[derive(Debug, Clone)]
     pub struct TxMerkleNodeDecoder(encoding::ArrayDecoder<32>);

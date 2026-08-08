@@ -1,18 +1,28 @@
 // SPDX-License-Identifier: CC0-1.0
 
+//! Macro for constructing newtype wrappers around `encoding::Decoder` types.
+
 /// Constructs a newtype wrapper around an inner [`encoding::Decoder`] type.
 ///
 /// The generated struct wraps an inner decoder and implements [`encoding::Decoder`] by delegating
 /// `push_bytes` and `read_limit` to the inner decoder, then transforming the result in `end`.
 ///
-/// ## Required items
+/// # Caller Requirements
+///
+/// Because this macro is exported from `bitcoin-internals` but generates code that is compiled
+/// in the *calling* crate, the identifier `encoding` must resolve at the macro's invocation
+/// site. Typically this means having `bitcoin-consensus-encoding` as a direct dependency, but
+/// any `use` that brings a crate into scope under that exact name (e.g. re-exported from
+/// another dependency) also works.
+///
+/// # Required items
 ///
 /// * **Struct definition** - declares the newtype with its inner decoder type.
 /// * `fn end` - receives the `Result` returned by the inner decoder's `end` method (i.e.
 ///   `Result<InnerOutput, InnerError>`) and must return a `Result<Output, Error>` for the
 ///   newtype decoder.
 ///
-/// ## Optional items
+/// # Optional items
 ///
 /// * `fn new` - a custom constructor. If provided, this macro also generates a [`Default`]
 ///   impl that calls through to `new()`. You may specify any visibility and/or make the function
@@ -24,7 +34,7 @@
 /// Both `fn new` and `fn map_push_bytes_err` are independently optional, giving four possible forms.
 /// Due to limitations in macros, the order must be `new`, `push_bytes_err`, then `end`.
 ///
-/// ## Attributes
+/// # Attributes
 ///
 /// You can add arbitrary doc comments or attributes to the struct definition and the new function.
 /// Note that the new function always has #[inline].
@@ -85,6 +95,7 @@
 ///     }
 /// }
 /// ```
+#[macro_export]
 macro_rules! decoder_newtype {
     // Arm 1: without new, without push_bytes_err
     (
@@ -93,7 +104,7 @@ macro_rules! decoder_newtype {
 
         fn end($result_name:ident: $result_ty:ty) -> Result<$output:ty, $err:ident> $end_impl:block
     ) => {
-        crate::_decoder_newtype_internal! {
+        $crate::_decoder_newtype_internal! {
             $(#[$($struct_attr)*])*
             $vis struct $name($decoder);
 
@@ -111,7 +122,7 @@ macro_rules! decoder_newtype {
 
         fn end($result_name:ident: $result_ty:ty) -> Result<$output:ty, $err:ident> $end_impl:block
     ) => {
-        crate::_decoder_newtype_internal! {
+        $crate::_decoder_newtype_internal! {
             $(#[$($struct_attr)*])*
             $vis struct $name($decoder);
 
@@ -130,7 +141,7 @@ macro_rules! decoder_newtype {
         fn map_push_bytes_err($err_var:ident: $inner_err:ty) -> $err_name:ident $on_err_impl:block
         fn end($result_name:ident: $result_ty:ty) -> Result<$output:ty, $err:ident> $end_impl:block
     ) => {
-        crate::_decoder_newtype_internal! {
+        $crate::_decoder_newtype_internal! {
             $(#[$($struct_attr)*])*
             $vis struct $name($decoder);
 
@@ -149,7 +160,7 @@ macro_rules! decoder_newtype {
         fn map_push_bytes_err($err_var:ident: $inner_err:ty) -> $err_name:ident $on_err_impl:block
         fn end($result_name:ident: $result_ty:ty) -> Result<$output:ty, $err:ident> $end_impl:block
     ) => {
-        crate::_decoder_newtype_internal! {
+        $crate::_decoder_newtype_internal! {
             $(#[$($struct_attr)*])*
             $vis struct $name($decoder);
 
@@ -161,9 +172,11 @@ macro_rules! decoder_newtype {
         }
     };
 }
-pub(crate) use decoder_newtype;
 
+/// Helper for [`decoder_newtype`]. Not part of the public API.
 // Due to macro ambiguity, the new needs to go at the end.
+#[doc(hidden)]
+#[macro_export]
 macro_rules! _decoder_newtype_internal {
     (
         $(#[$($struct_attr:tt)*])*
@@ -221,4 +234,3 @@ macro_rules! _decoder_newtype_internal {
         }
     };
 }
-pub(crate) use _decoder_newtype_internal;

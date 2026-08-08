@@ -23,8 +23,7 @@ use crate::script::{
 use crate::witness_version::WitnessVersion;
 use crate::{ScriptPubKey, WitnessScript};
 
-// Defined in `REPO_DIR/include/newtype.rs`.
-crate::transparent_newtype! {
+internals::transparent_newtype! {
     /// Bitcoin script slice.
     ///
     /// *[See also the `bitcoin::script` module](super).*

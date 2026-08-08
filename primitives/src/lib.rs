@@ -142,9 +142,3 @@ pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
     let encoder = encoding::CompactSizeEncoder::new(value);
     ArrayVec::from_slice(encoder.current_chunk())
 }
-
-#[cfg(feature = "alloc")]
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
-include!("../include/decoder_newtype.rs"); // decoder_newtype! macro
-#[cfg(feature = "alloc")]
-include!("../include/asref_push_bytes.rs"); // impl_asref_push_bytes! macro

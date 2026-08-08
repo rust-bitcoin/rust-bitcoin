@@ -39,7 +39,7 @@ impl encoding::Encode for SendCmpct {
 
 type SendCmpctInnerDecoder = Decoder2<ArrayDecoder<1>, ArrayDecoder<8>>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for the [`SendCmpct`] message.
     #[derive(Debug, Default, Clone)]
     pub struct SendCmpctDecoder(SendCmpctInnerDecoder);

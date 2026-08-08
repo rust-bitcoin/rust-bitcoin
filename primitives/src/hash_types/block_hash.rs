@@ -50,7 +50,7 @@ encoding::encoder_newtype_exact! {
     pub struct BlockHashEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`BlockHash`] type.
     #[derive(Debug, Clone)]
     pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);

@@ -107,7 +107,7 @@ encoding::encoder_newtype_exact! {
     pub struct TapLeafHashEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`TapLeafHash`] type.
     #[derive(Debug, Clone)]
     pub struct TapLeafHashDecoder(encoding::ArrayDecoder<32>);
@@ -527,9 +527,6 @@ impl<'a> Arbitrary<'a> for LeafVersion {
         }
     }
 }
-
-// decoder_newtype! macro
-include!("../include/decoder_newtype.rs");
 
 #[cfg(test)]
 #[cfg(feature = "alloc")]

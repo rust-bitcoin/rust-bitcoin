@@ -156,7 +156,7 @@ type VersionMessageInnerDecoder = encoding::Decoder2<
     >,
 >;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The Decoder for [`VersionMessage`].
     #[derive(Debug, Default, Clone)]
     pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
@@ -211,7 +211,7 @@ impl encoding::Encode for UserAgent {
 
 type UserAgentInnerDecoder = ByteVecDecoder;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`UserAgent`] message.
     #[derive(Debug, Default, Clone)]
     pub struct UserAgentDecoder(UserAgentInnerDecoder);
@@ -414,7 +414,7 @@ impl encoding::Encode for RejectReason {
     }
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder type for a [`RejectReason`].
     #[derive(Debug, Default, Clone)]
     pub struct RejectReasonDecoder(ArrayDecoder<1>);
@@ -490,7 +490,7 @@ impl encoding::Encode for Reject {
 type RejectInnerDecoder =
     Decoder4<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder, ArrayDecoder<32>>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder type for a [`Reject`] message.
     #[derive(Debug, Default, Clone)]
     pub struct RejectDecoder(RejectInnerDecoder);
@@ -567,7 +567,7 @@ impl encoding::Encode for Alert {
 
 type AlertInnerDecoder = ByteVecDecoder;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`Alert`] message.
     #[derive(Debug, Default, Clone)]
     pub struct AlertDecoder(AlertInnerDecoder);

@@ -141,7 +141,7 @@ encoding::encoder_newtype_exact! {
 }
 
 #[cfg(feature = "encoding")]
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`BlockTime`] type.
     #[derive(Debug, Clone)]
     pub struct BlockTimeDecoder(encoding::ArrayDecoder<4>);

@@ -37,8 +37,12 @@ pub mod _export {
 }
 
 pub mod array;
+pub mod array_newtype;
 pub mod array_vec;
+pub mod asref_push_bytes;
+pub mod decoder_newtype;
 pub mod error;
+pub mod newtype;
 pub mod script;
 pub mod slice;
 #[cfg(feature = "serde")]

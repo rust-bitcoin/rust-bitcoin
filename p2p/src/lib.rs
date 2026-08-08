@@ -8,8 +8,6 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 
-include!("../include/array_newtype.rs");
-
 mod network_ext;
 
 #[cfg(feature = "std")]
@@ -134,7 +132,7 @@ impl encoding::Encode for ProtocolVersion {
     }
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`ProtocolVersion`] type.
     #[derive(Debug, Clone)]
     pub struct ProtocolVersionDecoder(encoding::ArrayDecoder<4>);
@@ -314,7 +312,7 @@ impl encoding::Encode for ServiceFlags {
     }
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`ServiceFlags`] type.
     #[derive(Debug, Clone)]
     pub struct ServiceFlagsDecoder(encoding::ArrayDecoder<8>);
@@ -440,7 +438,7 @@ impl encoding::Encode for Magic {
 
 type MagicInnerDecoder = ArrayDecoder<4>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder type for a network [`Magic`].
     #[derive(Debug, Default, Clone)]
     pub struct MagicDecoder(MagicInnerDecoder);
@@ -503,9 +501,6 @@ impl<'a> Arbitrary<'a> for ServiceFlags {
 impl<'a> Arbitrary<'a> for Magic {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
-
-// decoder_newtype! macro
-include!("../include/decoder_newtype.rs");
 
 #[cfg(test)]
 mod tests {

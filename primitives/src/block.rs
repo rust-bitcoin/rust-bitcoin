@@ -377,7 +377,7 @@ encoding::encoder_newtype! {
 type BlockInnerDecoder = Decoder2<HeaderDecoder, VecDecoder<Transaction>>;
 
 #[cfg(feature = "alloc")]
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`Block`] type.
     ///
     /// This decoder can only produce a `Block<Unchecked>`.
@@ -580,7 +580,7 @@ type HeaderInnerDecoder = Decoder6<
     encoding::ArrayDecoder<4>, // Nonce
 >;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`Header`] type.
     #[derive(Debug, Clone)]
     pub struct HeaderDecoder(HeaderInnerDecoder);
@@ -749,7 +749,7 @@ encoding::encoder_newtype_exact! {
     pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`Version`] type.
     #[derive(Debug, Clone)]
     pub struct VersionDecoder(encoding::ArrayDecoder<4>);

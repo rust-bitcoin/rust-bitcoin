@@ -305,7 +305,7 @@ mod tweaked_keypair {
 }
 
 mod serialized_x_only_public_key {
-    crate::transparent_newtype! {
+    internals::transparent_newtype! {
         /// An array of bytes that's semantically an x-only public but was **not** validated.
         ///
         /// This can be useful when validation is not desired but semantics of the bytes should be

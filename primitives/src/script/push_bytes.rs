@@ -39,8 +39,7 @@ mod primitive {
         }
     }
 
-    // Defined in `REPO_DIR/include/newtype.rs`.
-    crate::transparent_newtype! {
+    internals::transparent_newtype! {
         /// Byte slices that can be in Bitcoin script.
         ///
         /// The encoding of Bitcoin script restricts data pushes to be less than 2^32 bytes long.
@@ -364,7 +363,7 @@ impl BorrowMut<PushBytes> for PushBytesBuf {
     fn borrow_mut(&mut self) -> &mut PushBytes { self.as_mut_push_bytes() }
 }
 
-crate::impl_asref_push_bytes! {
+internals::impl_asref_push_bytes! {
     hashes::ripemd160::Hash,
     hashes::hash160::Hash,
     hashes::sha1::Hash,

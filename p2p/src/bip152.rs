@@ -74,7 +74,7 @@ impl encoding::Encode for PrefilledTransaction {
 
 type PrefilledTransactionInnerDecoder = Decoder2<CompactSizeDecoder, TransactionDecoder>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for a [`PrefilledTransaction`] message.
     #[derive(Debug, Default, Clone)]
     pub struct PrefilledTransactionDecoder(PrefilledTransactionInnerDecoder);
@@ -112,7 +112,7 @@ mod sealed {
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
 pub struct ShortId([u8; 6]);
-impl_array_newtype!(ShortId, u8, 6);
+internals::impl_array_newtype!(ShortId, u8, 6);
 
 impl ShortId {
     /// Calculates the `SipHash24` keys used to calculate short IDs.
@@ -190,7 +190,7 @@ impl encoding::Encode for ShortId {
 
 type ShortIdInnerDecoder = ArrayDecoder<6>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for a [`ShortId`].
     #[derive(Debug, Default, Clone)]
     pub struct ShortIdDecoder(ShortIdInnerDecoder);
@@ -260,7 +260,7 @@ impl encoding::Encode for HeaderAndShortIds {
 type HeaderAndShortIdsInnerDecoder =
     Decoder4<HeaderDecoder, ArrayDecoder<8>, VecDecoder<ShortId>, VecDecoder<PrefilledTransaction>>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for the [`HeaderAndShortIds`] message.
     #[derive(Debug, Default, Clone)]
     pub struct HeaderAndShortIdsDecoder(HeaderAndShortIdsInnerDecoder);
@@ -384,7 +384,7 @@ impl encoding::Encode for Offset {
 
 type OffsetDecoderError = encoding::CompactSizeDecoderError;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     #[derive(Debug, Default, Clone)]
     struct OffsetDecoder(CompactSizeDecoder);
 
@@ -487,7 +487,7 @@ impl encoding::Encode for BlockTransactionsRequest {
 
 type BlockTransactionsRequestInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Offset>>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder type for a [`BlockTransactionsRequest`].
     #[derive(Debug, Default, Clone)]
     pub struct BlockTransactionsRequestDecoder(BlockTransactionsRequestInnerDecoder);
@@ -541,7 +541,7 @@ impl encoding::Encode for BlockTransactions {
 
 type BlockTransactionsInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Transaction>>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for a [`BlockTransactions`] message.
     #[derive(Debug, Default, Clone)]
     pub struct BlockTransactionsDecoder(BlockTransactionsInnerDecoder);

@@ -832,7 +832,7 @@ encoding::encoder_newtype_exact! {
 type TxInInnerDecoder = Decoder3<OutPointDecoder, ScriptSigBufDecoder, SequenceDecoder>;
 
 #[cfg(feature = "alloc")]
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`TxIn`] type.
     #[derive(Debug, Clone)]
     pub struct TxInDecoder(TxInInnerDecoder);
@@ -902,7 +902,7 @@ encoding::encoder_newtype_exact! {
 type TxOutInnerDecoder = Decoder2<AmountDecoder, ScriptPubKeyBufDecoder>;
 
 #[cfg(feature = "alloc")]
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`TxOut`] type.
     #[derive(Debug, Clone)]
     pub struct TxOutDecoder(TxOutInnerDecoder);
@@ -1016,7 +1016,7 @@ encoding::encoder_newtype_exact! {
     pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`OutPoint`] type.
     // 32 for the txid + 4 for the vout
     #[derive(Debug, Clone)]
@@ -1245,7 +1245,7 @@ encoding::encoder_newtype_exact! {
     pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`Version`] type.
     #[derive(Debug, Clone)]
     pub struct VersionDecoder(encoding::ArrayDecoder<4>);

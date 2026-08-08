@@ -207,7 +207,7 @@ impl encoding::Encode for Feature {
 
 type FeatureInnerDecoder = Decoder2<FeatureIdDecoder, FeatureDataDecoder>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder for [`Feature`].
     #[derive(Debug, Default, Clone)]
     pub struct FeatureDecoder(FeatureInnerDecoder);

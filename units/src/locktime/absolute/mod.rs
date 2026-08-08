@@ -420,7 +420,7 @@ encoding::encoder_newtype_exact! {
 }
 
 #[cfg(feature = "encoding")]
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`LockTime`] type.
     #[derive(Debug, Clone)]
     pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);

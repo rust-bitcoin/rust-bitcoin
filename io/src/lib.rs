@@ -648,9 +648,6 @@ where
     decoder.end().map_err(ReadError::Decode)
 }
 
-#[cfg(feature = "std")]
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
-
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]

@@ -2,8 +2,7 @@
 
 use internals::rust_version;
 
-// Defined in `REPO_DIR/include/newtype.rs`.
-crate::transparent_newtype! {
+internals::transparent_newtype! {
     /// A bridging wrapper providing the I/O traits for types that already implement `std` I/O traits.
     #[derive(Debug)]
     pub struct FromStd<T>(T);
@@ -109,8 +108,7 @@ impl<T: std::io::Write> std::io::Write for FromStd<T> {
     fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> { self.0.write_all(buf) }
 }
 
-// Defined in `REPO_DIR/include/newtype.rs`.
-crate::transparent_newtype! {
+internals::transparent_newtype! {
     /// A bridging wrapper providing the std traits for types that already implement our traits.
     #[derive(Debug)]
     pub struct ToStd<T>(T);

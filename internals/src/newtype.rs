@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
+//! Macros for constructing transparent newtype wrappers.
+
 /// Constructs a transparent wrapper around an inner type and soundly implements reference casts.
 ///
 /// This macro takes care of several issues related to newtypes that need to allow casting their
@@ -18,6 +20,7 @@
 /// body, just semicolon.
 ///
 /// The `alloc` types MUST NOT have import paths and don't need imports.
+#[macro_export]
 macro_rules! transparent_newtype {
     (
         $(#[$($struct_attr:tt)*])*
@@ -30,22 +33,22 @@ macro_rules! transparent_newtype {
             )*
         }
     ) => {
-        crate::_check_tts_eq!($newtype2, $newtype, "the type name in the impl block doesn't match the struct name");
+        $crate::_check_tts_eq!($newtype2, $newtype, "the type name in the impl block doesn't match the struct name");
         $(
             // WARNING: renaming has to be disabled for soundness!
             // If it weren't it'd be possible to make the type inside struct not match the one passed
             // to functions. In principle we could also omit the generics but that'd be confusing for
             // readers.
-            crate::_check_tts_eq!($gen2, $gen, "the name of the left generic parameter in impl block doesn't match the one on struct");
-            crate::_check_tts_eq!($gen3, $gen, "the name of the right generic parameter in impl block doesn't match the one on struct");
+            $crate::_check_tts_eq!($gen2, $gen, "the name of the left generic parameter in impl block doesn't match the one on struct");
+            $crate::_check_tts_eq!($gen3, $gen, "the name of the right generic parameter in impl block doesn't match the one on struct");
         )?
         $(#[$($struct_attr)*])*
         #[repr(transparent)]
         $vis struct $newtype$(<$gen $(= $default)?>)?($($fields)+) $(where $($where_ty: $bound),*)?;
 
         impl$(<$gen2>)? $newtype$(<$gen3>)? $(where $($where_ty: $bound),*)? {
-            crate::_transparent_ref_conversions! {
-                crate::_transparent_newtype_inner_type!($($fields)+);
+            $crate::_transparent_ref_conversions! {
+                $crate::_transparent_newtype_inner_type!($($fields)+);
                 $(
                     $(#[$($fn_attr)*])*
                     $fn_vis fn $fn($fn_arg_name: $($fn_arg_ty)+) -> $fn_ret_ty;
@@ -54,9 +57,10 @@ macro_rules! transparent_newtype {
         }
     };
 }
-#[allow(unused_imports)]
-pub(crate) use transparent_newtype;
 
+/// Helper for [`transparent_newtype`]. Not part of the public API.
+#[doc(hidden)]
+#[macro_export]
 macro_rules! _transparent_ref_conversions {
     (
         $inner:ty;
@@ -66,7 +70,7 @@ macro_rules! _transparent_ref_conversions {
         )+
     ) => {
         $(
-            crate::_transparent_ref_conversion! {
+            $crate::_transparent_ref_conversion! {
                 $inner;
                 $(#[$($fn_attr)*])*
                 $fn_vis fn $fn($fn_arg_name: $($fn_arg_ty)+) -> $fn_ret_ty;
@@ -74,8 +78,10 @@ macro_rules! _transparent_ref_conversions {
         )+
     }
 }
-pub(crate) use _transparent_ref_conversions;
 
+/// Helper for [`transparent_newtype`]. Not part of the public API.
+#[doc(hidden)]
+#[macro_export]
 macro_rules! _transparent_ref_conversion {
     (
         $inner:ty;
@@ -157,8 +163,10 @@ macro_rules! _transparent_ref_conversion {
         }
     }
 }
-pub(crate) use _transparent_ref_conversion;
 
+/// Helper for [`transparent_newtype`]. Not part of the public API.
+#[doc(hidden)]
+#[macro_export]
 macro_rules! _check_tts_eq {
     ($left:tt, $right:tt, $message:literal) => {
         macro_rules! token_eq {
@@ -170,8 +178,10 @@ macro_rules! _check_tts_eq {
         token_eq!($left);
     };
 }
-pub(crate) use _check_tts_eq;
 
+/// Helper for [`transparent_newtype`]. Not part of the public API.
+#[doc(hidden)]
+#[macro_export]
 macro_rules! _transparent_newtype_inner_type {
     ($(#[$($field_attr:tt)*])* $inner:ty) => {
         $inner
@@ -180,4 +190,3 @@ macro_rules! _transparent_newtype_inner_type {
         $inner
     };
 }
-pub(crate) use _transparent_newtype_inner_type;

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
+//! Macros for implementing common traits on byte-array-backed newtypes.
+
 /// Implements several string-ish traits for byte-based newtypes.
 ///
 /// - `fmt::Display` and `str::FromStr` (using lowercase hex)
@@ -8,7 +10,15 @@
 /// - `serde::Serialize` and `Deserialize` (using lowercase hex)
 ///
 /// As well as an inherent `from_hex` method.
-#[allow(unused_macros)]
+///
+/// # Caller Requirements
+///
+/// Because this macro is exported from `bitcoin-internals` but generates code that is compiled
+/// in the *calling* crate, the identifiers `hex` and (if the `serde` feature is used) `serde`
+/// must resolve at the macro's invocation site. Typically this means having `hex-conservative`
+/// and `serde` as direct dependencies, but any `use` that brings a crate into scope under those
+/// exact names (e.g. re-exported from another dependency) also works.
+#[macro_export]
 macro_rules! impl_array_newtype_stringify {
     ($t:ident, $len:literal) => {
         impl $t {
@@ -18,8 +28,8 @@ macro_rules! impl_array_newtype_stringify {
             ///
             /// Returns an error if `s` contains invalid characters or has incorrect length. (Should be
             /// `N * 2`.)
-            pub fn from_hex(s: &str) -> Result<Self, $crate::hex::DecodeFixedLengthBytesError> {
-                Ok($t($crate::hex::decode_to_array(s)?))
+            pub fn from_hex(s: &str) -> Result<Self, hex::DecodeFixedLengthBytesError> {
+                Ok($t(hex::decode_to_array(s)?))
             }
         }
 
@@ -50,13 +60,13 @@ macro_rules! impl_array_newtype_stringify {
         }
 
         impl core::str::FromStr for $t {
-            type Err = $crate::hex::DecodeFixedLengthBytesError;
+            type Err = hex::DecodeFixedLengthBytesError;
             fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { Self::from_hex(s) }
         }
 
         #[cfg(feature = "serde")]
-        impl $crate::serde::Serialize for $t {
-            fn serialize<S: $crate::serde::Serializer>(
+        impl serde::Serialize for $t {
+            fn serialize<S: serde::Serializer>(
                 &self,
                 s: S,
             ) -> core::result::Result<S::Ok, S::Error> {
@@ -69,14 +79,14 @@ macro_rules! impl_array_newtype_stringify {
         }
 
         #[cfg(feature = "serde")]
-        impl<'de> $crate::serde::Deserialize<'de> for $t {
-            fn deserialize<D: $crate::serde::Deserializer<'de>>(
+        impl<'de> serde::Deserialize<'de> for $t {
+            fn deserialize<D: serde::Deserializer<'de>>(
                 d: D,
             ) -> core::result::Result<$t, D::Error> {
                 if d.is_human_readable() {
                     struct HexVisitor;
 
-                    impl<'de> $crate::serde::de::Visitor<'de> for HexVisitor {
+                    impl<'de> serde::de::Visitor<'de> for HexVisitor {
                         type Value = $t;
 
                         fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -85,9 +95,9 @@ macro_rules! impl_array_newtype_stringify {
 
                         fn visit_bytes<E>(self, v: &[u8]) -> core::result::Result<Self::Value, E>
                         where
-                            E: $crate::serde::de::Error,
+                            E: serde::de::Error,
                         {
-                            use $crate::serde::de::Unexpected;
+                            use serde::de::Unexpected;
 
                             if let Ok(hex) = core::str::from_utf8(v) {
                                 core::str::FromStr::from_str(hex).map_err(E::custom)
@@ -98,7 +108,7 @@ macro_rules! impl_array_newtype_stringify {
 
                         fn visit_str<E>(self, hex: &str) -> core::result::Result<Self::Value, E>
                         where
-                            E: $crate::serde::de::Error,
+                            E: serde::de::Error,
                         {
                             core::str::FromStr::from_str(hex).map_err(E::custom)
                         }
@@ -108,7 +118,7 @@ macro_rules! impl_array_newtype_stringify {
                 } else {
                     struct BytesVisitor;
 
-                    impl<'de> $crate::serde::de::Visitor<'de> for BytesVisitor {
+                    impl<'de> serde::de::Visitor<'de> for BytesVisitor {
                         type Value = $t;
 
                         fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -117,7 +127,7 @@ macro_rules! impl_array_newtype_stringify {
 
                         fn visit_bytes<E>(self, v: &[u8]) -> core::result::Result<Self::Value, E>
                         where
-                            E: $crate::serde::de::Error,
+                            E: serde::de::Error,
                         {
                             if v.len() != $len {
                                 Err(E::invalid_length(v.len(), &stringify!($len)))
@@ -135,11 +145,9 @@ macro_rules! impl_array_newtype_stringify {
         }
     };
 }
-#[allow(unused_imports)]
-pub(crate) use impl_array_newtype_stringify;
 
 /// Implements standard array methods for a given wrapper type.
-#[allow(unused_macros)]
+#[macro_export]
 macro_rules! impl_array_newtype {
     ($thing:ident, $ty:ty, $len:literal) => {
         impl $thing {
@@ -255,5 +263,3 @@ macro_rules! impl_array_newtype {
         }
     };
 }
-#[allow(unused_imports)]
-pub(crate) use impl_array_newtype;

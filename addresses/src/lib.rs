@@ -414,8 +414,7 @@ pub enum AddressData {
     },
 }
 
-// Defined in `REPO_DIR/include/newtype.rs`.
-transparent_newtype! {
+internals::transparent_newtype! {
     /// A Bitcoin address.
     ///
     /// # Parsing addresses
@@ -1148,8 +1147,6 @@ fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
-
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
 
 #[cfg(test)]
 mod tests {

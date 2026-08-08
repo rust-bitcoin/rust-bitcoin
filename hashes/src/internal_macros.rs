@@ -135,8 +135,7 @@ macro_rules! hash_type_no_default {
 
         const DISPLAY_BACKWARD: bool = $reverse:expr;
     ) => {
-        // Defined in `REPO_DIR/include/newtype.rs`.
-        crate::transparent_newtype! {
+        internals::transparent_newtype! {
             $(#[$type_attrs])*
             #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
             pub struct Hash([u8; $len]);

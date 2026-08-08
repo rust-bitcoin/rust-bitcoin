@@ -47,8 +47,8 @@ pub type ExtendedPrivKey = Xpriv;
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
-impl_array_newtype!(ChainCode, u8, 32);
-crate::impl_array_newtype_stringify!(ChainCode, 32);
+internals::impl_array_newtype!(ChainCode, u8, 32);
+internals::impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
@@ -64,8 +64,8 @@ impl ChainCode {
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
-impl_array_newtype!(Fingerprint, u8, 4);
-crate::impl_array_newtype_stringify!(Fingerprint, 4);
+internals::impl_array_newtype!(Fingerprint, u8, 4);
+internals::impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {
     /// Extended key identifier as defined in BIP-0032.
@@ -76,7 +76,7 @@ hashes::impl_hex_for_newtype!(XKeyIdentifier);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(XKeyIdentifier);
 
-crate::transparent_newtype! {
+internals::transparent_newtype! {
     /// A master seed validated according to BIP-0032 specifications.
     ///
     /// Construct from a fixed-size array reference via [`From`] when the byte length is known at

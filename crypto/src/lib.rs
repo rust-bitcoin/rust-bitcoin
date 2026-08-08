@@ -32,10 +32,6 @@ pub mod taproot;
 #[doc(inline)]
 pub use self::key::{FullPublicKey, Keypair, LegacyPublicKey, PrivateKey, XOnlyPublicKey};
 
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
-#[cfg(feature = "alloc")]
-include!("../include/asref_push_bytes.rs");
-
 // Encapsulation module for the `PushBytes` code to be removed before 1.0.
 #[cfg(feature = "alloc")]
 mod push_bytes {
@@ -61,7 +57,7 @@ mod push_bytes {
         }
     }
 
-    crate::impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
+    internals::impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
     impl AsRef<PushBytes> for SerializedLegacyPublicKey {
         fn as_ref(&self) -> &PushBytes { self.borrow() }

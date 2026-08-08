@@ -100,7 +100,7 @@ impl encoding::Encode for Inventory {
 
 type InventoryInnerDecoder = Decoder2<ArrayDecoder<4>, ArrayDecoder<32>>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`Inventory`] type.
     #[derive(Debug, Default, Clone)]
     pub struct InventoryDecoder(InventoryInnerDecoder);
@@ -197,7 +197,7 @@ impl encoding::Encode for BlockLocator {
 
 type BlockLocatorInnerDecoder = VecDecoder<BlockHash>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder for the [`BlockLocator`] type.
     #[derive(Debug, Clone)]
     pub struct BlockLocatorDecoder(BlockLocatorInnerDecoder);
@@ -288,7 +288,7 @@ impl encoding::Encode for GetBlocksMessage {
 type GetBlocksOrHeadersInnerDecoder =
     Decoder3<ProtocolVersionDecoder, BlockLocatorDecoder, BlockHashDecoder>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for [`GetBlocksMessage`].
     #[derive(Debug, Default, Clone)]
     pub struct GetBlocksMessageDecoder(GetBlocksOrHeadersInnerDecoder);
@@ -302,7 +302,7 @@ crate::decoder_newtype! {
     }
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for [`GetHeadersMessage`].
     #[derive(Debug, Default, Clone)]
     pub struct GetHeadersMessageDecoder(GetBlocksOrHeadersInnerDecoder);

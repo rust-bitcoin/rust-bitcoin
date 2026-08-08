@@ -153,7 +153,7 @@ impl encoding::ExactSizeEncoder for CommandStringEncoder {
     fn len(&self) -> usize { self.0.len() }
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder for [`CommandString`].
     #[derive(Debug, Default, Clone)]
     pub struct CommandStringDecoder(encoding::ArrayDecoder<12>);
@@ -260,7 +260,7 @@ type V1MessageHeaderInnerDecoder = encoding::Decoder4<
     encoding::ArrayDecoder<4>,
 >;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The Decoder for `V1MessageHeader`
     #[derive(Debug, Default, Clone)]
     pub struct V1MessageHeaderDecoder(V1MessageHeaderInnerDecoder);
@@ -315,7 +315,7 @@ impl encoding::Encode for InventoryPayload {
 
 type InventoryInnerDecoder = VecDecoder<message_blockdata::Inventory>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for [`InventoryPayload`].
     #[derive(Debug, Default, Clone)]
     pub struct InventoryPayloadDecoder(InventoryInnerDecoder);
@@ -351,7 +351,7 @@ impl encoding::Encode for AddrPayload {
 
 type AddrPayloadInnerDecoder = VecDecoder<AddrV1Message>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for [`AddrPayload`].
     #[derive(Debug, Default, Clone)]
     pub struct AddrPayloadDecoder(AddrPayloadInnerDecoder);
@@ -390,7 +390,7 @@ impl encoding::Encode for AddrV2Payload {
 
 type AddrV2PayloadInnerDecoder = VecDecoder<AddrV2Message>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder type for [`AddrV2Payload`].
     #[derive(Debug, Default, Clone)]
     pub struct AddrV2PayloadDecoder(AddrV2PayloadInnerDecoder);
@@ -447,7 +447,7 @@ impl encoding::Encode for FeeFilter {
     }
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// Decoder for [`FeeFilter`] type.
     #[derive(Debug, Clone)]
     pub struct FeeFilterDecoder(encoding::ArrayDecoder<8>);
@@ -526,7 +526,7 @@ impl encoding::Encode for Ping {
     }
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The Decoder for [`Ping`]
     #[derive(Debug, Default, Clone)]
     pub struct PingDecoder(encoding::ArrayDecoder<8>);
@@ -570,7 +570,7 @@ impl encoding::Encode for Pong {
     }
 }
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The Decoder for [`Pong`]
     #[derive(Debug, Default, Clone)]
     pub struct PongDecoder(encoding::ArrayDecoder<8>);
@@ -1565,7 +1565,7 @@ impl encoding::Encode for NetworkHeader {
 
 type NetworkHeaderInnerDecoder = Decoder2<HeaderDecoder, ArrayDecoder<1>>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder type for a [`NetworkHeader`].
     #[derive(Debug, Default, Clone)]
     pub struct NetworkHeaderDecoder(NetworkHeaderInnerDecoder);
@@ -1617,7 +1617,7 @@ impl encoding::Encode for HeadersMessage {
 
 type HeadersMessageInnerDecoder = VecDecoder<NetworkHeader>;
 
-crate::decoder_newtype! {
+internals::decoder_newtype! {
     /// The decoder type for a [`HeadersMessage`].
     #[derive(Debug, Default, Clone)]
     pub struct HeadersMessageDecoder(HeadersMessageInnerDecoder);

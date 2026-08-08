@@ -25,14 +25,5 @@ extern crate hex;
 #[cfg(feature = "serde")]
 extern crate serde;
 
-// Pull in shared macros from include
-// The impl_array_newtype_stringify requires crate::serde, $crate::hex and
-// crate::hashes to exist.
-#[cfg(feature = "alloc")]
-include!("../include/array_newtype.rs");
-
-#[cfg(feature = "alloc")]
-include!("../include/newtype.rs");
-
 #[cfg(feature = "alloc")]
 pub mod bip32;
