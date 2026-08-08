@@ -45,6 +45,7 @@ pub mod slice;
 #[macro_use]
 pub mod serde;
 pub mod const_casts;
+pub mod u256;
 
 /// Asserts a boolean expression at compile time.
 #[macro_export]

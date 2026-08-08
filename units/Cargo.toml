@@ -17,6 +17,7 @@ exclude = ["api", "tests", "contrib"]
 default = ["std"]
 std = ["alloc", "internals/std", "encoding?/std"]
 alloc = ["internals/alloc", "serde?/alloc", "encoding?/alloc"]
+serde = ["dep:serde", "internals/serde"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
