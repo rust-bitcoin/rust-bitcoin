@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- `pow`'s internal `U256` helper (used only by `U256Wrapper` byte-array conversions) is now sourced
+  from `bitcoin-internals` instead of a duplicated `include!` module.
+
 ## [0.33.0-beta] - 2026-02-17
 
 This series of beta releases is meant for two things:

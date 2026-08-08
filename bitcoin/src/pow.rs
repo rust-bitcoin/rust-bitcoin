@@ -6,8 +6,10 @@
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 
 use alloc::string::String;
-use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
-use core::{cmp, fmt};
+use core::cmp;
+use core::ops::Div;
+
+use internals::u256::U256;
 
 use crate::block::{BlockHash, BlockHeight, BlockHeightInterval, Header};
 use crate::internal_macros;
@@ -394,29 +396,6 @@ impl U256Wrapper for Target {
 impl U256Wrapper for Work {
     fn to_inner(self) -> U256 { U256::from_le_bytes(self.to_le_bytes()) }
     fn from_inner(inner: U256) -> Self { Self::from_le_bytes(inner.to_le_bytes()) }
-}
-
-include!("../include/u256.rs");
-
-macro_rules! impl_hex {
-    ($hex:path, $case:expr) => {
-        impl $hex for U256 {
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                hex::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
-            }
-        }
-    };
-}
-impl_hex!(fmt::LowerHex, hex::Case::Lower);
-impl_hex!(fmt::UpperHex, hex::Case::Upper);
-
-#[cfg(kani)]
-impl kani::Arbitrary for U256 {
-    fn any() -> Self {
-        let high: u128 = kani::any();
-        let low: u128 = kani::any();
-        Self(high, low)
-    }
 }
 
 /// In test code, U256s are a pain to work with, so we just convert Rust primitives in many places
@@ -823,19 +802,5 @@ mod tests {
 
         // Should return the real_target from the walked-back header
         assert_eq!(got, want);
-    }
-}
-
-#[cfg(kani)]
-mod verification {
-    use super::*;
-
-    #[kani::unwind(5)] // mul_u64 loops over 4 64 bit ints so use one more than 4
-    #[kani::proof]
-    fn check_mul_u64() {
-        let x: U256 = kani::any();
-        let y: u64 = kani::any();
-
-        let _ = x.mul_u64(y);
     }
 }
