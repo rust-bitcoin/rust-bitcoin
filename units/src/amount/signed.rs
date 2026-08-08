@@ -140,13 +140,11 @@ impl SignedAmount {
     #[allow(clippy::missing_panics_doc)]
     fn from_sat_u64(satoshi: u64) -> Result<Self, ParseAmountError> {
         // u64 -> i64 only fails if value is greater than i64::MAX, which is also > Self::MAX_MONEY.
-        let amount = i64::try_from(satoshi).map_err(|_| {
-            ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError {
-                is_signed: true,
-                is_greater_than_max: true,
-            }))
-        })?;
-        Self::from_sat(amount).map_err(|e| ParseAmountError(ParseAmountErrorInner::OutOfRange(e)))
+        let amount = i64::try_from(satoshi)
+            .map_err(|_| OutOfRangeError { is_signed: true, is_greater_than_max: true })
+            .map_err(ParseAmountErrorInner::OutOfRange)
+            .map_err(ParseAmountError)?;
+        Self::from_sat(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
     }
 
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
@@ -227,7 +225,7 @@ impl SignedAmount {
     #[inline]
     pub fn from_str_with_denomination(s: &str) -> Result<Self, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
-        Self::from_str_in(amt, denom).map_err(|e| ParseError(ParseErrorInner::Amount(e)))
+        Self::from_str_in(amt, denom).map_err(ParseErrorInner::Amount).map_err(ParseError)
     }
 
     /// Expresses this [`SignedAmount`] as a floating-point value in the given [`Denomination`].
@@ -260,7 +258,8 @@ impl SignedAmount {
     #[inline]
     pub fn from_sat_hex(s: &str) -> Result<Self, ParseAmountError> {
         let amount = parse_int::hex_u64_prefixed(s)
-            .map_err(|e| ParseAmountError(ParseAmountErrorInner::PrefixedHex(e)))?;
+            .map_err(ParseAmountErrorInner::PrefixedHex)
+            .map_err(ParseAmountError)?;
         Self::from_sat_u64(amount)
     }
 
@@ -275,7 +274,8 @@ impl SignedAmount {
     #[inline]
     pub fn from_sat_unprefixed_hex(s: &str) -> Result<Self, ParseAmountError> {
         let amount = parse_int::hex_u64_unprefixed(s)
-            .map_err(|e| ParseAmountError(ParseAmountErrorInner::UnprefixedHex(e)))?;
+            .map_err(ParseAmountErrorInner::UnprefixedHex)
+            .map_err(ParseAmountError)?;
         Self::from_sat_u64(amount)
     }
 
