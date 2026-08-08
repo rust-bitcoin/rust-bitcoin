@@ -2,7 +2,39 @@
 
 //! # Bitcoin Base58 Encoding and Decoding
 //!
-//! This crate can be used in a no-std environment but requires an allocator for decoding.
+//! This crate can be used in a no-std environment for base58 encoding and decoding.
+//!
+//! Encoding is done with [`Base58CkString`], which produces a base58check string.
+//! [`Base58CkString::encode`] works with or without the `alloc` feature, returning an error
+//! if the result exceeds 128 characters and `alloc` is disabled. With the `alloc` feature
+//! enabled, [`Base58CkString::encode_unbounded`] encodes data of any length infallibly.
+//!
+//! Decoding can be done with [`decode_check_to_array`] or [`decode_check`], both of which verify
+//! the checksum. [`decode_check_to_array`] decodes into a fixed-size array, but only accepts
+//! inputs of at most 128 characters. The expected decoded length must be specified by the generic
+//! `usize`. With the `alloc` feature enabled, [`decode_check`] decodes strings of any length into
+//! a `Vec<u8>`.
+//!
+//! # Examples
+//!
+//! Encoding and decoding a legacy address:
+//!
+//! ```rust
+//! use base58ck::{decode_check_to_array, Base58CkString};
+//!
+//! // A legacy address payload: a version byte followed by a 20 byte public key hash.
+//! let payload: [u8; 21] = [
+//!     0x00,
+//!     0xf8, 0x91, 0x73, 0x03, 0xbf, 0xa8, 0xef, 0x24, 0xf2, 0x92,
+//!     0xe8, 0xfa, 0x14, 0x19, 0xb2, 0x04, 0x60, 0xba, 0x06, 0x4d,
+//! ];
+//!
+//! let address = Base58CkString::encode(&payload)?;
+//! assert_eq!(address.as_str(), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
+//!
+//! assert_eq!(decode_check_to_array::<21>(address.as_str()), Ok(payload));
+//! # Ok::<_, base58ck::InputTooLongError>(())
+//! ```
 
 #![no_std]
 // Experimental features we need.
@@ -142,6 +174,19 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 /// * The input contains an invalid base58 character.
 /// * The decoded data is less than 4 bytes (too short for checksum verification).
 /// * The checksum does not match the expected value.
+///
+/// # Examples
+///
+/// ```
+/// use base58ck::decode_check;
+///
+/// let payload = decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH")?;
+/// assert_eq!(payload.len(), 21);
+///
+/// // The checksum is verified, so a corrupted string is rejected.
+/// assert!(decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHG").is_err());
+/// # Ok::<_, base58ck::DecodeCheckError>(())
+/// ```
 #[cfg(feature = "alloc")]
 pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     let mut ret: Vec<u8> = decode(data)?;
@@ -174,6 +219,20 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// * The checksum does not match the expected value.
 /// * The input is longer than 128 characters.
 /// * The decoded payload length is not exactly `N` bytes.
+///
+/// # Examples
+///
+/// ```
+/// use base58ck::decode_check_to_array;
+///
+/// let payload = decode_check_to_array::<21>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH")?;
+/// assert_eq!(payload[0], 0x00); // Mainnet P2PKH version byte.
+///
+/// // Asking for the wrong length is an error. The generic `N` thus doubles as a
+/// // check that the input is the kind of payload you expected.
+/// assert!(decode_check_to_array::<20>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").is_err());
+/// # Ok::<_, base58ck::DecodeCheckArrayError>(())
+/// ```
 #[allow(clippy::missing_panics_doc)] // payload length is checked before cast unwrap
 pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
     // 11/15 is just over log_256(58), so the decoded length never exceeds the input length.
@@ -260,6 +319,23 @@ impl Base58CkString {
     /// If the `alloc` feature is disabled and `data` encodes to more than 128 base58 characters.
     /// With `alloc` enabled this function is infallible. If you will only be using this with `alloc`,
     /// you can alternatively call [`Self::encode_unbounded`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use base58ck::Base58CkString;
+    ///
+    /// let wif_key: [u8; 33] = [
+    ///     0x80,
+    ///     0x0c, 0x28, 0xfc, 0xa3, 0x86, 0xc7, 0xa2, 0x27, 0x60, 0x0b, 0x2f, 0xe5, 0x0b, 0x7c,
+    ///     0xae, 0x11, 0xec, 0x86, 0xd3, 0xbf, 0x1f, 0xbe, 0x47, 0x1b, 0xe8, 0x98, 0x27, 0xe1,
+    ///     0x9d, 0x72, 0xaa, 0x1d,
+    /// ];
+    ///
+    /// let wif = Base58CkString::encode(&wif_key)?;
+    /// assert_eq!(wif.as_str(), "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ");
+    /// # Ok::<_, base58ck::InputTooLongError>(())
+    /// ```
     pub fn encode(data: &[u8]) -> Result<Self, InputTooLongError> {
         #[cfg(feature = "alloc")]
         {
@@ -278,6 +354,16 @@ impl Base58CkString {
     }
 
     /// Encodes `data` of any length as a base58check string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use base58ck::Base58CkString;
+    ///
+    /// let payload = [0x2a; 200]; // Too long to encode without allocating.
+    /// let encoded = Base58CkString::encode_unbounded(&payload);
+    /// assert_eq!(base58ck::decode_check(encoded.as_str()), Ok(payload.to_vec()));
+    /// ```
     #[allow(clippy::missing_panics_doc)] // encode_to_buffer is infallible in both cases
     #[cfg(feature = "alloc")]
     pub fn encode_unbounded(data: &[u8]) -> Self {
@@ -297,12 +383,33 @@ impl Base58CkString {
     }
 
     /// Returns the base58check-encoded string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use base58ck::Base58CkString;
+    ///
+    /// let address = Base58CkString::encode(&[0u8; 21])?;
+    /// let uri = format!("bitcoin:{}", address);
+    /// assert_eq!(uri, "bitcoin:1111111111111111111114oLvT2");
+    /// # Ok::<_, base58ck::InputTooLongError>(())
+    /// ```
     #[allow(clippy::missing_panics_doc)] // Base58 characters are always valid ASCII.
     pub fn as_str(&self) -> &str {
         core::str::from_utf8(self.as_bytes()).expect("base58 characters are valid ASCII")
     }
 
     /// Returns the base58check-encoded string as ASCII bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use base58ck::Base58CkString;
+    ///
+    /// let encoded = Base58CkString::encode(&[13, 36])?;
+    /// assert_eq!(encoded.as_bytes(), b"7YY3x3vS");
+    /// # Ok::<_, base58ck::InputTooLongError>(())
+    /// ```
     pub fn as_bytes(&self) -> &[u8] {
         match self.0 {
             Base58CkInner::Small(ref data) => data.slice(),
