@@ -63,13 +63,10 @@ static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopq
 pub mod error;
 
 #[cfg(feature = "alloc")]
-#[cfg(not(feature = "std"))]
-pub use alloc::{string::String, vec::Vec};
+use alloc::vec::Vec;
 #[cfg(feature = "alloc")]
 use core::convert::Infallible;
 use core::fmt;
-#[cfg(feature = "std")]
-pub use std::{string::String, vec::Vec};
 
 use hashes::sha256d;
 use internals::array::ArrayExt;
