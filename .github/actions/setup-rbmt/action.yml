@@ -4,6 +4,10 @@ description: 'Install cargo-rbmt, toolchains, and a no_std env for testing.'
 runs:
   using: "composite"
   steps:
+    - name: "Configure log level"
+      shell: bash
+      run: echo "RBMT_LOG_LEVEL=${{ runner.debug == '1' && 'verbose' || 'quiet' }}" >> "$GITHUB_ENV"
+
     - name: "Install cargo-rbmt"
       shell: bash
       run: |
