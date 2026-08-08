@@ -98,7 +98,7 @@ test_hex_parse! {
     block_time, BlockTime, "5f000000", BlockTime::from_u32(0x5f00_0000);
     weight, Weight, "00000190", Weight::from_wu(400);
     sequence, Sequence, "ffffffff", Sequence::from_consensus(0xFFFF_FFFF);
-    number_of_blocks, relative::NumberOfBlocks, "000000ff", relative::NumberOfBlocks::from_height(255);
+    number_of_blocks, relative::NumberOfBlocks, "000000ff", relative::NumberOfBlocks::from_count(255);
     number_of_512_seconds, relative::NumberOf512Seconds, "00000001", relative::NumberOf512Seconds::from_512_second_intervals(1);
 }
 
