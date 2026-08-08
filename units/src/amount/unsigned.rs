@@ -193,11 +193,11 @@ impl Amount {
         let (is_neg, amount) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
         if is_neg {
-            return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
-                OutOfRangeError::negative(),
-            )));
+            return Err(OutOfRangeError::negative())
+                .map_err(ParseAmountErrorInner::OutOfRange)
+                .map_err(ParseAmountError);
         }
-        Self::try_from(amount).map_err(|e| ParseAmountError(ParseAmountErrorInner::OutOfRange(e)))
+        Self::try_from(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
     }
 
     /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
@@ -220,7 +220,7 @@ impl Amount {
     #[inline]
     pub fn from_str_with_denomination(s: &str) -> Result<Self, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
-        Self::from_str_in(amt, denom).map_err(|e| ParseError(ParseErrorInner::Amount(e)))
+        Self::from_str_in(amt, denom).map_err(ParseErrorInner::Amount).map_err(ParseError)
     }
 
     /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
@@ -269,9 +269,9 @@ impl Amount {
     #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
         if value < 0.0 {
-            return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
-                OutOfRangeError::negative(),
-            )));
+            return Err(OutOfRangeError::negative())
+                .map_err(ParseAmountErrorInner::OutOfRange)
+                .map_err(ParseAmountError);
         }
         // This is inefficient, but the safest way to deal with this. The parsing logic is safe.
         // Any performance-critical application should not be dealing with floats.
@@ -287,8 +287,9 @@ impl Amount {
     #[inline]
     pub fn from_sat_hex(s: &str) -> Result<Self, ParseAmountError> {
         let amount = parse_int::hex_u64_prefixed(s)
-            .map_err(|e| ParseAmountError(ParseAmountErrorInner::PrefixedHex(e)))?;
-        Self::from_sat(amount).map_err(|e| ParseAmountError(ParseAmountErrorInner::OutOfRange(e)))
+            .map_err(ParseAmountErrorInner::PrefixedHex)
+            .map_err(ParseAmountError)?;
+        Self::from_sat(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
     }
 
     /// Constructs a new `Amount` from an unprefixed hex string.
@@ -300,8 +301,9 @@ impl Amount {
     #[inline]
     pub fn from_sat_unprefixed_hex(s: &str) -> Result<Self, ParseAmountError> {
         let amount = parse_int::hex_u64_unprefixed(s)
-            .map_err(|e| ParseAmountError(ParseAmountErrorInner::UnprefixedHex(e)))?;
-        Self::from_sat(amount).map_err(|e| ParseAmountError(ParseAmountErrorInner::OutOfRange(e)))
+            .map_err(ParseAmountErrorInner::UnprefixedHex)
+            .map_err(ParseAmountError)?;
+        Self::from_sat(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
     }
 
     /// Constructs a new object that implements [`fmt::Display`] in the given [`Denomination`].

@@ -240,7 +240,7 @@ impl LockTime {
                 .is_satisfied_by(chain_tip, utxo_mined_at)
                 .map_err(IsSatisfiedByHeightError::Satisfaction),
             Self::Time(time) =>
-                Err(IsSatisfiedByHeightError::Incompatible(IncompatibleHeightError(time))),
+                Err(IncompatibleHeightError(time)).map_err(IsSatisfiedByHeightError::Incompatible),
         }
     }
 
@@ -260,7 +260,7 @@ impl LockTime {
                 .is_satisfied_by(chain_tip, utxo_mined_at)
                 .map_err(IsSatisfiedByTimeError::Satisfaction),
             Self::Blocks(blocks) =>
-                Err(IsSatisfiedByTimeError::Incompatible(IncompatibleTimeError(blocks))),
+                Err(IncompatibleTimeError(blocks)).map_err(IsSatisfiedByTimeError::Incompatible),
         }
     }
 
