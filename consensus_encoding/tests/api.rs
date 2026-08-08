@@ -13,15 +13,16 @@ use core::fmt;
 use bitcoin_consensus_encoding::{
     self as encoding, encoder_newtype, ArrayDecoder, ArrayEncoder, ArrayRefEncoder, BytesEncoder,
     CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder, CompactSizeU64Decoder, Decode,
-    Decoder, Decoder2, Decoder3, Decoder4, Decoder6, Encode, EncoderByteIter, SliceEncoder,
-    UnexpectedEofError,
+    Decoder, Decoder2, Decoder3, Decoder4, Decoder6, Encode, EncoderByteIter, IterEncoder,
+    SliceEncoder, UnexpectedEofError,
 };
 use encoding::error::{DecodeError, UnconsumedError};
 #[cfg(feature = "std")]
 use encoding::ReadError;
 #[cfg(feature = "alloc")]
 use encoding::{
-    ByteVecDecoder, ByteVecDecoderError, LengthPrefixExceedsMaxError, VecDecoder, VecDecoderError,
+    ByteVecDecoder, ByteVecDecoderError, ExactVecDecoderWith, LengthPrefixExceedsMaxError,
+    VecDecoder, VecDecoderError, VecDecoderWith,
 };
 
 static BYTES: &[u8] = &[];
@@ -43,9 +44,14 @@ struct Structs {
     k: Decoder4<D, D, D, D>,
     l: Decoder6<D, D, D, D, D, D>,
     m: EncoderByteIter<FooEncoder<'static>>,
-    n: SliceEncoder<'static, Foo>,
+    n: IterEncoder<core::iter::Empty<FooEncoder<'static>>>,
+    o: SliceEncoder<'static, Foo>,
     #[cfg(feature = "alloc")]
-    o: VecDecoder<Foo>,
+    p: VecDecoder<Foo>,
+    #[cfg(feature = "alloc")]
+    q: VecDecoderWith<FooDecoder>,
+    #[cfg(feature = "alloc")]
+    r: ExactVecDecoderWith<FooDecoder>,
 }
 
 // Dummy decoder to use in place of generic.
@@ -111,9 +117,14 @@ struct Clone {
     // k: Decoder4<D, D, D, D>,
     // l: Decoder6<D, D, D, D, D, D>,
     m: EncoderByteIter<FooEncoder<'static>>,
-    n: SliceEncoder<'static, Foo>,
+    n: IterEncoder<core::iter::Empty<FooEncoder<'static>>>,
+    o: SliceEncoder<'static, Foo>,
     #[cfg(feature = "alloc")]
-    o: VecDecoder<Foo>,
+    p: VecDecoder<Foo>,
+    #[cfg(feature = "alloc")]
+    q: VecDecoderWith<FooDecoder>,
+    #[cfg(feature = "alloc")]
+    r: ExactVecDecoderWith<FooDecoder>,
 }
 
 /// A struct that includes all types that implement `Default` (implies decoders).
@@ -132,6 +143,8 @@ struct Default {
     // l: Decoder6<D, D, D, D, D, D>,
     #[cfg(feature = "alloc")]
     o: VecDecoder<Foo>,
+    #[cfg(feature = "alloc")]
+    p: VecDecoderWith<FooDecoder>,
 }
 
 /// A struct that includes all public error types.
@@ -203,11 +216,17 @@ fn c_debug_nonempty() {
 
     let debug = format!("{:?}", EncoderByteIter::new(Foo::dummy().encoder()));
     assert!(!debug.is_empty());
+    let debug = format!("{:?}", IterEncoder::new(core::iter::empty::<FooEncoder<'static>>()));
+    assert!(!debug.is_empty());
     let debug = format!("{:?}", SliceEncoder::without_length_prefix(&[Foo::dummy()]));
     assert!(!debug.is_empty());
     #[cfg(feature = "alloc")]
     {
         let debug = format!("{:?}", VecDecoder::<Foo>::default());
+        assert!(!debug.is_empty());
+        let debug = format!("{:?}", VecDecoderWith::<FooDecoder>::default());
+        assert!(!debug.is_empty());
+        let debug = format!("{:?}", ExactVecDecoderWith::<FooDecoder>::new(0));
         assert!(!debug.is_empty());
     }
 }

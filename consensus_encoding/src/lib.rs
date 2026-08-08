@@ -64,6 +64,19 @@
 //! * [`drain_to_vec`]: Drain an encoder to the heap.
 //! * [`drain_to_hex`]: Drain an encoder to a hex string.
 //!
+//! # Collections
+//!
+//! This crate provides types for encoding and decoding sequences of items. On the decoding side,
+//! [`VecDecoder`] decodes a length-prefixed sequence of consensus encodable types into a `Vec`.
+//! [`VecDecoderWith`] and [`ExactVecDecoderWith`] are the underlying implementations, bound
+//! directly on [`Decoder`] allowing them to be used with decoder types that do not have a
+//! corresponding [`Decode`] implementation.
+//!
+//! On the encoding side, [`SliceEncoder`] and [`PrefixedSliceEncoder`] encode slices of consensus
+//! encodable types without and with a compact-size length prefix respectively.
+//!
+//! The lower-level [`IterEncoder`] drives any iterator whose items implement [`Encoder`].
+//!
 //! # Feature Flags
 //!
 //! * `std` - Enables std lib I/O driver functions and `std::error::Error` impls (implies `alloc`).
@@ -101,7 +114,7 @@ pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSize
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
 #[doc(inline)]
-pub use self::decode::decoders::{ByteVecDecoder, VecDecoder};
+pub use self::decode::decoders::{ByteVecDecoder, ExactVecDecoderWith, VecDecoder, VecDecoderWith};
 #[doc(inline)]
 pub use self::decode::{
     check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded,
@@ -122,6 +135,8 @@ pub use self::encode::encoders::{
     ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
     PrefixedBytesEncoder, PrefixedSliceEncoder, SliceEncoder,
 };
+#[doc(inline)]
+pub use self::encode::iter::IterEncoder;
 #[doc(inline)]
 pub use self::encode::{
     check_encode, check_encoder, Encode, Encoder, EncoderByteIter, EncoderStatus, ExactSizeEncoder,
