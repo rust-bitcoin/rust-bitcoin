@@ -1631,6 +1631,87 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::EncoderByteIt
   pub unsafe fn bitcoin_consensus_encoding::EncoderByteIter<T>::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::EncoderByteIter<T> where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::EncoderByteIter<T>
   pub fn bitcoin_consensus_encoding::EncoderByteIter<T>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_consensus_encoding::EncoderByteIter<T>]
+pub struct bitcoin_consensus_encoding::ExactVecDecoderWith<D: bitcoin_consensus_encoding::Decoder + core::default::Default>
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::ExactVecDecoderWith<D>
+pub const fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::new(count: usize) -> Self
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default + core::clone::Clone> core::clone::Clone for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where <D as bitcoin_consensus_encoding::Decoder>::Output: core::clone::Clone
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::clone(&self) -> Self [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default + core::clone::Clone> core::clone::Clone for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where <D as bitcoin_consensus_encoding::Decoder>::Output: core::clone::Clone]
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default + core::fmt::Debug> core::fmt::Debug for bitcoin_consensus_encoding::ExactVecDecoderWith<D>
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default + core::fmt::Debug> core::fmt::Debug for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>
+  pub type bitcoin_consensus_encoding::ExactVecDecoderWith<D>::Error = bitcoin_consensus_encoding::error::VecDecoderError<<D as bitcoin_consensus_encoding::Decoder>::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+  pub type bitcoin_consensus_encoding::ExactVecDecoderWith<D>::Output = alloc::vec::Vec<<D as bitcoin_consensus_encoding::Decoder>::Output> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::end(self) -> core::result::Result<Self::Output, Self::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::read_limit(&self) -> usize [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+impl<D> core::marker::Freeze for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where D: core::marker::Freeze
+impl<D> core::marker::Send for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where D: core::marker::Send, <D as bitcoin_consensus_encoding::Decoder>::Output: core::marker::Send
+impl<D> core::marker::Sync for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where D: core::marker::Sync, <D as bitcoin_consensus_encoding::Decoder>::Output: core::marker::Sync
+impl<D> core::marker::Unpin for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where D: core::marker::Unpin, <D as bitcoin_consensus_encoding::Decoder>::Output: core::marker::Unpin
+impl<D> core::marker::UnsafeUnpin for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where D: core::marker::UnsafeUnpin
+impl<D> core::panic::unwind_safe::RefUnwindSafe for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where D: core::panic::unwind_safe::RefUnwindSafe, <D as bitcoin_consensus_encoding::Decoder>::Output: core::panic::unwind_safe::RefUnwindSafe
+impl<D> core::panic::unwind_safe::UnwindSafe for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where D: core::panic::unwind_safe::UnwindSafe, <D as bitcoin_consensus_encoding::Decoder>::Output: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where U: core::convert::From<T>
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where U: core::convert::Into<T>
+  pub type bitcoin_consensus_encoding::ExactVecDecoderWith<D>::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where U: core::convert::Into<T>]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where U: core::convert::TryFrom<T>
+  pub type bitcoin_consensus_encoding::ExactVecDecoderWith<D>::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: core::clone::Clone
+  pub type bitcoin_consensus_encoding::ExactVecDecoderWith<D>::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: core::clone::Clone]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: core::clone::Clone]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: core::clone::Clone]
+impl<T> core::any::Any for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: core::clone::Clone
+  pub unsafe fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::ExactVecDecoderWith<D> where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_consensus_encoding::ExactVecDecoderWith<D>
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+pub struct bitcoin_consensus_encoding::IterEncoder<I: core::iter::traits::iterator::Iterator> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder
+impl<I: core::iter::traits::iterator::Iterator> bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder
+pub fn bitcoin_consensus_encoding::IterEncoder<I>::new(iter: impl core::iter::traits::collect::IntoIterator<IntoIter = I>) -> Self
+impl<I: core::iter::traits::iterator::Iterator> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::advance(&mut self) -> bitcoin_consensus_encoding::EncoderStatus [impl: impl<I: core::iter::traits::iterator::Iterator> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder]
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::current_chunk(&self) -> &[u8] [impl: impl<I: core::iter::traits::iterator::Iterator> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder]
+impl<I: core::iter::traits::iterator::Iterator> core::fmt::Debug for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder + core::fmt::Debug
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<I: core::iter::traits::iterator::Iterator> core::fmt::Debug for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder + core::fmt::Debug]
+impl<I> core::clone::Clone for bitcoin_consensus_encoding::IterEncoder<I> where I: core::clone::Clone + core::iter::traits::iterator::Iterator, <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder + core::clone::Clone
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::clone(&self) -> Self [impl: impl<I> core::clone::Clone for bitcoin_consensus_encoding::IterEncoder<I> where I: core::clone::Clone + core::iter::traits::iterator::Iterator, <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder + core::clone::Clone]
+impl<I> core::marker::Freeze for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: core::marker::Freeze, I: core::marker::Freeze
+impl<I> core::marker::Send for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: core::marker::Send, I: core::marker::Send
+impl<I> core::marker::Sync for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: core::marker::Sync, I: core::marker::Sync
+impl<I> core::marker::Unpin for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: core::marker::Unpin, I: core::marker::Unpin
+impl<I> core::marker::UnsafeUnpin for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: core::marker::UnsafeUnpin, I: core::marker::UnsafeUnpin
+impl<I> core::panic::unwind_safe::RefUnwindSafe for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: core::panic::unwind_safe::RefUnwindSafe, I: core::panic::unwind_safe::RefUnwindSafe
+impl<I> core::panic::unwind_safe::UnwindSafe for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: core::panic::unwind_safe::UnwindSafe, I: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for bitcoin_consensus_encoding::IterEncoder<I> where U: core::convert::From<T>
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_consensus_encoding::IterEncoder<I> where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::IterEncoder<I> where U: core::convert::Into<T>
+  pub type bitcoin_consensus_encoding::IterEncoder<I>::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::IterEncoder<I> where U: core::convert::Into<T>]
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::IterEncoder<I> where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::IterEncoder<I> where U: core::convert::TryFrom<T>
+  pub type bitcoin_consensus_encoding::IterEncoder<I>::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::IterEncoder<I> where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::IterEncoder<I> where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::IterEncoder<I> where T: core::clone::Clone
+  pub type bitcoin_consensus_encoding::IterEncoder<I>::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::IterEncoder<I> where T: core::clone::Clone]
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::IterEncoder<I> where T: core::clone::Clone]
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::IterEncoder<I> where T: core::clone::Clone]
+impl<T> core::any::Any for bitcoin_consensus_encoding::IterEncoder<I> where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_consensus_encoding::IterEncoder<I> where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_consensus_encoding::IterEncoder<I> where T: ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_consensus_encoding::IterEncoder<I> where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_consensus_encoding::IterEncoder<I> where T: ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_consensus_encoding::IterEncoder<I> where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::IterEncoder<I> where T: core::clone::Clone
+  pub unsafe fn bitcoin_consensus_encoding::IterEncoder<I>::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::IterEncoder<I> where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_consensus_encoding::IterEncoder<I>
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_consensus_encoding::IterEncoder<I>]
 pub struct bitcoin_consensus_encoding::LengthPrefixExceedsMaxError
 impl core::clone::Clone for bitcoin_consensus_encoding::error::LengthPrefixExceedsMaxError
   pub fn bitcoin_consensus_encoding::error::LengthPrefixExceedsMaxError::clone(&self) -> bitcoin_consensus_encoding::error::LengthPrefixExceedsMaxError [impl: impl core::clone::Clone for bitcoin_consensus_encoding::error::LengthPrefixExceedsMaxError]
@@ -1719,10 +1800,10 @@ impl<T> core::convert::From<T> for bitcoin_consensus_encoding::PrefixedBytesEnco
 pub struct bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T: bitcoin_consensus_encoding::Encode>(_)
 impl<'e, T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>
 pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>::new(sl: &'e [T]) -> Self
-impl<'e, T: bitcoin_consensus_encoding::Encode> core::clone::Clone for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::clone::Clone
-  pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>::clone(&self) -> Self [impl: impl<'e, T: bitcoin_consensus_encoding::Encode> core::clone::Clone for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::clone::Clone]
-impl<'e, T: bitcoin_consensus_encoding::Encode> core::fmt::Debug for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::fmt::Debug
-  pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<'e, T: bitcoin_consensus_encoding::Encode> core::fmt::Debug for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::fmt::Debug]
+impl<'e, T: bitcoin_consensus_encoding::Encode + 'e> core::clone::Clone for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::clone::Clone
+  pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>::clone(&self) -> Self [impl: impl<'e, T: bitcoin_consensus_encoding::Encode + 'e> core::clone::Clone for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::clone::Clone]
+impl<'e, T: bitcoin_consensus_encoding::Encode + 'e> core::fmt::Debug for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::fmt::Debug
+  pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<'e, T: bitcoin_consensus_encoding::Encode + 'e> core::fmt::Debug for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::fmt::Debug]
 impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>
   pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>::advance(&mut self) -> bitcoin_consensus_encoding::EncoderStatus [impl: impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>]
   pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>::current_chunk(&self) -> &[u8] [impl: impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>]
@@ -1755,13 +1836,13 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::PrefixedSlice
   pub unsafe fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T> where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>
   pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_consensus_encoding::PrefixedSliceEncoder<'e, T>]
-pub struct bitcoin_consensus_encoding::SliceEncoder<'e, T: bitcoin_consensus_encoding::Encode>
+pub struct bitcoin_consensus_encoding::SliceEncoder<'e, T: bitcoin_consensus_encoding::Encode>(_)
 impl<'e, T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::SliceEncoder<'e, T>
 pub fn bitcoin_consensus_encoding::SliceEncoder<'e, T>::without_length_prefix(sl: &'e [T]) -> Self
-impl<'e, T: bitcoin_consensus_encoding::Encode> core::clone::Clone for bitcoin_consensus_encoding::SliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::clone::Clone
-  pub fn bitcoin_consensus_encoding::SliceEncoder<'e, T>::clone(&self) -> Self [impl: impl<'e, T: bitcoin_consensus_encoding::Encode> core::clone::Clone for bitcoin_consensus_encoding::SliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::clone::Clone]
-impl<'e, T: bitcoin_consensus_encoding::Encode> core::fmt::Debug for bitcoin_consensus_encoding::SliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::fmt::Debug
-  pub fn bitcoin_consensus_encoding::SliceEncoder<'e, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<'e, T: bitcoin_consensus_encoding::Encode> core::fmt::Debug for bitcoin_consensus_encoding::SliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::fmt::Debug]
+impl<'e, T: bitcoin_consensus_encoding::Encode + 'e> core::clone::Clone for bitcoin_consensus_encoding::SliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::clone::Clone
+  pub fn bitcoin_consensus_encoding::SliceEncoder<'e, T>::clone(&self) -> Self [impl: impl<'e, T: bitcoin_consensus_encoding::Encode + 'e> core::clone::Clone for bitcoin_consensus_encoding::SliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::clone::Clone]
+impl<'e, T: bitcoin_consensus_encoding::Encode + 'e> core::fmt::Debug for bitcoin_consensus_encoding::SliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::fmt::Debug
+  pub fn bitcoin_consensus_encoding::SliceEncoder<'e, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<'e, T: bitcoin_consensus_encoding::Encode + 'e> core::fmt::Debug for bitcoin_consensus_encoding::SliceEncoder<'e, T> where <T as bitcoin_consensus_encoding::Encode>::Encoder: core::fmt::Debug]
 impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::SliceEncoder<'_, T>
   pub fn bitcoin_consensus_encoding::SliceEncoder<'_, T>::advance(&mut self) -> bitcoin_consensus_encoding::EncoderStatus [impl: impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::SliceEncoder<'_, T>]
   pub fn bitcoin_consensus_encoding::SliceEncoder<'_, T>::current_chunk(&self) -> &[u8] [impl: impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::SliceEncoder<'_, T>]
@@ -1882,7 +1963,7 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::Unexpe
   pub unsafe fn bitcoin_consensus_encoding::error::UnexpectedEofError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::UnexpectedEofError where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::UnexpectedEofError
   pub fn bitcoin_consensus_encoding::error::UnexpectedEofError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::UnexpectedEofError]
-pub struct bitcoin_consensus_encoding::VecDecoder<T: bitcoin_consensus_encoding::Decode>
+pub struct bitcoin_consensus_encoding::VecDecoder<T: bitcoin_consensus_encoding::Decode>(_)
 impl<T: bitcoin_consensus_encoding::Decode> bitcoin_consensus_encoding::VecDecoder<T>
 pub const fn bitcoin_consensus_encoding::VecDecoder<T>::new() -> Self
 pub const fn bitcoin_consensus_encoding::VecDecoder<T>::new_with_limit(limit: usize) -> Self
@@ -1971,6 +2052,51 @@ impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::VecDec
   pub unsafe fn bitcoin_consensus_encoding::error::VecDecoderError<Err>::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::error::VecDecoderError<Err> where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::VecDecoderError<Err>
   pub fn bitcoin_consensus_encoding::error::VecDecoderError<Err>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_consensus_encoding::error::VecDecoderError<Err>]
+pub struct bitcoin_consensus_encoding::VecDecoderWith<D: bitcoin_consensus_encoding::Decoder + core::default::Default>
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::VecDecoderWith<D>
+pub const fn bitcoin_consensus_encoding::VecDecoderWith<D>::new() -> Self
+pub const fn bitcoin_consensus_encoding::VecDecoderWith<D>::new_with_limit(limit: usize) -> Self
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default + core::clone::Clone> core::clone::Clone for bitcoin_consensus_encoding::VecDecoderWith<D> where <D as bitcoin_consensus_encoding::Decoder>::Output: core::clone::Clone
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::clone(&self) -> Self [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default + core::clone::Clone> core::clone::Clone for bitcoin_consensus_encoding::VecDecoderWith<D> where <D as bitcoin_consensus_encoding::Decoder>::Output: core::clone::Clone]
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default + core::fmt::Debug> core::fmt::Debug for bitcoin_consensus_encoding::VecDecoderWith<D>
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default + core::fmt::Debug> core::fmt::Debug for bitcoin_consensus_encoding::VecDecoderWith<D>]
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>
+  pub type bitcoin_consensus_encoding::VecDecoderWith<D>::Error = bitcoin_consensus_encoding::error::VecDecoderError<<D as bitcoin_consensus_encoding::Decoder>::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+  pub type bitcoin_consensus_encoding::VecDecoderWith<D>::Output = alloc::vec::Vec<<D as bitcoin_consensus_encoding::Decoder>::Output> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::end(self) -> core::result::Result<Self::Output, Self::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::read_limit(&self) -> usize [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> core::default::Default for bitcoin_consensus_encoding::VecDecoderWith<D>
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::default() -> Self [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> core::default::Default for bitcoin_consensus_encoding::VecDecoderWith<D>]
+impl<D> core::marker::Freeze for bitcoin_consensus_encoding::VecDecoderWith<D> where D: core::marker::Freeze
+impl<D> core::marker::Send for bitcoin_consensus_encoding::VecDecoderWith<D> where D: core::marker::Send, <D as bitcoin_consensus_encoding::Decoder>::Output: core::marker::Send
+impl<D> core::marker::Sync for bitcoin_consensus_encoding::VecDecoderWith<D> where D: core::marker::Sync, <D as bitcoin_consensus_encoding::Decoder>::Output: core::marker::Sync
+impl<D> core::marker::Unpin for bitcoin_consensus_encoding::VecDecoderWith<D> where D: core::marker::Unpin, <D as bitcoin_consensus_encoding::Decoder>::Output: core::marker::Unpin
+impl<D> core::marker::UnsafeUnpin for bitcoin_consensus_encoding::VecDecoderWith<D> where D: core::marker::UnsafeUnpin
+impl<D> core::panic::unwind_safe::RefUnwindSafe for bitcoin_consensus_encoding::VecDecoderWith<D> where D: core::panic::unwind_safe::RefUnwindSafe, <D as bitcoin_consensus_encoding::Decoder>::Output: core::panic::unwind_safe::RefUnwindSafe
+impl<D> core::panic::unwind_safe::UnwindSafe for bitcoin_consensus_encoding::VecDecoderWith<D> where D: core::panic::unwind_safe::UnwindSafe, <D as bitcoin_consensus_encoding::Decoder>::Output: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for bitcoin_consensus_encoding::VecDecoderWith<D> where U: core::convert::From<T>
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_consensus_encoding::VecDecoderWith<D> where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::VecDecoderWith<D> where U: core::convert::Into<T>
+  pub type bitcoin_consensus_encoding::VecDecoderWith<D>::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::VecDecoderWith<D> where U: core::convert::Into<T>]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_consensus_encoding::VecDecoderWith<D> where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::VecDecoderWith<D> where U: core::convert::TryFrom<T>
+  pub type bitcoin_consensus_encoding::VecDecoderWith<D>::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::VecDecoderWith<D> where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_consensus_encoding::VecDecoderWith<D> where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::VecDecoderWith<D> where T: core::clone::Clone
+  pub type bitcoin_consensus_encoding::VecDecoderWith<D>::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::VecDecoderWith<D> where T: core::clone::Clone]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::VecDecoderWith<D> where T: core::clone::Clone]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_consensus_encoding::VecDecoderWith<D> where T: core::clone::Clone]
+impl<T> core::any::Any for bitcoin_consensus_encoding::VecDecoderWith<D> where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_consensus_encoding::VecDecoderWith<D> where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_consensus_encoding::VecDecoderWith<D> where T: ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_consensus_encoding::VecDecoderWith<D> where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_consensus_encoding::VecDecoderWith<D> where T: ?core::marker::Sized
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_consensus_encoding::VecDecoderWith<D> where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::VecDecoderWith<D> where T: core::clone::Clone
+  pub unsafe fn bitcoin_consensus_encoding::VecDecoderWith<D>::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_consensus_encoding::VecDecoderWith<D> where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_consensus_encoding::VecDecoderWith<D>
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_consensus_encoding::VecDecoderWith<D>]
 pub trait bitcoin_consensus_encoding::Decode
 pub type bitcoin_consensus_encoding::Decode::Decoder: bitcoin_consensus_encoding::Decoder<Output = Self> + core::default::Default
 pub fn bitcoin_consensus_encoding::Decode::decoder() -> Self::Decoder
@@ -2022,6 +2148,18 @@ impl<A, B> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::D
   pub fn bitcoin_consensus_encoding::Decoder2<A, B>::end(self) -> core::result::Result<Self::Output, Self::Error> [impl: impl<A, B> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::Decoder2<A, B> where A: bitcoin_consensus_encoding::Decoder, B: bitcoin_consensus_encoding::Decoder]
   pub fn bitcoin_consensus_encoding::Decoder2<A, B>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> [impl: impl<A, B> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::Decoder2<A, B> where A: bitcoin_consensus_encoding::Decoder, B: bitcoin_consensus_encoding::Decoder]
   pub fn bitcoin_consensus_encoding::Decoder2<A, B>::read_limit(&self) -> usize [impl: impl<A, B> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::Decoder2<A, B> where A: bitcoin_consensus_encoding::Decoder, B: bitcoin_consensus_encoding::Decoder]
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>
+  pub type bitcoin_consensus_encoding::ExactVecDecoderWith<D>::Error = bitcoin_consensus_encoding::error::VecDecoderError<<D as bitcoin_consensus_encoding::Decoder>::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+  pub type bitcoin_consensus_encoding::ExactVecDecoderWith<D>::Output = alloc::vec::Vec<<D as bitcoin_consensus_encoding::Decoder>::Output> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::end(self) -> core::result::Result<Self::Output, Self::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::ExactVecDecoderWith<D>::read_limit(&self) -> usize [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::ExactVecDecoderWith<D>]
+impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>
+  pub type bitcoin_consensus_encoding::VecDecoderWith<D>::Error = bitcoin_consensus_encoding::error::VecDecoderError<<D as bitcoin_consensus_encoding::Decoder>::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+  pub type bitcoin_consensus_encoding::VecDecoderWith<D>::Output = alloc::vec::Vec<<D as bitcoin_consensus_encoding::Decoder>::Output> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::end(self) -> core::result::Result<Self::Output, Self::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
+  pub fn bitcoin_consensus_encoding::VecDecoderWith<D>::read_limit(&self) -> usize [impl: impl<D: bitcoin_consensus_encoding::Decoder + core::default::Default> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoderWith<D>]
 impl<T: bitcoin_consensus_encoding::Decode> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoder<T>
   pub type bitcoin_consensus_encoding::VecDecoder<T>::Error = bitcoin_consensus_encoding::error::VecDecoderError<<<T as bitcoin_consensus_encoding::Decode>::Decoder as bitcoin_consensus_encoding::Decoder>::Error> [impl: impl<T: bitcoin_consensus_encoding::Decode> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoder<T>]
   pub type bitcoin_consensus_encoding::VecDecoder<T>::Output = alloc::vec::Vec<T> [impl: impl<T: bitcoin_consensus_encoding::Decode> bitcoin_consensus_encoding::Decoder for bitcoin_consensus_encoding::VecDecoder<T>]
@@ -2061,6 +2199,9 @@ impl<A: bitcoin_consensus_encoding::Encoder, B: bitcoin_consensus_encoding::Enco
 impl<A: bitcoin_consensus_encoding::Encoder, B: bitcoin_consensus_encoding::Encoder> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::Encoder2<A, B>
   pub fn bitcoin_consensus_encoding::Encoder2<A, B>::advance(&mut self) -> bitcoin_consensus_encoding::EncoderStatus [impl: impl<A: bitcoin_consensus_encoding::Encoder, B: bitcoin_consensus_encoding::Encoder> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::Encoder2<A, B>]
   pub fn bitcoin_consensus_encoding::Encoder2<A, B>::current_chunk(&self) -> &[u8] [impl: impl<A: bitcoin_consensus_encoding::Encoder, B: bitcoin_consensus_encoding::Encoder> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::Encoder2<A, B>]
+impl<I: core::iter::traits::iterator::Iterator> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::advance(&mut self) -> bitcoin_consensus_encoding::EncoderStatus [impl: impl<I: core::iter::traits::iterator::Iterator> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder]
+  pub fn bitcoin_consensus_encoding::IterEncoder<I>::current_chunk(&self) -> &[u8] [impl: impl<I: core::iter::traits::iterator::Iterator> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::IterEncoder<I> where <I as core::iter::traits::iterator::Iterator>::Item: bitcoin_consensus_encoding::Encoder]
 impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>
   pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>::advance(&mut self) -> bitcoin_consensus_encoding::EncoderStatus [impl: impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>]
   pub fn bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>::current_chunk(&self) -> &[u8] [impl: impl<T: bitcoin_consensus_encoding::Encode> bitcoin_consensus_encoding::Encoder for bitcoin_consensus_encoding::PrefixedSliceEncoder<'_, T>]
