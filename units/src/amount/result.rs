@@ -268,11 +268,8 @@ mod tests {
 
     #[test]
     fn test_sum_amounts() {
-        let amounts = [
-            Amount::from_sat_u32(100),
-            Amount::from_sat_u32(200),
-            Amount::from_sat_u32(300),
-        ];
+        let amounts =
+            [Amount::from_sat_u32(100), Amount::from_sat_u32(200), Amount::from_sat_u32(300)];
 
         let sum: NumOpResult<Amount> = amounts.into_iter().sum();
         assert_eq!(sum, NumOpResult::Valid(Amount::from_sat_u32(600)));
