@@ -3,15 +3,11 @@ on:   # yamllint disable-line rule:truthy
   push:
     branches:
       - master
-      - 'test-ci/**'
   pull_request:
 
 name: Continuous integration
 
 permissions: {}
-
-env:
-  RBMT_LOG_LEVEL: "progress"
 
 jobs:
   Test:
@@ -77,6 +73,52 @@ jobs:
       - name: "Run pre-release checks"
         run: cargo rbmt prerelease --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
 
+  Embedded:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Set up QEMU"
+        run: sudo apt-get update && sudo apt-get install -y qemu-system-arm
+      - name: "Run bitcoin/embedded"
+        working-directory: bitcoin/embedded
+        run: source ./scripts/env.sh && cargo rbmt run --toolchain nightly --lockfile existing -- run --target thumbv7m-none-eabi
+      - name: "Run hashes/embedded no alloc"
+        working-directory: hashes/embedded
+        run: source ./scripts/env.sh && cargo rbmt run --toolchain nightly --lockfile existing -- run --target thumbv7m-none-eabi
+      - name: "Run hashes/embedded with alloc and no hex"
+        working-directory: hashes/embedded
+        run: source ./scripts/env.sh && cargo rbmt run --toolchain nightly --lockfile existing -- run --target thumbv7m-none-eabi --features=alloc
+      - name: "Run hashes/embedded with alloc and hex"
+        working-directory: hashes/embedded
+        run: source ./scripts/env.sh && cargo rbmt run --toolchain nightly --lockfile existing -- run --target thumbv7m-none-eabi --features=alloc,hex
+
+  Cross:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - s390x-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Install cross"
+        run: cargo install cross --locked --git https://github.com/cross-rs/cross --rev 64b5bb4d3d34de062552b9a2093affe77b4ad16a
+      - name: "Run cross test"
+        run: |
+          cp Cargo-recent.lock Cargo.lock
+          cross test --target ${{ matrix.target }} --locked
+
   # Non cargo-rbmt jobs manage their toolchain version directly.
   Prepare:
     runs-on: ubuntu-24.04
@@ -120,63 +162,6 @@ jobs:
         run: rustup target add i686-unknown-linux-gnu
       - name: "Run test on i686"
         run: cargo test --target i686-unknown-linux-gnu
-
-  Cross:
-    name: Cross test - stable toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - s390x-unknown-linux-gnu
-          - aarch64-unknown-linux-gnu
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-      - name: "Install target"
-        run: rustup target add ${{ matrix.target }}
-      - name: "Install cross"
-        run: cargo install cross --locked --git https://github.com/cross-rs/cross --rev 64b5bb4d3d34de062552b9a2093affe77b4ad16a
-      - name: "Run cross test"
-        run: cross test --target ${{ matrix.target }}
-
-  Embedded:
-    name: Embedded - nightly toolchain
-    needs: Prepare
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    env:
-      RUSTFLAGS: "-C link-arg=-Tlink.x"
-      CARGO_TARGET_THUMBV7M_NONE_EABI_RUNNER: "qemu-system-arm -cpu cortex-m3 -machine mps2-an385 -nographic -semihosting-config enable=on,target=native -kernel"
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          persist-credentials: false
-      - name: "Set up QEMU"
-        run: sudo apt update && sudo apt install -y qemu-system-arm gcc-arm-none-eabi
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-          targets: thumbv7m-none-eabi
-      - name: "Install rust-src"
-        run: rustup component add rust-src
-      - name: "Run bitcoin/embedded"
-        run: cd bitcoin/embedded && cargo run --target thumbv7m-none-eabi
-      - name: "Run hashes/embedded no alloc"
-        run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi
-      - name: "Run hashes/embedded with alloc and no hex"
-        run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc
-      - name: "Run hashes/embedded with alloc and hex"
-        run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc,hex
 
   ASAN:                         # hashes crate only.
     name: ASAN - nightly toolchain
