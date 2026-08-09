@@ -12,7 +12,7 @@ REPO_DIR=$(git rev-parse --show-toplevel)
 export LC_ALL=C
 
 # List all fuzz target files.
-listTargetFiles() {
+list_target_files() {
   pushd "$REPO_DIR/fuzz" > /dev/null || exit 1
   find fuzz_targets/ -type f -name "*.rs" | sort
   popd > /dev/null || exit 1
@@ -20,7 +20,7 @@ listTargetFiles() {
 
 # Convert fuzz target file path to target name
 # Example: fuzz_targets/bitcoin/deserialize_block.rs -> bitcoin_deserialize_block
-targetFileToName() {
+target_file_to_name() {
   echo "$1" \
     | sed 's/^fuzz_targets\///' \
     | sed 's/\.rs$//' \
@@ -39,12 +39,12 @@ trap 'rm -f "$CARGO_TOML_TMP"' EXIT
 awk '/^\[\[bin\]\]/{exit} {print}' "$CARGO_TOML" > "$CARGO_TOML_TMP"
 
 # Generate the [[bin]] sections.
-for targetFile in $(listTargetFiles); do
-    targetName=$(targetFileToName "$targetFile")
+for target_file in $(list_target_files); do
+    target_name=$(target_file_to_name "$target_file")
     cat >> "$CARGO_TOML_TMP" <<EOF
 [[bin]]
-name = "$targetName"
-path = "$targetFile"
+name = "$target_name"
+path = "$target_file"
 test = false
 doc = false
 bench = false

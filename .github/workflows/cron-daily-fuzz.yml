@@ -8,6 +8,7 @@ on:
     # - 6am CET
     # - 4pm AEDT
     - cron: '00 05 * * *'
+  workflow_dispatch:
 permissions: {}
 
 jobs:
@@ -33,11 +34,9 @@ jobs:
             fuzz/target
             target
           key: cache-fuzz-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
-      - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-        with:
-          toolchain: '1.74.0'
+      - uses: ./.github/actions/setup-rbmt
       - name: Install cargo-fuzz
-        run: cargo install --locked --version 0.12.0 cargo-fuzz
+        run: cargo install --locked --force --version 0.13.2 cargo-fuzz
       - name: Fuzz shard ${{ matrix.shard_id }}
         working-directory: fuzz
         shell: bash
