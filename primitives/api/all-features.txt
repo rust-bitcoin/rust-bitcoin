@@ -6542,6 +6542,8 @@ impl core::str::traits::FromStr for bitcoin_primitives::witness_version::Witness
   pub fn bitcoin_primitives::witness_version::WitnessVersion::from_str(s: &str) -> core::result::Result<Self, Self::Err> [impl: impl core::str::traits::FromStr for bitcoin_primitives::witness_version::WitnessVersion]
 impl serde::ser::Serialize for bitcoin_primitives::witness_version::WitnessVersion
   pub fn bitcoin_primitives::witness_version::WitnessVersion::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer [impl: impl serde::ser::Serialize for bitcoin_primitives::witness_version::WitnessVersion]
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::witness_version::WitnessVersion
+  pub fn bitcoin_primitives::witness_version::WitnessVersion::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::witness_version::WitnessVersion]
 impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::witness_version::WitnessVersion
   pub fn bitcoin_primitives::witness_version::WitnessVersion::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de> [impl: impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::witness_version::WitnessVersion]
 impl core::marker::Freeze for bitcoin_primitives::witness_version::WitnessVersion

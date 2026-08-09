@@ -82,6 +82,8 @@ pub use self::error::{
         ParseError, UnknownAddressTypeError, UnknownHrpError, ParseBech32Error,
 };
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use alloc::borrow::ToOwned;
 use alloc::format;
 use alloc::string::String;
@@ -1150,6 +1152,49 @@ fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
 }
 
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AddressInner {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=2)? {
+            0 => Ok(Self::P2pkh { hash: u.arbitrary()?, network: u.arbitrary()? }),
+            1 => Ok(Self::P2sh { hash: u.arbitrary()?, network: u.arbitrary()? }),
+            _ => Ok(Self::Segwit { program: u.arbitrary()?, hrp: u.arbitrary()? })
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for KnownHrp {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=2)? {
+            0 => Ok(Self::Mainnet),
+            1 => Ok(Self::Regtest),
+            _ => Ok(Self::Testnets),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a, V: NetworkValidation> Arbitrary<'a> for Address<V> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(PhantomData, u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AddressType {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=5)? {
+            0 => Ok(Self::P2pkh),
+            1 => Ok(Self::P2sh),
+            2 => Ok(Self::P2wpkh),
+            3 => Ok(Self::P2wsh),
+            4 => Ok(Self::P2tr),
+            _ => Ok(Self::P2a),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
