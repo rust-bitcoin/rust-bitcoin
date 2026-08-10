@@ -2,7 +2,9 @@
 
 //! The `ScriptHash` type.
 
+#[cfg(feature = "alloc")]
 use core::convert::Infallible;
+#[cfg(any(feature = "alloc", feature = "hex"))]
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
@@ -11,6 +13,7 @@ use core::str;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::hash160;
 
+#[cfg(feature = "alloc")]
 use crate::script::{PushBytes, PushBytesBuf, Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
 
 /// A 160-bit hash of Bitcoin Script bytecode.
@@ -22,8 +25,10 @@ use crate::script::{PushBytes, PushBytesBuf, Script, ScriptHashableTag, MAX_REDE
 pub struct ScriptHash(hash160::Hash);
 
 super::impl_debug!(ScriptHash);
+#[cfg(feature = "alloc")]
 crate::impl_asref_push_bytes!(ScriptHash);
 
+#[cfg(feature = "alloc")]
 impl ScriptHash {
     /// Constructs a new `ScriptHash` after first checking the script size.
     ///
@@ -65,22 +70,26 @@ impl ScriptHash {
 }
 
 /// Error while hashing a redeem script.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RedeemScriptSizeError {
     /// Invalid redeem script size (cannot exceed 520 bytes).
     size: usize,
 }
 
+#[cfg(feature = "alloc")]
 impl RedeemScriptSizeError {
     /// Returns the invalid redeem script size.
     pub fn invalid_size(&self) -> usize { self.size }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Infallible> for RedeemScriptSizeError {
     #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for RedeemScriptSizeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -6,13 +6,11 @@
 
 mod block_hash;
 mod ntxid;
-#[cfg(feature = "alloc")]
 mod script_hash;
 mod transaction_merkle_node;
 mod txid;
 mod witness_commitment;
 mod witness_merkle_node;
-#[cfg(feature = "alloc")]
 mod witness_script_hash;
 mod wtxid;
 
@@ -21,18 +19,17 @@ mod wtxid;
 pub use self::{
     block_hash::{BlockHash, BlockHashDecoder, BlockHashDecoderError, BlockHashEncoder},
     ntxid::Ntxid,
+    script_hash::ScriptHash,
     transaction_merkle_node::{TxMerkleNode, TxMerkleNodeEncoder, TxMerkleNodeDecoder, TxMerkleNodeDecoderError},
     txid::{Txid},
     wtxid::Wtxid,
     witness_commitment::WitnessCommitment,
     witness_merkle_node::WitnessMerkleNode,
+    witness_script_hash::WScriptHash,
 };
 #[cfg(feature = "alloc")]
 #[doc(inline)]
-pub use self::{
-    script_hash::{RedeemScriptSizeError, ScriptHash},
-    witness_script_hash::{WScriptHash, WitnessScriptSizeError},
-};
+pub use self::{script_hash::RedeemScriptSizeError, witness_script_hash::WitnessScriptSizeError};
 
 /// Adds trait impls to a bytelike type.
 ///

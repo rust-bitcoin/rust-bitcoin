@@ -2,7 +2,9 @@
 
 //! The `WScriptHash` type.
 
+#[cfg(feature = "alloc")]
 use core::convert::Infallible;
+#[cfg(any(feature = "alloc", feature = "hex"))]
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
@@ -11,6 +13,7 @@ use core::str;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256;
 
+#[cfg(feature = "alloc")]
 use crate::script::{PushBytes, PushBytesBuf, WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
 
 /// SegWit (256-bit) version of a Bitcoin Script bytecode hash.
@@ -22,8 +25,10 @@ use crate::script::{PushBytes, PushBytesBuf, WitnessScript, MAX_WITNESS_SCRIPT_S
 pub struct WScriptHash(sha256::Hash);
 
 super::impl_debug!(WScriptHash);
+#[cfg(feature = "alloc")]
 crate::impl_asref_push_bytes!(WScriptHash);
 
+#[cfg(feature = "alloc")]
 impl WScriptHash {
     /// Constructs a new `WScriptHash` after first checking the script size.
     ///
@@ -60,22 +65,26 @@ impl WScriptHash {
 }
 
 /// Error while hashing a witness script.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WitnessScriptSizeError {
     /// Invalid witness script size (cannot exceed 10,000 bytes).
     size: usize,
 }
 
+#[cfg(feature = "alloc")]
 impl WitnessScriptSizeError {
     /// Returns the invalid witness script size.
     pub fn invalid_size(&self) -> usize { self.size }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Infallible> for WitnessScriptSizeError {
     #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for WitnessScriptSizeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
