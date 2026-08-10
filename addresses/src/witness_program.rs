@@ -9,8 +9,9 @@
 
 use crypto::key::{FullPublicKey, TweakedPublicKey, UntweakedPublicKey};
 use internals::array_vec::ArrayVec;
+use primitives::script::WScriptHash;
 #[cfg(feature = "alloc")]
-use primitives::script::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
+use primitives::script::{PushBytes, WitnessScript, WitnessScriptSizeError};
 use primitives::witness_version::WitnessVersion;
 use taproot_primitives::{TapNodeHash, TapTweak as _};
 
@@ -70,7 +71,6 @@ impl WitnessProgram {
     }
 
     /// Constructs a new [`WitnessProgram`] from a 32 byte script hash.
-    #[cfg(feature = "alloc")]
     fn new_p2wsh(program: [u8; 32]) -> Self {
         Self { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
@@ -97,7 +97,6 @@ impl WitnessProgram {
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
-    #[cfg(feature = "alloc")]
     pub fn p2wsh_from_hash(hash: WScriptHash) -> Self { Self::new_p2wsh(hash.to_byte_array()) }
 
     /// Constructs a new [`WitnessProgram`] from an untweaked key for a P2TR output.

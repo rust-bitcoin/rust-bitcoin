@@ -94,18 +94,15 @@ use alloc::format;
 #[cfg(feature = "alloc")]
 use alloc::string::String;
 use core::fmt;
-#[cfg(feature = "alloc")]
 use core::marker::PhantomData;
 #[cfg(feature = "alloc")]
 use core::str::FromStr;
 
 use bech32::{Fe32, Hrp};
-use crypto::key::PubkeyHash;
-#[cfg(feature = "alloc")]
 use crypto::key::{
-    FullPublicKey, LegacyPublicKey, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey,
+    FullPublicKey, LegacyPublicKey, PubkeyHash, TweakedPublicKey, UntweakedPublicKey,
+    XOnlyPublicKey,
 };
-#[cfg(feature = "alloc")]
 use hashes::{hash160, HashEngine};
 #[cfg(feature = "alloc")]
 use internals::array::ArrayExt as _;
@@ -114,18 +111,19 @@ use network::{Network, NetworkKind};
 use primitives::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
 #[cfg(feature = "alloc")]
 use primitives::opcodes::Opcode;
-use primitives::script::ScriptHash;
 #[cfg(feature = "alloc")]
 use primitives::script::{
     Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHashableTag, ScriptPubKey,
-    ScriptPubKeyBuf, WScriptHash, WitnessScript, WitnessScriptSizeError,
+    ScriptPubKeyBuf, WitnessScript, WitnessScriptSizeError,
 };
+use primitives::script::{ScriptHash, WScriptHash};
 #[cfg(feature = "alloc")]
 use primitives::witness_version::WitnessVersion;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use taproot_primitives::TapNodeHash;
 #[cfg(feature = "alloc")]
-use taproot_primitives::{TapNodeHash, TapTweak as _};
+use taproot_primitives::TapTweak as _;
 use witness_program::WitnessProgram;
 
 #[cfg(feature = "alloc")]
@@ -443,7 +441,6 @@ pub enum AddressData {
 }
 
 // Defined in `REPO_DIR/include/newtype.rs`.
-#[cfg(feature = "alloc")]
 transparent_newtype! {
     /// A Bitcoin address.
     ///
@@ -464,6 +461,7 @@ transparent_newtype! {
     /// The types `Address` and `Address<NetworkChecked>` are synonymous, i.e. they can be used interchangeably.
     ///
     /// ```rust
+    /// # #[cfg(feature = "alloc")] {
     /// use std::str::FromStr;
     /// use bitcoin_addresses::{Address, NetworkUnchecked, NetworkChecked};
     /// use bitcoin_addresses::network::Network;
@@ -479,6 +477,7 @@ transparent_newtype! {
     /// // variant 3
     /// let _address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
     ///                .unwrap().require_network(Network::Bitcoin).unwrap();
+    /// # }
     /// ```
     ///
     /// ### Formatting addresses
@@ -489,10 +488,12 @@ transparent_newtype! {
     /// 1. `Display` is implemented only for `Address<NetworkChecked>`:
     ///
     /// ```
+    /// # #[cfg(feature = "alloc")] {
     /// # use bitcoin_addresses::{Address, NetworkChecked};
     /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
     ///                .unwrap().assume_checked();
     /// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    /// # }
     /// ```
     ///
     /// ```ignore
@@ -507,17 +508,21 @@ transparent_newtype! {
     ///    check the network and use `Display` in user-facing context.
     ///
     /// ```
+    /// # #[cfg(feature = "alloc")] {
     /// # use bitcoin_addresses::{Address, NetworkUnchecked};
     /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
     ///                .unwrap();
     /// assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
+    /// # }
     /// ```
     ///
     /// ```
+    /// # #[cfg(feature = "alloc")] {
     /// # use bitcoin_addresses::{Address, NetworkChecked};
     /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
     ///                .unwrap().assume_checked();
     /// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    /// # }
     /// ```
     ///
     /// # Relevant BIPs
@@ -540,11 +545,9 @@ transparent_newtype! {
     }
 }
 
-#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 struct DisplayUnchecked<'a, N: NetworkValidation>(&'a Address<N>);
 
-#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
@@ -587,7 +590,6 @@ impl<'de, U: NetworkValidationUnchecked> serde::Deserialize<'de> for Address<U> 
     }
 }
 
-#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 impl<V: NetworkValidation> serde::Serialize for Address<V> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -600,7 +602,6 @@ impl<V: NetworkValidation> serde::Serialize for Address<V> {
 
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
-#[cfg(feature = "alloc")]
 impl<V: NetworkValidation> Address<V> {
     fn from_inner(inner: AddressInner) -> Self { Self(PhantomData, inner) }
 
@@ -633,7 +634,6 @@ impl<V: NetworkValidation> Address<V> {
 }
 
 /// Methods and functions that can be called only on `Address<NetworkChecked>`.
-#[cfg(feature = "alloc")]
 impl Address {
     /// Constructs a new pay-to-public-key-hash (P2PKH) [`Address`] from a public key.
     ///
@@ -653,6 +653,7 @@ impl Address {
     ///
     /// Returns an error if the script exceeds 520 bytes.
     #[inline]
+    #[cfg(feature = "alloc")]
     pub fn p2sh<T: ScriptHashableTag>(
         redeem_script: &Script<T>,
         network: impl Into<NetworkKind>,
@@ -684,6 +685,7 @@ impl Address {
     ///
     /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     #[allow(clippy::missing_panics_doc)] // script cannot cause hash failure due to size
+    #[cfg(feature = "alloc")]
     pub fn p2shwpkh(pk: FullPublicKey, network: impl Into<NetworkKind>) -> Self {
         let builder =
             ScriptPubKey::builder().push_opcode(OP_PUSHBYTES_0).push_slice(pk.wpubkey_hash());
@@ -696,6 +698,7 @@ impl Address {
     /// # Errors
     ///
     /// Returns an error if the script exceeds 10,000 bytes.
+    #[cfg(feature = "alloc")]
     pub fn p2wsh(
         witness_script: &WitnessScript,
         hrp: impl Into<KnownHrp>,
@@ -719,6 +722,7 @@ impl Address {
     ///
     /// Returns an error if the script exceeds 10,000 bytes.
     #[allow(clippy::missing_panics_doc)] // script cannot cause hash failure due to size
+    #[cfg(feature = "alloc")]
     pub fn p2shwsh(
         witness_script: &WitnessScript,
         network: impl Into<NetworkKind>,
@@ -835,6 +839,7 @@ impl Address {
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
     /// Generates a script pubkey spending to this address.
+    #[cfg(feature = "alloc")]
     pub fn script_pubkey(&self) -> ScriptPubKeyBuf {
         use AddressInner::{P2pkh, P2sh, Segwit};
 
@@ -876,6 +881,7 @@ impl Address {
     /// # })().unwrap();
     /// # assert_eq!(writer, ADDRESS);
     /// ```
+    #[cfg(feature = "alloc")]
     pub fn to_qr_uri(self) -> String { format!("bitcoin:{:#}", self) }
 
     /// Returns true if the given pubkey is directly related to the address payload.
@@ -903,6 +909,7 @@ impl Address {
 
     /// Returns true if the address creates a particular script
     /// This function doesn't make any allocations.
+    #[cfg(feature = "alloc")]
     pub fn matches_script_pubkey(&self, script: &ScriptPubKey) -> bool {
         use AddressInner::{P2pkh, P2sh, Segwit};
 
@@ -929,13 +936,12 @@ impl Address {
         match *self.inner() {
             AddressInner::P2sh { ref hash, network: _ } => hash.as_ref(),
             AddressInner::P2pkh { ref hash, network: _ } => hash.as_ref(),
-            AddressInner::Segwit { ref program, hrp: _ } => program.program().as_bytes(),
+            AddressInner::Segwit { ref program, hrp: _ } => program.program.as_slice(),
         }
     }
 }
 
 /// Methods that can be called only on `Address<NetworkUnchecked>`.
-#[cfg(feature = "alloc")]
 impl Address<NetworkUnchecked> {
     /// Returns a reference to the checked address.
     ///
@@ -949,6 +955,7 @@ impl Address<NetworkUnchecked> {
     /// network a simple comparison is not enough anymore. Instead this function can be used.
     ///
     /// ```rust
+    /// # #[cfg(feature = "alloc")] {
     /// use network::{Network, TestnetVersion};
     /// use bitcoin_addresses::{Address, NetworkUnchecked};
     ///
@@ -962,6 +969,7 @@ impl Address<NetworkUnchecked> {
     /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
     /// assert!(address.is_valid_for_network(Network::Bitcoin));
     /// assert_eq!(address.is_valid_for_network(Network::Testnet(TestnetVersion::V4)), false);
+    /// # }
     /// ```
     pub fn is_valid_for_network(&self, n: Network) -> bool {
         match *self.inner() {
@@ -1014,6 +1022,7 @@ impl Address<NetworkUnchecked> {
     /// let _ = parse_and_validate_address_show_types(network).unwrap();
     /// ```
     #[inline]
+    #[cfg(feature = "alloc")]
     pub fn require_network(self, required: Network) -> Result<Address, ParseError> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
@@ -1041,6 +1050,7 @@ impl Address<NetworkUnchecked> {
     /// - [`Bech32Error::UnknownHrp`] if the human-readable part is not one of the known Bitcoin
     ///   HRPs (`bc`, `tb`, or `bcrt`).
     #[allow(clippy::missing_panics_doc)]
+    #[cfg(feature = "alloc")]
     pub fn from_bech32_str(s: &str) -> Result<Self, Bech32Error> {
         let (hrp, witness_version, data) =
             bech32::segwit::decode(s).map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
@@ -1067,6 +1077,7 @@ impl Address<NetworkUnchecked> {
     ///   - [`PUBKEY_ADDRESS_PREFIX_TEST`]
     ///   - [`SCRIPT_ADDRESS_PREFIX_MAIN`]
     ///   - [`SCRIPT_ADDRESS_PREFIX_TEST`]
+    #[cfg(feature = "alloc")]
     pub fn from_base58_str(s: &str) -> Result<Self, Base58Error> {
         if s.len() > 50 {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
@@ -1109,12 +1120,10 @@ impl From<Address> for ScriptPubKeyBuf {
 
 // Alternate formatting `{:#}` is used to return an uppercase version of bech32 addresses which should
 // be used in QR codes, see [`Address::to_qr_uri`].
-#[cfg(feature = "alloc")]
 impl fmt::Display for Address {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.inner(), fmt) }
 }
 
-#[cfg(feature = "alloc")]
 impl<V: NetworkValidation> fmt::Debug for Address<V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if V::IS_CHECKED {
@@ -1165,7 +1174,6 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
 }
 
 /// Convert a byte array of a pubkey hash into a SegWit redeem hash
-#[cfg(feature = "alloc")]
 fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
     let mut sha_engine = hash160::Hash::engine();
     sha_engine.input(&[0, 20]);
@@ -1191,7 +1199,6 @@ fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
-#[cfg(feature = "alloc")]
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
 
 #[cfg(feature = "alloc")]
