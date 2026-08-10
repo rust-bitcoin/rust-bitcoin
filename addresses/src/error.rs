@@ -1,10 +1,9 @@
 //! Error code for the address module.
 
-#[cfg(feature = "alloc")]
-use alloc::string::String;
 use core::convert::Infallible;
 use core::fmt;
 
+use internals::error::InputString;
 use internals::write_err;
 #[cfg(feature = "alloc")]
 use network::Network;
@@ -60,15 +59,14 @@ impl From<witness_version::InvalidWitnessVersionError> for FromScriptError {
 }
 
 /// Address type is either invalid or not supported in rust-bitcoin.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct UnknownAddressTypeError(pub String);
+pub struct UnknownAddressTypeError(pub(super) InputString);
 
-#[cfg(feature = "alloc")]
 impl fmt::Display for UnknownAddressTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "failed to parse {} as address type", self.0)
+        // Outputs "failed to parse <input string> as address type".
+        write!(f, "{}", self.0.display_cannot_parse("address type"))
     }
 }
 
@@ -141,14 +139,15 @@ impl From<NetworkValidationError> for ParseError {
 }
 
 /// Unknown HRP error.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct UnknownHrpError(pub String);
+pub struct UnknownHrpError(pub(super) InputString);
 
-#[cfg(feature = "alloc")]
 impl fmt::Display for UnknownHrpError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "unknown hrp: {}", self.0) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Outputs "'<input string>' is not a known hrp" or "unknown hrp"
+        self.0.unknown_variant("hrp", f)
+    }
 }
 
 #[cfg(feature = "std")]

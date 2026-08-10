@@ -76,26 +76,23 @@ pub mod witness_program;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-        FromScriptError, InvalidBase58PayloadLengthError,
-        InvalidLegacyPrefixError, LegacyAddressTooLongError,
+    FromScriptError, InvalidBase58PayloadLengthError, InvalidLegacyPrefixError,
+    LegacyAddressTooLongError, UnknownAddressTypeError, UnknownHrpError
 };
 #[cfg(feature = "alloc")]
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-        Base58Error, Bech32Error, NetworkValidationError,
-        ParseError, UnknownAddressTypeError, UnknownHrpError, ParseBech32Error,
+    Base58Error, Bech32Error, NetworkValidationError,
+    ParseError, ParseBech32Error,
 };
 
-#[cfg(feature = "alloc")]
-use alloc::borrow::ToOwned;
 #[cfg(feature = "alloc")]
 use alloc::format;
 #[cfg(feature = "alloc")]
 use alloc::string::String;
 use core::fmt;
 use core::marker::PhantomData;
-#[cfg(feature = "alloc")]
 use core::str::FromStr;
 
 use bech32::{Fe32, Hrp};
@@ -231,7 +228,6 @@ impl fmt::Display for AddressType {
     }
 }
 
-#[cfg(feature = "alloc")]
 impl FromStr for AddressType {
     type Err = UnknownAddressTypeError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -242,7 +238,7 @@ impl FromStr for AddressType {
             "p2wsh" => Ok(Self::P2wsh),
             "p2tr" => Ok(Self::P2tr),
             "p2a" => Ok(Self::P2a),
-            _ => Err(UnknownAddressTypeError(s.to_owned())),
+            _ => Err(UnknownAddressTypeError(s.into())),
         }
     }
 }
@@ -388,7 +384,7 @@ impl KnownHrp {
         } else if hrp == bech32::hrp::BCRT {
             Ok(Self::Regtest)
         } else {
-            Err(UnknownHrpError(hrp.to_lowercase()))
+            Err(UnknownHrpError(hrp.as_str().into()))
         }
     }
 
@@ -1168,7 +1164,7 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
                 Some(pos) => &s[..pos],
                 None => s,
             };
-            Err(UnknownHrpError(hrp.to_owned()).into())
+            Err(UnknownHrpError(hrp.into()).into())
         }
     }
 }
@@ -1204,8 +1200,6 @@ include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
 #[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
-    use alloc::string::ToString;
-
     use network::TestnetVersion;
     use primitives::RedeemScriptBuf;
 
@@ -1432,7 +1426,7 @@ mod tests {
     #[test]
     fn invalid_address_parses_error() {
         let got = "invalid".parse::<AddressType>();
-        let want = Err(UnknownAddressTypeError("invalid".to_string()));
+        let want = Err(UnknownAddressTypeError("invalid".into()));
         assert_eq!(got, want);
     }
 
