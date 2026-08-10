@@ -712,6 +712,38 @@ mod tests {
         assert!(segwit_signal.is_signalling_soft_fork(1));
         assert!(!segwit_signal.is_signalling_soft_fork(2));
     }
+
+    #[test]
+    fn block_rejects_empty_coinbase_witness_commitment() {
+        let mut script = Vec::from(WITNESS_COMMITMENT_MAGIC);
+        script.extend_from_slice(&[0; 32]);
+
+        let coinbase = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            input: vec![crate::TxIn::default()],
+            output: vec![crate::TxOut {
+                value: crate::Amount::ZERO,
+                script_pubkey: crate::ScriptBuf::from_bytes(script),
+            }],
+        };
+
+        let header = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::all_zeros(),
+            merkle_root: TxMerkleNode::all_zeros(),
+            time: 0,
+            bits: CompactTarget::from_consensus(0x1d00ffff),
+            nonce: 0,
+        };
+
+        let mut block = Block { header, txdata: vec![coinbase] };
+        block.header.merkle_root = block.compute_merkle_root().unwrap();
+
+        assert!(block.check_merkle_root());
+        // BIP-141 requires the witness reserved value, so the commitment is invalid.
+        assert!(!block.check_witness_commitment());
+    }
 }
 
 #[cfg(bench)]
