@@ -50,7 +50,6 @@
 //! ref: <https://sprovoost.nl/2022/11/10/what-is-a-bitcoin-address/>
 
 #![no_std]
-#![cfg(feature = "alloc")]
 // Experimental features we need.
 #![doc(test(attr(warn(unused))))]
 // Coding conventions.
@@ -77,38 +76,60 @@ pub mod witness_program;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-        Base58Error, Bech32Error, FromScriptError, InvalidBase58PayloadLengthError,
-        InvalidLegacyPrefixError, LegacyAddressTooLongError, NetworkValidationError,
+        FromScriptError, InvalidBase58PayloadLengthError,
+        InvalidLegacyPrefixError, LegacyAddressTooLongError,
+};
+#[cfg(feature = "alloc")]
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::{
+        Base58Error, Bech32Error, NetworkValidationError,
         ParseError, UnknownAddressTypeError, UnknownHrpError, ParseBech32Error,
 };
 
+#[cfg(feature = "alloc")]
 use alloc::borrow::ToOwned;
+#[cfg(feature = "alloc")]
 use alloc::format;
+#[cfg(feature = "alloc")]
 use alloc::string::String;
 use core::fmt;
+#[cfg(feature = "alloc")]
 use core::marker::PhantomData;
+#[cfg(feature = "alloc")]
 use core::str::FromStr;
 
+#[cfg(feature = "alloc")]
 use bech32::{Fe32, Hrp};
+#[cfg(feature = "alloc")]
 use crypto::key::{
     FullPublicKey, LegacyPublicKey, PubkeyHash, TweakedPublicKey, UntweakedPublicKey,
     XOnlyPublicKey,
 };
+#[cfg(feature = "alloc")]
 use hashes::{hash160, HashEngine};
+#[cfg(feature = "alloc")]
 use internals::array::ArrayExt as _;
 use network::{Network, NetworkKind};
+#[cfg(feature = "alloc")]
 use primitives::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
+#[cfg(feature = "alloc")]
 use primitives::opcodes::Opcode;
+#[cfg(feature = "alloc")]
 use primitives::script::{
     Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptHashableTag,
     ScriptPubKey, ScriptPubKeyBuf, WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
+#[cfg(feature = "alloc")]
 use primitives::witness_version::WitnessVersion;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "alloc")]
 use taproot_primitives::{TapNodeHash, TapTweak as _};
+#[cfg(feature = "alloc")]
 use witness_program::WitnessProgram;
 
+#[cfg(feature = "alloc")]
 const OP_PUSHBYTES_0: Opcode = Opcode::from_u8(0x00);
 
 /// Mainnet (bitcoin) pubkey address prefix.
@@ -213,6 +234,7 @@ impl fmt::Display for AddressType {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl FromStr for AddressType {
     type Err = UnknownAddressTypeError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -236,7 +258,9 @@ mod sealed {
     pub trait NetworkValidationUnchecked {}
     impl NetworkValidationUnchecked for super::NetworkUnchecked {}
 
+    #[cfg(feature = "alloc")]
     pub trait Sealed {}
+    #[cfg(feature = "alloc")]
     impl Sealed for super::ScriptPubKeyBuf {}
 }
 
@@ -283,6 +307,7 @@ impl NetworkValidationUnchecked for NetworkUnchecked {}
 ///
 /// This struct represents the inner representation of an address without the network validation
 /// tag, which is used to ensure that addresses are used only on the appropriate network.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum AddressInner {
     P2pkh { hash: PubkeyHash, network: NetworkKind },
@@ -291,6 +316,7 @@ enum AddressInner {
 }
 
 /// Formats bech32 as upper case if alternate formatting is chosen (`{:#}`).
+#[cfg(feature = "alloc")]
 impl fmt::Display for AddressInner {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -354,6 +380,7 @@ impl KnownHrp {
     }
 
     /// Constructs a new [`KnownHrp`] from a [`bech32::Hrp`].
+    #[cfg(feature = "alloc")]
     fn from_hrp(hrp: Hrp) -> Result<Self, UnknownHrpError> {
         if hrp == bech32::hrp::BC {
             Ok(Self::Mainnet)
@@ -367,6 +394,7 @@ impl KnownHrp {
     }
 
     /// Converts, infallibly a known HRP to a [`bech32::Hrp`].
+    #[cfg(feature = "alloc")]
     fn to_hrp(self) -> Hrp {
         match self {
             Self::Mainnet => bech32::hrp::BC,
@@ -394,6 +422,7 @@ impl From<KnownHrp> for NetworkKind {
 ///
 /// This is the data used to encumber an output that pays to this address i.e., it is the address
 /// excluding the network information.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum AddressData {
@@ -415,6 +444,7 @@ pub enum AddressData {
 }
 
 // Defined in `REPO_DIR/include/newtype.rs`.
+#[cfg(feature = "alloc")]
 transparent_newtype! {
     /// A Bitcoin address.
     ///
@@ -511,9 +541,11 @@ transparent_newtype! {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 struct DisplayUnchecked<'a, N: NetworkValidation>(&'a Address<N>);
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
@@ -521,6 +553,7 @@ impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 impl<'de, U: NetworkValidationUnchecked> serde::Deserialize<'de> for Address<U> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -555,6 +588,7 @@ impl<'de, U: NetworkValidationUnchecked> serde::Deserialize<'de> for Address<U> 
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 impl<V: NetworkValidation> serde::Serialize for Address<V> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -567,6 +601,7 @@ impl<V: NetworkValidation> serde::Serialize for Address<V> {
 
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
+#[cfg(feature = "alloc")]
 impl<V: NetworkValidation> Address<V> {
     fn from_inner(inner: AddressInner) -> Self { Self(PhantomData, inner) }
 
@@ -599,6 +634,7 @@ impl<V: NetworkValidation> Address<V> {
 }
 
 /// Methods and functions that can be called only on `Address<NetworkChecked>`.
+#[cfg(feature = "alloc")]
 impl Address {
     /// Constructs a new pay-to-public-key-hash (P2PKH) [`Address`] from a public key.
     ///
@@ -900,6 +936,7 @@ impl Address {
 }
 
 /// Methods that can be called only on `Address<NetworkUnchecked>`.
+#[cfg(feature = "alloc")]
 impl Address<NetworkUnchecked> {
     /// Returns a reference to the checked address.
     ///
@@ -1066,16 +1103,19 @@ impl Address<NetworkUnchecked> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Address> for ScriptPubKeyBuf {
     fn from(a: Address) -> Self { a.script_pubkey() }
 }
 
 // Alternate formatting `{:#}` is used to return an uppercase version of bech32 addresses which should
 // be used in QR codes, see [`Address::to_qr_uri`].
+#[cfg(feature = "alloc")]
 impl fmt::Display for Address {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.inner(), fmt) }
 }
 
+#[cfg(feature = "alloc")]
 impl<V: NetworkValidation> fmt::Debug for Address<V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if V::IS_CHECKED {
@@ -1103,6 +1143,7 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
 ///
 /// - [`UnknownHrpError`] if the address does not begin with one of the above SegWit or
 ///   legacy prefixes.
+#[cfg(feature = "alloc")]
 impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
     type Err = ParseError;
 
@@ -1125,6 +1166,7 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
 }
 
 /// Convert a byte array of a pubkey hash into a SegWit redeem hash
+#[cfg(feature = "alloc")]
 fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
     let mut sha_engine = hash160::Hash::engine();
     sha_engine.input(&[0, 20]);
@@ -1138,6 +1180,7 @@ fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
 ///
 /// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
 // This function is duplicated in bitcoin and primitives. If you make any changes, please update all three.
+#[cfg(feature = "alloc")]
 fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     version: WitnessVersion,
     program: T,
@@ -1149,8 +1192,10 @@ fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
+#[cfg(feature = "alloc")]
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
 
+#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
     use alloc::string::ToString;

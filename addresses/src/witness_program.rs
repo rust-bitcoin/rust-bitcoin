@@ -9,6 +9,7 @@
 
 use crypto::key::{FullPublicKey, TweakedPublicKey, UntweakedPublicKey};
 use internals::array_vec::ArrayVec;
+#[cfg(feature = "alloc")]
 use primitives::script::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
 use primitives::witness_version::WitnessVersion;
 use taproot_primitives::{TapNodeHash, TapTweak as _};
@@ -69,6 +70,7 @@ impl WitnessProgram {
     }
 
     /// Constructs a new [`WitnessProgram`] from a 32 byte script hash.
+    #[cfg(feature = "alloc")]
     fn new_p2wsh(program: [u8; 32]) -> Self {
         Self { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
@@ -89,11 +91,13 @@ impl WitnessProgram {
     /// # Errors
     ///
     /// Returns an error if the script exceeds 10,000 bytes.
+    #[cfg(feature = "alloc")]
     pub fn p2wsh(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
         WScriptHash::from_script(script).map(Self::p2wsh_from_hash)
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
+    #[cfg(feature = "alloc")]
     pub fn p2wsh_from_hash(hash: WScriptHash) -> Self { Self::new_p2wsh(hash.to_byte_array()) }
 
     /// Constructs a new [`WitnessProgram`] from an untweaked key for a P2TR output.
@@ -125,6 +129,7 @@ impl WitnessProgram {
     pub fn version(&self) -> WitnessVersion { self.version }
 
     /// Returns the witness program.
+    #[cfg(feature = "alloc")]
     #[allow(clippy::missing_panics_doc)] // expect panic is unreachable by witness program limit
     pub fn program(&self) -> &PushBytes {
         self.program
