@@ -647,10 +647,6 @@ impl Block {
     /// Checks if witness commitment in coinbase matches the transaction list.
     pub fn check_witness_commitment(&self) -> bool {
         const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
-        // Witness commitment is optional if there are no transactions using SegWit in the block.
-        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
-            return true;
-        }
 
         if self.txdata.is_empty() {
             return false;
@@ -679,6 +675,12 @@ impl Block {
                         == Self::compute_witness_commitment(&witness_root, witness_vec[0]);
                 }
             }
+            return false;
+        }
+
+        // Witness commitment is optional if there are no transactions using SegWit in the block.
+        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
+            return true;
         }
 
         false
