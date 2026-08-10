@@ -76,14 +76,14 @@ pub mod witness_program;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-    FromScriptError, InvalidBase58PayloadLengthError, InvalidLegacyPrefixError,
+    Base58Error, FromScriptError, InvalidLegacyPrefixError,
     LegacyAddressTooLongError, UnknownAddressTypeError, UnknownHrpError
 };
 #[cfg(feature = "alloc")]
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-    Base58Error, Bech32Error, NetworkValidationError,
+    Bech32Error, NetworkValidationError,
     ParseError, ParseBech32Error,
 };
 
@@ -101,7 +101,6 @@ use crypto::key::{
     XOnlyPublicKey,
 };
 use hashes::{hash160, HashEngine};
-#[cfg(feature = "alloc")]
 use internals::array::ArrayExt as _;
 use network::{Network, NetworkKind};
 #[cfg(feature = "alloc")]
@@ -1064,24 +1063,18 @@ impl Address<NetworkUnchecked> {
     /// # Errors
     ///
     /// - [`Base58Error::LegacyAddressTooLong`] if the input string is longer than 50 characters.
-    /// - [`Base58Error::ParseBase58`] if the input string is invalid base58, less than 4 bytes or
-    ///   the checksum does not match the expected value.
-    /// - [`Base58Error::InvalidBase58PayloadLength`] if the resulting decoded slice is not 21
-    ///   bytes.
+    /// - [`Base58Error::ParseBase58`] if the input string is invalid base58, or the string doesn't
+    ///   decode to exactly 21 bytes.
     /// - [`Base58Error::InvalidLegacyPrefix`] if the address prefix is not one of:
     ///   - [`PUBKEY_ADDRESS_PREFIX_MAIN`]
     ///   - [`PUBKEY_ADDRESS_PREFIX_TEST`]
     ///   - [`SCRIPT_ADDRESS_PREFIX_MAIN`]
     ///   - [`SCRIPT_ADDRESS_PREFIX_TEST`]
-    #[cfg(feature = "alloc")]
     pub fn from_base58_str(s: &str) -> Result<Self, Base58Error> {
         if s.len() > 50 {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
-        let data = base58::decode_check(s)?;
-        let data: &[u8; 21] = (&*data)
-            .try_into()
-            .map_err(|_| InvalidBase58PayloadLengthError { length: data.len() })?;
+        let data = base58::decode_check_to_array::<21>(s)?;
 
         let (prefix, &data) = data.split_first();
 
@@ -1470,12 +1463,6 @@ mod tests {
         let encoded = base58::Base58CkString::encode_unbounded(&payload);
 
         let err = Address::<NetworkUnchecked>::from_base58_str(encoded.as_str()).unwrap_err();
-        match err {
-            Base58Error::InvalidBase58PayloadLength(inner) => {
-                assert_eq!(inner.invalid_base58_payload_length(), 22); // Payload size
-                assert_ne!(inner.invalid_base58_payload_length(), encoded.len()); // Not string size
-            }
-            other => panic!("unexpected error: {other:?}"),
-        }
+        assert!(matches!(err, Base58Error::ParseBase58(_)));
     }
 }

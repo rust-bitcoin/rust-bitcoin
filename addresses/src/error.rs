@@ -269,12 +269,11 @@ impl std::error::Error for ParseBech32Error {
 }
 
 /// Base58 related error.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Base58Error {
     /// Parse legacy Base58 error.
-    ParseBase58(base58::DecodeCheckError),
+    ParseBase58(base58::DecodeCheckArrayError),
     /// Legacy address is too long.
     LegacyAddressTooLong(LegacyAddressTooLongError),
     /// Invalid base58 payload data length for legacy address.
@@ -283,12 +282,10 @@ pub enum Base58Error {
     InvalidLegacyPrefix(InvalidLegacyPrefixError),
 }
 
-#[cfg(feature = "alloc")]
 impl From<Infallible> for Base58Error {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
-#[cfg(feature = "alloc")]
 impl fmt::Display for Base58Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -313,22 +310,18 @@ impl std::error::Error for Base58Error {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl From<base58::DecodeCheckError> for Base58Error {
-    fn from(e: base58::DecodeCheckError) -> Self { Self::ParseBase58(e) }
+impl From<base58::DecodeCheckArrayError> for Base58Error {
+    fn from(e: base58::DecodeCheckArrayError) -> Self { Self::ParseBase58(e) }
 }
 
-#[cfg(feature = "alloc")]
 impl From<LegacyAddressTooLongError> for Base58Error {
     fn from(e: LegacyAddressTooLongError) -> Self { Self::LegacyAddressTooLong(e) }
 }
 
-#[cfg(feature = "alloc")]
 impl From<InvalidBase58PayloadLengthError> for Base58Error {
     fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
 }
 
-#[cfg(feature = "alloc")]
 impl From<InvalidLegacyPrefixError> for Base58Error {
     fn from(e: InvalidLegacyPrefixError) -> Self { Self::InvalidLegacyPrefix(e) }
 }
