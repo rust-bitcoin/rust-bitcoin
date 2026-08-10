@@ -2,19 +2,25 @@
 
 # Manage the shared fuzz corpora stored in the qa-assets repository.
 #
-# Usage: corpora.sh {seed QA_DIR TARGET | refresh INCOMING_DIR TARGETS_FILE | push}
+# Usage: corpora.sh {seed QA_DIR TARGET | refresh INCOMING_CORPORA INCOMING_CRASHES TARGETS_FILE | replay QA_DIR | push}
 #
 # Commands:
 #   seed     Copy a target's stored corpus into fuzz/corpus.
-#   refresh  Replace each stored corpus with the one under INCOMING_DIR and drop
-#            targets not listed in TARGETS_FILE.
+#   refresh  Replace each stored corpus with the one under INCOMING_CORPORA, add
+#            crash inputs under INCOMING_CRASHES to the fuzz_crashes store and
+#            drop targets not listed in TARGETS_FILE.
+#   replay   Run every input in the fuzz_crashes store under QA_DIR against
+#            its target and fail if any of them still crashes.
 #   push     CI only, not meant to be run locally. Commit and push to
 #            qa-assets. Reads QA_ASSETS_PUSH_TOKEN, SOURCE, RUN_URL and
 #            BRANCH from the environment.
 
 set -euo pipefail
 
-usage="Usage: $0 {seed QA_DIR TARGET | refresh INCOMING_DIR TARGETS_FILE | push}"
+# shellcheck source=fuzz/rustflags.sh
+. "$(dirname "$0")/rustflags.sh"
+
+usage="Usage: $0 {seed QA_DIR TARGET | refresh INCOMING_CORPORA INCOMING_CRASHES TARGETS_FILE | replay QA_DIR | push}"
 
 seed() {
   local qa="${1:?$usage}" target="${2:?$usage}"
@@ -27,10 +33,13 @@ seed() {
 }
 
 refresh() {
-  local incoming="${1:?$usage}" targets_file="${2:?$usage}"
+  local corpora="${1:?$usage}" crashes="${2:?$usage}" targets_file="${3:?$usage}"
   local dir name
-  mkdir -p fuzz_corpora "$incoming"
-  for dir in "$incoming"/corpus-*/; do
+  [ -s "$targets_file" ] || { echo "empty target list, refusing to prune" >&2; exit 1; }
+  mkdir -p fuzz_corpora fuzz_crashes "$corpora" "$crashes"
+
+  # Copy and replace the corpora into the fuzz_corpora store.
+  for dir in "$corpora"/corpus-*/; do
     [ -d "$dir" ] || continue # skip on empty corpora, string expansion yields literal pattern
     name=$(basename "$dir")
     name=${name#corpus-}
@@ -38,15 +47,50 @@ refresh() {
     mkdir -p "fuzz_corpora/$name"
     find "$dir" -maxdepth 1 -type f -exec cp -t "fuzz_corpora/$name/" {} +
   done
-  for dir in fuzz_corpora/*/; do
+
+  # Copy without replacing the crashes into the fuzz_crashes store.
+  for dir in "$crashes"/crash-*/; do
     [ -d "$dir" ] || continue
     name=$(basename "$dir")
-    grep -qx "$name" "$targets_file" || rm -rf "$dir" # drop targets that no longer exist upstream
+    name=${name#crash-}
+    mkdir -p "fuzz_crashes/$name"
+    find "$dir" -maxdepth 1 -type f -exec cp -n -t "fuzz_crashes/$name/" {} +
+  done
+
+  # Drop targets that no longer exist upstream
+  for dir in fuzz_corpora/*/ fuzz_crashes/*/; do
+    [ -d "$dir" ] || continue
+    name=$(basename "$dir")
+    grep -qx "$name" "$targets_file" || rm -rf "$dir"
   done
 }
 
+replay() {
+  local qa="${1:?$usage}"
+  local fuzz dir input target rustflags nightly failed=0
+  qa="$(cd "$qa" && pwd)"
+  fuzz="$(cd "$(dirname "$0")" && pwd)"
+  cd "$fuzz"
+  nightly="$(cargo rbmt toolchains --nightly)"
+
+  for dir in "$qa"/fuzz_crashes/*/; do
+    [ -d "$dir" ] || continue
+    target=$(basename "$dir")
+    rustflags="$(fuzz_rustflags "$target")"
+
+    # Inputs as files so libFuzzer runs each one, not as a corpus to fuzz.
+    while IFS= read -r -d '' input; do
+      echo "Replaying $target/$(basename "$input")"
+      if ! RUSTFLAGS="${RUSTFLAGS:-} $rustflags" cargo +"$nightly" fuzz run "$target" "$input"; then
+        failed=1
+      fi
+    done < <(find "$dir" -maxdepth 1 -type f -print0)
+  done
+  [ "$failed" = 0 ] || exit 1
+}
+
 push() {
-  git add -A fuzz_corpora
+  git add -A fuzz_corpora fuzz_crashes
   if git diff --cached --quiet; then
     echo "No corpus changes"
     exit 0
@@ -72,7 +116,7 @@ export LC_ALL=C
 cmd="${1:?$usage}"
 shift
 case "$cmd" in
-  seed | refresh | push) "$cmd" "$@" ;;
+  seed | refresh | replay | push) "$cmd" "$@" ;;
   *)
     echo "$usage" >&2
     exit 2
