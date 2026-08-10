@@ -51,7 +51,7 @@ use crate::script::ScriptExt as _;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-    Base58Error, Bech32Error, FromScriptError, InvalidBase58PayloadLengthError,
+    Base58Error, Bech32Error, FromScriptError,
     InvalidLegacyPrefixError, LegacyAddressTooLongError, NetworkValidationError,
     ParseError, UnknownAddressTypeError, UnknownHrpError, ParseBech32Error,
 };
@@ -100,9 +100,9 @@ crate::internal_macros::define_extension_trait! {
 pub mod error {
     #[doc(inline)]
     pub use addresses::error::{
-        Base58Error, Bech32Error, FromScriptError, InvalidBase58PayloadLengthError,
-        InvalidLegacyPrefixError, LegacyAddressTooLongError, NetworkValidationError,
-        ParseBech32Error, ParseError, UnknownAddressTypeError, UnknownHrpError,
+        Base58Error, Bech32Error, FromScriptError, InvalidLegacyPrefixError,
+        LegacyAddressTooLongError, NetworkValidationError, ParseBech32Error, ParseError,
+        UnknownAddressTypeError, UnknownHrpError,
     };
 }
 

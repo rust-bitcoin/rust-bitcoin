@@ -276,8 +276,6 @@ pub enum Base58Error {
     ParseBase58(base58::DecodeCheckArrayError),
     /// Legacy address is too long.
     LegacyAddressTooLong(LegacyAddressTooLongError),
-    /// Invalid base58 payload data length for legacy address.
-    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
     /// Invalid legacy address prefix in base58 data payload.
     InvalidLegacyPrefix(InvalidLegacyPrefixError),
 }
@@ -291,8 +289,6 @@ impl fmt::Display for Base58Error {
         match self {
             Self::ParseBase58(ref e) => write_err!(f, "legacy parsing error"; e),
             Self::LegacyAddressTooLong(ref e) => write_err!(f, "legacy address length error"; e),
-            Self::InvalidBase58PayloadLength(ref e) =>
-                write_err!(f, "legacy payload length error"; e),
             Self::InvalidLegacyPrefix(ref e) => write_err!(f, "legacy prefix error"; e),
         }
     }
@@ -304,7 +300,6 @@ impl std::error::Error for Base58Error {
         match self {
             Self::ParseBase58(ref e) => Some(e),
             Self::LegacyAddressTooLong(ref e) => Some(e),
-            Self::InvalidBase58PayloadLength(ref e) => Some(e),
             Self::InvalidLegacyPrefix(ref e) => Some(e),
         }
     }
@@ -318,38 +313,8 @@ impl From<LegacyAddressTooLongError> for Base58Error {
     fn from(e: LegacyAddressTooLongError) -> Self { Self::LegacyAddressTooLong(e) }
 }
 
-impl From<InvalidBase58PayloadLengthError> for Base58Error {
-    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
-}
-
 impl From<InvalidLegacyPrefixError> for Base58Error {
     fn from(e: InvalidLegacyPrefixError) -> Self { Self::InvalidLegacyPrefix(e) }
-}
-
-/// Decoded base58 data was an invalid length.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidBase58PayloadLengthError {
-    /// The base58 payload length we got after decoding address string.
-    pub(crate) length: usize,
-}
-
-impl InvalidBase58PayloadLengthError {
-    /// Returns the invalid payload length.
-    pub fn invalid_base58_payload_length(&self) -> usize { self.length }
-}
-
-impl fmt::Display for InvalidBase58PayloadLengthError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "decoded base58 data was an invalid length: {} (expected 21)", self.length)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidBase58PayloadLengthError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { length: _ } = self;
-        None
-    }
 }
 
 /// Legacy base58 address was too long, max 50 characters.
