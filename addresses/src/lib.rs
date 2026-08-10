@@ -99,12 +99,11 @@ use core::marker::PhantomData;
 #[cfg(feature = "alloc")]
 use core::str::FromStr;
 
-#[cfg(feature = "alloc")]
 use bech32::{Fe32, Hrp};
+use crypto::key::PubkeyHash;
 #[cfg(feature = "alloc")]
 use crypto::key::{
-    FullPublicKey, LegacyPublicKey, PubkeyHash, TweakedPublicKey, UntweakedPublicKey,
-    XOnlyPublicKey,
+    FullPublicKey, LegacyPublicKey, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey,
 };
 #[cfg(feature = "alloc")]
 use hashes::{hash160, HashEngine};
@@ -115,10 +114,11 @@ use network::{Network, NetworkKind};
 use primitives::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
 #[cfg(feature = "alloc")]
 use primitives::opcodes::Opcode;
+use primitives::script::ScriptHash;
 #[cfg(feature = "alloc")]
 use primitives::script::{
-    Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptHashableTag,
-    ScriptPubKey, ScriptPubKeyBuf, WScriptHash, WitnessScript, WitnessScriptSizeError,
+    Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHashableTag, ScriptPubKey,
+    ScriptPubKeyBuf, WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
 #[cfg(feature = "alloc")]
 use primitives::witness_version::WitnessVersion;
@@ -126,7 +126,6 @@ use primitives::witness_version::WitnessVersion;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "alloc")]
 use taproot_primitives::{TapNodeHash, TapTweak as _};
-#[cfg(feature = "alloc")]
 use witness_program::WitnessProgram;
 
 #[cfg(feature = "alloc")]
@@ -307,7 +306,6 @@ impl NetworkValidationUnchecked for NetworkUnchecked {}
 ///
 /// This struct represents the inner representation of an address without the network validation
 /// tag, which is used to ensure that addresses are used only on the appropriate network.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum AddressInner {
     P2pkh { hash: PubkeyHash, network: NetworkKind },
@@ -316,7 +314,6 @@ enum AddressInner {
 }
 
 /// Formats bech32 as upper case if alternate formatting is chosen (`{:#}`).
-#[cfg(feature = "alloc")]
 impl fmt::Display for AddressInner {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -327,7 +324,9 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Test => PUBKEY_ADDRESS_PREFIX_TEST,
                 };
                 prefixed[1..].copy_from_slice(hash.as_byte_array());
-                base58::Base58CkString::encode_unbounded(&prefixed[..]).fmt(fmt)
+                base58::Base58CkString::encode(&prefixed[..])
+                    .expect("prefixed is short enough to be encode infallibly")
+                    .fmt(fmt)
             }
             Self::P2sh { hash, network } => {
                 let mut prefixed = [0; 21];
@@ -336,13 +335,15 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Test => SCRIPT_ADDRESS_PREFIX_TEST,
                 };
                 prefixed[1..].copy_from_slice(hash.as_byte_array());
-                base58::Base58CkString::encode_unbounded(&prefixed[..]).fmt(fmt)
+                base58::Base58CkString::encode(&prefixed[..])
+                    .expect("prefixed is short enough to be encode infallibly")
+                    .fmt(fmt)
             }
             Self::Segwit { program, hrp } => {
                 let hrp = hrp.to_hrp();
                 let version = Fe32::try_from(program.version().to_num())
                     .expect("version nums 0-16 are valid fe32 values");
-                let program = program.program().as_ref();
+                let program = program.program.as_slice();
 
                 if fmt.alternate() {
                     bech32::segwit::encode_upper_to_fmt_unchecked(fmt, hrp, version, program)
@@ -394,7 +395,6 @@ impl KnownHrp {
     }
 
     /// Converts, infallibly a known HRP to a [`bech32::Hrp`].
-    #[cfg(feature = "alloc")]
     fn to_hrp(self) -> Hrp {
         match self {
             Self::Mainnet => bech32::hrp::BC,
@@ -422,7 +422,6 @@ impl From<KnownHrp> for NetworkKind {
 ///
 /// This is the data used to encumber an output that pays to this address i.e., it is the address
 /// excluding the network information.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum AddressData {
