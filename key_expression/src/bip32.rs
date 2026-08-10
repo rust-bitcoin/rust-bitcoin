@@ -49,6 +49,8 @@ pub type ExtendedPrivKey = Xpriv;
 pub struct ChainCode([u8; 32]);
 internals::impl_array_newtype!(ChainCode, u8, 32);
 internals::impl_array_newtype_stringify!(ChainCode, 32);
+#[cfg(feature = "serde")]
+internals::impl_array_newtype_serde!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
@@ -66,6 +68,8 @@ impl ChainCode {
 pub struct Fingerprint([u8; 4]);
 internals::impl_array_newtype!(Fingerprint, u8, 4);
 internals::impl_array_newtype_stringify!(Fingerprint, 4);
+#[cfg(feature = "serde")]
+internals::impl_array_newtype_serde!(Fingerprint, 4);
 
 hash_newtype! {
     /// Extended key identifier as defined in BIP-0032.
