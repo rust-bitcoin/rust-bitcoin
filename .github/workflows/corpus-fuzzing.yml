@@ -1,0 +1,142 @@
+# Fuzz every target seeded from its corpus stored in rust-bitcoin/qa-assets.
+# Output gets minimized and pushed back to the origin repository.
+name: Fuzz (corpus)
+
+on:
+  schedule:
+    # 5am every day UTC
+    - cron: "00 05 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  CARGO_FUZZ_VERSION: 0.13.2
+
+# Prevents race on the final push
+concurrency:
+  group: update-corpora
+  cancel-in-progress: false
+
+jobs:
+  setup:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      targets: ${{ steps.list.outputs.targets }}
+      source_sha: ${{ steps.list.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: master
+          persist-credentials: false
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cargo/bin/cargo-fuzz
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
+          key: cargo-fuzz-${{ env.CARGO_FUZZ_VERSION }}
+      - name: Install cargo-fuzz
+        run: cargo install --locked --version "$CARGO_FUZZ_VERSION" cargo-fuzz
+      - name: List fuzz targets
+        id: list
+        run: |
+          echo "targets=$(cd fuzz && cargo fuzz list | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  fuzz:
+    needs: setup
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        fuzz_target: ${{ fromJSON(needs.setup.outputs.targets) }}
+    env:
+      TARGET: ${{ matrix.fuzz_target }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: ${{ github.repository_owner }}/qa-assets
+          persist-credentials: false
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.setup.outputs.source_sha }}
+          path: rust-bitcoin
+          persist-credentials: false
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
+            rust-bitcoin/fuzz/target
+            rust-bitcoin/target
+          # cached cargo-rbmt binary goes stale when it is bumped.
+          key: fuzz-${{ hashFiles('rust-bitcoin/**/Cargo.toml', 'rust-bitcoin/rbmt-version') }}
+          # On cache miss this loads the latest cache and avoids a rebuild from scratch.
+          restore-keys: fuzz-
+      - name: Install cargo-rbmt
+        working-directory: rust-bitcoin
+        run: |
+          cargo install \
+            --git https://git.rust-bitcoin.org/rust-bitcoin/rust-bitcoin-maintainer-tools \
+            --rev "$(cat rbmt-version)" \
+            cargo-rbmt \
+            --locked
+      - name: Install nightly toolchain
+        working-directory: rust-bitcoin
+        run: rustup toolchain install "$(cargo rbmt toolchains --nightly)" --profile minimal --no-self-update
+      - name: Install cargo-fuzz
+        run: cargo install --locked --version "$CARGO_FUZZ_VERSION" cargo-fuzz
+      - name: Seed corpus
+        run: rust-bitcoin/fuzz/corpora.sh seed . "$TARGET"
+      - name: Fuzz
+        working-directory: rust-bitcoin/fuzz
+        run: ./fuzz.sh "$TARGET" -max_total_time=300 # 5 minutes per target
+      # Only successful inputs reach fuzz_corpora.
+      - name: Upload corpus
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: corpus-${{ matrix.fuzz_target }}
+          path: rust-bitcoin/fuzz/corpus/${{ matrix.fuzz_target }}
+          if-no-files-found: warn
+
+  # Merges the corpus of each target back into the qa-assets repository.
+  merge:
+    needs: [setup, fuzz]
+    if: ${{ always() && needs.setup.result == 'success' && needs.fuzz.result != 'cancelled' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: ${{ github.repository_owner }}/qa-assets
+          token: ${{ secrets.QA_ASSETS_PUSH_TOKEN || github.token }}
+          persist-credentials: true # zizmor: ignore[artipacked] the push step uses this credential
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: rust-bitcoin
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        continue-on-error: true
+        with:
+          pattern: corpus-*
+          path: incoming
+      - name: Refresh corpora
+        env:
+          TARGETS: ${{ needs.setup.outputs.targets }}
+        run: |
+          echo "$TARGETS" | jq -r '.[]' > "$RUNNER_TEMP/targets.txt"
+          rust-bitcoin/fuzz/corpora.sh refresh incoming "$RUNNER_TEMP/targets.txt"
+      - name: Commit and push
+        env:
+          QA_ASSETS_PUSH_TOKEN: ${{ secrets.QA_ASSETS_PUSH_TOKEN }}
+          SOURCE: ${{ github.repository }}@${{ needs.setup.outputs.source_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          BRANCH: master
+        run: rust-bitcoin/fuzz/corpora.sh push
