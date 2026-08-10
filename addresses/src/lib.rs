@@ -5,7 +5,30 @@
 //! Bitcoin addresses do not appear on chain; rather, they are conventions used by Bitcoin (wallet)
 //! software to communicate where coins should be sent and are based on the output type e.g., P2WPKH.
 //!
-//! This crate can be used in a no-std environment but requires an allocator.
+//! This crate can be used in a no-std environment, with or without an allocator.
+//!
+//! # Working without an allocator
+//!
+//! Substantial portions of the crate functionality are available without an allocator
+//! (i.e. the `alloc` feature).
+//!
+//! Available without `alloc`:
+//!
+//! - Constructing addresses: [`Address::p2pkh`], [`Address::p2sh_from_hash`], [`Address::p2wpkh`],
+//!   [`Address::p2wsh_from_hash`], [`Address::p2tr`], [`Address::p2tr_tweaked`], [`Address::p2a`],
+//!   and [`Address::from_witness_program`].
+//! - Parsing legacy (base58) addresses with [`Address::from_base58_str`].
+//! - Formatting addresses using `Display` and `Debug`. Both legacy and SegWit addresses can be
+//!   displayed.
+//! - Inspecting addresses e.g., [`Address::address_type`], [`Address::to_address_data`],
+//!   [`Address::is_valid_for_network`], and [`Address::is_related_to_pubkey`].
+//!
+//! Requires `alloc`:
+//!
+//! - Parsing bech32 (SegWit) addresses i.e., `Address::from_bech32_str`. Importantly, this also
+//!   means `FromStr`/`str::parse` and `serde` deserialization require `alloc`.
+//! - Anything that builds a script e.g., `Address::script_pubkey`, `Address::p2sh`,
+//!   `Address::p2wsh`, `Address::p2shwpkh`, `Address::p2shwsh`, and `ScriptPubKeyBufExt`.
 //!
 //! # Examples
 //!
