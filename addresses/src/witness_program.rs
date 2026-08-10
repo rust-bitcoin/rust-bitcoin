@@ -37,7 +37,7 @@ pub struct WitnessProgram {
     /// The SegWit version associated with this witness program.
     version: WitnessVersion,
     /// The witness program (between 2 and 40 bytes).
-    program: ArrayVec<u8, MAX_SIZE>,
+    pub(super) program: ArrayVec<u8, MAX_SIZE>,
 }
 
 impl WitnessProgram {
