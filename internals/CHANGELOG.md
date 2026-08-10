@@ -2,7 +2,13 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-10
+
 - Add `U256` type, moved from the private `include!` module duplicated in `units` and `bitcoin`.
+- Add `transparent_newtype`, `impl_array_newtype`, `impl_array_newtype_stringify`,
+  `impl_asref_push_bytes`, and `decoder_newtype` macros, moved from the `include/` directory.
+- Add `impl_array_newtype_serde`, split out of `impl_array_newtype_stringify` so that callers can
+  independently `cfg`-gate serde support instead of the macro assuming a `serde` feature name.
 
 ## [0.6.0] - 2026-07-07
 
@@ -45,7 +51,7 @@ This release violated semver rules, sorry - yanking.
 - Add `SliceExt` [#4182](https://github.com/rust-bitcoin/rust-bitcoin/pull/4182)
 - Abstract out "debug-print hex fields" using `WrapDebug` [#4088](https://github.com/rust-bitcoin/rust-bitcoin/pull/4088)
 
-## Breaking changes
+### Breaking changes
 
 This release will be yanked because the following were included and are breaking changes:
 
@@ -78,7 +84,9 @@ Split this crate out from the [rust-bitcoin](https://github.com/rust-bitcoin/rus
 For previous development history see the original
 [CHANGELOG](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/CHANGELOG.md) file.
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.5.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.7.0...HEAD
+[0.7.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.6.0...bitcoin-internals-0.7.0
+[0.6.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.5.0...bitcoin-internals-0.6.0
 [0.5.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.4.2...bitcoin-internals-0.5.0
 [0.4.2]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.4.1...bitcoin-internals-0.4.2
 [0.4.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/internals-0.4.0...bitcoin-internals-0.4.1
