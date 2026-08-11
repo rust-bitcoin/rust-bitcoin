@@ -23,8 +23,11 @@ tools:
 # Check for API changes.
 check-api: (rbmt "api")
 
-# Update the recent and minimal lock files.
+# Update all lock files.
 @update-lock-files: (rbmt "lock")
+  cargo fetch --manifest-path {{justfile_directory()}}/benches/Cargo.toml
+  cargo fetch --manifest-path {{justfile_directory()}}/bitcoin/embedded/Cargo.toml
+  cargo fetch --manifest-path {{justfile_directory()}}/hashes/embedded/Cargo.toml
 
 # Query the current API.
 [group('scripts')]
