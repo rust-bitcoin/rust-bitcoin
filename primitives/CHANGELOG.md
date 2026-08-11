@@ -2,10 +2,36 @@
 
 ## [Unreleased]
 
-- `TransactionEncoder` and `BlockEncoder` now implement `ExactSizeEncoder`, enabling callers to
-  obtain the exact encoded size of transactions and blocks before serialization.
+# [0.104.0] - 2026-10-30
+
+- Move `OP_CODESEPARATOR` docs to `ScriptCode` [#6986](https://github.com/rust-bitcoin/rust-bitcoin/pull/6986)
+- Implement `ExactSizeEncoder` for `TransactionEncoder` and `BlockEncoder` [#6906](https://github.com/rust-bitcoin/rust-bitcoin/pull/6906)
+- Export `WitnessMerkleNode` encoder, decoder, and decoder error types [#6995](https://github.com/rust-bitcoin/rust-bitcoin/pull/6995)
+- Remove derived `PartialOrd`/`Ord` from `block::Header`; implement lexicographic `Ord` [#6989](https://github.com/rust-bitcoin/rust-bitcoin/pull/6989)
+- Reject P2SH-wrapped SegWit v1+ programs in `ScriptHash::from_script` and related APIs [#6957](https://github.com/rust-bitcoin/rust-bitcoin/pull/6957)
+- Fix coinbase `ntxid` to use `txid` instead of zeroed-`script_sig` hash [#6958](https://github.com/rust-bitcoin/rust-bitcoin/pull/6958)
+- Fix aggregate size/weight bounds during decoding to prevent memory exhaustion [#6920](https://github.com/rust-bitcoin/rust-bitcoin/pull/6920)
+- Fix serde `size_hint` sanitization to prevent OOM from untrusted input [#6919](https://github.com/rust-bitcoin/rust-bitcoin/pull/6919)
+- Fix `Witness::get` index overflow [#6879](https://github.com/rust-bitcoin/rust-bitcoin/pull/6879)
+- Fix `Witness` inconsistencies when stack contains an oversized item [#6915](https://github.com/rust-bitcoin/rust-bitcoin/pull/6915)
+- Fix `OutPoint` serde vout endianness in sequence visitor [#6880](https://github.com/rust-bitcoin/rust-bitcoin/pull/6880)
+- Fix hash serde error message to include the expected byte count [#7009](https://github.com/rust-bitcoin/rust-bitcoin/pull/7009)
+- Make `ScriptHash` and `WScriptHash` `no-alloc` [#6711](https://github.com/rust-bitcoin/rust-bitcoin/pull/6711)
+- Fix witness commitment check (BIP-141) [#6250](https://github.com/rust-bitcoin/rust-bitcoin/pull/6250)
+- Add serde impls for `WitnessVersion` [#6644](https://github.com/rust-bitcoin/rust-bitcoin/pull/6644)
+- Replace Block `PartialEq`/`Eq` derive with manual impl [#6623](https://github.com/rust-bitcoin/rust-bitcoin/pull/6623)
+- Add `fmt` traits for `WitnessVersion` [#6621](https://github.com/rust-bitcoin/rust-bitcoin/pull/6621)
+- Add `Hash` derive to `Opcode` [#6622](https://github.com/rust-bitcoin/rust-bitcoin/pull/6622)
+- Make `Witness` `FromIterator` infallible [#6554](https://github.com/rust-bitcoin/rust-bitcoin/pull/6554)
+- Add `Extend` impl to `Witness` [#6561](https://github.com/rust-bitcoin/rust-bitcoin/pull/6561)
+- Drop `WitnessCommitment::GENESIS_PREVIOUS_BLOCK_HASH` [#6584](https://github.com/rust-bitcoin/rust-bitcoin/pull/6584)
+- Add `Debug` impl to `witness::Iter` [#6562](https://github.com/rust-bitcoin/rust-bitcoin/pull/6562)
+- Depend on `units 0.7.0`
+- Depend on `consensus-encoding 1.3.0`
 
 # 0.103.1 - 2026-08-06
+
+**YANKED**
 
 - Explicitly depend on `consensus-encoding 1.1.0`
 
@@ -163,7 +189,8 @@ Enjoy!
 * Initial release of the `github.com/rust-bitcoin/rust-bitcoin/primitives` crate as
   `bitcoin-primitives`. The name on crates.io was generously transferred to us.
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-primitives-0.103.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-primitives-0.104.0...HEAD
+[0.104.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.103.0...bitcoin-primitives-0.104.0
 [0.103.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.102.0...bitcoin-primitives-0.103.0
 [0.102.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.101.0...bitcoin-primitives-0.102.0
 [0.101.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.100.0...primitives-0.101.0
