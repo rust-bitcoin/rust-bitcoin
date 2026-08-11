@@ -709,7 +709,6 @@ impl Header {
     /// header.nonce += 1;
     /// assert_ne!(header.block_hash(), block_hash);
     /// ```
-    // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
     pub fn block_hash(&self) -> BlockHash {
         let hash = hashes::encode_to_hash::<_, sha256d::HashEngine>(self);
         BlockHash::from_byte_array(hash.to_byte_array())
