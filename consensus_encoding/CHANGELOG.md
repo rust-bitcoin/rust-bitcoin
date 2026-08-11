@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-11
+
+- Expose lower level encoder/decoder interfaces [#6690](https://github.com/rust-bitcoin/rust-bitcoin/pull/6690)
+  - Add `IterEncoder` driver bound to the low-level `Encoder` trait.
+  - Expose `VecDecoderWith` and `ExactVecDecoderWith` drivers bound to the low-level `Decoder` trait.
+- Make distinction in docs about consensus [#6651](https://github.com/rust-bitcoin/rust-bitcoin/pull/6651)
+- Loosen `serde_as_consensus` trait bounds [#6629](https://github.com/rust-bitcoin/rust-bitcoin/pull/6629)
+- Flatten nested error constructors [#6546](https://github.com/rust-bitcoin/rust-bitcoin/pull/6546)
+
 ## [1.1.0] - 2026-07-14
 
 - Add `PrefixedBytesEncoder` and `PrefixedSliceEncoder` [#6476](https://github.com/rust-bitcoin/rust-bitcoin/pull/6476)
@@ -95,7 +104,8 @@ around but the work got done. Props to him for many of the ideas.
 
 Empty crate to reserve the name on crates.io
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.1.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.2.0...HEAD
+[1.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.1.0...bitcoin-consensus-encoding-1.2.0
 [1.1.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.0.0...bitcoin-consensus-encoding-1.1.0
 [1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.2.0...bitcoin-consensus-encoding-1.0.0
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.1.0...bitcoin-consensus-encoding-0.2.0
