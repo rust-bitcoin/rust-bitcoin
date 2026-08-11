@@ -40,6 +40,7 @@ exclude_re = [
     "units/.* Weight::to_vbytes_ceil", # Deprecated
     "units/.* Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
     "units/.* \\| with \\^ in Target::to_compact_lossy", # compact | (size << 24). compact and size are bitwise independent, so impossible to tell ^ from |.
+    "units/.* Weight::from_non_witness_data_size", # Deprecated
 
     # primitives
     "primitives/.* Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
