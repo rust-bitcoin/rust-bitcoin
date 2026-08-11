@@ -28,6 +28,34 @@ pub use self::error::{ParseWitnessVersionError, InvalidWitnessVersionError};
 ///
 /// First byte of `scriptPubkey` in transaction output for transactions starting with opcodes
 /// ranging from 0 to 16 (inclusive).
+///
+/// # Examples
+///
+/// ```rust
+/// # #[cfg(feature = "alloc")] {
+/// use bitcoin_primitives::witness_version::WitnessVersion;
+/// use bitcoin_primitives::ScriptPubKey;
+///
+/// // A P2WPKH scriptPubKey: OP_0 <20-byte-key-hash>.
+/// let script_pubkey = ScriptPubKey::from_bytes(&[
+///     0x00, 0x14, 0x8b, 0x9c, 0x1a, 0xcd, 0x2f, 0x2f, 0x1a, 0x4c, 0x5e, 0x3b, 0x7f, 0x91, 0x6d,
+///     0x0e, 0x28, 0x3a, 0x54, 0xc7, 0xb2, 0x1d,
+/// ]);
+///
+/// match script_pubkey.witness_version() {
+///     Some(WitnessVersion::V0) => println!("segwit v0 output (P2WPKH or P2WSH)"),
+///     Some(WitnessVersion::V1) => println!("segwit v1 output (Taproot)"),
+///     Some(version) => println!("unknown witness version: {}", version),
+///     None => println!("not a witness program"),
+/// }
+///
+/// assert_eq!(script_pubkey.witness_version(), Some(WitnessVersion::V0));
+///
+/// // Versions are only valid in the range 0 to 16 inclusive.
+/// assert_eq!(WitnessVersion::try_from(1_u8), Ok(WitnessVersion::V1));
+/// assert!(WitnessVersion::try_from(17_u8).is_err());
+/// # }
+/// ```
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[repr(u8)]
 pub enum WitnessVersion {

@@ -22,6 +22,21 @@ use core::fmt;
 ///   Bitcoin Core's `IsPushOnly` considers `OP_RESERVED` to be a "push code", allowing this opcode
 ///   in contexts where only pushes are supposed to be allowed.
 /// </details>
+///
+/// # Examples
+///
+/// ```rust
+/// use bitcoin_primitives::opcodes::all::{OP_EQUAL, OP_HASH160};
+/// use bitcoin_primitives::opcodes::Opcode;
+///
+/// fn is_p2sh_shaped(script: &[u8]) -> bool {
+///     script.first().map(|&b| Opcode::from_u8(b)) == Some(OP_HASH160)
+///         && script.last().map(|&b| Opcode::from_u8(b)) == Some(OP_EQUAL)
+/// }
+///
+/// assert!(is_p2sh_shaped(&[0xa9, 0x14, 0x87]));
+/// assert!(!is_p2sh_shaped(&[0x76, 0xa9, 0xac]));
+/// ```
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Opcode {
     code: u8,
