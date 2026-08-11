@@ -183,6 +183,24 @@ impl<T> ScriptBuf<T> {
     /// If your pushes should be interpreted as numbers, ensure your input does
     /// not have any leading zeros. In particular, the number 0 should be encoded
     /// as an empty string rather than as a single 0 byte.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::script::ScriptSigBuf;
+    ///
+    /// // 0x01 becomes OP_1, and 0x81 becomes OP_1NEGATE.
+    /// let mut script = ScriptSigBuf::new();
+    /// script.push_slice([0x01u8]);
+    /// script.push_slice([0x81u8]);
+    /// assert_eq!(script.as_bytes(), &[0x51, 0x4f]);
+    ///
+    /// // 0x00 and 0x11 have no numeric opcode, so they are pushed as data.
+    /// let mut script = ScriptSigBuf::new();
+    /// script.push_slice([0x00u8]);
+    /// script.push_slice([0x11u8]);
+    /// assert_eq!(script.as_bytes(), &[0x01, 0x00, 0x01, 0x11]);
+    /// ```
     pub fn push_slice<D: AsRef<PushBytes>>(&mut self, data: D) {
         let bytes = data.as_ref().as_bytes();
         if bytes.len() == 1 {
@@ -207,6 +225,17 @@ impl<T> ScriptBuf<T> {
     /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
     ///
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::script::ScriptSigBuf;
+    ///
+    /// // Unlike `push_slice`, 0x01 is pushed as raw data, not an opcode.
+    /// let mut non_minimal = ScriptSigBuf::new();
+    /// non_minimal.push_slice_non_minimal([0x01u8]);
+    /// assert_eq!(non_minimal.as_bytes(), &[0x01, 0x01]);
+    /// ```
     pub fn push_slice_non_minimal<D: AsRef<PushBytes>>(&mut self, data: D) {
         let data = data.as_ref();
         self.reserve(Self::reserved_len_for_slice(data.len()));
@@ -265,11 +294,36 @@ impl<T> ScriptBuf<T> {
 
 impl ScriptPubKeyBuf {
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::script::ScriptPubKeyBuf;
+    /// use bitcoin_primitives::{Amount, TxOut};
+    ///
+    /// let script_pubkey = ScriptPubKeyBuf::new_op_return([0x01, 0x02, 0x03]);
+    /// assert_eq!(script_pubkey.as_bytes(), &[0x6a, 0x03, 0x01, 0x02, 0x03]);
+    ///
+    /// // Unspendable, so any amount assigned is burned.
+    /// let _output = TxOut { amount: Amount::ZERO, script_pubkey };
+    /// ```
     pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
         Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
     }
 
     /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::script::{RedeemScriptBuf, ScriptHash, ScriptPubKeyBuf};
+    ///
+    /// let redeem_script = RedeemScriptBuf::from_bytes(vec![0x51]);
+    /// let script_pubkey = ScriptPubKeyBuf::new_p2sh(ScriptHash::from_script(&redeem_script)?);
+    ///
+    /// assert!(script_pubkey.is_p2sh());
+    /// # Ok::<_, bitcoin_primitives::script::RedeemScriptSizeError>(())
+    /// ```
     pub fn new_p2sh(script_hash: ScriptHash) -> Self {
         Builder::new()
             .push_opcode(OP_HASH160)
@@ -286,6 +340,18 @@ impl ScriptPubKeyBuf {
 
 impl<T: ScriptHashableTag> ScriptBuf<T> {
     /// Generates a P2WSH witness program script with a given hash of the witness script.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::script::{ScriptPubKeyBuf, WScriptHash, WitnessScriptBuf};
+    ///
+    /// let witness_script = WitnessScriptBuf::from_bytes(vec![0x51]);
+    /// let script_pubkey = ScriptPubKeyBuf::new_p2wsh(WScriptHash::from_script(&witness_script)?);
+    ///
+    /// assert!(script_pubkey.is_p2wsh());
+    /// # Ok::<_, bitcoin_primitives::script::WitnessScriptSizeError>(())
+    /// ```
     pub fn new_p2wsh(script_hash: WScriptHash) -> Self {
         // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
         super::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
