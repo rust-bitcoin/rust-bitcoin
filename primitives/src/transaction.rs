@@ -64,10 +64,8 @@ pub use self::error::{OutPointDecoderError, VersionDecoderError};
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::{TransactionDecoderError, TxInDecoderError, TxOutDecoderError};
-#[doc(no_inline)]
-pub use crate::hash_types::BlockHashDecoderError;
 #[doc(inline)]
-pub use crate::hash_types::{BlockHashDecoder, Ntxid, Txid, Wtxid};
+pub use crate::hash_types::{Ntxid, Txid, Wtxid};
 
 /// Bitcoin transaction.
 ///
