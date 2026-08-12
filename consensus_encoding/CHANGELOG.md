@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-12
+
+- Expose lower level encoder/decoder interfaces [#6690](https://github.com/rust-bitcoin/rust-bitcoin/pull/6690)
+- Make distinction in docs about consensus [#6651](https://github.com/rust-bitcoin/rust-bitcoin/pull/6651)
+- Loosen `serde_as_consensus` trait bounds [#6629](https://github.com/rust-bitcoin/rust-bitcoin/pull/6629)
+
 ## [1.1.0] - 2026-07-14
 
 - Add `PrefixedBytesEncoder` and `PrefixedSliceEncoder` [#6476](https://github.com/rust-bitcoin/rust-bitcoin/pull/6476)
