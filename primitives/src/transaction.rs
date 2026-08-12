@@ -329,7 +329,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     let input_len = tx.inputs.len();
     enc.input(crate::compact_size_encode(input_len).as_slice());
     for input in &tx.inputs {
-        // Encode each input same as we do in `Encodable for TxIn`.
+        // Encode each input same as we do in `Encode for TxIn`.
         enc.input(input.previous_output.txid.as_byte_array());
         enc.input(&input.previous_output.vout.to_le_bytes());
 
@@ -344,7 +344,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     let output_len = tx.outputs.len();
     enc.input(crate::compact_size_encode(output_len).as_slice());
     for output in &tx.outputs {
-        // Encode each output same as we do in `Encodable for TxOut`.
+        // Encode each output same as we do in `Encode for TxOut`.
         enc.input(&output.amount.to_sat().to_le_bytes());
 
         let script_pubkey_bytes = output.script_pubkey.as_bytes();
@@ -355,7 +355,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     if uses_segwit_serialization {
         // BIP-0141 (SegWit) transaction serialization also includes the witness data.
         for input in &tx.inputs {
-            // Same as `Encodable for Witness`.
+            // Same as `Encode for Witness`.
             enc.input(crate::compact_size_encode(input.witness.len()).as_slice());
             for element in &input.witness {
                 enc.input(crate::compact_size_encode(element.len()).as_slice());
@@ -364,7 +364,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
         }
     }
 
-    // Same as `Encodable for absolute::LockTime`.
+    // Same as `Encode for absolute::LockTime`.
     enc.input(&tx.lock_time.to_consensus_u32().to_le_bytes());
 
     sha256d::Hash::from_engine(enc)
@@ -777,9 +777,9 @@ pub struct TxIn {
     pub sequence: Sequence,
     /// Witness data: an array of byte-arrays.
     /// Note that this field is *not* (de)serialized with the rest of the [`TxIn`] in
-    /// Encodable/Decodable, as it is (de)serialized at the end of the full
-    /// [`Transaction`]. It *is* (de)serialized with the rest of the [`TxIn`] in other
-    /// (de)serialization routines.
+    /// [`Encode`](encoding::Encode)/[`Decode`](encoding::Decode), as it is (de)serialized at the
+    /// end of the full [`Transaction`]. It *is* (de)serialized with the rest of the [`TxIn`] in
+    /// other (de)serialization routines.
     pub witness: Witness,
 }
 
