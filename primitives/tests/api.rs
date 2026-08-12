@@ -189,17 +189,11 @@ struct Clone<'a> {
     i2: pow::Target,
     i3: pow::Work,
     // j: &'a Script,
-    #[cfg(feature = "alloc")]
     j0: alloc::boxed::Box<PushBytes>,
-    #[cfg(feature = "alloc")]
     j1: alloc::boxed::Box<RedeemScript>,
-    #[cfg(feature = "alloc")]
     j2: alloc::boxed::Box<ScriptPubKey>,
-    #[cfg(feature = "alloc")]
     j3: alloc::boxed::Box<ScriptSig>,
-    #[cfg(feature = "alloc")]
     j4: alloc::boxed::Box<TapScript>,
-    #[cfg(feature = "alloc")]
     j5: alloc::boxed::Box<WitnessScript>,
     k: ScriptHash,
     l: WScriptHash,
