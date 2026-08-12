@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Contains `PushBytes` & co
+//! Contains [`PushBytes`] & co
 
 #[cfg(feature = "alloc")]
 use alloc::borrow::ToOwned as _;
@@ -198,16 +198,16 @@ mod primitive {
         71, 72, 73, 74, 75, 76
     }
 
-    /// Owned, growable counterpart to `PushBytes`.
+    /// Owned, growable counterpart to [`PushBytes`].
     #[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     pub struct PushBytesBuf(Vec<u8>);
 
     impl PushBytesBuf {
-        /// Constructs an empty `PushBytesBuf`.
+        /// Constructs an empty [`PushBytesBuf`].
         #[inline]
         pub const fn new() -> Self { Self(Vec::new()) }
 
-        /// Constructs an empty `PushBytesBuf` with reserved capacity.
+        /// Constructs an empty [`PushBytesBuf`] with reserved capacity.
         pub fn with_capacity(capacity: usize) -> Self { Self(Vec::with_capacity(capacity)) }
 
         /// Reserve capacity for `additional_capacity` bytes.
@@ -228,7 +228,7 @@ mod primitive {
             Ok(())
         }
 
-        /// Try appending a slice to `PushBytesBuf`
+        /// Try appending a slice to [`PushBytesBuf`]
         ///
         /// # Errors
         ///
@@ -257,13 +257,13 @@ mod primitive {
         /// Remove bytes from buffer past `len`.
         pub fn truncate(&mut self, len: usize) { self.0.truncate(len) }
 
-        /// Extracts `PushBytes` slice
+        /// Extracts [`PushBytes`] slice
         pub fn as_push_bytes(&self) -> &PushBytes {
             // length guaranteed by our invariant
             PushBytes::from_slice_unchecked(&self.0)
         }
 
-        /// Extracts mutable `PushBytes` slice
+        /// Extracts mutable [`PushBytes`] slice
         pub fn as_mut_push_bytes(&mut self) -> &mut PushBytes {
             // length guaranteed by our invariant
             PushBytes::from_mut_slice_unchecked(&mut self.0)
@@ -372,9 +372,9 @@ crate::impl_asref_push_bytes! {
     hashes::sha256d::Hash,
 }
 
-/// Reports information about failed conversion into `PushBytes`.
+/// Reports information about failed conversion into [`PushBytes`].
 ///
-/// This should not be needed by general public, except as an additional bound on `TryFrom` when
+/// This should not be needed by general public, except as an additional bound on [`TryFrom`] when
 /// converting to `WitnessProgram`.
 pub trait PushBytesErrorReport: sealed::Sealed {
     /// How many bytes the input had.
@@ -399,7 +399,9 @@ pub use error::PushBytesError;
 mod error {
     use core::fmt;
 
-    /// Error returned on attempt to create too large `PushBytes`.
+    /// Error returned on attempt to create too large [`PushBytes`].
+    ///
+    /// [`PushBytes`]: super::PushBytes
     #[allow(unused)]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct PushBytesError {
@@ -422,7 +424,9 @@ mod error {
 mod error {
     use core::fmt;
 
-    /// Error returned on attempt to create too large `PushBytes`.
+    /// Error returned on attempt to create too large [`PushBytes`].
+    ///
+    /// [`PushBytes`]: super::PushBytes
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct PushBytesError {
         /// How long the input was.

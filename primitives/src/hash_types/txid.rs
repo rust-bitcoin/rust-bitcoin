@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `Txid` type.
+//! The [`Txid`] type.
 //!
 //! In order to print and parse txids enable the "hex" feature.
 
@@ -26,7 +26,7 @@ pub struct Txid(sha256d::Hash);
 super::impl_debug!(Txid);
 
 impl Txid {
-    /// The `Txid` used in a coinbase prevout.
+    /// The [`Txid`] used in a coinbase prevout.
     ///
     /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
     /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].

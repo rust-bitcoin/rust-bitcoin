@@ -12,7 +12,7 @@ use core::fmt;
 
 /// A script opcode.
 ///
-/// We do not implement `Ord` on this type because there is no natural ordering on opcodes, but there
+/// We do not implement [`Ord`] on this type because there is no natural ordering on opcodes, but there
 /// may appear to be one (e.g. because all the push opcodes appear in a consecutive block) and we
 /// don't want to encourage subtly buggy code.
 ///
@@ -52,7 +52,7 @@ macro_rules! all_opcodes {
         /// Enables wildcard imports to bring into scope all opcodes and nothing else.
         ///
         /// The `all` module is provided so one can use a wildcard import `use primitives::opcodes::all::*`
-        /// to get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. `Opcode`).
+        /// to get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. [`Opcode`](crate::opcodes::Opcode)).
         ///
         /// This module is guaranteed to never contain anything except opcode constants and all opcode
         /// constants are guaranteed to begin with `OP_`.

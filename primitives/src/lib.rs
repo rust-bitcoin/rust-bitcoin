@@ -12,9 +12,9 @@
 //!
 //! ### serde
 //!
-//! The consensus encodable types (`Block`, `block::Header`, `Transaction`, `TxIn`, and `TxOut`)
-//! deliberately do not implement serde traits. Instead, they can be de/serialized with the
-//! `bitcoin_consensus_encoding::serde_as_consensus` module.
+//! The consensus encodable types ([`Block`], [`block::Header`], [`Transaction`], [`TxIn`], and
+//! [`TxOut`]) deliberately do not implement serde traits. Instead, they can be de/serialized with
+//! the `bitcoin_consensus_encoding::serde_as_consensus` module.
 //!
 //! ```rust
 //! # #[cfg(feature = "serde")] {
@@ -93,7 +93,7 @@ pub use units::{
     weight::{self, Weight},
 };
 
-#[deprecated(since = "1.0.0-rc.0", note = "use `BlockHeightInterval` instead")]
+#[deprecated(since = "1.0.0-rc.0", note = "use [`BlockHeightInterval`] instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
 

@@ -10,7 +10,7 @@ use crate::prelude::Vec;
 ///
 /// # Panics
 ///
-/// `Builder` is backed by [`ScriptBuf`] and inherits its panic behavior. This means that
+/// [`Builder`] is backed by [`ScriptBuf`] and inherits its panic behavior. This means that
 /// attempting to construct scripts larger than `isize::MAX` bytes will panic.
 #[derive(PartialEq, Eq, Clone)]
 pub struct Builder<T>(ScriptBuf<T>);
@@ -55,7 +55,7 @@ impl<T> Builder<T> {
         self
     }
 
-    /// Converts the `Builder` into `ScriptBuf`.
+    /// Converts the [`Builder`] into [`ScriptBuf`].
     pub fn into_script(self) -> ScriptBuf<T> { self.0 }
 
     /// Returns the internal script

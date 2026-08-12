@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `WScriptHash` type.
+//! The [`WScriptHash`] type.
 
 use core::convert::Infallible;
 use core::fmt;
@@ -25,7 +25,7 @@ super::impl_debug!(WScriptHash);
 crate::impl_asref_push_bytes!(WScriptHash);
 
 impl WScriptHash {
-    /// Constructs a new `WScriptHash` after first checking the script size.
+    /// Constructs a new [`WScriptHash`] after first checking the script size.
     ///
     /// # 10,000-byte limit on the witness script
     ///
@@ -47,7 +47,7 @@ impl WScriptHash {
         Ok(Self::from_script_unchecked(witness_script))
     }
 
-    /// Constructs a new `WScriptHash` from any script irrespective of script size.
+    /// Constructs a new [`WScriptHash`] from any script irrespective of script size.
     ///
     /// If you hash a script that exceeds 10,000 bytes in size and use it to create a Segwit
     /// output then the output will be unspendable (see [BIP-0141]).

@@ -17,11 +17,11 @@ use crate::ScriptPubKeyBuf;
 
 /// An owned, growable script.
 ///
-/// `ScriptBuf` is the most common script type that has the ownership over the contents of the
+/// [`ScriptBuf`] is the most common script type that has the ownership over the contents of the
 /// script. It has a close relationship with its borrowed counterpart, [`Script`].
 ///
 /// Just as other similar types, this implements [`Deref`], so [deref coercions] apply. Also note
-/// that all the safety/validity restrictions that apply to [`Script`] apply to `ScriptBuf` as well.
+/// that all the safety/validity restrictions that apply to [`Script`] apply to [`ScriptBuf`] as well.
 ///
 /// # Hexadecimal strings
 ///
@@ -36,7 +36,7 @@ use crate::ScriptPubKeyBuf;
 ///
 /// # Panics
 ///
-/// `ScriptBuf` is backed by [`Vec`] and inherits its panic behavior. This means that attempting to
+/// [`ScriptBuf`] is backed by [`Vec`] and inherits its panic behavior. This means that attempting to
 /// construct scripts larger than `isize::MAX` bytes will panic.
 #[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct ScriptBuf<T>(PhantomData<T>, Vec<u8>);
@@ -71,7 +71,7 @@ impl<T> ScriptBuf<T> {
     /// Constructs a new [`ScriptBuf`] from a hex string.
     ///
     /// This is **not** consensus encoding. If your hex string is a consensus encoded script
-    /// then use `ScriptBuf::from_hex_prefixed`.
+    /// then use [`ScriptBuf::from_hex_prefixed`].
     ///
     /// There is no script decoding error path because what ever is in the hex input string is
     /// assumed to be the script. This means if you pass a consensus encoded hex string into this
@@ -104,7 +104,7 @@ impl<T> ScriptBuf<T> {
     #[inline]
     pub fn into_bytes(self) -> Vec<u8> { self.1 }
 
-    /// Converts this `ScriptBuf` into a [boxed](Box) [`Script`].
+    /// Converts this [`ScriptBuf`] into a [boxed](Box) [`Script`].
     ///
     /// This method reallocates if the capacity is greater than length of the script but should not
     /// when they are equal. If you know beforehand that you need to create a script of exact size
@@ -226,7 +226,7 @@ impl<T> ScriptBuf<T> {
 
     /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
     ///
-    /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
+    /// Note: if the returned value leaks the original [`ScriptBuf`] will become empty.
     fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_, T> {
         let vec = core::mem::take(self).into_bytes();
         ScriptBufAsVec(self, vec)

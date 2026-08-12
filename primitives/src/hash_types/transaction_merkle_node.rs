@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `TxMerkleNode` type.
+//! The [`TxMerkleNode`] type.
 
 use core::convert::Infallible;
 use core::fmt;
@@ -38,13 +38,13 @@ impl TxMerkleNode {
 
     /// Given an iterator of leaves, compute the Merkle root.
     ///
-    /// Returns `None` if the iterator was empty, or if the transaction list contains
+    /// Returns [`None`] if the iterator was empty, or if the transaction list contains
     /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
     /// transactions will always be invalid, so there is no harm in us refusing to
     /// compute their merkle roots.
     ///
     /// Unless you are certain your transaction list is nonempty and has no duplicates,
-    /// you should not unwrap the `Option` returned by this method!
+    /// you should not unwrap the [`Option`] returned by this method!
     pub fn calculate_root<I: IntoIterator<Item = Txid>>(iter: I) -> Option<Self> {
         MerkleNode::calculate_root(iter.into_iter())
     }
@@ -84,7 +84,7 @@ crate::decoder_newtype! {
     }
 }
 
-/// An error consensus decoding a `TxMerkleNode`.
+/// An error consensus decoding a [`TxMerkleNode`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TxMerkleNodeDecoderError(encoding::UnexpectedEofError);
 

@@ -29,13 +29,13 @@ crate::transparent_newtype! {
     ///
     /// *[See also the `bitcoin::script` module](super).*
     ///
-    /// `Script` is a script slice, the most primitive script type. It's usually seen in its borrowed
+    /// [`Script`] is a script slice, the most primitive script type. It's usually seen in its borrowed
     /// form `&Script`. It is always encoded as a series of bytes representing the opcodes and data
     /// pushes.
     ///
     /// # Validity
     ///
-    /// `Script` does not have any validity invariants - it's essentially just a marked slice of
+    /// [`Script`] does not have any validity invariants - it's essentially just a marked slice of
     /// bytes. This is similar to [`Path`](std::path::Path) vs [`OsStr`](std::ffi::OsStr) where they
     /// are trivially cast-able to each-other and `Path` doesn't guarantee being a usable FS path but
     /// having a newtype still has value because of added methods, readability and basic type checking.
@@ -81,10 +81,10 @@ crate::transparent_newtype! {
     pub struct Script<T>(PhantomData<T>, [u8]);
 
     impl<T> Script<T> {
-        /// Treat byte slice as `Script`
+        /// Treat byte slice as [`Script`]
         pub const fn from_bytes(bytes: &_) -> &Self;
 
-        /// Treat mutable byte slice as `Script`
+        /// Treat mutable byte slice as [`Script`]
         pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
 
         pub(crate) fn from_boxed_bytes(bytes: Box<_>) -> Box<Self>;
