@@ -505,6 +505,37 @@ fn c_serde() {
     assert_serde::<witness_version::WitnessVersion>();
 }
 
+/// P-ARBITRARY: Tests that public types implement `Arbitrary`.
+#[test]
+fn p_arbitrary() {
+    fn assert_arbitrary<T: for<'a> Arbitrary<'a>>() {}
+
+    assert_arbitrary::<block::Block<Unchecked>>();
+    assert_arbitrary::<block::Header>();
+    assert_arbitrary::<block::Version>();
+    assert_arbitrary::<block::BlockHash>();
+    assert_arbitrary::<block::WitnessCommitment>();
+    assert_arbitrary::<merkle_tree::TxMerkleNode>();
+    assert_arbitrary::<merkle_tree::WitnessMerkleNode>();
+    assert_arbitrary::<RedeemScriptBuf>();
+    assert_arbitrary::<ScriptPubKeyBuf>();
+    assert_arbitrary::<ScriptSigBuf>();
+    assert_arbitrary::<TapScriptBuf>();
+    assert_arbitrary::<WitnessScriptBuf>();
+    assert_arbitrary::<SignetBlockScriptBuf>();
+    assert_arbitrary::<ScriptHash>();
+    assert_arbitrary::<WScriptHash>();
+    assert_arbitrary::<Transaction>();
+    assert_arbitrary::<TxIn>();
+    assert_arbitrary::<TxOut>();
+    assert_arbitrary::<OutPoint>();
+    assert_arbitrary::<Txid>();
+    assert_arbitrary::<Wtxid>();
+    assert_arbitrary::<transaction::Ntxid>();
+    assert_arbitrary::<transaction::Version>();
+    assert_arbitrary::<Witness>();
+}
+
 /// P-DEFAULT-CHANGE: Tests regression for Default implementation values.
 #[test]
 fn p_default_change() {
