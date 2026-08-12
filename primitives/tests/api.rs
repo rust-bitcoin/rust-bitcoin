@@ -502,6 +502,7 @@ fn c_serde() {
     assert_serde::<transaction::Version>();
     assert_serde::<OutPoint>();
     assert_serde::<Witness>();
+    assert_serde::<witness_version::WitnessVersion>();
 }
 
 /// P-DEFAULT-CHANGE: Tests regression for Default implementation values.
