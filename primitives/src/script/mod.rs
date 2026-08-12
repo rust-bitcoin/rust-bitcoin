@@ -448,7 +448,7 @@ impl<T: PartialOrd> PartialOrd<ScriptBuf<T>> for Script<T> {
 
 #[cfg(feature = "serde")]
 impl<T> serde::Serialize for Script<T> {
-    /// User-facing serialization for `Script`.
+    /// User-facing serialization for [`Script`].
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

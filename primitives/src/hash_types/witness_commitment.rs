@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `WitnessCommitment` type.
+//! The [`WitnessCommitment`] type.
 
 #[cfg(feature = "hex")]
 use core::{fmt, str};

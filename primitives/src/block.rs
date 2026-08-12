@@ -65,7 +65,7 @@ const WITNESS_COMMITMENT_MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
 /// See `bitcoin::block::BlockUncheckedExt::validate()`.
 #[cfg(feature = "alloc")]
 pub trait Validation: sealed::Validation + Sync + Send + Sized + Unpin {
-    /// Indicates whether this `Validation` is `Checked` or not.
+    /// Indicates whether this [`Validation`] is [`Checked`] or not.
     const IS_CHECKED: bool;
 }
 
@@ -98,7 +98,7 @@ where
 
 #[cfg(feature = "alloc")]
 impl Block<Unchecked> {
-    /// Constructs a new `Block` without doing any validation.
+    /// Constructs a new [`Block`] without doing any validation.
     #[inline]
     pub fn new_unchecked(header: Header, transactions: Vec<Transaction>) -> Self {
         Self { header, transactions, witness_root: None, _marker: PhantomData::<Unchecked> }
@@ -380,7 +380,7 @@ type BlockInnerDecoder = Decoder2<HeaderDecoder, VecDecoder<Transaction>>;
 crate::decoder_newtype! {
     /// The decoder for the [`Block`] type.
     ///
-    /// This decoder can only produce a `Block<Unchecked>`.
+    /// This decoder can only produce a [`Block<Unchecked>`].
     #[derive(Debug, Clone)]
     pub struct BlockDecoder(BlockInnerDecoder);
 
@@ -395,13 +395,13 @@ crate::decoder_newtype! {
 
 /// Computes the Merkle root for a list of transactions.
 ///
-/// Returns `None` if the iterator was empty, or if the transaction list contains
+/// Returns [`None`] if the iterator was empty, or if the transaction list contains
 /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
 /// transactions will always be invalid, so there is no harm in us refusing to
 /// compute their merkle roots.
 ///
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
-/// you should not unwrap the `Option` returned by this method!
+/// you should not unwrap the [`Option`] returned by this method!
 #[cfg(feature = "alloc")]
 pub fn compute_merkle_root<T>(transactions: T) -> Option<TxMerkleNode>
 where
@@ -414,13 +414,13 @@ where
 
 /// Computes the Merkle root of transactions hashed for witness.
 ///
-/// Returns `None` if the iterator was empty, or if the transaction list contains
+/// Returns [`None`] if the iterator was empty, or if the transaction list contains
 /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
 /// transactions will always be invalid, so there is no harm in us refusing to
 /// compute their merkle roots.
 ///
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
-/// you should not unwrap the `Option` returned by this method!
+/// you should not unwrap the [`Option`] returned by this method!
 #[cfg(feature = "alloc")]
 pub fn compute_witness_root<T>(transactions: T) -> Option<WitnessMerkleNode>
 where
@@ -851,7 +851,7 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a `Header`.
+    /// An error consensus decoding a [`Header`](super::Header).
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum HeaderDecoderError {
@@ -900,7 +900,7 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a `Version`.
+    /// An error consensus decoding a [`Version`](super::Version).
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
 

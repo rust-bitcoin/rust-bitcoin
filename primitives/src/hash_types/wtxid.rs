@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `Wtxid` type.
+//! The [`Wtxid`] type.
 //!
 //! In order to print and parse txids enable the "hex" feature.
 
@@ -18,7 +18,7 @@ pub struct Wtxid(sha256d::Hash);
 super::impl_debug!(Wtxid);
 
 impl Wtxid {
-    /// The `Wtxid` of a coinbase transaction.
+    /// The [`Wtxid`] of a coinbase transaction.
     ///
     /// This is used as the wTXID for the coinbase transaction when constructing blocks (in the
     /// witness commitment tree) since the coinbase transaction contains a commitment to all

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `BlockHash` type.
+//! The [`BlockHash`] type.
 
 use core::convert::Infallible;
 use core::fmt;
@@ -64,7 +64,7 @@ crate::decoder_newtype! {
     }
 }
 
-/// An error consensus decoding a `BlockHash`.
+/// An error consensus decoding a [`BlockHash`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockHashDecoderError(encoding::UnexpectedEofError);
 

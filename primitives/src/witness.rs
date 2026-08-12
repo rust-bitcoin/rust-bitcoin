@@ -46,17 +46,17 @@ const MAX_WITNESS_ITEM_SIZE: usize = 4_000_000;
 
 /// The Witness is the data used to unlock bitcoin since the [SegWit upgrade].
 ///
-/// Can be logically seen as an array of bytestrings, i.e. `Vec<Vec<u8>>`, and it is serialized on the wire
-/// in that format. You can convert between this type and `Vec<Vec<u8>>` by using [`Witness::from_slice`]
+/// Can be logically seen as an array of bytestrings, i.e. [`Vec<Vec<u8>>`], and it is serialized on the wire
+/// in that format. You can convert between this type and [`Vec<Vec<u8>>`] by using [`Witness::from_slice`]
 /// and [`Witness::to_vec`].
 ///
-/// For serialization and deserialization performance it is stored internally as a single `Vec`,
+/// For serialization and deserialization performance it is stored internally as a single [`Vec`],
 /// saving some allocations.
 ///
 /// [SegWit upgrade]: <https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki>
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Witness {
-    /// Contains the witness `Vec<Vec<u8>>` serialization.
+    /// Contains the witness [`Vec<Vec<u8>>`] serialization.
     ///
     /// Does not include the initial length prefix indicating the number of elements. Each element
     /// however, does include a [`CompactSize`] indicating the element length. The number of
@@ -198,7 +198,7 @@ impl Witness {
     ///
     /// `index` is 0-based from the end, where 0 is the last element, 1 is the second-to-last, etc.
     ///
-    /// Returns `None` if the requested index is beyond the witness's elements.
+    /// Returns [`None`] if the requested index is beyond the witness's elements.
     ///
     /// # Examples
     /// ```

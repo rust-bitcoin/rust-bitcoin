@@ -5,7 +5,7 @@
 //! Various types in primitives need to be rendered in hexadecimal.
 //! Since `consensus_encoding` only provides a method using `alloc`
 //! to do this, this module provides utilities for alloc-less encoding
-//! of `Encodable` types within the primitives crate.
+//! of [`Encode`](encoding::Encode) types within the primitives crate.
 
 use core::fmt;
 use core::fmt::Write as _;

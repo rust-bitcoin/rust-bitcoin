@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! The `ScriptHash` type.
+//! The [`ScriptHash`] type.
 
 #[cfg(feature = "alloc")]
 use core::convert::Infallible;
@@ -30,7 +30,7 @@ crate::impl_asref_push_bytes!(ScriptHash);
 
 #[cfg(feature = "alloc")]
 impl ScriptHash {
-    /// Constructs a new `ScriptHash` after first checking the script size.
+    /// Constructs a new [`ScriptHash`] after first checking the script size.
     ///
     /// # 520-byte limitation on serialized script size
     ///
@@ -57,7 +57,7 @@ impl ScriptHash {
         Ok(Self::from_script_unchecked(redeem_script))
     }
 
-    /// Constructs a new `ScriptHash` from any script irrespective of script size.
+    /// Constructs a new [`ScriptHash`] from any script irrespective of script size.
     ///
     /// If you hash a script that exceeds 520 bytes in size and use it to create a P2SH output
     /// then the output will be unspendable (see [BIP-0016]).

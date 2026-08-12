@@ -114,11 +114,11 @@ pub use crate::hash_types::{BlockHashDecoder, Ntxid, Txid, Wtxid};
 ///
 /// # A note on ordering
 ///
-/// This type implements `Ord`, even though it contains a locktime, which is not
-/// itself `Ord`. This was done to simplify applications that may need to hold
+/// This type implements [`Ord`], even though it contains a locktime, which is not
+/// itself [`Ord`]. This was done to simplify applications that may need to hold
 /// transactions inside a sorted container. We have ordered the locktimes based
 /// on their representation as a `u32`, which is not a semantically meaningful
-/// order, and therefore the ordering on `Transaction` itself is not semantically
+/// order, and therefore the ordering on [`Transaction`] itself is not semantically
 /// meaningful either.
 ///
 /// The ordering is, however, consistent with the ordering present in this library
@@ -297,7 +297,7 @@ impl From<&Transaction> for Wtxid {
     fn from(tx: &Transaction) -> Self { tx.compute_wtxid() }
 }
 
-/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
+/// Trait that abstracts over a transaction identifier i.e., [`Txid`] and [`Wtxid`].
 pub(crate) trait TxIdentifier: AsRef<[u8]> {}
 
 impl TxIdentifier for Txid {}
@@ -329,7 +329,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     let input_len = tx.inputs.len();
     enc.input(crate::compact_size_encode(input_len).as_slice());
     for input in &tx.inputs {
-        // Encode each input same as we do in `Encodable for TxIn`.
+        // Encode each input same as we do in `Encode for TxIn`.
         enc.input(input.previous_output.txid.as_byte_array());
         enc.input(&input.previous_output.vout.to_le_bytes());
 
@@ -344,7 +344,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     let output_len = tx.outputs.len();
     enc.input(crate::compact_size_encode(output_len).as_slice());
     for output in &tx.outputs {
-        // Encode each output same as we do in `Encodable for TxOut`.
+        // Encode each output same as we do in `Encode for TxOut`.
         enc.input(&output.amount.to_sat().to_le_bytes());
 
         let script_pubkey_bytes = output.script_pubkey.as_bytes();
@@ -355,7 +355,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     if uses_segwit_serialization {
         // BIP-0141 (SegWit) transaction serialization also includes the witness data.
         for input in &tx.inputs {
-            // Same as `Encodable for Witness`.
+            // Same as `Encode for Witness`.
             enc.input(crate::compact_size_encode(input.witness.len()).as_slice());
             for element in &input.witness {
                 enc.input(crate::compact_size_encode(element.len()).as_slice());
@@ -364,7 +364,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
         }
     }
 
-    // Same as `Encodable for absolute::LockTime`.
+    // Same as `Encode for absolute::LockTime`.
     enc.input(&tx.lock_time.to_consensus_u32().to_le_bytes());
 
     sha256d::Hash::from_engine(enc)
@@ -776,10 +776,10 @@ pub struct TxIn {
     /// the miner behavior cannot be enforced.
     pub sequence: Sequence,
     /// Witness data: an array of byte-arrays.
-    /// Note that this field is *not* (de)serialized with the rest of the `TxIn` in
-    /// Encodable/Decodable, as it is (de)serialized at the end of the full
-    /// Transaction. It *is* (de)serialized with the rest of the `TxIn` in other
-    /// (de)serialization routines.
+    /// Note that this field is *not* (de)serialized with the rest of the [`TxIn`] in
+    /// [`Encode`](encoding::Encode)/[`Decode`](encoding::Decode), as it is (de)serialized at the
+    /// end of the full [`Transaction`]. It *is* (de)serialized with the rest of the [`TxIn`] in
+    /// other (de)serialization routines.
     pub witness: Witness,
 }
 
@@ -937,7 +937,7 @@ impl OutPoint {
     /// The number of bytes that an outpoint contributes to the size of a transaction.
     pub const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
 
-    /// The `OutPoint` used in a coinbase prevout.
+    /// The [`OutPoint`] used in a coinbase prevout.
     ///
     /// This is used as the dummy input for coinbase transactions because they don't have any
     /// previous outputs. In other words, does not point to a real transaction.
@@ -1180,7 +1180,7 @@ impl Version {
     #[inline]
     pub const fn maybe_non_standard(version: u32) -> Self { Self(version) }
 
-    /// Returns the inner `u32` value of this `Version`.
+    /// Returns the inner `u32` value of this [`Version`].
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
@@ -1277,7 +1277,7 @@ pub mod error {
     #[cfg(feature = "alloc")]
     use crate::witness::WitnessDecoderError;
 
-    /// An error consensus decoding a `Transaction`.
+    /// An error consensus decoding a [`Transaction`](super::Transaction).
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct TransactionDecoderError(pub(super) TransactionDecoderErrorInner);
@@ -1377,7 +1377,7 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a `TxIn`.
+    /// An error consensus decoding a [`TxIn`](super::TxIn).
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct TxInDecoderError(pub(super) <super::TxInInnerDecoder as encoding::Decoder>::Error);
@@ -1400,7 +1400,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// An error consensus decoding a `TxOut`.
+    /// An error consensus decoding a [`TxOut`](super::TxOut).
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct TxOutDecoderError(pub(super) <super::TxOutInnerDecoder as encoding::Decoder>::Error);
@@ -1422,7 +1422,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Error while decoding an `OutPoint`.
+    /// Error while decoding an [`OutPoint`].
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct OutPointDecoderError(pub(super) encoding::UnexpectedEofError);
 
@@ -1492,7 +1492,7 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a `Version`.
+    /// An error consensus decoding a [`Version`](super::Version).
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
 
