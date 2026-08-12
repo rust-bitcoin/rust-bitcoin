@@ -697,7 +697,8 @@ fn p_consistent_exports_locktime_relative() {
 #[test]
 fn p_consistent_exports_script() {
     use bitcoin_primitives::script::error::{
-        PushBytesError as _, RedeemScriptSizeError as _, ScriptBufDecoderError as _, WitnessScriptSizeError as _,
+        PushBytesError as _, RedeemScriptSizeError as _, ScriptBufDecoderError as _,
+        WitnessScriptSizeError as _,
     };
     use bitcoin_primitives::script::{
         Builder, PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, RedeemScript,
@@ -714,8 +715,9 @@ fn p_consistent_exports_script() {
 #[test]
 fn p_consistent_exports_block() {
     use bitcoin_primitives::block::error::{
-        BlockDecoderError as _, BlockHashDecoderError as _, BlockHeightDecoderError as _, HeaderDecoderError as _,
-        InvalidBlockError as _, TooBigForRelativeHeightError as _, VersionDecoderError as _,
+        BlockDecoderError as _, BlockHashDecoderError as _, BlockHeightDecoderError as _,
+        HeaderDecoderError as _, InvalidBlockError as _, TooBigForRelativeHeightError as _,
+        VersionDecoderError as _,
     };
     use bitcoin_primitives::block::{
         Block, BlockDecoder, BlockDecoderError, BlockEncoder, BlockHash, BlockHashDecoder,
@@ -747,8 +749,8 @@ fn p_consistent_exports_opcodes() {
 #[test]
 fn p_consistent_exports_transaction() {
     use bitcoin_primitives::transaction::error::{
-        OutPointDecoderError as _, ParseOutPointError as _, TransactionDecoderError as _, TxInDecoderError as _,
-        TxOutDecoderError as _, VersionDecoderError as _,
+        OutPointDecoderError as _, ParseOutPointError as _, TransactionDecoderError as _,
+        TxInDecoderError as _, TxOutDecoderError as _, VersionDecoderError as _,
     };
     use bitcoin_primitives::transaction::{
         BlockHashDecoder, BlockHashDecoderError, Ntxid, OutPoint, OutPointDecoder,
