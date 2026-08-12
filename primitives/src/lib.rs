@@ -131,6 +131,14 @@ mod prelude {
     pub use alloc::sync;
 }
 
+#[cfg(not(feature = "alloc"))]
+pub mod script {
+    //! Bitcoin scripts.
+
+    #[doc(inline)]
+    pub use crate::hash_types::{ScriptHash, WScriptHash};
+}
+
 #[cfg(feature = "alloc")]
 use encoding::Encoder;
 #[cfg(feature = "alloc")]
