@@ -104,6 +104,17 @@ jobs:
           name: corpus-${{ matrix.fuzz_target }}
           path: rust-bitcoin/fuzz/corpus/${{ matrix.fuzz_target }}
           if-no-files-found: warn
+      - name: Report crashes
+        if: failure()
+        working-directory: rust-bitcoin
+        run: ./fuzz/report-crashes.sh "crash-$TARGET"
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: crash-${{ matrix.fuzz_target }}
+          path: rust-bitcoin/fuzz/artifacts/${{ matrix.fuzz_target }}
+          if-no-files-found: ignore
 
   # Merges the corpus of each target back into the qa-assets repository.
   merge:
