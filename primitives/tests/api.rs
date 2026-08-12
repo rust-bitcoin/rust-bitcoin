@@ -21,10 +21,12 @@ use bitcoin_primitives::script::{
     WScriptHash, WitnessScriptTag,
 };
 use bitcoin_primitives::{
-    absolute, block, merkle_tree, opcodes, pow, relative, transaction, witness, witness_version,
-    OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig,
-    ScriptSigBuf, Sequence, SignetBlockScript, SignetBlockScriptBuf, TapScript, TapScriptBuf,
-    Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
+    absolute, amount, block, fee_rate, locktime, merkle_tree, opcodes, parse_int, pow, relative,
+    result, sequence, time, transaction, weight, witness, witness_version, Amount,
+    BlockHeightInterval, BlockMtpInterval, OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey,
+    ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, SignedAmount, SignetBlockScript,
+    SignetBlockScriptBuf, TapScript, TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness,
+    WitnessScript, WitnessScriptBuf, Wtxid,
 };
 
 /// A struct that includes all public non-error enums.
@@ -41,6 +43,9 @@ struct Enums {
     i: script::TapScriptTag,
     j: script::WitnessScriptTag,
     k: witness_version::WitnessVersion,
+    l: amount::Denomination,
+    m: result::MathOp,
+    n: result::NumOpResult<Amount>,
 }
 
 /// A struct that includes all public non-error structs.
@@ -86,6 +91,20 @@ struct Structs<'a> {
     z1: &'a PushBytes,
     z2: PushBytesBuf,
     aa: opcodes::Opcode,
+    ab: amount::Amount,
+    ac: amount::Display,
+    ad: amount::SignedAmount,
+    ae: block::BlockHeight,
+    af: block::BlockHeightInterval,
+    ag: block::BlockMtp,
+    ah: block::BlockMtpInterval,
+    ai: fee_rate::FeeRate,
+    aj: absolute::Height,
+    ak: absolute::MedianTimePast,
+    al: relative::NumberOf512Seconds,
+    am: relative::NumberOfBlocks,
+    an: time::BlockTime,
+    ao: weight::Weight,
 }
 
 static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
@@ -146,6 +165,23 @@ struct CommonTraits {
     ae6: script::WitnessScriptTag,
     af1: block::Checked,
     af2: block::Unchecked,
+    ag: amount::Amount,
+    // ah: amount::Display, // Doesn't implement `PartialEq` or `Eq`.
+    ai: amount::SignedAmount,
+    aj: block::BlockHeight,
+    ak: block::BlockHeightInterval,
+    al: block::BlockMtp,
+    am: block::BlockMtpInterval,
+    an: fee_rate::FeeRate,
+    ao: absolute::Height,
+    ap: absolute::MedianTimePast,
+    aq: relative::NumberOf512Seconds,
+    ar: relative::NumberOfBlocks,
+    at: time::BlockTime,
+    au: weight::Weight,
+    av: amount::Denomination,
+    aw: result::MathOp,
+    ax: result::NumOpResult<Amount>,
 }
 
 /// A struct that includes all types that implement `Copy`.
@@ -172,6 +208,22 @@ struct Copy {
     q: absolute::LockTime,
     r: relative::LockTime,
     s: witness_version::WitnessVersion,
+    t: amount::Amount,
+    u: amount::SignedAmount,
+    v: block::BlockHeight,
+    w: block::BlockHeightInterval,
+    x: block::BlockMtp,
+    y: block::BlockMtpInterval,
+    z: fee_rate::FeeRate,
+    aa: absolute::Height,
+    ab: absolute::MedianTimePast,
+    ac: relative::NumberOf512Seconds,
+    ad: relative::NumberOfBlocks,
+    ae: time::BlockTime,
+    af: weight::Weight,
+    ag: amount::Denomination,
+    ah: result::MathOp,
+    ai: result::NumOpResult<Amount>,
 }
 
 /// A struct that includes all types that implement `Clone`.
@@ -228,6 +280,23 @@ struct Clone<'a> {
     ae6: script::WitnessScriptTag,
     af1: block::Checked,
     af2: block::Unchecked,
+    ag: amount::Amount,
+    ah: amount::Display,
+    ai: amount::SignedAmount,
+    aj: block::BlockHeight,
+    ak: block::BlockHeightInterval,
+    al: block::BlockMtp,
+    am: block::BlockMtpInterval,
+    an: fee_rate::FeeRate,
+    ao: absolute::Height,
+    ap: absolute::MedianTimePast,
+    aq: relative::NumberOf512Seconds,
+    ar: relative::NumberOfBlocks,
+    at: time::BlockTime,
+    au: weight::Weight,
+    av: amount::Denomination,
+    aw: result::MathOp,
+    ax: result::NumOpResult<Amount>,
 }
 
 /// Public structs that derive common traits.
@@ -279,6 +348,22 @@ struct Ord {
     ae6: script::WitnessScriptTag,
     af1: block::Checked,
     af2: block::Unchecked,
+    ag: amount::Amount,
+    ah: amount::SignedAmount,
+    ai: block::BlockHeight,
+    aj: block::BlockHeightInterval,
+    ak: block::BlockMtp,
+    al: block::BlockMtpInterval,
+    am: fee_rate::FeeRate,
+    an: absolute::Height,
+    ao: absolute::MedianTimePast,
+    ap: relative::NumberOf512Seconds,
+    aq: relative::NumberOfBlocks,
+    ar: time::BlockTime,
+    at: weight::Weight,
+    // au: amount::Denomination, // Deliberately does not implement `Ord`.
+    // av: result::MathOp, // Deliberately does not implement `Ord`.
+    // aw: result::NumOpResult<Amount>, // Deliberately does not implement `Ord`.
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -300,6 +385,12 @@ struct Default {
     e: Witness,
     f: Builder<ScriptSigTag>,
     g: PushBytesBuf,
+    h: Amount,
+    i: SignedAmount,
+    j: BlockHeightInterval,
+    k: BlockMtpInterval,
+    l: relative::NumberOf512Seconds,
+    m: relative::NumberOfBlocks,
 }
 
 /// A struct that includes all public encoder types.
@@ -317,6 +408,12 @@ struct Encoders<'a> {
     j: transaction::TxOutEncoder<'a>,
     k: transaction::VersionEncoder<'a>,
     l: witness::WitnessEncoder<'a>,
+    m: amount::AmountEncoder<'a>,
+    n: block::BlockHeightEncoder<'a>,
+    o: locktime::absolute::LockTimeEncoder<'a>,
+    p: pow::CompactTargetEncoder<'a>,
+    q: sequence::SequenceEncoder<'a>,
+    r: time::BlockTimeEncoder<'a>,
 }
 
 /// A struct that includes all public decoder types.
@@ -336,6 +433,12 @@ struct Decoders {
     k: transaction::OutPointDecoder,
     l: transaction::VersionDecoder,
     m: witness::WitnessDecoder,
+    n: amount::AmountDecoder,
+    o: block::BlockHeightDecoder,
+    p: locktime::absolute::LockTimeDecoder,
+    q: pow::CompactTargetDecoder,
+    r: sequence::SequenceDecoder,
+    s: time::BlockTimeDecoder,
 }
 
 /// A struct that includes all public error types.
@@ -368,6 +471,39 @@ struct Errors {
     x: witness::WitnessDecoderError,
     y: witness_version::InvalidWitnessVersionError,
     z: witness_version::ParseWitnessVersionError,
+    aa: amount::error::AmountDecoderError,
+    ab: amount::error::BadPositionError,
+    ac: amount::error::InputTooLargeError,
+    ad: amount::error::InvalidCharacterError,
+    ae: amount::error::MissingDenominationError,
+    af: amount::error::MissingDigitsError,
+    ag: amount::error::OutOfRangeError,
+    ah: amount::error::ParseAmountError,
+    ai: amount::error::ParseDenominationError,
+    aj: amount::error::ParseError,
+    ak: amount::error::PossiblyConfusingDenominationError,
+    al: amount::error::TooPreciseError,
+    am: amount::error::UnknownDenominationError,
+    #[cfg(feature = "serde")]
+    an: fee_rate::serde::OverflowError,
+    ao: absolute::ConversionError,
+    ap: absolute::LockTimeDecoderError,
+    aq: absolute::ParseHeightError,
+    ar: absolute::ParseTimeError,
+    at: relative::error::IncompatibleHeightError,
+    au: relative::error::IncompatibleTimeError,
+    av: relative::error::InvalidHeightError,
+    aw: relative::error::InvalidTimeError,
+    ax: relative::error::TimeOverflowError,
+    ay: parse_int::ParseIntError,
+    az: parse_int::PrefixedHexError,
+    ba: parse_int::UnprefixedHexError,
+    bb: pow::CompactTargetDecoderError,
+    bc: pow::ParseTargetError,
+    bd: pow::ParseWorkError,
+    be: result::NumOpError,
+    bf: sequence::SequenceDecoderError,
+    bg: time::BlockTimeDecoderError,
 }
 
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
@@ -384,8 +520,11 @@ fn c_debug_nonempty() {
 
     // All the enums.
     check_debug! {
+        amount::Denomination::Bitcoin;
         absolute::LockTime::ZERO;
         relative::LockTime::ZERO;
+        result::MathOp::Add;
+        result::NumOpResult::Valid(Amount::MAX);
         witness_version::WitnessVersion::V0
     };
 
@@ -436,6 +575,20 @@ fn c_debug_nonempty() {
         PUSH_BYTES.as_push_bytes();
         PUSH_BYTES.clone();
         opcodes::Opcode::from_u8(0x51);
+        Amount::MAX;
+        Amount::MAX.display_in(amount::Denomination::Bitcoin);
+        SignedAmount::MAX;
+        block::BlockHeight::MAX;
+        block::BlockHeightInterval::MAX;
+        block::BlockMtp::MAX;
+        block::BlockMtpInterval::MAX;
+        fee_rate::FeeRate::MAX;
+        absolute::Height::MAX;
+        absolute::MedianTimePast::MAX;
+        relative::NumberOf512Seconds::MAX;
+        relative::NumberOfBlocks::MAX;
+        time::BlockTime::from_u32(u32::MAX);
+        weight::Weight::MAX;
     };
 
     // All the decoders.
@@ -453,6 +606,12 @@ fn c_debug_nonempty() {
         transaction::TxOutDecoder::new();
         transaction::VersionDecoder::new();
         witness::WitnessDecoder::new();
+        amount::AmountDecoder::new();
+        block::BlockHeightDecoder::new();
+        locktime::absolute::LockTimeDecoder::new();
+        pow::CompactTargetDecoder::new();
+        sequence::SequenceDecoder::new();
+        time::BlockTimeDecoder::new();
     };
 }
 
@@ -523,6 +682,39 @@ fn c_good_err_display() {
     assert_display::<witness::WitnessDecoderError>();
     assert_display::<witness_version::InvalidWitnessVersionError>();
     assert_display::<witness_version::ParseWitnessVersionError>();
+    assert_display::<amount::error::AmountDecoderError>();
+    assert_display::<amount::error::BadPositionError>();
+    assert_display::<amount::error::InputTooLargeError>();
+    assert_display::<amount::error::InvalidCharacterError>();
+    assert_display::<amount::error::MissingDenominationError>();
+    assert_display::<amount::error::MissingDigitsError>();
+    assert_display::<amount::error::OutOfRangeError>();
+    assert_display::<amount::error::ParseAmountError>();
+    assert_display::<amount::error::ParseDenominationError>();
+    assert_display::<amount::error::ParseError>();
+    assert_display::<amount::error::PossiblyConfusingDenominationError>();
+    assert_display::<amount::error::TooPreciseError>();
+    assert_display::<amount::error::UnknownDenominationError>();
+    #[cfg(feature = "serde")]
+    assert_display::<fee_rate::serde::OverflowError>();
+    assert_display::<absolute::ConversionError>();
+    assert_display::<absolute::LockTimeDecoderError>();
+    assert_display::<absolute::ParseHeightError>();
+    assert_display::<absolute::ParseTimeError>();
+    assert_display::<relative::error::IncompatibleHeightError>();
+    assert_display::<relative::error::IncompatibleTimeError>();
+    assert_display::<relative::error::InvalidHeightError>();
+    assert_display::<relative::error::InvalidTimeError>();
+    assert_display::<relative::error::TimeOverflowError>();
+    assert_display::<parse_int::ParseIntError>();
+    assert_display::<parse_int::PrefixedHexError>();
+    assert_display::<parse_int::UnprefixedHexError>();
+    assert_display::<pow::CompactTargetDecoderError>();
+    assert_display::<pow::ParseTargetError>();
+    assert_display::<pow::ParseWorkError>();
+    assert_display::<result::NumOpError>();
+    assert_display::<sequence::SequenceDecoderError>();
+    assert_display::<time::BlockTimeDecoderError>();
 }
 
 /// C-SERDE: Tests that serde traits are implemented where expected.
@@ -550,6 +742,23 @@ fn c_serde() {
     assert_serde::<transaction::Version>();
     assert_serde::<OutPoint>();
     assert_serde::<Witness>();
+    assert_serde::<witness_version::WitnessVersion>();
+    assert_serde::<block::BlockHeight>();
+    assert_serde::<block::BlockHeightInterval>();
+    assert_serde::<block::BlockMtp>();
+    assert_serde::<block::BlockMtpInterval>();
+    assert_serde::<Sequence>();
+    assert_serde::<weight::Weight>();
+    assert_serde::<time::BlockTime>();
+    assert_serde::<absolute::Height>();
+    assert_serde::<absolute::LockTime>();
+    assert_serde::<absolute::MedianTimePast>();
+    assert_serde::<relative::LockTime>();
+    assert_serde::<relative::NumberOf512Seconds>();
+    assert_serde::<relative::NumberOfBlocks>();
+    assert_serde::<pow::CompactTarget>();
+    assert_serde::<pow::Target>();
+    assert_serde::<pow::Work>();
 }
 
 /// P-DEFAULT-CHANGE: Tests regression for Default implementation values.
@@ -573,6 +782,12 @@ fn p_default_change() {
         e: Witness::new(),
         f: Builder::new(),
         g: PushBytesBuf::new(),
+        h: Amount::ZERO,
+        i: SignedAmount::ZERO,
+        j: BlockHeightInterval::ZERO,
+        k: BlockMtpInterval::ZERO,
+        l: relative::NumberOf512Seconds::ZERO,
+        m: relative::NumberOfBlocks::ZERO,
     };
     assert_eq!(got, want);
 }
@@ -593,6 +808,12 @@ fn p_decoders_implement_new() {
     let _ = transaction::OutPointDecoder::new();
     let _ = transaction::VersionDecoder::new();
     let _ = witness::WitnessDecoder::new();
+    let _ = amount::AmountDecoder::new();
+    let _ = block::BlockHeightDecoder::new();
+    let _ = locktime::absolute::LockTimeDecoder::new();
+    let _ = pow::CompactTargetDecoder::new();
+    let _ = sequence::SequenceDecoder::new();
+    let _ = time::BlockTimeDecoder::new();
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that units modules can be used from the crate root.
@@ -616,8 +837,8 @@ fn p_consistent_exports_units_types() {
 #[test]
 fn p_consistent_exports_units_amount() {
     use bitcoin_primitives::amount::{
-        Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
-        ParseError, SignedAmount,
+        Amount, AmountDecoder, AmountDecoderError, AmountEncoder, Denomination, Display,
+        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError, SignedAmount,
     };
 }
 
@@ -625,8 +846,8 @@ fn p_consistent_exports_units_amount() {
 #[test]
 fn p_consistent_exports_units_amount_error() {
     use bitcoin_primitives::amount::error::{
-        InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+        BadPositionError, InputTooLargeError, InvalidCharacterError, MissingDenominationError,
+        MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
         PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     };
 }
