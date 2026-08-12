@@ -9,6 +9,49 @@
 //! signatures ensures that coins cannot be spent by unauthorized parties.
 //!
 //! This module provides the structures and functions needed to support transactions.
+//!
+//! # Examples
+//!
+//! ```rust
+//! # #[cfg(all(feature = "alloc", feature = "hex"))]
+//! # type Error = encoding::FromHexError<bitcoin_primitives::transaction::TransactionDecoderError>;
+//! # #[cfg(all(feature = "alloc", feature = "hex"))]
+//! # fn example() -> Result<(), Error> {
+//! use bitcoin_primitives::transaction::Version;
+//! use bitcoin_primitives::Transaction;
+//!
+//! let tx: Transaction = "02000000000101595895ea20179de87052b4046dfe6fd515860505d6511a9004cf12a1f9\
+//!                        3cac7c0100000000ffffffff01deb807000000000017a9140f3444e271620c736808aa7\
+//!                        b33e370bd87cb5a078702483045022100fb60dad8df4af2841adc0346638c16d0b8035f\
+//!                        5e3f3753b88db122e70c79f9370220756e6633b17fd2710e626347d28d60b0a2d6cbb41\
+//!                        de51740644b9fb3ba7751040121028fa937ca8cba2197a37c007176ed8941055d3bcb86\
+//!                        27d085e94553e62f057dcc00000000".parse()?;
+//!
+//! assert_eq!(tx.version, Version::TWO);
+//! assert!(!tx.is_coinbase());
+//!
+//! // An input names the UTXO it spends but not its value; that lives in the previous transaction,
+//! // so computing a fee means looking those outputs up separately.
+//! let spent_outpoint = tx.inputs[0].previous_output;
+//! assert_eq!(spent_outpoint.vout, 1);
+//!
+//! // This input is SegWit, so the signature and public key are in the witness.
+//! assert!(tx.inputs[0].script_sig.is_empty());
+//! assert_eq!(tx.inputs[0].witness.len(), 2);
+//!
+//! let total_out: u64 = tx.outputs.iter().map(|output| output.amount.to_sat()).sum();
+//! assert_eq!(total_out, 506_078);
+//! assert!(tx.outputs[0].script_pubkey.is_p2sh());
+//!
+//! assert_eq!(
+//!     tx.compute_txid().to_string(),
+//!     "f5864806e3565c34d1b41e716f72609d00b55ea5eac5b924c9719a842ef42206",
+//! );
+//! # Ok(())
+//! # }
+//! # #[cfg(all(feature = "alloc", feature = "hex"))]
+//! # example().unwrap();
+//! ```
 
 use core::fmt;
 #[cfg(feature = "alloc")]

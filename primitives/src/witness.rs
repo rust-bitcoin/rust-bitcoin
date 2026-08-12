@@ -3,6 +3,45 @@
 //! A witness.
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
+//!
+//! # Examples
+//!
+//! A P2WPKH spend:
+//!
+//! ```rust
+//! use bitcoin_primitives::witness::Witness;
+//!
+//! let signature = [0xab; 72];
+//! let public_key = [0xcd; 33];
+//!
+//! let witness = Witness::from_slice(&[signature.as_slice(), public_key.as_slice()]);
+//!
+//! assert_eq!(witness.len(), 2);
+//! assert!(!witness.is_empty());
+//! assert_eq!(witness.get(0), Some(signature.as_slice()));
+//! assert_eq!(witness.last(), Some(public_key.as_slice()));
+//!
+//! // Serialized size includes a compact-size element count and a prefix per element.
+//! assert_eq!(witness.size(), 1 + (1 + 72) + (1 + 33));
+//! ```
+//!
+//! A P2WSH spend is assembled incrementally, ending with the witness script itself:
+//!
+//! ```rust
+//! use bitcoin_primitives::witness::Witness;
+//!
+//! let witness_script = [0x51];
+//!
+//! let mut witness = Witness::new();
+//! assert!(witness.is_empty());
+//!
+//! witness.push([]); // Empty element, for the OP_CHECKMULTISIG off-by-one.
+//! witness.push([0xab; 72]);
+//! witness.push(witness_script);
+//!
+//! assert_eq!(witness.last(), Some(witness_script.as_slice()));
+//! assert_eq!(witness.iter().count(), 3);
+//! ```
 
 use core::fmt;
 use core::ops::Index;
