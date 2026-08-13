@@ -76,7 +76,7 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
     s.as_ref().parse().map_err(|error| {
         ParseIntError {
             input: s.into(),
-            bits: u8::try_from(core::mem::size_of::<T>() * 8).expect("max is 128 bits for u128"),
+            bits: u16::try_from(core::mem::size_of::<T>() * 8).expect("max is 128 bits for u128"),
             // We detect if the type is signed by checking if -1 can be represented by it
             // this way we don't have to implement special traits and optimizer will get rid of the
             // computation.
@@ -365,6 +365,19 @@ pub(crate) fn hex_u256_unprefixed(s: &str) -> Result<crate::pow::U256, Unprefixe
 }
 
 pub(crate) fn hex_u256_unchecked(s: &str) -> Result<crate::pow::U256, ParseIntError> {
+    // We cannot use byte offsets into `s` if it is not ASCII.
+    if !s.is_ascii() {
+        // We want the `ParseIntError`; use u128 to get it since we know the string is not ASCII.
+        return u128::from_str_radix(s, 16)
+            .map_err(|error| ParseIntError {
+                input: s.into(),
+                bits: 256,
+                is_signed: false,
+                source: error,
+            })
+            .map(crate::pow::U256::from);
+    }
+
     let (high, low) = if s.len() <= 32 {
         let low = hex_u128_unchecked(s)?;
         (0, low)
@@ -418,7 +431,7 @@ pub mod error {
     pub struct ParseIntError {
         pub(crate) input: InputString,
         // for displaying - see Display impl with nice error message below
-        pub(crate) bits: u8,
+        pub(crate) bits: u16,
         // We could represent this as a single bit, but it wouldn't actually decrease the cost of moving
         // the struct because String contains pointers so there will be padding of bits at least
         // pointer_size - 1 bytes: min 1B in practice.
@@ -617,20 +630,21 @@ mod tests {
     fn parse_int_panic_when_populating_bits() {
         // Fields in the test type are never used
         #[allow(dead_code)]
-        struct TestTypeLargerThanU128(u128, u128);
-        impl_integer!(TestTypeLargerThanU128);
-        impl FromStr for TestTypeLargerThanU128 {
+        struct TestTypeWithMoreThanU16Bits([u8; 8192]);
+        impl_integer!(TestTypeWithMoreThanU16Bits);
+        impl FromStr for TestTypeWithMoreThanU16Bits {
             type Err = core::num::ParseIntError;
 
             fn from_str(_: &str) -> Result<Self, Self::Err> {
-                "Always invalid for testing".parse::<u32>().map(|_| Self(0, 0))
+                "Always invalid for testing".parse::<u32>().map(|_| Self([0; 8192]))
             }
         }
-        impl From<i8> for TestTypeLargerThanU128 {
-            fn from(_: i8) -> Self { Self(0, 0) }
+        impl From<i8> for TestTypeWithMoreThanU16Bits {
+            fn from(_: i8) -> Self { Self([0; 8192]) }
         }
 
-        let result = panic::catch_unwind(|| int_from_str::<TestTypeLargerThanU128>("not a number"));
+        let result =
+            panic::catch_unwind(|| int_from_str::<TestTypeWithMoreThanU16Bits>("not a number"));
         assert!(result.is_err());
     }
 
@@ -764,6 +778,12 @@ mod tests {
     fn parse_u128_from_hex_unchecked_errors_on_overflow() {
         assert!(hex_u128_unchecked("deadbeefabcdffffdeadbeefabcdffff").is_ok());
         assert!(hex_u128_unchecked("deadbeefabcdffffdeadbeefabcdffff1").is_err());
+    }
+
+    #[test]
+    fn parse_u256_from_hex_non_ascii_reports_bit_length() {
+        let error = hex_u256_unchecked("é0000000000000000000000000000000").unwrap_err();
+        assert_eq!(error.bits, 256);
     }
 
     #[test]
