@@ -5552,12 +5552,12 @@ impl bitcoin_units::locktime::relative::LockTime
 pub const bitcoin_units::locktime::relative::LockTime::SIZE: usize
 pub const bitcoin_units::locktime::relative::LockTime::ZERO: Self
 pub const fn bitcoin_units::locktime::relative::LockTime::from_512_second_intervals(intervals: u16) -> Self
+pub const fn bitcoin_units::locktime::relative::LockTime::from_block_count(n: u16) -> Self
 pub fn bitcoin_units::locktime::relative::LockTime::from_consensus(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
-pub const fn bitcoin_units::locktime::relative::LockTime::from_height(n: u16) -> Self
 pub const fn bitcoin_units::locktime::relative::LockTime::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::LockTime::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub fn bitcoin_units::locktime::relative::LockTime::from_sequence(n: bitcoin_units::sequence::Sequence) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
-pub const fn bitcoin_units::locktime::relative::LockTime::is_block_height(self) -> bool
+pub const fn bitcoin_units::locktime::relative::LockTime::is_block_count(self) -> bool
 pub const fn bitcoin_units::locktime::relative::LockTime::is_block_time(self) -> bool
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by(self, other: Self) -> bool
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by_sequence(self, other: bitcoin_units::sequence::Sequence) -> bool
@@ -5958,11 +5958,11 @@ impl bitcoin_units::locktime::relative::NumberOfBlocks
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MAX: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MIN: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::ZERO: Self
-pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_height(blocks: u16) -> Self
+pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_count(blocks: u16) -> Self
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
-pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_height(self) -> u16
+pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_count(self) -> u16
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::clone(&self) -> bitcoin_units::locktime::relative::NumberOfBlocks [impl: impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks]
 impl core::cmp::Eq for bitcoin_units::locktime::relative::NumberOfBlocks
@@ -7597,12 +7597,12 @@ impl bitcoin_units::locktime::relative::LockTime
 pub const bitcoin_units::locktime::relative::LockTime::SIZE: usize
 pub const bitcoin_units::locktime::relative::LockTime::ZERO: Self
 pub const fn bitcoin_units::locktime::relative::LockTime::from_512_second_intervals(intervals: u16) -> Self
+pub const fn bitcoin_units::locktime::relative::LockTime::from_block_count(n: u16) -> Self
 pub fn bitcoin_units::locktime::relative::LockTime::from_consensus(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
-pub const fn bitcoin_units::locktime::relative::LockTime::from_height(n: u16) -> Self
 pub const fn bitcoin_units::locktime::relative::LockTime::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::LockTime::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub fn bitcoin_units::locktime::relative::LockTime::from_sequence(n: bitcoin_units::sequence::Sequence) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
-pub const fn bitcoin_units::locktime::relative::LockTime::is_block_height(self) -> bool
+pub const fn bitcoin_units::locktime::relative::LockTime::is_block_count(self) -> bool
 pub const fn bitcoin_units::locktime::relative::LockTime::is_block_time(self) -> bool
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by(self, other: Self) -> bool
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by_sequence(self, other: bitcoin_units::sequence::Sequence) -> bool
@@ -8003,11 +8003,11 @@ impl bitcoin_units::locktime::relative::NumberOfBlocks
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MAX: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MIN: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::ZERO: Self
-pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_height(blocks: u16) -> Self
+pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_count(blocks: u16) -> Self
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
-pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_height(self) -> u16
+pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_count(self) -> u16
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::clone(&self) -> bitcoin_units::locktime::relative::NumberOfBlocks [impl: impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks]
 impl core::cmp::Eq for bitcoin_units::locktime::relative::NumberOfBlocks

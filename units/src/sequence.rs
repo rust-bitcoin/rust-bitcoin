@@ -215,7 +215,7 @@ impl Sequence {
         if self.is_time_locked() {
             Some(LockTime::from(NumberOf512Seconds::from_512_second_intervals(lock_value)))
         } else {
-            Some(LockTime::from(NumberOfBlocks::from_height(lock_value)))
+            Some(LockTime::from(NumberOfBlocks::from_count(lock_value)))
         }
     }
 
@@ -333,8 +333,8 @@ impl<'a> Arbitrary<'a> for Sequence {
             1 => Ok(Self::ZERO),
             2 => Ok(Self::MIN_NO_RBF),
             3 => Ok(Self::ENABLE_LOCKTIME_AND_RBF),
-            4 => Ok(Self::from_consensus(u32::from(relative::NumberOfBlocks::MIN.to_height()))),
-            5 => Ok(Self::from_consensus(u32::from(relative::NumberOfBlocks::MAX.to_height()))),
+            4 => Ok(Self::from_consensus(u32::from(relative::NumberOfBlocks::MIN.to_count()))),
+            5 => Ok(Self::from_consensus(u32::from(relative::NumberOfBlocks::MAX.to_count()))),
             6 => Ok(Self::from_consensus(
                 Self::LOCK_TYPE_MASK
                     | u32::from(relative::NumberOf512Seconds::MIN.to_512_second_intervals()),

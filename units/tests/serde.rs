@@ -798,7 +798,7 @@ fn serde_as_locktime_from_blocks() {
 
     let orig = T {
         a_lt: AbsoluteLockTime::Blocks(Height::from_u32(1_000).unwrap()),
-        r_lt: RelativeLockTime::Blocks(NumberOfBlocks::from_height(1_000)),
+        r_lt: RelativeLockTime::Blocks(NumberOfBlocks::from_count(1_000)),
     };
 
     let json = "{\"a_lt\": 1000, \"r_lt\": 1000}";
