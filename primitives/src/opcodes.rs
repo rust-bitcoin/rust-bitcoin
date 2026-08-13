@@ -10,6 +10,9 @@
 #[cfg(feature = "alloc")]
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 /// A script opcode.
 ///
 /// We do not implement `Ord` on this type because there is no natural ordering on opcodes, but there
@@ -275,6 +278,13 @@ pub(crate) fn fmt_opcode(op: u8, f: &mut fmt::Formatter) -> fmt::Result {
         0xba => f.write_str("OP_CHECKSIGADD"),
         0xbb..=0xfe => write!(f, "OP_RETURN_{}", op),
         0xff => f.write_str("OP_INVALIDOPCODE"),
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Opcode {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_u8(u8::arbitrary(u)?))
     }
 }
 
