@@ -25,6 +25,7 @@ exclude_re = [
     # src/locktime/relative.rs
     "units/.* LockTime::to_consensus_u32", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
     "units/.* CompactTarget::to_hex", # Deprecated
+    "units/.* CompactTarget::to_consensus", # Deprecated
     "units/.* FeeRate::fee_vb", # Deprecated
     "units/.* FeeRate::fee_wu", # Deprecated
     "units/.* SignedAmount::checked_abs", # Deprecated
@@ -35,6 +36,8 @@ exclude_re = [
     "units/.* MedianTimePast::to_consensus_u32", # Deprecated
     "units/.* Height::to_consensus_u32", # Deprecated
     "units/.* Sequence::to_hex", # Deprecated
+    "units/.* Weight::to_vbytes_floor", # Deprecated
+    "units/.* Weight::to_vbytes_ceil", # Deprecated
     "units/.* Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
     "units/.* \\| with \\^ in Target::to_compact_lossy", # compact | (size << 24). compact and size are bitwise independent, so impossible to tell ^ from |.
 
