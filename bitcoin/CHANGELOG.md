@@ -2,6 +2,76 @@
 
 ## [Unreleased]
 
+# 0.34.0-beta - 2026-07-22
+
+Crates smashing continues. The old consensus encoding logic is gone and so is the `psbt` module. See
+the `consensus-enocoding/` crate and [`rust-psbt-v2`](https://crates.io/crates/psbt-v2).
+
+- Remove uses of old encoding traits [#6170](https://github.com/rust-bitcoin/rust-bitcoin/pull/6170)
+- Remove old consensus module [#6389](https://github.com/rust-bitcoin/rust-bitcoin/pull/6389)
+- Remove the unstable hex-conservative dependency [#6148](https://github.com/rust-bitcoin/rust-bitcoin/pull/6148)
+- Delete the psbt module [#6056](https://github.com/rust-bitcoin/rust-bitcoin/pull/6056)
+- Implement `AsRef<PushBytes>` for generic hashes [#6077](https://github.com/rust-bitcoin/rust-bitcoin/pull/6077)
+- Clear pushnum cache on signature operations in sigop count [#6409](https://github.com/rust-bitcoin/rust-bitcoin/pull/6409)
+- Reject non-pushnum opcodes in multisig pattern [#6406](https://github.com/rust-bitcoin/rust-bitcoin/pull/6406)
+- Remove Verification re-exports [#6319](https://github.com/rust-bitcoin/rust-bitcoin/pull/6319)
+- Remove PrivateKeyExt and make PrivateKey::as_inner private [#6345](https://github.com/rust-bitcoin/rust-bitcoin/pull/6345)
+- Fix panic in `sign_message::MessageSignature::from_base64` [#6381](https://github.com/rust-bitcoin/rust-bitcoin/pull/6381)
+- Fix `InstructionIndices::nth` byte position bug [#6382](https://github.com/rust-bitcoin/rust-bitcoin/pull/6382)
+- Witness constructor for P2WSH [#6027](https://github.com/rust-bitcoin/rust-bitcoin/pull/6027)
+- bip158: Reject malformed filter counts [#6220](https://github.com/rust-bitcoin/rust-bitcoin/pull/6220)
+- Add `SerializedLegacyPublicKey` [#6011](https://github.com/rust-bitcoin/rust-bitcoin/pull/6011)
+- Improve secret key conversions [#5961](https://github.com/rust-bitcoin/rust-bitcoin/pull/5961)
+- Derive `Clone` for `SighashCache` [#5939](https://github.com/rust-bitcoin/rust-bitcoin/pull/5939)
+- Move errors to `error` submodules [#5923](https://github.com/rust-bitcoin/rust-bitcoin/pull/5923)
+- Rename public key types [#5879](https://github.com/rust-bitcoin/rust-bitcoin/pull/5879)
+- Add `From` conversion for `PrivateKey` -> `Keypair` [#5740](https://github.com/rust-bitcoin/rust-bitcoin/pull/5740)
+- Reject 65 bytes signature with sighash 0x00 [#5718](https://github.com/rust-bitcoin/rust-bitcoin/pull/5718)
+- Preserve parity for `XOnlyPublicKey` [#5708](https://github.com/rust-bitcoin/rust-bitcoin/pull/5708)
+- Adjust `PublicKey::from_slice` and improve error documentation for key types [#5679](https://github.com/rust-bitcoin/rust-bitcoin/pull/5679)
+- Change `Params::pow_target_spacing` to `u32` [#5656](https://github.com/rust-bitcoin/rust-bitcoin/pull/5656)
+- Change `hex` re-export in bitcoin to stable `hex` [#5640](https://github.com/rust-bitcoin/rust-bitcoin/pull/5640)
+- Fix PSBT key deserialisation byte size [#5625](https://github.com/rust-bitcoin/rust-bitcoin/pull/5625)
+- Add bounds check for non-witness UTXO output index [#5617](https://github.com/rust-bitcoin/rust-bitcoin/pull/5617)
+- Encapsulate the PublicKey and PrivateKey types [#5614](https://github.com/rust-bitcoin/rust-bitcoin/pull/5614)
+- Add note about `Target` maximum values [#5609](https://github.com/rust-bitcoin/rust-bitcoin/pull/5609)
+- Add parity to `XOnlyPublicKey` and adjust API [#5593](https://github.com/rust-bitcoin/rust-bitcoin/pull/5593)
+- Depend on bitcoin-network-kind [#5528](https://github.com/rust-bitcoin/rust-bitcoin/pull/5528)
+- Add `FromStr` to `Target` and `Work` [#5539](https://github.com/rust-bitcoin/rust-bitcoin/pull/5539)
+- Fix `U256::overflowing_mul` [#5501](https://github.com/rust-bitcoin/rust-bitcoin/pull/5501)
+- Fix bug in `Psbt::spend_utxo` when missing output [#5500](https://github.com/rust-bitcoin/rust-bitcoin/pull/5500)
+- Fix unreachable error bug during iteration of funding utxos [#5492](https://github.com/rust-bitcoin/rust-bitcoin/pull/5492)
+
+## Dependency upgrades
+
+New crates: 
+
+- https://crates.io/crates/bitcoin-crypto
+- https://crates.io/crates/bitcoin-addresses
+- https://crates.io/crates/bitcoin-key-expression
+- https://crates.io/crates/bitcoin-network-kind
+
+Dependency upgrades of crates in the `rust-bitcoin` repository:
+
+- `bitcoin-consensus-encoding 1.1.0` [#6538](https://github.com/rust-bitcoin/rust-bitcoin/pull/6538)
+- `bitcoin-primitives 0.103.0` [#6279](https://github.com/rust-bitcoin/rust-bitcoin/pull/6276)
+- `bitcoin-addresses 0.1.0` [#6543](https://github.com/rust-bitcoin/rust-bitcoin/pull/6543) 
+- `bitcoin_hashes 1.1.0` [#6555](https://github.com/rust-bitcoin/rust-bitcoin/pull/6555)
+- `bitcoin-io 0.6.0` [#6544](https://github.com/rust-bitcoin/rust-bitcoin/pull/6544)
+- `bitcoin-internals 0.6.0` [#6491](https://github.com/rust-bitcoin/rust-bitcoin/pull/6491)
+- `bitcoin-network-kind 1.0.0` [#6300](https://github.com/rust-bitcoin/rust-bitcoin/pull/6300)
+- `bitcoin-key-expression 0.1.0` [#6130](https://github.com/rust-bitcoin/rust-bitcoin/pull/6130)
+- `bitcoin-crypto 0.2.0` [#6053](https://github.com/rust-bitcoin/rust-bitcoin/pull/6053)
+
+## BIP-32 work
+
+- Move `bip32` module to `key-expression` crate [#6009]()
+- Make child number a newtype `ChildNumber(u32)` [#6192]()
+- Split relative and absolute bip32 derivation paths [#6232]()
+- validate master key seed length [#6212]()
+- Seed length validation follow-up [#6271]()
+- 
+
 ## [0.33.0-beta] - 2026-02-17
 
 This series of beta releases is meant for two things:
