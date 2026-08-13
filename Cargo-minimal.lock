@@ -119,6 +119,11 @@ dependencies = [
 [[package]]
 name = "bitcoin-bip158"
 version = "0.0.0"
+dependencies = [
+ "bitcoin-consensus-encoding 1.1.0",
+ "bitcoin-internals 0.6.0",
+ "bitcoin_hashes 1.2.0",
+]
 
 [[package]]
 name = "bitcoin-consensus-encoding"
