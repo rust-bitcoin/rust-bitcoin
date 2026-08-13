@@ -322,8 +322,9 @@ Run as for any other Rust project `cargo test --all-features`.
 
 ### Benchmarks
 
-We use a custom Rust compiler configuration conditional to guard the benchmark code. To run the
-benchmarks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
+Benchmarks use [criterion](https://github.com/criterion-rs/criterion.rs) and live in the separate
+`benches/` package (its own workspace, excluded from the root workspace). See
+[`benches/README.md`](./benches/README.md) for details.
 
 ### Mutation tests
 

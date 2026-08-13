@@ -6,6 +6,7 @@ description = "Criterion benchmarks for rust-bitcoin"
 edition = "2021"
 
 [dependencies]
+base58ck = { path = "../base58" }
 bitcoin = { path = "../bitcoin", default-features = false, features = ["std"] }
 bitcoin_hashes = { path = "../hashes" }
 chacha20-poly1305 = { path = "../chacha20_poly1305" }
@@ -19,6 +20,11 @@ use_self = "warn"
 
 [workspace.metadata.rbmt.toolchains]
 stable = "1.97.1"
+
+[[bench]]
+name = "base58ck"
+path = "base58/base58ck.rs"
+harness = false
 
 [[bench]]
 name = "block"
