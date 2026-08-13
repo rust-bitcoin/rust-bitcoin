@@ -3,10 +3,10 @@
 
 //! Fuzz target comparing consensus encoding between bitcoin 0.32 and master.
 //!
-//! This fuzz target compares the consensus encoding produced by `bitcoin_consensus_encoding::encode_to_vec`
+//! This fuzz target compares the consensus encoding produced by `bitcoin::encoding::encode_to_vec`
 //! in master branch with `bitcoin::consensus::encode::serialize` from bitcoin 0.32 for all shared types.
 
-use bitcoin_consensus_encoding::{check_encode, decode_from_slice, Decoder};
+use bitcoin::encoding::{check_encode, decode_from_slice, Decoder};
 use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
@@ -32,7 +32,7 @@ fn main() {}
 ///   values sum to more than `MAX_MONEY`; the old decoder accepted both.
 fn is_known_decoder_divergence(err: &(dyn std::error::Error + 'static)) -> bool {
     use bitcoin::blockdata::transaction::TransactionDecoderError;
-    use bitcoin_consensus_encoding::LengthPrefixExceedsMaxError;
+    
     use p2p::message::error::CommandStringDecoderError;
 
     let mut current: Option<&(dyn std::error::Error + 'static)> = Some(err);
@@ -46,7 +46,7 @@ fn is_known_decoder_divergence(err: &(dyn std::error::Error + 'static)) -> bool 
         ) {
             return true;
         }
-        if e.downcast_ref::<LengthPrefixExceedsMaxError>().is_some() {
+        if e.downcast_ref::<bitcoin::encoding::LengthPrefixExceedsMaxError>().is_some() {
             return true;
         }
         if e.downcast_ref::<TransactionDecoderError>().is_some_and(|e| {
@@ -86,7 +86,7 @@ macro_rules! compare_encoding {
                 let old_encoded = bitcoin_0_32::consensus::encode::serialize(&old_obj);
                 // Uncomment the following two lines if you need to see the difference
                 // in serialisation.
-                // let new_encoded = bitcoin_consensus_encoding::encode_to_vec(&new_obj);
+                // let new_encoded = bitcoin::encoding::encode_to_vec(&new_obj);
                 // assert_eq!(old_encoded, new_encoded);
                 check_encode(&new_obj, &old_encoded);
             }

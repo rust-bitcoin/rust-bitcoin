@@ -3,7 +3,7 @@
 use std::fmt;
 use std::ops::Deref;
 
-use bitcoin_consensus_encoding::{decode_from_slice, Decode, Decoder, Encode, Encoder};
+use bitcoin::encoding::{decode_from_slice, Decode, Decoder, Encode, Encoder};
 
 /// Checks roundtrip decode -> encode for a type.
 ///
