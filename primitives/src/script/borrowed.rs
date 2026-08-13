@@ -83,10 +83,10 @@ crate::transparent_newtype! {
     pub struct Script<T>(PhantomData<T>, [u8]);
 
     impl<T> Script<T> {
-        /// Treat byte slice as [`Script`]
+        /// Treat byte slice as [`Script`].
         pub const fn from_bytes(bytes: &_) -> &Self;
 
-        /// Treat mutable byte slice as [`Script`]
+        /// Treat mutable byte slice as [`Script`].
         pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
 
         pub(crate) fn from_boxed_bytes(bytes: Box<_>) -> Box<Self>;
