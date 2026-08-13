@@ -90,6 +90,9 @@ jobs:
         env:
           RUSTFLAGS: --cfg=bench
         run: cargo rbmt run --toolchain nightly -- bench
+      - name: "Check criterion benches"
+        working-directory: benches
+        run: cargo rbmt run --toolchain stable --lockfile existing -- bench -- --test
 
   Prerelease:
     runs-on: ubuntu-24.04

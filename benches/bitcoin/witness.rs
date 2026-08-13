@@ -3,9 +3,8 @@
 use std::hint::black_box;
 
 use bitcoin::blockdata::witness::{Witness, WitnessDecoder};
-use bitcoin::consensus::encode;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use encoding::{decode_from_slice, Decoder as _};
+use encoding::{decode_from_slice, encode_to_vec, Decoder as _};
 
 fn bench_witness(c: &mut Criterion) {
     let mut g = c.benchmark_group("witness");
@@ -29,7 +28,7 @@ fn bench_witness(c: &mut Criterion) {
     // Many small elements (100 and 1000).
     for count in [100, 1000] {
         let witness = Witness::from_slice(&vec![vec![0u8; 4]; count]);
-        let bytes = encode::serialize(&witness);
+        let bytes = encode_to_vec(&witness);
         g.bench_with_input(BenchmarkId::new("many_elements", count), &bytes, |b, bytes| {
             b.iter(|| black_box(decode_from_slice::<Witness>(bytes).unwrap()));
         });
@@ -38,7 +37,7 @@ fn bench_witness(c: &mut Criterion) {
     // Single element of different sizes.
     for size in [64, 256, 1024, 2048, 4096] {
         let witness = Witness::from_slice(&[vec![0u8; size]]);
-        let bytes = encode::serialize(&witness);
+        let bytes = encode_to_vec(&witness);
         g.bench_with_input(BenchmarkId::new("one_element", size), &bytes, |b, bytes| {
             b.iter(|| black_box(decode_from_slice::<Witness>(bytes).unwrap()));
         });
@@ -46,7 +45,7 @@ fn bench_witness(c: &mut Criterion) {
 
     // 64 KB element fed in different chunk sizes.
     let witness = Witness::from_slice(&[vec![0u8; 65536]]);
-    let bytes = encode::serialize(&witness);
+    let bytes = encode_to_vec(&witness);
     for chunk in [1, 64, 256, 1024, 4096] {
         g.bench_with_input(BenchmarkId::new("chunk_64kb", chunk), &bytes, |b, bytes| {
             b.iter(|| black_box(decode_chunked(bytes, chunk)));
