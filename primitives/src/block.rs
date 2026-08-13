@@ -781,7 +781,9 @@ pub mod error {
     #[doc(inline)]
     pub use crate::hash_types::BlockHashDecoderError;
 
-    /// An error consensus decoding a [`Block`](super::Block).
+    /// An error consensus decoding a [`Block`].
+    ///
+    /// [`Block`]: super::Block
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct BlockDecoderError(pub(super) <super::BlockInnerDecoder as encoding::Decoder>::Error);
@@ -851,7 +853,9 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a [`Header`](super::Header).
+    /// An error consensus decoding a [`Header`].
+    ///
+    /// [`Header`]: super::Header
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum HeaderDecoderError {
@@ -900,7 +904,9 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a [`Version`](super::Version).
+    /// An error consensus decoding a [`Version`].
+    ///
+    /// [`Version`]: super::Version
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
 

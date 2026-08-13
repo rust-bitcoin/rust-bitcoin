@@ -52,10 +52,12 @@ macro_rules! all_opcodes {
         /// Enables wildcard imports to bring into scope all opcodes and nothing else.
         ///
         /// The `all` module is provided so one can use a wildcard import `use primitives::opcodes::all::*`
-        /// to get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. [`Opcode`](crate::opcodes::Opcode)).
+        /// to get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. [`Opcode`]).
         ///
         /// This module is guaranteed to never contain anything except opcode constants and all opcode
         /// constants are guaranteed to begin with `OP_`.
+        ///
+        /// [`Opcode`]: crate::opcodes::Opcode
         pub mod all {
             use super::Opcode;
             $(
