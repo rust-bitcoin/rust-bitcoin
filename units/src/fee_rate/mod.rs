@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Implements `FeeRate` and associated features.
+//! Implements [`FeeRate`] and associated features.
 
 #[cfg(feature = "serde")]
 pub mod serde;
@@ -21,7 +21,7 @@ mod encapsulate {
     /// This is an integer newtype representing fee rate. It provides protection
     /// against mixing up the types, conversion functions, and basic formatting.
     ///
-    /// NOTE: `FeeRate` explicitly does not have any format/display trait implementations, as it
+    /// NOTE: [`FeeRate`] explicitly does not have any format/display trait implementations, as it
     /// doesn't have a standard unit for measure. Users are expected to format it on their own by
     /// extracting values in desired units with `to_sat_per*` functions.
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

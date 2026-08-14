@@ -247,7 +247,7 @@ impl SignedAmount {
         self.to_string_in(denom).parse::<f64>().unwrap()
     }
 
-    /// Constructs a new `SignedAmount` from a prefixed hex string.
+    /// Constructs a new [`SignedAmount`] from a prefixed hex string.
     ///
     /// This can only parse an unsigned quantity.
     ///
@@ -263,7 +263,7 @@ impl SignedAmount {
         Self::from_sat_u64(amount)
     }
 
-    /// Constructs a new `SignedAmount` from an unprefixed hex string.
+    /// Constructs a new [`SignedAmount`] from an unprefixed hex string.
     ///
     /// This can only parse an unsigned quantity.
     ///

@@ -30,7 +30,9 @@ macro_rules! impl_integer {
 impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
 
 mod sealed {
-    /// Seals the `Integer` trait.
+    /// Seals the [`Integer`] trait.
+    ///
+    /// [`Integer`]: super::Integer
     pub trait Sealed {}
 }
 
@@ -41,9 +43,11 @@ mod sealed {
 /// allocates to copy the input string into the error return. If `alloc` is not enabled the input
 /// string is lost.
 ///
-/// If the caller has a `String` or `Box<str>` which is not used later it's better to call
+/// If the caller has a [`String`] or [`Box<str>`] which is not used later it's better to call
 /// [`parse_int::int_from_string`] or [`parse_int::int_from_box`] respectively.
 ///
+/// [`String`]: alloc::string::String
+/// [`Box<str>`]: alloc::boxed::Box
 /// [`parse_int::int_from_string`]: crate::parse_int::int_from_string
 /// [`parse_int::int_from_box`]: crate::parse_int::int_from_box
 ///
@@ -93,13 +97,13 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 ///
 /// Implements:
 ///
-/// * `FromStr`
-/// * `TryFrom<&str>`
+/// * [`FromStr`]
+/// * [`TryFrom<&str>`]
 ///
 /// And if `alloc` feature is enabled in calling crate:
 ///
-/// * `TryFrom<Box<str>>`
-/// * `TryFrom<String>`
+/// * [`TryFrom<Box<str>>`]
+/// * [`TryFrom<String>`]
 ///
 /// # Parameters
 ///
@@ -109,7 +113,11 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 ///
 /// # Errors
 ///
-/// If parsing the string fails then a `units::parse::ParseIntError` is returned.
+/// If parsing the string fails then a [`ParseIntError`] is returned.
+///
+/// [`TryFrom<&str>`]: core::convert::TryFrom
+/// [`TryFrom<Box<str>>`]: core::convert::TryFrom
+/// [`TryFrom<String>`]: core::convert::TryFrom
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
         impl $crate::_export::_core::str::FromStr for $to {
@@ -161,23 +169,28 @@ pub(crate) use impl_parse_str_from_int_infallible;
 ///
 /// Implements:
 ///
-/// * `FromStr`
-/// * `TryFrom<&str>`
+/// * [`FromStr`]
+/// * [`TryFrom<&str>`]
 ///
 /// And if `alloc` feature is enabled in calling crate:
 ///
-/// * `TryFrom<Box<str>>`
-/// * `TryFrom<String>`
+/// * [`TryFrom<Box<str>>`]
+/// * [`TryFrom<String>`]
 ///
 /// # Parameters
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
-/// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
+/// * `err` - the error type returned by `$inner_fn` (implies returned by [`FromStr`] and
+///   [`TryFrom`]).
 /// * `inner_fn`: the fallible conversion function to call to convert from a string reference.
 ///
 /// # Errors
 ///
 /// All functions use the error returned by `$inner_fn`.
+///
+/// [`TryFrom<&str>`]: core::convert::TryFrom
+/// [`TryFrom<Box<str>>`]: core::convert::TryFrom
+/// [`TryFrom<String>`]: core::convert::TryFrom
 macro_rules! impl_parse_str {
     ($to:ty, $err:ty, $inner_fn:expr) => {
         $crate::parse_int::impl_tryfrom_str!(&str, $to, $err, $inner_fn);

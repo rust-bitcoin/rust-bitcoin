@@ -11,7 +11,7 @@
 //! We provide `fee.div_by_weight_ceil(weight)` to calculate a minimum threshold fee rate
 //! required to pay at least `fee` for transaction with `weight`.
 //!
-//! We support various `core::ops` traits all of which return [`NumOpResult<T>`].
+//! We support various [`core::ops`] traits all of which return [`NumOpResult<T>`].
 //!
 //! For specific methods see:
 //!

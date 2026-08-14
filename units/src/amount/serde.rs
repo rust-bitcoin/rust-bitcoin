@@ -86,8 +86,8 @@ pub mod as_sat {
     }
 
     pub mod opt {
-        //! Serialize and deserialize `Option<Amount>` and `Option<SignedAmount>` as real numbers
-        //! denominated in satoshi.
+        //! Serialize and deserialize [`Option<Amount>`] and [`Option<SignedAmount>`] as real
+        //! numbers denominated in satoshi.
         //!
         //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
@@ -147,10 +147,13 @@ pub mod as_sat {
 
     #[cfg(feature = "alloc")]
     pub mod vec {
-        //! Serialize and deserialize `Vec<Amount>` and `Vec<SignedAmount>` as real numbers
+        //! Serialize and deserialize [`Vec<Amount>`] and [`Vec<SignedAmount>`] as real numbers
         //! denominated in satoshi.
         //!
         //! Use with `#[serde(with = "amount::serde::as_sat::vec")]`.
+        //!
+        //! [`Vec<Amount>`]: crate::Amount
+        //! [`Vec<SignedAmount>`]: crate::SignedAmount
 
         use alloc::vec::Vec;
         use core::fmt;
@@ -245,8 +248,8 @@ pub mod as_btc {
     }
 
     pub mod opt {
-        //! Serialize and deserialize `Option<Amount>` and `Option<SignedAmount>` as JSON numbers
-        //! denominated in BTC.
+        //! Serialize and deserialize [`Option<Amount>`] and [`Option<SignedAmount>`] as JSON
+        //! numbers denominated in BTC.
         //!
         //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
@@ -308,10 +311,13 @@ pub mod as_btc {
     }
 
     pub mod vec {
-        //! Serialize and deserialize `Vec<Amount>` and `Vec<SignedAmount>` as JSON numbers
+        //! Serialize and deserialize [`Vec<Amount>`] and [`Vec<SignedAmount>`] as JSON numbers
         //! denominated in BTC.
         //!
         //! Use with `#[serde(with = "amount::serde::as_btc::vec")]`.
+        //!
+        //! [`Vec<Amount>`]: crate::Amount
+        //! [`Vec<SignedAmount>`]: crate::SignedAmount
 
         use alloc::vec::Vec;
         use core::fmt;
@@ -411,8 +417,8 @@ pub mod as_str {
     }
 
     pub mod opt {
-        //! Serialize and deserialize `Option<Amount>` and `Option<SignedAmount>` as a JSON string
-        //! denominated in BTC.
+        //! Serialize and deserialize [`Option<Amount>`] and [`Option<SignedAmount>`] as a JSON
+        //! string denominated in BTC.
         //!
         //! Use with `#[serde(default, with = "amount::serde::as_str::opt")]`.
 
@@ -474,10 +480,13 @@ pub mod as_str {
     }
 
     pub mod vec {
-        //! Serialize and deserialize `Vec<Amount>` and `Vec<SignedAmount>` as JSON strings
+        //! Serialize and deserialize [`Vec<Amount>`] and [`Vec<SignedAmount>`] as JSON strings
         //! denominated in BTC.
         //!
         //! Use with `#[serde(with = "amount::serde::as_str::vec")]`.
+        //!
+        //! [`Vec<Amount>`]: crate::Amount
+        //! [`Vec<SignedAmount>`]: crate::SignedAmount
 
         use alloc::vec::Vec;
         use core::fmt;

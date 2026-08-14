@@ -278,7 +278,7 @@ impl Amount {
         Self::from_str_in(&value.to_string(), denom)
     }
 
-    /// Constructs a new `Amount` from a prefixed hex string.
+    /// Constructs a new [`Amount`] from a prefixed hex string.
     ///
     /// # Errors
     ///
@@ -292,7 +292,7 @@ impl Amount {
         Self::from_sat(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
     }
 
-    /// Constructs a new `Amount` from an unprefixed hex string.
+    /// Constructs a new [`Amount`] from an unprefixed hex string.
     ///
     /// # Errors
     ///
@@ -445,10 +445,10 @@ impl Amount {
             .expect("range of Amount is within range of SignedAmount")
     }
 
-    /// Infallibly subtracts one `Amount` from another returning a [`SignedAmount`].
+    /// Infallibly subtracts one [`Amount`] from another returning a [`SignedAmount`].
     ///
-    /// Since `SignedAmount::MIN` is equivalent to `-Amount::MAX` subtraction of two signed amounts
-    /// can never overflow a `SignedAmount`.
+    /// Since [`SignedAmount::MIN`] is equivalent to `-`[`Amount::MAX`] subtraction of two signed
+    /// amounts can never overflow a [`SignedAmount`].
     #[inline]
     #[must_use]
     pub fn signed_sub(self, rhs: Self) -> SignedAmount {

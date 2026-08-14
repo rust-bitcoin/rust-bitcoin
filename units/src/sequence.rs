@@ -8,7 +8,7 @@
 //! - Indicating whether a transaction opts-in to [BIP-0125] replace-by-fee.
 //!
 //! Note that transactions spending an output with `OP_CHECKLOCKTIMEVERIFY` MUST NOT use
-//! `Sequence::MAX` for the corresponding input. [BIP-0065]
+//! [`Sequence::MAX`] for the corresponding input. [BIP-0065]
 //!
 //! [BIP-0065]: <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>
 //! [BIP-0068]: <https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki>
@@ -65,7 +65,7 @@ impl Sequence {
     /// The lowest sequence number that does not opt-in for replace-by-fee.
     ///
     /// A transaction is considered to have opted in to replacement of itself
-    /// if any of its inputs have a `Sequence` number less than this value
+    /// if any of its inputs have a [`Sequence`] number less than this value
     /// (Explicit Signalling [BIP-0125]).
     ///
     /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
@@ -126,7 +126,7 @@ impl Sequence {
         self.is_relative_lock_time() && (self.0 & Self::LOCK_TYPE_MASK > 0)
     }
 
-    /// Constructs a new `Sequence` from a prefixed hex string.
+    /// Constructs a new [`Sequence`] from a prefixed hex string.
     ///
     /// # Errors
     ///
@@ -138,7 +138,7 @@ impl Sequence {
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Constructs a new `Sequence` from an unprefixed hex string.
+    /// Constructs a new [`Sequence`] from an unprefixed hex string.
     ///
     /// # Errors
     ///
@@ -297,7 +297,9 @@ pub mod error {
     #[cfg(feature = "encoding")]
     use internals::write_err;
 
-    /// An error consensus decoding a `Sequence`.
+    /// An error consensus decoding a [`Sequence`].
+    ///
+    /// [`Sequence`]: super::Sequence
     #[cfg(feature = "encoding")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct SequenceDecoderError(pub(super) encoding::UnexpectedEofError);

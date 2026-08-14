@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Implements `Weight` and associated features.
+//! Implements [`Weight`] and associated features.
 
 use core::num::NonZeroU64;
 use core::{fmt, ops};
@@ -82,7 +82,7 @@ impl Weight {
         Self::from_wu(vb * Self::WITNESS_SCALE_FACTOR)
     }
 
-    /// Constructs a new `Weight` from a prefixed hex string.
+    /// Constructs a new [`Weight`] from a prefixed hex string.
     ///
     /// The hex string once parsed is assumed to represent weight units.
     ///
@@ -96,7 +96,7 @@ impl Weight {
         Ok(Self::from_wu(weight))
     }
 
-    /// Constructs a new `Weight` from an unprefixed hex string.
+    /// Constructs a new [`Weight`] from an unprefixed hex string.
     ///
     /// The hex string once parsed is assumed to represent weight units.
     ///

@@ -12,7 +12,9 @@ use internals::write_err;
 use super::{Height, MedianTimePast, LOCK_TIME_THRESHOLD};
 use crate::parse_int::{ParseIntError, PrefixedHexError, UnprefixedHexError};
 
-/// An error consensus decoding a `LockTime`.
+/// An error consensus decoding a [`LockTime`].
+///
+/// [`LockTime`]: super::LockTime
 #[cfg(feature = "encoding")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LockTimeDecoderError(pub(super) encoding::UnexpectedEofError);
@@ -304,13 +306,13 @@ pub struct ConversionError {
 }
 
 impl ConversionError {
-    /// Constructs a new `ConversionError` from an invalid `n` when expecting a height value.
+    /// Constructs a new [`ConversionError`] from an invalid `n` when expecting a height value.
     #[inline]
     pub(super) const fn invalid_height(n: u32) -> Self {
         Self { unit: LockTimeUnit::Blocks, input: n }
     }
 
-    /// Constructs a new `ConversionError` from an invalid `n` when expecting a time value.
+    /// Constructs a new [`ConversionError`] from an invalid `n` when expecting a time value.
     #[inline]
     pub(super) const fn invalid_time(n: u32) -> Self {
         Self { unit: LockTimeUnit::Seconds, input: n }

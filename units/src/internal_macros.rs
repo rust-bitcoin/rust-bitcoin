@@ -87,8 +87,13 @@ pub(crate) use impl_add_assign;
 
 /// Implement `ops::AddAssign` for `$ty` and `NumOpResult<$ty>` on `NumOpResult<$ty>`
 ///
-/// This implements the same logic as the generic `NumOpResult` implementation in result.rs,
-/// but works for types that can't implement `AddAssign` on themselves (e.g. `Amount`, `SignedAmount`)
+/// This implements the same logic as the generic [`NumOpResult`] implementation in result.rs,
+/// but works for types that can't implement `AddAssign` on themselves (e.g. [`Amount`],
+/// [`SignedAmount`])
+///
+/// [`NumOpResult`]: crate::NumOpResult
+/// [`Amount`]: crate::Amount
+/// [`SignedAmount`]: crate::SignedAmount
 macro_rules! impl_add_assign_for_results {
     ($ty:ident) => {
         impl ops::AddAssign<$ty> for NumOpResult<$ty> {
@@ -116,8 +121,13 @@ pub(crate) use impl_add_assign_for_results;
 
 /// Implement `ops::SubAssign` for `$ty` and `NumOpResult<$ty>` on `NumOpResult<$ty>`
 ///
-/// This implements the same logic as the generic `NumOpResult` implementation in result.rs,
-/// but works for types that can't implement `SubAssign` on themselves (e.g. `Amount`, `SignedAmount`)
+/// This implements the same logic as the generic [`NumOpResult`] implementation in result.rs,
+/// but works for types that can't implement `SubAssign` on themselves (e.g. [`Amount`],
+/// [`SignedAmount`])
+///
+/// [`NumOpResult`]: crate::NumOpResult
+/// [`Amount`]: crate::Amount
+/// [`SignedAmount`]: crate::SignedAmount
 macro_rules! impl_sub_assign_for_results {
     ($ty:ident) => {
         impl ops::SubAssign<$ty> for NumOpResult<$ty> {
@@ -209,8 +219,10 @@ pub(crate) use impl_rem_assign;
 
 /// Implements Lower/UpperHex, Octal and Binary for a new-type `$ty`.
 ///
-/// This macro can be used on raw new-types (e.g. `BlockHeight`), or those encapsulated
+/// This macro can be used on raw new-types (e.g. [`BlockHeight`]), or those encapsulated
 /// per the privacy rules by accessing the inner value with a method `$fn`.
+///
+/// [`BlockHeight`]: crate::BlockHeight
 macro_rules! impl_fmt_traits_for_u32_wrapper {
     ($ty:ident) => {
         impl core::fmt::LowerHex for $ty {

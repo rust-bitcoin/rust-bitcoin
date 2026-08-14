@@ -39,26 +39,26 @@ macro_rules! impl_u32_wrapper {
         $type_vis struct $newtype($inner_vis u32);
 
         impl $newtype {
-            #[doc = "Constructs a new `"]
+            #[doc = "Constructs a new [`"]
             #[doc = stringify!($newtype)]
-            #[doc = "` from an unprefixed hex string.\n\n"]
+            #[doc = "`] from an unprefixed hex string.\n\n"]
             #[doc = "# Errors\n\n"]
-            #[doc = "If the input string is not a valid hex representation of a `"]
+            #[doc = "If the input string is not a valid hex representation of a [`"]
             #[doc = stringify!($newtype)]
-            #[doc = "` or it does not include the `0x` prefix."]
+            #[doc = "`] or it does not include the `0x` prefix."]
             #[inline]
             pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
                 let block_height = parse_int::hex_u32_prefixed(s)?;
                 Ok(Self(block_height))
             }
 
-            #[doc = "Constructs a new `"]
+            #[doc = "Constructs a new [`"]
             #[doc = stringify!($newtype)]
-            #[doc = "` from a prefixed hex string.\n\n"]
+            #[doc = "`] from a prefixed hex string.\n\n"]
             #[doc = "# Errors\n\n"]
-            #[doc = "If the input string is not a valid hex representation of a `"]
+            #[doc = "If the input string is not a valid hex representation of a [`"]
             #[doc = stringify!($newtype)]
-            #[doc = "` or if it includes the `0x` prefix."]
+            #[doc = "`] or if it includes the `0x` prefix."]
             #[inline]
             pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
                 let block_height = parse_int::hex_u32_unprefixed(s)?;
@@ -149,14 +149,14 @@ impl BlockHeight {
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Attempt to subtract two [`BlockHeight`]s, returning `None` if overflow occurred.
+    /// Attempt to subtract two [`BlockHeight`]s, returning [`None`] if overflow occurred.
     #[inline]
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<BlockHeightInterval> {
         self.to_u32().checked_sub(other.to_u32()).map(BlockHeightInterval)
     }
 
-    /// Attempt to add an interval to this [`BlockHeight`], returning `None` if overflow occurred.
+    /// Attempt to add an interval to this [`BlockHeight`], returning [`None`] if overflow occurred.
     #[inline]
     #[must_use]
     pub fn checked_add(self, other: BlockHeightInterval) -> Option<Self> {
@@ -165,7 +165,7 @@ impl BlockHeight {
 
     /// Saturating integer addition.
     ///
-    /// Computes self + rhs, saturating at `BlockHeight::MAX` instead of overflowing.
+    /// Computes self + rhs, saturating at [`BlockHeight::MAX`] instead of overflowing.
     #[inline]
     #[must_use]
     pub const fn saturating_add(self, rhs: BlockHeightInterval) -> Self {
@@ -174,7 +174,7 @@ impl BlockHeight {
 
     /// Saturating integer subtraction.
     ///
-    /// Computes self - rhs, saturating at `BlockHeight::MIN` instead of overflowing.
+    /// Computes self - rhs, saturating at [`BlockHeight::MIN`] instead of overflowing.
     #[inline]
     #[must_use]
     pub const fn saturating_sub(self, rhs: BlockHeightInterval) -> Self {
@@ -258,7 +258,7 @@ impl BlockHeightInterval {
     /// Block interval 0.
     pub const ZERO: Self = Self(0);
 
-    /// The minimum block interval, equivalent to `Self::ZERO`.
+    /// The minimum block interval, equivalent to [`Self::ZERO`].
     pub const MIN: Self = Self::ZERO;
 
     /// The maximum block interval.
@@ -272,14 +272,14 @@ impl BlockHeightInterval {
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Attempt to subtract two [`BlockHeightInterval`]s, returning `None` if overflow occurred.
+    /// Attempt to subtract two [`BlockHeightInterval`]s, returning [`None`] if overflow occurred.
     #[inline]
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<Self> {
         self.to_u32().checked_sub(other.to_u32()).map(Self)
     }
 
-    /// Attempt to add two [`BlockHeightInterval`]s, returning `None` if overflow occurred.
+    /// Attempt to add two [`BlockHeightInterval`]s, returning [`None`] if overflow occurred.
     #[inline]
     #[must_use]
     pub fn checked_add(self, other: Self) -> Option<Self> {
@@ -331,7 +331,7 @@ impl BlockMtp {
     /// for some use cases e.g., folding a sum of intervals.
     pub const ZERO: Self = Self(0);
 
-    /// The minimum block MTP, equivalent to `Self::ZERO`.
+    /// The minimum block MTP, equivalent to [`Self::ZERO`].
     pub const MIN: Self = Self::ZERO;
 
     /// The maximum block MTP.
@@ -356,14 +356,14 @@ impl BlockMtp {
         Self::from_u32(u32::from(timestamps[5]))
     }
 
-    /// Attempt to subtract two [`BlockMtp`]s, returning `None` if overflow occurred.
+    /// Attempt to subtract two [`BlockMtp`]s, returning [`None`] if overflow occurred.
     #[inline]
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<BlockMtpInterval> {
         self.to_u32().checked_sub(other.to_u32()).map(BlockMtpInterval)
     }
 
-    /// Attempt to add an interval to this [`BlockMtp`], returning `None` if overflow occurred.
+    /// Attempt to add an interval to this [`BlockMtp`], returning [`None`] if overflow occurred.
     #[inline]
     #[must_use]
     pub fn checked_add(self, other: BlockMtpInterval) -> Option<Self> {
@@ -408,7 +408,7 @@ impl BlockMtpInterval {
     /// Block MTP interval 0.
     pub const ZERO: Self = Self(0);
 
-    /// The minimum block MTP interval, equivalent to `Self::ZERO`.
+    /// The minimum block MTP interval, equivalent to [`Self::ZERO`].
     pub const MIN: Self = Self::ZERO;
 
     /// The maximum block MTP interval.
@@ -454,14 +454,14 @@ impl BlockMtpInterval {
         relative::NumberOf512Seconds::from_seconds_ceil(self.to_u32())
     }
 
-    /// Attempt to subtract two [`BlockMtpInterval`]s, returning `None` if overflow occurred.
+    /// Attempt to subtract two [`BlockMtpInterval`]s, returning [`None`] if overflow occurred.
     #[inline]
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<Self> {
         self.to_u32().checked_sub(other.to_u32()).map(Self)
     }
 
-    /// Attempt to add two [`BlockMtpInterval`]s, returning `None` if overflow occurred.
+    /// Attempt to add two [`BlockMtpInterval`]s, returning [`None`] if overflow occurred.
     #[inline]
     #[must_use]
     pub fn checked_add(self, other: Self) -> Option<Self> {
@@ -663,7 +663,9 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a `BlockHeight`.
+    /// An error consensus decoding a [`BlockHeight`].
+    ///
+    /// [`BlockHeight`]: super::BlockHeight
     #[cfg(feature = "encoding")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct BlockHeightDecoderError(pub(super) encoding::UnexpectedEofError);

@@ -20,55 +20,55 @@ pub use self::error::CompactTargetDecoderError;
 #[doc(no_inline)]
 pub use self::error::{ParseTargetError, ParseWorkError};
 
-/// Implement traits and methods shared by `Target` and `Work`.
+/// Implement traits and methods shared by [`Target`] and [`Work`].
 macro_rules! do_impl {
     ($ty:ident, $err_ty:ident) => {
         impl $ty {
-            #[doc = "Constructs a new `"]
+            #[doc = "Constructs a new [`"]
             #[doc = stringify!($ty)]
-            #[doc = "` from a prefixed hex string.\n"]
+            #[doc = "`] from a prefixed hex string.\n"]
             #[doc = "\n# Errors\n"]
             #[doc = "\n - If the input string does not contain a `0x` (or `0X`) prefix."]
-            #[doc = "\n - If the input string is not a valid hex encoding of a `"]
+            #[doc = "\n - If the input string is not a valid hex encoding of a [`"]
             #[doc = stringify!($ty)]
-            #[doc = "`."]
+            #[doc = "`]."]
             pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
                 Ok($ty(U256::from_hex(s)?))
             }
 
-            #[doc = "Constructs a new `"]
+            #[doc = "Constructs a new [`"]
             #[doc = stringify!($ty)]
-            #[doc = "` from an unprefixed hex string.\n"]
+            #[doc = "`] from an unprefixed hex string.\n"]
             #[doc = "\n# Errors\n"]
             #[doc = "\n - If the input string contains a `0x` (or `0X`) prefix."]
-            #[doc = "\n - If the input string is not a valid hex encoding of a `"]
+            #[doc = "\n - If the input string is not a valid hex encoding of a [`"]
             #[doc = stringify!($ty)]
-            #[doc = "`."]
+            #[doc = "`]."]
             pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
                 Ok($ty(U256::from_unprefixed_hex(s)?))
             }
 
-            #[doc = "Constructs `"]
+            #[doc = "Constructs [`"]
             #[doc = stringify!($ty)]
-            #[doc = "` from a big-endian byte array."]
+            #[doc = "`] from a big-endian byte array."]
             #[inline]
             pub fn from_be_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_be_bytes(bytes)) }
 
-            #[doc = "Constructs `"]
+            #[doc = "Constructs [`"]
             #[doc = stringify!($ty)]
-            #[doc = "` from a little-endian byte array."]
+            #[doc = "`] from a little-endian byte array."]
             #[inline]
             pub fn from_le_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_le_bytes(bytes)) }
 
-            #[doc = "Converts `"]
+            #[doc = "Converts [`"]
             #[doc = stringify!($ty)]
-            #[doc = "` to a big-endian byte array."]
+            #[doc = "`] to a big-endian byte array."]
             #[inline]
             pub fn to_be_bytes(self) -> [u8; 32] { self.0.to_be_bytes() }
 
-            #[doc = "Converts `"]
+            #[doc = "Converts [`"]
             #[doc = stringify!($ty)]
-            #[doc = "` to a little-endian byte array."]
+            #[doc = "`] to a little-endian byte array."]
             #[inline]
             pub fn to_le_bytes(self) -> [u8; 32] { self.0.to_le_bytes() }
         }
@@ -241,9 +241,9 @@ impl_fmt_traits_for_u32_wrapper!(Target);
 /// # Note on order/equality
 ///
 /// Usage of the ordering and equality traits for this type may be surprising. Converting between
-/// `CompactTarget` and `Target` is lossy *in both directions* (there are multiple `CompactTarget`
-/// values that map to the same `Target` value). Ordering and equality for this type are defined in
-/// terms of the underlying `u32`.
+/// [`CompactTarget`] and [`Target`] is lossy *in both directions* (there are multiple
+/// [`CompactTarget`] values that map to the same [`Target`] value). Ordering and equality for this
+/// type are defined in terms of the underlying `u32`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CompactTarget(u32);
@@ -267,7 +267,7 @@ impl CompactTarget {
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
     pub fn to_target(self) -> Target { Target::from_compact(self) }
 
-    /// Constructs a new `CompactTarget` from a prefixed hex string.
+    /// Constructs a new [`CompactTarget`] from a prefixed hex string.
     ///
     /// # Errors
     ///
@@ -282,7 +282,7 @@ impl CompactTarget {
         Ok(Self::from_consensus(target))
     }
 
-    /// Constructs a new `CompactTarget` from an unprefixed hex string.
+    /// Constructs a new [`CompactTarget`] from an unprefixed hex string.
     ///
     /// # Errors
     ///
@@ -359,7 +359,9 @@ pub mod error {
 
     use super::ParseU256Error;
 
-    /// An error consensus decoding a `CompactTarget`.
+    /// An error consensus decoding a [`CompactTarget`].
+    ///
+    /// [`CompactTarget`]: super::CompactTarget
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[cfg(feature = "encoding")]
     pub struct CompactTargetDecoderError(pub(super) encoding::UnexpectedEofError);
@@ -439,10 +441,10 @@ impl<'a> Arbitrary<'a> for CompactTarget {
 include!("../include/u256.rs");
 
 impl U256 {
-    /// Constructs a new `U256` from a prefixed hex string.
+    /// Constructs a new [`U256`] from a prefixed hex string.
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> { parse_int::hex_u256_prefixed(s) }
 
-    /// Constructs a new `U256` from an unprefixed hex string.
+    /// Constructs a new [`U256`] from an unprefixed hex string.
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         parse_int::hex_u256_unprefixed(s)
     }

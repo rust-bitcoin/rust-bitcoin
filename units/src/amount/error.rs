@@ -475,7 +475,9 @@ impl std::error::Error for PossiblyConfusingDenominationError {
     }
 }
 
-/// An error consensus decoding an `Amount`.
+/// An error consensus decoding an [`Amount`].
+///
+/// [`Amount`]: super::Amount
 #[cfg(feature = "encoding")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AmountDecoderError(pub(super) AmountDecoderErrorInner);
@@ -488,7 +490,9 @@ impl AmountDecoderError {
         Self(AmountDecoderErrorInner::UnexpectedEof(e))
     }
 
-    /// Constructs an out of range (`Amount::from_sat`) error.
+    /// Constructs an out of range ([`Amount::from_sat`]) error.
+    ///
+    /// [`Amount::from_sat`]: super::Amount::from_sat
     #[inline]
     pub(super) fn out_of_range(e: OutOfRangeError) -> Self {
         Self(AmountDecoderErrorInner::OutOfRange(e))
