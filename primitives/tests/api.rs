@@ -21,9 +21,9 @@ use bitcoin_primitives::script::{
     WScriptHash, WitnessScriptTag,
 };
 use bitcoin_primitives::{
-    absolute, block, merkle_tree, opcodes, pow, relative, transaction, witness, witness_version,
+    block, merkle_tree, opcodes, transaction, witness, witness_version,
     OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig,
-    ScriptSigBuf, Sequence, SignetBlockScript, SignetBlockScriptBuf, TapScript, TapScriptBuf,
+    ScriptSigBuf, SignetBlockScript, SignetBlockScriptBuf, TapScript, TapScriptBuf,
     Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
 };
 
@@ -32,8 +32,6 @@ use bitcoin_primitives::{
 struct Enums {
     a: block::Checked, // Empty enums are not constructable.
     b: block::Unchecked,
-    c: absolute::LockTime,
-    d: relative::LockTime,
     e: script::RedeemScriptTag, // Script tags are empty enums.
     f: script::ScriptPubKeyTag,
     g: script::ScriptSigTag,
@@ -54,9 +52,6 @@ struct Structs<'a> {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i1: pow::CompactTarget,
-    i2: pow::Target,
-    i3: pow::Work,
     j1: &'a RedeemScript,
     j2: &'a ScriptPubKey,
     j3: &'a ScriptSig,
@@ -71,7 +66,6 @@ struct Structs<'a> {
     m4: TapScriptBuf,
     m5: WitnessScriptBuf,
     m6: SignetBlockScriptBuf,
-    n: Sequence,
     o: Transaction,
     p: TxIn,
     q: TxOut,
@@ -109,9 +103,6 @@ struct CommonTraits {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i1: pow::CompactTarget,
-    i2: pow::Target,
-    i3: pow::Work,
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
@@ -121,7 +112,6 @@ struct CommonTraits {
     m4: TapScriptBuf,
     m5: WitnessScriptBuf,
     m6: SignetBlockScriptBuf,
-    n: Sequence,
     o: Transaction,
     p: TxIn,
     q: TxOut,
@@ -135,8 +125,6 @@ struct CommonTraits {
     y: Builder<ScriptSigTag>,
     z: PushBytesBuf,
     aa: opcodes::Opcode,
-    ab: absolute::LockTime,
-    ac: relative::LockTime,
     ad: witness_version::WitnessVersion,
     ae1: script::RedeemScriptTag,
     ae2: script::ScriptPubKeyTag,
@@ -157,20 +145,14 @@ struct Copy {
     d: block::WitnessCommitment,
     e: merkle_tree::TxMerkleNode,
     f: merkle_tree::WitnessMerkleNode,
-    g1: pow::CompactTarget,
-    g2: pow::Target,
-    g3: pow::Work,
     h: ScriptHash,
     i: WScriptHash,
-    j: Sequence,
     k: OutPoint,
     l: Txid,
     m: Wtxid,
     n: transaction::Ntxid,
     o: transaction::Version,
     p: opcodes::Opcode,
-    q: absolute::LockTime,
-    r: relative::LockTime,
     s: witness_version::WitnessVersion,
 }
 
@@ -185,21 +167,12 @@ struct Clone<'a> {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i1: pow::CompactTarget,
-    i2: pow::Target,
-    i3: pow::Work,
     // j: &'a Script,
-    #[cfg(feature = "alloc")]
     j0: alloc::boxed::Box<PushBytes>,
-    #[cfg(feature = "alloc")]
     j1: alloc::boxed::Box<RedeemScript>,
-    #[cfg(feature = "alloc")]
     j2: alloc::boxed::Box<ScriptPubKey>,
-    #[cfg(feature = "alloc")]
     j3: alloc::boxed::Box<ScriptSig>,
-    #[cfg(feature = "alloc")]
     j4: alloc::boxed::Box<TapScript>,
-    #[cfg(feature = "alloc")]
     j5: alloc::boxed::Box<WitnessScript>,
     k: ScriptHash,
     l: WScriptHash,
@@ -209,7 +182,6 @@ struct Clone<'a> {
     m4: TapScriptBuf,
     m5: WitnessScriptBuf,
     m6: SignetBlockScriptBuf,
-    n: Sequence,
     o: Transaction,
     p: TxIn,
     q: TxOut,
@@ -223,8 +195,6 @@ struct Clone<'a> {
     y: Builder<ScriptSigTag>,
     z: PushBytesBuf,
     aa: opcodes::Opcode,
-    ab: absolute::LockTime,
-    ac: relative::LockTime,
     ad: witness_version::WitnessVersion,
     ae1: script::RedeemScriptTag,
     ae2: script::ScriptPubKeyTag,
@@ -248,9 +218,6 @@ struct Ord {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i1: pow::CompactTarget,
-    i2: pow::Target,
-    i3: pow::Work,
     // j: &'a Script,  // Doesn't implement `Clone`.
     k: ScriptHash,
     l: WScriptHash,
@@ -260,7 +227,6 @@ struct Ord {
     m4: TapScriptBuf,
     m5: WitnessScriptBuf,
     m6: SignetBlockScriptBuf,
-    n: Sequence,
     o: Transaction,
     p: TxIn,
     q: TxOut,
@@ -274,8 +240,6 @@ struct Ord {
     // y: Builder<ScriptSigTag>, // Doesn't implement `Ord` or `Hash`.
     z: PushBytesBuf,
     // aa: opcodes::Opcode, // Deliberately does not implement `Ord` (see type docs).
-    // ab: absolute::LockTime, // Deliberately does not implement `Ord` (see type docs).
-    // ac: relative::LockTime, // Deliberately does not implement `Ord` (see type docs).
     ad: witness_version::WitnessVersion,
     ae1: script::RedeemScriptTag,
     ae2: script::ScriptPubKeyTag,
@@ -350,16 +314,10 @@ struct Decoders {
 struct Errors {
     a: block::BlockDecoderError,
     b: block::BlockHashDecoderError,
-    c: block::BlockHeightDecoderError,
     d: block::HeaderDecoderError,
     e: block::InvalidBlockError,
-    f: block::TooBigForRelativeHeightError,
     g: block::VersionDecoderError,
     h: merkle_tree::TxMerkleNodeDecoderError,
-    i: relative::error::DisabledLockTimeError,
-    j: relative::error::IsSatisfiedByError,
-    k: relative::error::IsSatisfiedByHeightError,
-    l: relative::error::IsSatisfiedByTimeError,
     m: script::PushBytesError,
     n: script::RedeemScriptSizeError,
     o: script::ScriptBufDecoderError,
@@ -390,8 +348,6 @@ fn c_debug_nonempty() {
 
     // All the enums.
     check_debug! {
-        absolute::LockTime::ZERO;
-        relative::LockTime::ZERO;
         witness_version::WitnessVersion::V0
     };
 
@@ -410,9 +366,6 @@ fn c_debug_nonempty() {
         block::WitnessCommitment::from_byte_array(BYTES);
         merkle_tree::TxMerkleNode::from_byte_array(BYTES);
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
-        pow::CompactTarget::arbitrary(&mut u).unwrap();
-        pow::Target::MAX;
-        pow::Target::MAX.to_work();
         REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
         SCRIPT_PUB_KEY.as_script();
@@ -427,7 +380,6 @@ fn c_debug_nonempty() {
         SIGNET_BLOCK_SCRIPT.clone();
         TAP_SCRIPT.clone();
         WITNESS_SCRIPT.clone();
-        Sequence::arbitrary(&mut u).unwrap();
         Transaction::arbitrary(&mut u).unwrap();
         TxIn::arbitrary(&mut u).unwrap();
         TxOut::arbitrary(&mut u).unwrap();
@@ -505,16 +457,10 @@ fn c_good_err_display() {
 
     assert_display::<block::BlockDecoderError>();
     assert_display::<block::BlockHashDecoderError>();
-    assert_display::<block::BlockHeightDecoderError>();
     assert_display::<block::HeaderDecoderError>();
     assert_display::<block::InvalidBlockError>();
-    assert_display::<block::TooBigForRelativeHeightError>();
     assert_display::<block::VersionDecoderError>();
     assert_display::<merkle_tree::TxMerkleNodeDecoderError>();
-    assert_display::<relative::error::DisabledLockTimeError>();
-    assert_display::<relative::error::IsSatisfiedByError>();
-    assert_display::<relative::error::IsSatisfiedByHeightError>();
-    assert_display::<relative::error::IsSatisfiedByTimeError>();
     assert_display::<script::PushBytesError>();
     assert_display::<script::RedeemScriptSizeError>();
     assert_display::<script::ScriptBufDecoderError>();
@@ -556,6 +502,38 @@ fn c_serde() {
     assert_serde::<transaction::Version>();
     assert_serde::<OutPoint>();
     assert_serde::<Witness>();
+    assert_serde::<witness_version::WitnessVersion>();
+}
+
+/// P-ARBITRARY: Tests that public types implement `Arbitrary`.
+#[test]
+fn p_arbitrary() {
+    fn assert_arbitrary<T: for<'a> Arbitrary<'a>>() {}
+
+    assert_arbitrary::<block::Block<Unchecked>>();
+    assert_arbitrary::<block::Header>();
+    assert_arbitrary::<block::Version>();
+    assert_arbitrary::<block::BlockHash>();
+    assert_arbitrary::<block::WitnessCommitment>();
+    assert_arbitrary::<merkle_tree::TxMerkleNode>();
+    assert_arbitrary::<merkle_tree::WitnessMerkleNode>();
+    assert_arbitrary::<RedeemScriptBuf>();
+    assert_arbitrary::<ScriptPubKeyBuf>();
+    assert_arbitrary::<ScriptSigBuf>();
+    assert_arbitrary::<TapScriptBuf>();
+    assert_arbitrary::<WitnessScriptBuf>();
+    assert_arbitrary::<SignetBlockScriptBuf>();
+    assert_arbitrary::<ScriptHash>();
+    assert_arbitrary::<WScriptHash>();
+    assert_arbitrary::<Transaction>();
+    assert_arbitrary::<TxIn>();
+    assert_arbitrary::<TxOut>();
+    assert_arbitrary::<OutPoint>();
+    assert_arbitrary::<Txid>();
+    assert_arbitrary::<Wtxid>();
+    assert_arbitrary::<transaction::Ntxid>();
+    assert_arbitrary::<transaction::Version>();
+    assert_arbitrary::<Witness>();
 }
 
 /// P-DEFAULT-CHANGE: Tests regression for Default implementation values.
@@ -714,8 +692,9 @@ fn p_consistent_exports_script() {
 #[test]
 fn p_consistent_exports_block() {
     use bitcoin_primitives::block::error::{
-        BlockDecoderError as _, BlockHashDecoderError as _, BlockHeightDecoderError as _, HeaderDecoderError as _,
-        InvalidBlockError as _, TooBigForRelativeHeightError as _, VersionDecoderError as _,
+        BlockDecoderError as _, BlockHashDecoderError as _, BlockHeightDecoderError as _,
+        HeaderDecoderError as _, InvalidBlockError as _, TooBigForRelativeHeightError as _,
+        VersionDecoderError as _,
     };
     use bitcoin_primitives::block::{
         Block, BlockDecoder, BlockDecoderError, BlockEncoder, BlockHash, BlockHashDecoder,
