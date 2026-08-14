@@ -121,12 +121,12 @@ fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Er
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
         if usize::from(d58) >= BASE58_DIGITS.len() {
-            return Err(Base256Error::InvalidChar(InvalidCharacterError::new(d58)));
+            return Err(InvalidCharacterError::new(d58)).map_err(Base256Error::InvalidChar);
         }
         let mut carry = match BASE58_DIGITS[usize::from(d58)] {
             Some(d58) => u32::from(d58),
             None => {
-                return Err(Base256Error::InvalidChar(InvalidCharacterError::new(d58)));
+                return Err(InvalidCharacterError::new(d58)).map_err(Base256Error::InvalidChar);
             }
         };
         for d256 in scratch.slice_mut() {
@@ -186,7 +186,8 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     let actual = u32::from_le_bytes(data_check);
 
     if actual != expected {
-        return Err(IncorrectChecksumError { incorrect: actual, expected }.into());
+        return Err(IncorrectChecksumError { incorrect: actual, expected })
+            .map_err(DecodeCheckError::from);
     }
 
     ret.truncate(remaining.len());
@@ -252,16 +253,17 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     write_slice.copy_from_slice(&scratch);
     let decoded = &decoded[..decoded_len];
 
-    let (payload, &data_check) = decoded.split_last_chunk::<4>().ok_or_else(|| {
-        DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(DecodeCheckError::from(
-            TooShortError { length: decoded_len },
-        )))
-    })?;
+    let (payload, &data_check) = decoded
+        .split_last_chunk::<4>()
+        .ok_or(TooShortError { length: decoded_len })
+        .map_err(DecodeCheckError::from)
+        .map_err(DecodeCheckArrayErrorInner::Decode)
+        .map_err(DecodeCheckArrayError)?;
 
     if payload.len() != N {
-        return Err(DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
-            UnexpectedLengthError { expected: N, actual: payload.len() },
-        )));
+        return Err(UnexpectedLengthError { expected: N, actual: payload.len() })
+            .map_err(DecodeCheckArrayErrorInner::UnexpectedLength)
+            .map_err(DecodeCheckArrayError);
     }
 
     let hash_check = *sha256d::Hash::hash(payload).as_byte_array().sub_array::<0, 4>();
@@ -269,9 +271,10 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     let actual = u32::from_le_bytes(data_check);
 
     if actual != expected {
-        return Err(DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(
-            DecodeCheckError::from(IncorrectChecksumError { incorrect: actual, expected }),
-        )));
+        return Err(IncorrectChecksumError { incorrect: actual, expected })
+            .map_err(DecodeCheckError::from)
+            .map_err(DecodeCheckArrayErrorInner::Decode)
+            .map_err(DecodeCheckArrayError);
     }
 
     Ok(payload.try_into().expect("payload length checked to equal N"))
@@ -336,7 +339,8 @@ impl Base58CkString {
 
             encode_to_buffer(iter, &mut buf)
                 .map(|()| Self(Base58CkInner::Small(buf)))
-                .map_err(|_| InputTooLongError(InputTooLongErrorInner { input_len: data.len() }))
+                .map_err(|_| InputTooLongErrorInner { input_len: data.len() })
+                .map_err(InputTooLongError)
         }
     }
 
