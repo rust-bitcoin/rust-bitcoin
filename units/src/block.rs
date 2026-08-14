@@ -472,7 +472,7 @@ impl BlockMtpInterval {
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockMtpInterval);
 
 impl From<relative::NumberOf512Seconds> for BlockMtpInterval {
-    /// Converts a [`locktime::relative::NumberOf512Seconds`] to a [`BlockMtpInterval `].
+    /// Converts a [`locktime::relative::NumberOf512Seconds`] to a [`BlockMtpInterval`].
     ///
     /// A relative locktime MTP interval has a resolution of 512 seconds, and a maximum value
     /// of `u16::MAX` 512-second intervals. [`BlockMtpInterval`] may take the full range of
