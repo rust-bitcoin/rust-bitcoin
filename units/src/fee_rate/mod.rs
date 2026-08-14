@@ -44,12 +44,16 @@ use internals::const_casts;
 impl FeeRate {
     /// The zero fee rate.
     ///
-    /// Equivalent to [`MIN`](Self::MIN), may better express intent in some contexts.
+    /// Equivalent to [`MIN`], may better express intent in some contexts.
+    ///
+    /// [`MIN`]: Self::MIN
     pub const ZERO: Self = Self::from_sat_per_mvb(0);
 
     /// The minimum possible value.
     ///
-    /// Equivalent to [`ZERO`](Self::ZERO), may better express intent in some contexts.
+    /// Equivalent to [`ZERO`], may better express intent in some contexts.
+    ///
+    /// [`ZERO`]: Self::ZERO
     pub const MIN: Self = Self::ZERO;
 
     /// The maximum possible value.

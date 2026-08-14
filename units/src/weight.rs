@@ -42,12 +42,16 @@ pub use encapsulate::Weight;
 impl Weight {
     /// Zero weight units (wu).
     ///
-    /// Equivalent to [`MIN`](Self::MIN), may better express intent in some contexts.
+    /// Equivalent to [`MIN`], may better express intent in some contexts.
+    ///
+    /// [`MIN`]: Self::MIN
     pub const ZERO: Self = Self::from_wu(0);
 
     /// Minimum possible value (0 wu).
     ///
-    /// Equivalent to [`ZERO`](Self::ZERO), may better express intent in some contexts.
+    /// Equivalent to [`ZERO`], may better express intent in some contexts.
+    ///
+    /// [`ZERO`]: Self::ZERO
     pub const MIN: Self = Self::from_wu(u64::MIN);
 
     /// Maximum possible value.

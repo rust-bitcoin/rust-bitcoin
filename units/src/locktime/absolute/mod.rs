@@ -273,8 +273,11 @@ impl LockTime {
     ///
     /// If you do not have, or do not wish to calculate, both parameters consider using:
     ///
-    /// * [`is_satisfied_by_height()`](absolute::LockTime::is_satisfied_by_height)
-    /// * [`is_satisfied_by_time()`](absolute::LockTime::is_satisfied_by_time)
+    /// * [`is_satisfied_by_height()`]
+    /// * [`is_satisfied_by_time()`]
+    ///
+    /// [`is_satisfied_by_height()`]: Self::is_satisfied_by_height
+    /// [`is_satisfied_by_time()`]: Self::is_satisfied_by_time
     ///
     /// # Examples
     ///
