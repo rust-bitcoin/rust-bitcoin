@@ -10,5 +10,8 @@ target
 mutants.out*
 fuzz/coverage
 
+# Generated API snapshot files
+*/api/
+
 # Local tooling (rbmt)
 Cargo.lock.backup

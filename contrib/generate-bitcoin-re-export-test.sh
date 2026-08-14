@@ -3,11 +3,13 @@
 # Script for generating a Rust test file that verifies all bitcoin_primitives
 # items are re-exported in the `bitcoin` crate.
 #
-# The script parses primitives/api/all-features.txt and units/api/all-features.txt
-# to generate use statements that will fail to compile if any re-exports are missing.
+# The script generates the primitives and units API files with `cargo rbmt api`
+# and parses them to produce use statements that will fail to compile if any
+# re-exports are missing.
 
 set -euo pipefail
 
+api_crates=("primitives" "units")
 api_file="./primitives/api/all-features.txt"
 units_api_file="./units/api/all-features.txt"
 output_file="./bitcoin/tests/check-re-exports.rs"
@@ -22,9 +24,9 @@ DESCRIPTION
   Generates a Rust test file that verifies all public types and modules from
   bitcoin_primitives are re-exported in the bitcoin crate;
 
-  The script parses primitives/api/all-features.txt and units/api/all-features.txt
-  to creates use statements for every 'pub enum', 'pub struct', and 'pub mod'
-  declaration.
+  The script runs 'cargo rbmt api --snapshot' for the primitives and units
+  crates and parses the resulting API files, creating use statements for every
+  'pub enum', 'pub struct', and 'pub mod' declaration.
 
   Output file: bitcoin/tests/check-re-exports.rs
 EOF
@@ -46,6 +48,8 @@ main() {
     done
 
     check_required_commands
+
+    generate_api_files
     check_required_files
 
     say "Parsing $api_file and generating Rust test..."
@@ -177,9 +181,21 @@ check_required_files() {
 }
 
 check_required_commands() {
+    need_cmd cargo
     need_cmd grep
     need_cmd sort
     need_cmd mktemp
+}
+
+generate_api_files() {
+    local args=()
+    local crate
+    for crate in "${api_crates[@]}"; do
+        args+=(-p "$crate")
+    done
+
+    say "Generating API files with cargo rbmt api..."
+    cargo rbmt api --snapshot "${args[@]}" > /dev/null
 }
 
 say() {
