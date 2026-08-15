@@ -1,6 +1,6 @@
 # Fuzz targets are distributed over a static number of jobs.
 
-name: Fuzz
+name: Fuzz (from scratch)
 on:
   schedule:
     # 5am every day UTC, this correlates to:

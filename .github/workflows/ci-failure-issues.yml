@@ -3,7 +3,7 @@ name: CI Failure Issues
 on:
   workflow_run:  # zizmor: ignore[dangerous-triggers]
     workflows:
-      - Fuzz
+      - Fuzz (from scratch)
       - Kani CI
       - Miri
     types:
@@ -31,7 +31,7 @@ jobs:
             const workflow = run.name;
             const marker = `<!-- ci-failure-key:${workflow} -->`;
             const workflowFiles = {
-              "Fuzz": "cron-daily-fuzz.yml",
+              "Fuzz (from scratch)": "cron-daily-fuzz.yml",
               "Kani CI": "cron-daily-kani.yml",
               "Miri": "cron-daily-miri.yml",
             };
