@@ -28,8 +28,14 @@
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 #[cfg(feature = "serde")]
 pub extern crate serde;
+
+#[cfg(feature = "alloc")]
+use alloc::{boxed::Box, rc::Rc, string::String, sync::Arc};
 
 use core::fmt;
 use core::str::FromStr;
@@ -175,6 +181,45 @@ impl FromStr for Network {
     }
 }
 
+impl TryFrom<&str> for Network {
+    type Error = ParseNetworkError;
+
+    #[inline]
+    fn try_from(s: &str) -> Result<Self, Self::Error> { Self::from_str(s) }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<String> for Network {
+    type Error = ParseNetworkError;
+
+    #[inline]
+    fn try_from(s: String) -> Result<Self, Self::Error> { Self::from_str(&s) }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<Box<str>> for Network {
+    type Error = ParseNetworkError;
+
+    #[inline]
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> { Self::from_str(&s) }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<Rc<str>> for Network {
+    type Error = ParseNetworkError;
+
+    #[inline]
+    fn try_from(s: Rc<str>) -> Result<Self, Self::Error> { Self::from_str(&s) }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<Arc<str>> for Network {
+    type Error = ParseNetworkError;
+
+    #[inline]
+    fn try_from(s: Arc<str>) -> Result<Self, Self::Error> { Self::from_str(&s) }
+}
+
 impl AsRef<Self> for Network {
     fn as_ref(&self) -> &Self { self }
 }
@@ -236,7 +281,6 @@ pub mod as_core_arg {
     //!     network: Network,
     //! }
     //! ```
-
     // No need to document these functions, they are well known.
     #![allow(missing_docs)]
     #![allow(clippy::missing_errors_doc)]
@@ -411,5 +455,26 @@ mod tests {
                 serde_test::Token::StructEnd,
             ],
         );
+    }
+
+    #[test]
+    fn try_from_str() {
+        assert_eq!(Network::try_from("bitcoin"), Ok(Network::Bitcoin));
+        assert_eq!(Network::try_from("testnet"), Ok(Network::Testnet(TestnetVersion::V3)));
+        assert_eq!(Network::try_from("testnet4"), Ok(Network::Testnet(TestnetVersion::V4)));
+        assert_eq!(Network::try_from("regtest"), Ok(Network::Regtest));
+        assert_eq!(Network::try_from("signet"), Ok(Network::Signet));
+        assert!(Network::try_from("fakenet").is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn try_from_alloc_string_types() {
+        use alloc::{rc::Rc, sync::Arc};
+
+        assert_eq!(Network::try_from("bitcoin".to_string()), Ok(Network::Bitcoin));
+        assert_eq!(Network::try_from("bitcoin".to_string().into_boxed_str()), Ok(Network::Bitcoin));
+        assert_eq!(Network::try_from(Rc::<str>::from("bitcoin")), Ok(Network::Bitcoin));
+        assert_eq!(Network::try_from(Arc::<str>::from("bitcoin")), Ok(Network::Bitcoin));
     }
 }
