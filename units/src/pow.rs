@@ -436,6 +436,20 @@ impl<'a> Arbitrary<'a> for CompactTarget {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Target {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_be_bytes(<[u8; 32]>::arbitrary(u)?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Work {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_be_bytes(<[u8; 32]>::arbitrary(u)?))
+    }
+}
+
 include!("../include/u256.rs");
 
 impl U256 {
