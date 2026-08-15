@@ -30,11 +30,9 @@ use crate::witness::Witness;
 use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount, ToU64};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
-#[doc(no_inline)]
-pub use primitives::transaction::BlockHashDecoderError;
 #[doc(inline)]
 pub use primitives::transaction::{
-    BlockHashDecoder, Ntxid, OutPoint, OutPointDecoder, OutPointEncoder, Transaction,
+    Ntxid, OutPoint, OutPointDecoder, OutPointEncoder, Transaction,
     TransactionDecoder, TransactionEncoder, TxIn, TxInDecoder, TxInEncoder, TxOut, TxOutDecoder,
     TxOutEncoder, Txid, Version, VersionDecoder, VersionEncoder, Wtxid,
 };

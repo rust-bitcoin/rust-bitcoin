@@ -730,7 +730,7 @@ fn p_consistent_exports_transaction() {
         TxOutDecoderError as _, VersionDecoderError as _,
     };
     use bitcoin_primitives::transaction::{
-        BlockHashDecoder, BlockHashDecoderError, Ntxid, OutPoint, OutPointDecoder,
+        Ntxid, OutPoint, OutPointDecoder,
         OutPointDecoderError, OutPointEncoder, ParseOutPointError, Transaction, TransactionDecoder,
         TransactionDecoderError, TransactionEncoder, TxIn, TxInDecoder, TxInDecoderError,
         TxInEncoder, TxOut, TxOutDecoder, TxOutDecoderError, TxOutEncoder, Txid, Version,
