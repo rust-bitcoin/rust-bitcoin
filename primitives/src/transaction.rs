@@ -375,6 +375,7 @@ impl encoding::Encode for Transaction {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         let version = self.version.encoder();
         let inputs = PrefixedSliceEncoder::new(self.inputs.as_ref());
@@ -808,6 +809,7 @@ impl encoding::Encode for TxIn {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         TxInEncoder::new(Encoder3::new(
             self.previous_output.encoder(),
@@ -879,6 +881,7 @@ impl encoding::Encode for TxOut {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         TxOutEncoder::new(Encoder2::new(self.amount.encoder(), self.script_pubkey.encoder()))
     }
@@ -996,6 +999,7 @@ impl encoding::Encode for OutPoint {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         OutPointEncoder::new(Encoder2::new(
             BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
@@ -1226,6 +1230,7 @@ impl From<Version> for u32 {
 
 impl encoding::Encode for Version {
     type Encoder<'e> = VersionEncoder<'e>;
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_u32().to_le_bytes(),

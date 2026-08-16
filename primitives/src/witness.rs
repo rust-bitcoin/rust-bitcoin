@@ -278,6 +278,7 @@ impl encoding::Encode for Witness {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         let num_elements = CompactSizeEncoder::new(self.len());
         let witness_elements =
@@ -632,6 +633,7 @@ impl Index<usize> for Witness {
 impl<'a> Iterator for Iter<'a> {
     type Item = &'a [u8];
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let index = decode_cursor(self.inner, self.indices_start, self.current_index)?;
         let mut slice = &self.inner[index..]; // Start of element.
