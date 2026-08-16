@@ -59,6 +59,9 @@ impl core::convert::AsRef<bitcoin_network_kind::Network> for bitcoin_network_kin
   pub fn bitcoin_network_kind::Network::as_ref(&self) -> &Self [impl: impl core::convert::AsRef<bitcoin_network_kind::Network> for bitcoin_network_kind::Network]
 impl core::convert::From<bitcoin_network_kind::Network> for bitcoin_network_kind::NetworkKind
   pub fn bitcoin_network_kind::NetworkKind::from(network: bitcoin_network_kind::Network) -> Self [impl: impl core::convert::From<bitcoin_network_kind::Network> for bitcoin_network_kind::NetworkKind]
+impl core::convert::TryFrom<&str> for bitcoin_network_kind::Network
+  pub type bitcoin_network_kind::Network::Error = bitcoin_network_kind::error::ParseNetworkError [impl: impl core::convert::TryFrom<&str> for bitcoin_network_kind::Network]
+  pub fn bitcoin_network_kind::Network::try_from(s: &str) -> core::result::Result<Self, Self::Error> [impl: impl core::convert::TryFrom<&str> for bitcoin_network_kind::Network]
 impl core::fmt::Debug for bitcoin_network_kind::Network
   pub fn bitcoin_network_kind::Network::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_network_kind::Network]
 impl core::fmt::Display for bitcoin_network_kind::Network

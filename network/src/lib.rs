@@ -34,9 +34,10 @@ extern crate alloc;
 #[cfg(feature = "serde")]
 pub extern crate serde;
 
+#[cfg(all(feature = "alloc", target_has_atomic = "ptr"))]
+use alloc::sync::Arc;
 #[cfg(feature = "alloc")]
-use alloc::{boxed::Box, rc::Rc, string::String, sync::Arc};
-
+use alloc::{boxed::Box, rc::Rc, string::String};
 use core::fmt;
 use core::str::FromStr;
 
@@ -212,7 +213,7 @@ impl TryFrom<Rc<str>> for Network {
     fn try_from(s: Rc<str>) -> Result<Self, Self::Error> { Self::from_str(&s) }
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", target_has_atomic = "ptr"))]
 impl TryFrom<Arc<str>> for Network {
     type Error = ParseNetworkError;
 
@@ -470,11 +471,19 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn try_from_alloc_string_types() {
-        use alloc::{rc::Rc, sync::Arc};
+        use alloc::boxed::Box;
+        use alloc::rc::Rc;
+        use alloc::string::String;
 
-        assert_eq!(Network::try_from("bitcoin".to_string()), Ok(Network::Bitcoin));
-        assert_eq!(Network::try_from("bitcoin".to_string().into_boxed_str()), Ok(Network::Bitcoin));
+        assert_eq!(Network::try_from(String::from("bitcoin")), Ok(Network::Bitcoin));
+        assert_eq!(Network::try_from(Box::<str>::from("bitcoin")), Ok(Network::Bitcoin));
         assert_eq!(Network::try_from(Rc::<str>::from("bitcoin")), Ok(Network::Bitcoin));
-        assert_eq!(Network::try_from(Arc::<str>::from("bitcoin")), Ok(Network::Bitcoin));
+
+        #[cfg(target_has_atomic = "ptr")]
+        {
+            use alloc::sync::Arc;
+
+            assert_eq!(Network::try_from(Arc::<str>::from("bitcoin")), Ok(Network::Bitcoin));
+        }
     }
 }
