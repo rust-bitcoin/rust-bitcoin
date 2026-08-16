@@ -251,6 +251,7 @@ impl<T: Encoder> EncoderByteIter<T> {
 impl<T: Encoder> Iterator for EncoderByteIter<T> {
     type Item = u8;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if let Some(b) = self.enc.current_chunk().get(self.position) {
@@ -297,6 +298,7 @@ impl<T> ExactSizeIterator for EncoderByteIter<T>
 where
     T: Encoder + ExactSizeEncoder,
 {
+    #[inline]
     fn len(&self) -> usize { self.enc.len() - self.position }
 }
 
@@ -473,13 +475,16 @@ pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) 
 }
 
 impl<T: Encoder> Encoder for Option<T> {
+    #[inline]
     fn current_chunk(&self) -> &[u8] { self.as_ref().map_or(&[], Encoder::current_chunk) }
 
+    #[inline]
     fn advance(&mut self) -> EncoderStatus {
         self.as_mut().map_or(EncoderStatus::Finished, Encoder::advance)
     }
 }
 
 impl<T: ExactSizeEncoder> ExactSizeEncoder for Option<T> {
+    #[inline]
     fn len(&self) -> usize { self.as_ref().map_or(0, T::len) }
 }
