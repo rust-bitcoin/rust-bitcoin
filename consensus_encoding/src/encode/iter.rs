@@ -145,4 +145,16 @@ where
             }
         }
     }
+
+    // Drains the current encoder, then each remaining item's encoder.
+    #[inline]
+    fn drain_with(&mut self, sink: &mut dyn FnMut(&[u8])) {
+        if let EncoderState::Encoding { current, remaining } = &mut self.state {
+            current.drain_with(sink);
+            for mut next in remaining.by_ref() {
+                next.drain_with(sink);
+            }
+        }
+        self.state = EncoderState::Done;
+    }
 }

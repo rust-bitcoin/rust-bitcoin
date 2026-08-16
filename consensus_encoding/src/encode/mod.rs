@@ -100,6 +100,39 @@ pub trait Encoder {
     /// otherwise. While usually the encoder simply stays in the last possible state this MUST NOT
     /// be relied upon by the callers.
     fn advance(&mut self) -> EncoderStatus;
+
+    /// Drains all remaining bytes from the encoder, until finished, passing each piece to `sink`.
+    ///
+    /// This is a secondary interface to [`Encoder::current_chunk`] and [`Encoder::advance`]. And
+    /// the default implementation is just the standard pattern: pull chunks one at a time via
+    /// [`Encoder::current_chunk`] and [`Encoder::advance`].
+    ///
+    /// Composite encoders may override this to recurse into their children directly, using the
+    /// call stack rather than explicit state to track progress. This avoids re-dispatching through
+    /// every level of an encoder's tree for every (potentially tiny) chunk, increasing performance
+    /// when the caller intends to consume the encoder to completion anyway.
+    ///
+    /// The sink cannot signal backpressure or early termination. Consumers with bounded
+    /// destinations (e.g. a fixed-size buffer) or a need to suspend encoding should drive
+    /// with [`Encoder::current_chunk`] and [`Encoder::advance`] instead.
+    ///
+    /// A newtype wrapper should defer to its inner type's `drain_with`, since introducing a single
+    /// layer of the default pull-based loop switches the rest of the encoder graph to a pull-based
+    /// loop. This potentially hurts performance (e.g. switching to pull-based in a large
+    /// Transaction encoder), however, sometimes the pull-based loop is more performant (e.g. an
+    /// Option usually only holds a small graph).
+    ///
+    /// Using dynamic dispatch for the sink proved to be more performant for bitcoin use cases than
+    /// a generic static dispatch, even with Link-Time Optimization (LTO).
+    #[inline]
+    fn drain_with(&mut self, sink: &mut dyn FnMut(&[u8])) {
+        loop {
+            sink(self.current_chunk());
+            if self.advance().has_finished() {
+                break;
+            }
+        }
+    }
 }
 
 /// Indicates whether the encoder still has bytes available or it is finished.
@@ -169,6 +202,9 @@ macro_rules! encoder_newtype {
 
             #[inline]
             fn advance(&mut self) -> $crate::EncoderStatus { self.0.advance() }
+
+            #[inline]
+            fn drain_with(&mut self, sink: &mut dyn FnMut(&[u8])) { self.0.drain_with(sink) }
         }
     }
 }
@@ -334,12 +370,7 @@ where
     T: Encoder + ?Sized,
 {
     let mut vec = Vec::new();
-    loop {
-        vec.extend_from_slice(encoder.current_chunk());
-        if encoder.advance().has_finished() {
-            break;
-        }
-    }
+    encoder.drain_with(&mut |chunk| vec.extend_from_slice(chunk));
     vec
 }
 
@@ -399,13 +430,13 @@ where
     T: Encoder + ?Sized,
     W: std::io::Write,
 {
-    loop {
-        writer.write_all(encoder.current_chunk())?;
-        if encoder.advance().has_finished() {
-            break;
+    let mut result = Ok(());
+    encoder.drain_with(&mut |chunk| {
+        if result.is_ok() {
+            result = writer.write_all(chunk);
         }
-    }
-    Ok(())
+    });
+    result
 }
 
 /// Checks that a consensus encodable `value` encodes to `expected`, panicking if it doesn't.
@@ -474,6 +505,7 @@ pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) 
     );
 }
 
+/// The default `drain_with` implementation is usually more performant for `Option` use cases.
 impl<T: Encoder> Encoder for Option<T> {
     #[inline]
     fn current_chunk(&self) -> &[u8] { self.as_ref().map_or(&[], Encoder::current_chunk) }

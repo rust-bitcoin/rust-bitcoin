@@ -60,6 +60,9 @@ impl Encoder for PrefixedBytesEncoder<'_> {
 
     #[inline]
     fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+
+    #[inline]
+    fn drain_with(&mut self, sink: &mut dyn FnMut(&[u8])) { self.0.drain_with(sink) }
 }
 
 impl ExactSizeEncoder for PrefixedBytesEncoder<'_> {
@@ -151,6 +154,8 @@ impl<T: Encode> Encoder for SliceEncoder<'_, T> {
     fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
     #[inline]
     fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+    #[inline]
+    fn drain_with(&mut self, sink: &mut dyn FnMut(&[u8])) { self.0.drain_with(sink) }
 }
 
 /// An encoder for a list of consensus encodable types, including a length prefix.
@@ -189,6 +194,9 @@ impl<T: Encode> Encoder for PrefixedSliceEncoder<'_, T> {
 
     #[inline]
     fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+
+    #[inline]
+    fn drain_with(&mut self, sink: &mut dyn FnMut(&[u8])) { self.0.drain_with(sink) }
 }
 
 /// Helper macro to define an unrolled `EncoderN` composite encoder.
@@ -239,6 +247,17 @@ macro_rules! define_encoder_n {
                     )*
                     _ => EncoderStatus::Finished,
                 }
+            }
+
+            // Sequentially drain each remaining child instead of re-dispatching from the top.
+            #[inline]
+            fn drain_with(&mut self, sink: &mut dyn FnMut(&[u8])) {
+                $(
+                    if self.cur_idx <= $enc_idx {
+                        self.$enc_field.drain_with(sink);
+                        self.cur_idx = $enc_idx + 1;
+                    }
+                )*
             }
         }
 
