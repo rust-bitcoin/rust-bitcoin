@@ -21,10 +21,10 @@ use bitcoin_primitives::script::{
     WScriptHash, WitnessScriptTag,
 };
 use bitcoin_primitives::{
-    block, merkle_tree, opcodes, transaction, witness, witness_version,
-    OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig,
-    ScriptSigBuf, SignetBlockScript, SignetBlockScriptBuf, TapScript, TapScriptBuf,
-    Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
+    block, merkle_tree, opcodes, transaction, witness, witness_version, OutPoint, RedeemScript,
+    RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, SignetBlockScript,
+    SignetBlockScriptBuf, TapScript, TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness,
+    WitnessScript, WitnessScriptBuf, Wtxid,
 };
 
 /// A struct that includes all public non-error enums.
@@ -675,7 +675,8 @@ fn p_consistent_exports_locktime_relative() {
 #[test]
 fn p_consistent_exports_script() {
     use bitcoin_primitives::script::error::{
-        PushBytesError as _, RedeemScriptSizeError as _, ScriptBufDecoderError as _, WitnessScriptSizeError as _,
+        PushBytesError as _, RedeemScriptSizeError as _, ScriptBufDecoderError as _,
+        WitnessScriptSizeError as _,
     };
     use bitcoin_primitives::script::{
         Builder, PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, RedeemScript,
@@ -726,8 +727,8 @@ fn p_consistent_exports_opcodes() {
 #[test]
 fn p_consistent_exports_transaction() {
     use bitcoin_primitives::transaction::error::{
-        OutPointDecoderError as _, ParseOutPointError as _, TransactionDecoderError as _, TxInDecoderError as _,
-        TxOutDecoderError as _, VersionDecoderError as _,
+        OutPointDecoderError as _, ParseOutPointError as _, TransactionDecoderError as _,
+        TxInDecoderError as _, TxOutDecoderError as _, VersionDecoderError as _,
     };
     use bitcoin_primitives::transaction::{
         BlockHashDecoder, BlockHashDecoderError, Ntxid, OutPoint, OutPointDecoder,
