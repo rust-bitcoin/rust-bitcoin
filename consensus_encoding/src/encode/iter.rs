@@ -21,6 +21,7 @@ impl<'e, T: Encode> Encoders<'e, T> {
 
 impl<'e, T: Encode> Iterator for Encoders<'e, T> {
     type Item = T::Encoder<'e>;
+    #[inline]
     fn next(&mut self) -> Option<T::Encoder<'e>> {
         // A closure is required since MSRV (1.74.0) cannot infer the `Self: 'e` GAT bound on
         // `Encode::encoder` when passed as a bare function item here.
@@ -112,6 +113,7 @@ impl<I: Iterator> Encoder for IterEncoder<I>
 where
     I::Item: Encoder,
 {
+    #[inline]
     fn current_chunk(&self) -> &[u8] {
         match &self.state {
             EncoderState::Encoding { current, .. } => current.current_chunk(),
@@ -119,6 +121,7 @@ where
         }
     }
 
+    #[inline]
     fn advance(&mut self) -> EncoderStatus {
         let EncoderState::Encoding { current, remaining } = &mut self.state else {
             return EncoderStatus::Finished;
