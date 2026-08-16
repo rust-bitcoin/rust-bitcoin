@@ -1791,6 +1791,8 @@ impl core::hash::Hash for bitcoin_primitives::opcodes::Opcode
   pub fn bitcoin_primitives::opcodes::Opcode::hash<__H: core::hash::Hasher>(&self, state: &mut __H) [impl: impl core::hash::Hash for bitcoin_primitives::opcodes::Opcode]
 impl core::marker::Copy for bitcoin_primitives::opcodes::Opcode
 impl core::marker::StructuralPartialEq for bitcoin_primitives::opcodes::Opcode
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::opcodes::Opcode
+  pub fn bitcoin_primitives::opcodes::Opcode::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::opcodes::Opcode]
 impl core::marker::Freeze for bitcoin_primitives::opcodes::Opcode
 impl core::marker::Send for bitcoin_primitives::opcodes::Opcode
 impl core::marker::Sync for bitcoin_primitives::opcodes::Opcode
