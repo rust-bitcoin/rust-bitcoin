@@ -423,6 +423,7 @@ impl encoding::Encode for Transaction {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         let version = self.version.encoder();
         let inputs = PrefixedSliceEncoder::new(self.inputs.as_ref());

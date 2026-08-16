@@ -553,6 +553,7 @@ where
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockEncoder::new(Encoder2::new(
             self.header.encoder(),
