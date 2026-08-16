@@ -27,8 +27,10 @@ impl<'sl> BytesEncoder<'sl> {
 }
 
 impl Encoder for BytesEncoder<'_> {
+    #[inline]
     fn current_chunk(&self) -> &[u8] { self.sl }
 
+    #[inline]
     fn advance(&mut self) -> EncoderStatus { EncoderStatus::Finished }
 }
 
@@ -145,7 +147,9 @@ where
 }
 
 impl<T: Encode> Encoder for SliceEncoder<'_, T> {
+    #[inline]
     fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+    #[inline]
     fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
