@@ -344,7 +344,7 @@ fn c_newtype_transparent_format() {
         assert_format_matches!(BlockMtpInterval::from(rand_num), rand_num);
         assert_format_matches!(BlockTime::from(rand_num), rand_num);
         assert_format_matches!(
-            relative::NumberOfBlocks::from_height(rand_num as u16),
+            relative::NumberOfBlocks::from_count(rand_num as u16),
             rand_num as u16
         );
         assert_format_matches!(

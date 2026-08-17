@@ -309,7 +309,7 @@ mod tests {
         assert!(e.source().is_none());
 
         // InvalidHeightError - is_satisfied_by with invalid args
-        let blocks = NumberOfBlocks::from_height(10);
+        let blocks = NumberOfBlocks::from_count(10);
         let e = blocks
             .is_satisfied_by(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
             .unwrap_err();
@@ -326,7 +326,7 @@ mod tests {
 
         // IsSatisfiedBy*Error
         let time_lock = LockTime::from_512_second_intervals(10);
-        let height_lock = LockTime::from_height(10);
+        let height_lock = LockTime::from_block_count(10);
 
         // IsSatisfiedByError - wraps InvalidHeightError or InvalidTimeError
         // Error when chain_tip < utxo_mined_at (args wrong way around)

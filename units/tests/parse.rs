@@ -6,7 +6,7 @@ use bitcoin_units::amount::{Amount, SignedAmount};
 use bitcoin_units::locktime::{absolute, relative};
 use bitcoin_units::{
     BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, CompactTarget,
-    Sequence, Weight,
+    Sequence, Target, Weight, Work,
 };
 
 /// Tests `from_hex`/`from_unprefixed_hex` for an integer wrapper type.
@@ -98,7 +98,7 @@ test_hex_parse! {
     block_time, BlockTime, "5f000000", BlockTime::from_u32(0x5f00_0000);
     weight, Weight, "00000190", Weight::from_wu(400);
     sequence, Sequence, "ffffffff", Sequence::from_consensus(0xFFFF_FFFF);
-    number_of_blocks, relative::NumberOfBlocks, "000000ff", relative::NumberOfBlocks::from_height(255);
+    number_of_blocks, relative::NumberOfBlocks, "000000ff", relative::NumberOfBlocks::from_count(255);
     number_of_512_seconds, relative::NumberOf512Seconds, "00000001", relative::NumberOf512Seconds::from_512_second_intervals(1);
 }
 
@@ -110,6 +110,17 @@ test_hex_parse! {
 test_hex_parse! {
     amount, Amount, "00000001", Amount::from_sat(1).unwrap(), from_sat_hex, from_sat_unprefixed_hex;
     signed_amount, SignedAmount, "00000001", SignedAmount::from_sat(1).unwrap(), from_sat_hex, from_sat_unprefixed_hex;
+}
+
+#[test]
+fn target_and_work_hex_with_non_ascii_errors() {
+    const UNPREFIXED: &str = "é0000000000000000000000000000000";
+    const PREFIXED: &str = "0xé0000000000000000000000000000000";
+
+    assert!(Target::from_unprefixed_hex(UNPREFIXED).is_err());
+    assert!(Target::from_hex(PREFIXED).is_err());
+    assert!(Work::from_unprefixed_hex(UNPREFIXED).is_err());
+    assert!(Work::from_hex(PREFIXED).is_err());
 }
 
 /// Tests that hex parsing rejects out-of-range values for types with constrained ranges.
