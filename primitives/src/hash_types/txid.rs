@@ -14,7 +14,7 @@ use hashes::sha256d;
 #[cfg(doc)]
 use crate::OutPoint;
 
-/// A bitcoin transaction hash/transaction ID.
+/// A Bitcoin transaction hash/transaction ID.
 ///
 /// For compatibility with the existing Bitcoin infrastructure and historical and current
 /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are

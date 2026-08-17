@@ -422,7 +422,7 @@ mod tests {
     #[test]
     fn pay_to_anchor_address_regtest() {
         // Verify that P2A uses the expected address for regtest.
-        // This test-vector is borrowed from the bitcoin source code.
+        // This test-vector is borrowed from the Bitcoin Core source code.
         let address_str = "bcrt1pfeesnyr2tx";
 
         let script = ScriptPubKeyBuf::new_p2a();

@@ -11,7 +11,7 @@ use core::{fmt, str};
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 
-/// A bitcoin witness transaction ID.
+/// A Bitcoin witness transaction ID.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Wtxid(sha256d::Hash);
 

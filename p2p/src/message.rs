@@ -1582,7 +1582,7 @@ impl encoding::Decode for NetworkHeader {
     type Decoder = NetworkHeaderDecoder;
 }
 
-/// A list of bitcoin block headers.
+/// A list of Bitcoin block headers.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HeadersMessage(pub Vec<NetworkHeader>);
 

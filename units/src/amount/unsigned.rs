@@ -27,7 +27,7 @@ mod encapsulate {
 
     /// An amount.
     ///
-    /// The [`Amount`] type can be used to express Bitcoin amounts that support arithmetic and
+    /// The [`Amount`] type can be used to express bitcoin amounts that support arithmetic and
     /// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
     /// but we do provide modules for serializing as satoshis or bitcoin.
     ///
@@ -242,7 +242,7 @@ impl Amount {
         self.to_string_in(denom).parse::<f64>().unwrap()
     }
 
-    /// Expresses this [`Amount`] as a floating-point value in Bitcoin.
+    /// Expresses this [`Amount`] as a floating-point value in bitcoin.
     ///
     /// Please be aware of the risk of using floating-point numbers.
     ///
@@ -557,7 +557,7 @@ impl fmt::Debug for Amount {
 }
 
 // No one should depend on a binding contract for Display for this type.
-// Just using Bitcoin denominated string.
+// Just using bitcoin denominated string.
 impl fmt::Display for Amount {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

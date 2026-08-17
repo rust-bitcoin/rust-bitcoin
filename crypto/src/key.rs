@@ -675,11 +675,11 @@ impl LegacyPublicKey {
     #[inline]
     pub fn serialize_uncompressed(&self) -> [u8; 65] { self.to_inner().serialize_uncompressed() }
 
-    /// Returns bitcoin 160-bit hash of the public key.
+    /// Returns the Bitcoin 160-bit hash of the public key.
     #[inline]
     pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.serialize())) }
 
-    /// Returns bitcoin 160-bit hash of the public key for witness program
+    /// Returns the Bitcoin 160-bit hash of the public key for witness program
     ///
     /// # Errors
     ///
@@ -921,11 +921,11 @@ impl From<&FullPublicKey> for WPubkeyHash {
 }
 
 impl FullPublicKey {
-    /// Returns bitcoin 160-bit hash of the public key.
+    /// Returns the Bitcoin 160-bit hash of the public key.
     #[inline]
     pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.to_bytes())) }
 
-    /// Returns bitcoin 160-bit hash of the public key for witness program.
+    /// Returns the Bitcoin 160-bit hash of the public key for witness program.
     #[inline]
     pub fn wpubkey_hash(&self) -> WPubkeyHash {
         WPubkeyHash::from_byte_array(hash160::Hash::hash(&self.to_bytes()).to_byte_array())
@@ -1139,7 +1139,7 @@ impl PrivateKey {
     /// ECDSA signs a [`Message`] with this private key.
     ///
     /// This functions grinds the nonce to produce a signature less than 71 bytes and compatible
-    /// with the low r signature implementation of bitcoin core.
+    /// with the low r signature implementation of Bitcoin Core.
     ///
     /// See [`secp256k1::ecdsa::sign_low_r`] for details.
     ///
@@ -1582,7 +1582,7 @@ impl fmt::Debug for SerializedXOnlyPublicKey {
     }
 }
 
-/// Error types for bitcoin keys.
+/// Error types for Bitcoin keys.
 pub mod error {
     use core::convert::Infallible;
     use core::fmt;
