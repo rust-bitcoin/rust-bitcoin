@@ -35,8 +35,8 @@ pub use self::{script_hash::RedeemScriptSizeError, witness_script_hash::WitnessS
 ///
 /// Implements:
 ///
-/// * `AsRef[u8; $len]`
-/// * `AsRef[u8]`
+/// * `AsRef<[u8; $len]>`
+/// * `AsRef<[u8]>`
 /// * `Borrow<[u8; $len]>`
 /// * `Borrow<[u8]>`
 ///
