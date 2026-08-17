@@ -190,8 +190,8 @@ impl Block<Unchecked> {
     ///
     /// # Returns
     ///
-    /// Returns the Merkle root if it was computed. This can then be passed into [`assume_checked`] to
-    /// save re-calculating it.
+    /// Returns the witness Merkle root if it was computed. This can then be passed into
+    /// [`assume_checked`] to save re-calculating it.
     ///
     /// [`assume_checked`]: Block<Unchecked>::assume_checked
     pub fn check_witness_commitment(&self) -> (bool, Option<WitnessMerkleNode>) {
