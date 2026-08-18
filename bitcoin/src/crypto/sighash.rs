@@ -308,6 +308,16 @@ impl SplitAnyoneCanPay for EcdsaSighashType {
             AllPlusAnyoneCanPay => (All, true),
             NonePlusAnyoneCanPay => (None, true),
             SinglePlusAnyoneCanPay => (Single, true),
+            NonStandard(n) => {
+                // Check sighash tyoe
+                let sighash_type = match n & 0x1f {
+                    0x02 => None,
+                    0x03 => Single,
+                    _ => All,
+                };
+                // Check ACP
+                (sighash_type, n & 0x80 == 0x80)
+            }
         }
     }
 }

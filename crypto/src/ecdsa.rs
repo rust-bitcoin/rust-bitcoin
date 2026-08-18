@@ -79,7 +79,7 @@ impl Signature {
         let mut buf = [0u8; MAX_SIG_LEN];
         let signature = self.signature.serialize_der();
         buf[..signature.len()].copy_from_slice(&signature);
-        buf[signature.len()] = self.sighash_type as u8;
+        buf[signature.len()] = self.sighash_type.to_consensus_u8();
         SerializedSignature { data: buf, len: signature.len() + 1 }
     }
 
@@ -93,7 +93,7 @@ impl Signature {
             .serialize_der()
             .iter()
             .copied()
-            .chain(iter::once(self.sighash_type as u8))
+            .chain(iter::once(self.sighash_type.to_consensus_u8()))
             .collect()
     }
 }
