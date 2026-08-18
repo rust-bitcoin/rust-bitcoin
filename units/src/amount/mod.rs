@@ -105,10 +105,10 @@ pub enum Denomination {
 }
 
 impl Denomination {
-    /// Convenience alias for `Denomination::Bitcoin`.
+    /// Convenience alias for [`Denomination::Bitcoin`].
     pub const BTC: Self = Self::Bitcoin;
 
-    /// Convenience alias for `Denomination::Satoshi`.
+    /// Convenience alias for [`Denomination::Satoshi`].
     pub const SAT: Self = Self::Satoshi;
 
     /// The number of decimal places more than a satoshi.
@@ -139,7 +139,7 @@ impl Denomination {
         }
     }
 
-    /// The different `str` forms of denominations that are recognized.
+    /// The different [`str`] forms of denominations that are recognized.
     #[inline]
     fn forms(s: &str) -> Option<Self> {
         match s {
@@ -156,7 +156,8 @@ impl Denomination {
 }
 
 /// These forms are ambiguous and could have many meanings. For example, M could denote Mega or Milli.
-/// If any of these forms are used, an error type `PossiblyConfusingDenomination` is returned.
+/// If any of these forms are used, an error type [`PossiblyConfusingDenominationError`] is
+/// returned.
 const CONFUSING_FORMS: [&str; 6] = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
 
 impl fmt::Display for Denomination {
@@ -167,7 +168,7 @@ impl fmt::Display for Denomination {
 impl FromStr for Denomination {
     type Err = ParseDenominationError;
 
-    /// Converts from a `str` to a `Denomination`.
+    /// Converts from a [`str`] to a [`Denomination`].
     ///
     /// # Errors
     ///
@@ -187,9 +188,11 @@ impl FromStr for Denomination {
     }
 }
 
-/// Returns `Some(position)` if the precision is not supported.
+/// Returns [`Some(position)`] if the precision is not supported.
 ///
 /// The position indicates the first digit that is too precise.
+///
+/// [`Some(position)`]: Some
 fn is_too_precise(s: &str, precision: usize) -> Option<usize> {
     match s.find('.') {
         Some(pos) if precision >= pos => Some(0),
@@ -212,7 +215,7 @@ const INPUT_STRING_LEN_LIMIT: usize = 50;
 /// Parses a decimal string in the given denomination into a satoshi value and a
 /// [`bool`] indicator for a negative amount.
 ///
-/// The `bool` is only needed to distinguish -0 from 0.
+/// The [`bool`] is only needed to distinguish -0 from 0.
 #[allow(clippy::too_many_lines)]
 fn parse_signed_to_satoshi(
     mut s: &str,
@@ -389,7 +392,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     Ok((&s[..i], s[j..].parse().map_err(ParseErrorInner::Denomination).map_err(ParseError)?))
 }
 
-/// Options given by `fmt::Formatter`
+/// Options given by [`fmt::Formatter`]
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 struct FormatOptions {
     fill: char,
@@ -598,7 +601,9 @@ pub struct Display {
 }
 
 impl Display {
-    /// Makes subsequent calls to `Display::fmt` display denomination.
+    /// Makes subsequent calls to [`Display::fmt`] display denomination.
+    ///
+    /// [`Display::fmt`]: fmt::Display::fmt
     #[inline]
     #[must_use]
     pub fn show_denomination(mut self) -> Self {

@@ -75,7 +75,9 @@ impl std::error::Error for IsSatisfiedByError {
     }
 }
 
-/// Error returned when `is_satisfied_by_height` fails.
+/// Error returned when [`is_satisfied_by_height`] fails.
+///
+/// [`is_satisfied_by_height`]: super::LockTime::is_satisfied_by_height
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IsSatisfiedByHeightError {
     /// Satisfaction of the lock height value failed.
@@ -109,7 +111,9 @@ impl std::error::Error for IsSatisfiedByHeightError {
     }
 }
 
-/// Error returned when `is_satisfied_by_height` fails with a block time.
+/// Error returned when [`is_satisfied_by_height`] fails with a block time.
+///
+/// [`is_satisfied_by_height`]: super::LockTime::is_satisfied_by_height
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompatibleHeightError(pub(crate) NumberOf512Seconds);
 
@@ -132,7 +136,9 @@ impl std::error::Error for IncompatibleHeightError {
     }
 }
 
-/// Error returned when `is_satisfied_by_time` fails.
+/// Error returned when [`is_satisfied_by_time`] fails.
+///
+/// [`is_satisfied_by_time`]: super::LockTime::is_satisfied_by_time
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IsSatisfiedByTimeError {
     /// Satisfaction of the lock time value failed.
@@ -166,7 +172,9 @@ impl std::error::Error for IsSatisfiedByTimeError {
     }
 }
 
-/// Error returned when `is_satisfied_by_time` fails with a block height.
+/// Error returned when [`is_satisfied_by_time`] fails with a block height.
+///
+/// [`is_satisfied_by_time`]: super::LockTime::is_satisfied_by_time
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompatibleTimeError(pub(crate) NumberOfBlocks);
 
@@ -220,7 +228,7 @@ impl std::error::Error for TimeOverflowError {
     }
 }
 
-/// Error returned when `NumberOfBlocks::is_satisfied_by` is incorrectly called.
+/// Error returned when [`NumberOfBlocks::is_satisfied_by`] is incorrectly called.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidHeightError {
     /// The `chain_tip` argument.
@@ -249,7 +257,7 @@ impl std::error::Error for InvalidHeightError {
     }
 }
 
-/// Error returned when `NumberOf512Seconds::is_satisfied_by` is incorrectly called.
+/// Error returned when [`NumberOf512Seconds::is_satisfied_by`] is incorrectly called.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidTimeError {
     /// The `chain_tip` argument.

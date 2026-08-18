@@ -63,7 +63,8 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
-    /// Constructs a new `LockTime` from an `nSequence` value or the argument to `OP_CHECKSEQUENCEVERIFY`.
+    /// Constructs a new [`LockTime`] from an `nSequence` value or the argument to
+    /// `OP_CHECKSEQUENCEVERIFY`.
     ///
     /// This method will **not** round-trip with [`Self::to_consensus_u32`], because relative
     /// locktimes only use some bits of the underlying `u32` value and discard the rest. If
@@ -113,7 +114,7 @@ impl LockTime {
         }
     }
 
-    /// Constructs a new `LockTime` from the sequence number of a Bitcoin input.
+    /// Constructs a new [`LockTime`] from the sequence number of a Bitcoin input.
     ///
     /// This method will **not** round-trip with [`Self::to_sequence`]. See the
     /// docs for [`Self::from_consensus`] for more information.
@@ -143,11 +144,12 @@ impl LockTime {
     #[inline]
     pub fn to_sequence(self) -> Sequence { Sequence::from_consensus(self.to_consensus_u32()) }
 
-    /// Constructs a new `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
+    /// Constructs a new [`LockTime`] from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
     pub const fn from_block_count(n: u16) -> Self { Self::Blocks(NumberOfBlocks::from_count(n)) }
 
-    /// Constructs a new `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
+    /// Constructs a new [`LockTime`] from `n`, expecting `n` to be a count of 512-second
+    /// intervals.
     ///
     /// This function is a little awkward to use, and users may wish to instead use
     /// [`Self::from_seconds_floor`] or [`Self::from_seconds_ceil`].
@@ -272,8 +274,9 @@ impl LockTime {
     /// mathematical sense) the smaller one being satisfied.
     ///
     /// This function is useful when checking sequence values against a lock, first one checks the
-    /// sequence represents a relative lock time by converting to `LockTime` then use this function
-    /// to see if satisfaction of the newly created lock time would imply satisfaction of `self`.
+    /// sequence represents a relative lock time by converting to [`LockTime`] then use this
+    /// function to see if satisfaction of the newly created lock time would imply satisfaction of
+    /// `self`.
     ///
     /// Can also be used to remove the smaller value of two `OP_CHECKSEQUENCEVERIFY` operations
     /// within one branch of the script.
@@ -411,7 +414,7 @@ impl NumberOfBlocks {
     #[must_use]
     pub const fn to_count(self) -> u16 { self.0 }
 
-    /// Constructs a new `NumberOfBlocks` from a prefixed hex string.
+    /// Constructs a new [`NumberOfBlocks`] from a prefixed hex string.
     ///
     /// # Errors
     ///
@@ -423,7 +426,7 @@ impl NumberOfBlocks {
         Ok(Self::from_count(block_count))
     }
 
-    /// Constructs a new `NumberOfBlocks` from an unprefixed hex string.
+    /// Constructs a new [`NumberOfBlocks`] from an unprefixed hex string.
     ///
     /// # Errors
     ///
@@ -548,7 +551,7 @@ impl NumberOf512Seconds {
     #[inline]
     pub const fn to_seconds(self) -> u32 { const_casts::u16_to_u32(self.0) * 512 }
 
-    /// Constructs a new `NumberOf512Seconds` from a prefixed hex string.
+    /// Constructs a new [`NumberOf512Seconds`] from a prefixed hex string.
     ///
     /// # Errors
     ///
@@ -560,7 +563,7 @@ impl NumberOf512Seconds {
         Ok(Self::from_512_second_intervals(block_count))
     }
 
-    /// Constructs a new `NumberOf512Seconds` from an unprefixed hex string.
+    /// Constructs a new [`NumberOf512Seconds`] from an unprefixed hex string.
     ///
     /// # Errors
     ///

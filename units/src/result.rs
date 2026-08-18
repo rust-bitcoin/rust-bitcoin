@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides a monadic type returned by mathematical operations (`core::ops`).
+//! Provides a monadic type returned by mathematical operations ([`core::ops`]).
 
 use core::convert::Infallible;
 use core::{fmt, ops};
@@ -21,12 +21,12 @@ pub use self::error::NumOpError;
 /// [`core::result::Result`] but implements mathematical operations (e.g. [`core::ops::Add`]) so that
 /// math operations can be chained ergonomically. This is very similar to how `NaN` works.
 ///
-/// `NumOpResult` is a monadic type that contains `Valid` and `Error` (similar to `Ok` and `Err`).
-/// It supports a subset of functions similar to `Result` (e.g. `unwrap`).
+/// [`NumOpResult`] is a monadic type that contains [`Valid`] and [`Error`] (similar to [`Ok`] and
+/// [`Err`]). It supports a subset of functions similar to [`Result`] (e.g. [`unwrap`]).
 ///
 /// # Examples
 ///
-/// The `NumOpResult` type provides protection against overflow and div-by-zero.
+/// The [`NumOpResult`] type provides protection against overflow and div-by-zero.
 ///
 /// ### Overflow protection
 ///
@@ -54,7 +54,7 @@ pub use self::error::NumOpError;
 /// # Ok::<_, amount::OutOfRangeError>(())
 /// ```
 ///
-/// ### Divide-by-zero (overflow in `Div` or `Rem`)
+/// ### Divide-by-zero (overflow in [`Div`] or [`Rem`])
 ///
 /// In some instances one may wish to differentiate div-by-zero from overflow.
 ///
@@ -84,6 +84,12 @@ pub use self::error::NumOpError;
 /// };
 /// # Ok::<_, NumOpError>(())
 /// ```
+///
+/// [`Valid`]: NumOpResult::Valid
+/// [`Error`]: NumOpResult::Error
+/// [`unwrap`]: NumOpResult::unwrap
+/// [`Div`]: core::ops::Div
+/// [`Rem`]: core::ops::Rem
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[must_use]
 pub enum NumOpResult<T> {
@@ -94,7 +100,7 @@ pub enum NumOpResult<T> {
 }
 
 impl<T> NumOpResult<T> {
-    /// Maps a `NumOpResult<T>` to `NumOpResult<U>` by applying a function to a
+    /// Maps a [`NumOpResult<T>`] to [`NumOpResult<U>`] by applying a function to a
     /// contained [`NumOpResult::Valid`] value, leaving a [`NumOpResult::Error`] value untouched.
     #[inline]
     pub fn map<U, F: FnOnce(T) -> U>(self, op: F) -> NumOpResult<U> {
@@ -110,7 +116,9 @@ impl<T: fmt::Debug> NumOpResult<T> {
     ///
     /// # Panics
     ///
-    /// Panics with `msg` if the numeric result is an `Error`.
+    /// Panics with `msg` if the numeric result is an [`Error`].
+    ///
+    /// [`Error`]: NumOpResult::Error
     #[inline]
     #[track_caller]
     pub fn expect(self, msg: &str) -> T {
@@ -124,7 +132,9 @@ impl<T: fmt::Debug> NumOpResult<T> {
     ///
     /// # Panics
     ///
-    /// Panics if the numeric result is an `Error`.
+    /// Panics if the numeric result is an [`Error`].
+    ///
+    /// [`Error`]: NumOpResult::Error
     #[inline]
     #[track_caller]
     pub fn unwrap(self) -> T {
@@ -148,10 +158,14 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
-    /// Returns the contained `Valid` value or a provided default.
+    /// Returns the contained [`Valid`] value or a provided default.
     ///
-    /// Arguments passed to `unwrap_or` are eagerly evaluated; if you are passing the result of a
-    /// function call, it is recommended to use `unwrap_or_else`, which is lazily evaluated.
+    /// Arguments passed to [`unwrap_or`] are eagerly evaluated; if you are passing the result of a
+    /// function call, it is recommended to use [`unwrap_or_else`], which is lazily evaluated.
+    ///
+    /// [`Valid`]: NumOpResult::Valid
+    /// [`unwrap_or`]: NumOpResult::unwrap_or
+    /// [`unwrap_or_else`]: NumOpResult::unwrap_or_else
     #[inline]
     pub fn unwrap_or(self, default: T) -> T {
         match self {
@@ -160,7 +174,9 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
-    /// Returns the contained `Valid` value or computes it from a closure.
+    /// Returns the contained [`Valid`] value or computes it from a closure.
+    ///
+    /// [`Valid`]: NumOpResult::Valid
     #[inline]
     pub fn unwrap_or_else<F>(self, f: F) -> T
     where
@@ -172,7 +188,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
-    /// Converts this `NumOpResult` to an `Option<T>`.
+    /// Converts this [`NumOpResult`] to an [`Option<T>`].
     #[inline]
     pub fn ok(self) -> Option<T> {
         match self {
@@ -181,7 +197,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
-    /// Converts this `NumOpResult` to a `Result<T, NumOpError>`.
+    /// Converts this [`NumOpResult`] to a [`Result<T, NumOpError>`].
     #[inline]
     #[allow(clippy::missing_errors_doc)]
     pub fn into_result(self) -> Result<T, NumOpError> {
@@ -191,7 +207,11 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
-    /// Calls `op` if the numeric result is `Valid`, otherwise returns the `Error` value of `self`.
+    /// Calls `op` if the numeric result is [`Valid`], otherwise returns the [`Error`] value of
+    /// `self`.
+    ///
+    /// [`Valid`]: NumOpResult::Valid
+    /// [`Error`]: NumOpResult::Error
     #[inline]
     pub fn and_then<F>(self, op: F) -> Self
     where

@@ -3,7 +3,7 @@
 //! Provides type [`LockTime`] that implements the logic around `nLockTime`/`OP_CHECKLOCKTIMEVERIFY`.
 //!
 //! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
-//! whether `LockTime < LOCKTIME_THRESHOLD`. To support these we provide the [`Height`] and
+//! whether [`LockTime`] < [`LOCK_TIME_THRESHOLD`]. To support these we provide the [`Height`] and
 //! [`MedianTimePast`] types.
 
 pub mod error;
@@ -32,7 +32,7 @@ pub use self::error::LockTimeDecoderError;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
-/// `LockTime` values _below_ the threshold are interpreted as block heights, values _above_ (or
+/// [`LockTime`] values _below_ the threshold are interpreted as block heights, values _above_ (or
 /// equal to) the threshold are interpreted as block times (UNIX timestamp, seconds since epoch).
 ///
 /// Bitcoin is able to safely use this value because a block height greater than 500,000,000 would
@@ -115,7 +115,7 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
-    /// Constructs a new `LockTime` from a prefixed hex string.
+    /// Constructs a new [`LockTime`] from a prefixed hex string.
     ///
     /// # Errors
     ///
@@ -138,7 +138,7 @@ impl LockTime {
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Constructs a new `LockTime` from an unprefixed hex string.
+    /// Constructs a new [`LockTime`] from an unprefixed hex string.
     ///
     /// # Errors
     ///
@@ -161,7 +161,8 @@ impl LockTime {
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Constructs a new `LockTime` from an `nLockTime` value or the argument to `OP_CHECKLOCKTIMEVERIFY`.
+    /// Constructs a new [`LockTime`] from an `nLockTime` value or the argument to
+    /// `OP_CHECKLOCKTIMEVERIFY`.
     ///
     /// # Examples
     ///
@@ -183,7 +184,7 @@ impl LockTime {
         }
     }
 
-    /// Constructs a new `LockTime` from `n`, expecting `n` to be a valid block height.
+    /// Constructs a new [`LockTime`] from `n`, expecting `n` to be a valid block height.
     ///
     /// # Note
     ///
@@ -211,7 +212,7 @@ impl LockTime {
         Ok(Self::Blocks(height))
     }
 
-    /// Constructs a new `LockTime` from `n`, expecting `n` to be a median-time-past (MTP)
+    /// Constructs a new [`LockTime`] from `n`, expecting `n` to be a median-time-past (MTP)
     /// which is in range for a locktime.
     ///
     /// # Note
@@ -272,8 +273,11 @@ impl LockTime {
     ///
     /// If you do not have, or do not wish to calculate, both parameters consider using:
     ///
-    /// * [`is_satisfied_by_height()`](absolute::LockTime::is_satisfied_by_height)
-    /// * [`is_satisfied_by_time()`](absolute::LockTime::is_satisfied_by_time)
+    /// * [`is_satisfied_by_height()`]
+    /// * [`is_satisfied_by_time()`]
+    ///
+    /// [`is_satisfied_by_height()`]: Self::is_satisfied_by_height
+    /// [`is_satisfied_by_time()`]: Self::is_satisfied_by_time
     ///
     /// # Examples
     ///
@@ -360,14 +364,17 @@ impl LockTime {
         }
     }
 
-    /// Returns the inner `u32` value. This is the value used when creating this `LockTime`
+    /// Returns the inner `u32` value. This is the value used when creating this [`LockTime`]
     /// i.e., `n OP_CHECKLOCKTIMEVERIFY` or `nLockTime`.
     ///
     /// # Warning
     ///
-    /// Do not compare values return by this method. The whole point of the `LockTime` type is to
-    /// assist in doing correct comparisons. Either use `is_satisfied_by`, `is_satisfied_by_time`,
-    /// or use the pattern below:
+    /// Do not compare values return by this method. The whole point of the [`LockTime`] type is to
+    /// assist in doing correct comparisons. Either use [`is_satisfied_by`],
+    /// [`is_satisfied_by_time`], or use the pattern below:
+    ///
+    /// [`is_satisfied_by`]: Self::is_satisfied_by
+    /// [`is_satisfied_by_time`]: Self::is_satisfied_by_time
     ///
     /// # Examples
     ///
@@ -571,7 +578,7 @@ impl Height {
 
     /// Returns true if a transaction with this locktime can be included in the next block.
     ///
-    /// `self` is value of the `LockTime` and if `height` is the current chain tip then
+    /// `self` is value of the [`LockTime`] and if `height` is the current chain tip then
     /// a transaction with this lock can be broadcast for inclusion in the next block.
     #[inline]
     pub fn is_satisfied_by(self, height: Self) -> bool {
@@ -715,9 +722,9 @@ impl MedianTimePast {
 
     /// Returns true if a transaction with this locktime can be included in the next block.
     ///
-    /// `self` is the value of the `LockTime` and if `time` is the median time past of the block at
-    /// the chain tip then a transaction with this lock can be broadcast for inclusion in the next
-    /// block.
+    /// `self` is the value of the [`LockTime`] and if `time` is the median time past of the block
+    /// at the chain tip then a transaction with this lock can be broadcast for inclusion in the
+    /// next block.
     #[inline]
     pub fn is_satisfied_by(self, time: Self) -> bool { self < time }
 }

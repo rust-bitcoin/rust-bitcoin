@@ -51,7 +51,7 @@ mod encapsulate {
 pub use encapsulate::BlockTime;
 
 impl BlockTime {
-    /// Constructs a new `BlockTime` from a prefixed hex string.
+    /// Constructs a new [`BlockTime`] from a prefixed hex string.
     ///
     /// # Errors
     ///
@@ -63,7 +63,7 @@ impl BlockTime {
         Ok(Self::from_u32(block_time))
     }
 
-    /// Constructs a new `BlockTime` from an unprefixed hex string.
+    /// Constructs a new [`BlockTime`] from an unprefixed hex string.
     ///
     /// # Errors
     ///
@@ -166,7 +166,9 @@ pub mod error {
     #[cfg(feature = "encoding")]
     use internals::write_err;
 
-    /// An error consensus decoding an `BlockTime`.
+    /// An error consensus decoding a [`BlockTime`].
+    ///
+    /// [`BlockTime`]: super::BlockTime
     #[cfg(feature = "encoding")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct BlockTimeDecoderError(pub(super) encoding::UnexpectedEofError);
