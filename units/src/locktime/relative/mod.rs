@@ -1118,6 +1118,41 @@ mod tests {
         let utxo_state3 = BlockHeight::from_u32(80);
         assert!(!max_height_lock.is_satisfied_by_height(chain_state3, Some(utxo_state3)).unwrap());
     }
+    #[test]
+    fn parent_child_can_be_mined_in_the_same_block_lock_by_count_if_zero() {
+        let height_lock = LockTime::Blocks(NumberOfBlocks::ZERO);
+        // Value is meaningless, we only check that lock is ZERO.
+        let chain_state = BlockHeight::from_u32(100);
+
+        assert!(height_lock.is_satisfied_by_height(chain_state, None).unwrap());
+    }
+
+    #[test]
+    fn parent_child_cannot_be_mined_in_the_same_block_lock_by_count_if_non_zero() {
+       let height_lock = LockTime::from_block_count(1);
+        // Value is meaningless, we only check that lock is ZERO.
+        let chain_state = BlockHeight::from_u32(100);
+
+        assert!(!height_lock.is_satisfied_by_height(chain_state, None).unwrap());
+    }
+
+    #[test]
+    fn parent_child_can_be_mined_in_the_same_block_lock_by_time_if_zero() {
+        let height_lock = LockTime::Time(NumberOf512Seconds::ZERO);
+        // Value is meaningless, we only check that lock is ZERO.
+        let chain_state = crate::BlockMtp::from_u32(83_176_862);
+
+        assert!(height_lock.is_satisfied_by_time(chain_state, None).unwrap());
+    }
+
+    #[test]
+    fn parent_child_cannot_be_mined_in_the_same_block_lock_by_time_if_non_zero() {
+       let height_lock = LockTime::from_512_second_intervals(1);
+        // Value is meaningless, we only check that lock is ZERO.
+        let chain_state = crate::BlockMtp::from_u32(83_176_862);
+
+        assert!(!height_lock.is_satisfied_by_time(chain_state, None).unwrap());
+    }
 
     #[test]
     fn satisfied_by_height_boundary() {
