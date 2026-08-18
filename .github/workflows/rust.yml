@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [api, lint, docs, docsrs]
+        task: [lint, docs]
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -45,6 +45,37 @@ jobs:
       - uses: ./.github/actions/setup-rbmt
       - name: "Run ${{ matrix.task }}"
         run: cargo rbmt ${{ matrix.task }}
+
+  API:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # History required for API diff.
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Run API check"
+        id: api_check
+        run: |
+          set +e
+          cargo rbmt api --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+      - name: "Save API diff state"
+        if: github.event_name == 'pull_request'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXIT_CODE: ${{ steps.api_check.outputs.exit_code }}
+        run: |
+          echo "$PR_NUMBER" > api-diff
+          echo "$EXIT_CODE" >> api-diff
+      - name: "Upload API diff state"
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: api-diff
+          path: api-diff
 
   Bench:
     runs-on: ubuntu-24.04
@@ -222,7 +253,7 @@ jobs:
         run: ./contrib/check-for-policy-violations.sh
 
   Re-exports:
-    name: Check re-exports - stable toolchain
+    name: Check re-exports
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -233,8 +264,11 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Generate API files"
+        run: cargo rbmt api --snapshot > /dev/null
+      - name: "Check committed API files are up to date"
+        run: git diff --exit-code -- '*/api/*.txt'
       - name: "Run primitives API checker script"
         run: |
           contrib/generate-primitives-re-export-test.sh && (cd ./primitives && cargo test --all-features)
