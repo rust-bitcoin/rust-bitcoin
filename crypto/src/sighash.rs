@@ -440,6 +440,39 @@ mod tests {
     }
 
     #[test]
+    fn ecdsa_sighash_type_from_consensus_roundtrips() {
+        use super::EcdsaSighashType;
+
+        for n in 0..=255u32 {
+            let ty = EcdsaSighashType::from_consensus(n);
+            assert_eq!(ty.to_u32(), n);
+            assert_eq!(u32::from(ty.to_consensus_u8()), n);
+            match n {
+                0x01 | 0x02 | 0x03 | 0x81 | 0x82 | 0x83 =>
+                    assert!(!matches!(ty, EcdsaSighashType::NonStandard(_))),
+                _ => assert_eq!(ty, EcdsaSighashType::NonStandard(n)),
+            }
+        }
+
+        // On replay-protected forks bits above the lowest byte are sometimes set.
+        let ty = EcdsaSighashType::from_consensus(0x0100_0041);
+        assert_eq!(ty, EcdsaSighashType::NonStandard(0x0100_0041));
+        assert_eq!(ty.to_u32(), 0x0100_0041);
+
+        assert_eq!(ty.to_consensus_u8(), 0x41);
+    }
+
+    #[test]
+    fn ecdsa_sighash_type_non_standard_is_single_uses_mask() {
+        use super::EcdsaSighashType;
+
+        assert!(EcdsaSighashType::NonStandard(0x63).is_single());
+        assert!(EcdsaSighashType::NonStandard(0xe3).is_single());
+        assert!(!EcdsaSighashType::NonStandard(0x65).is_single());
+        assert!(!EcdsaSighashType::NonStandard(0x62).is_single());
+    }
+
+    #[test]
     #[cfg(feature = "alloc")]
     fn ecdsasighashtype_fromstr_display() {
         let sighashtypes = [
