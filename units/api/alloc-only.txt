@@ -4504,9 +4504,9 @@ pub const fn bitcoin_units::locktime::relative::LockTime::is_block_time(self) ->
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by(self, other: Self) -> bool
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by_sequence(self, other: bitcoin_units::sequence::Sequence) -> bool
 pub const fn bitcoin_units::locktime::relative::LockTime::is_same_unit(self, other: Self) -> bool
-pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by(self, chain_tip_height: bitcoin_units::block::BlockHeight, chain_tip_mtp: bitcoin_units::block::BlockMtp, utxo_mined_at_height: bitcoin_units::block::BlockHeight, utxo_mined_at_mtp: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByError>
-pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_height(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError>
-pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_time(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError>
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by(self, chain_tip_height: bitcoin_units::block::BlockHeight, chain_tip_mtp: bitcoin_units::block::BlockMtp, utxo_mined_at_height: core::option::Option<bitcoin_units::block::BlockHeight>, utxo_mined_at_mtp: core::option::Option<bitcoin_units::block::BlockMtp>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByError>
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_height(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: core::option::Option<bitcoin_units::block::BlockHeight>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError>
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_time(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: core::option::Option<bitcoin_units::block::BlockMtp>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError>
 pub fn bitcoin_units::locktime::relative::LockTime::to_consensus_u32(self) -> u32
 pub fn bitcoin_units::locktime::relative::LockTime::to_sequence(self) -> bitcoin_units::sequence::Sequence
 impl core::clone::Clone for bitcoin_units::locktime::relative::LockTime
@@ -4794,7 +4794,7 @@ pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_hex(s: &str) 
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
-pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidTimeError>
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: core::option::Option<bitcoin_units::block::BlockMtp>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidTimeError>
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_512_second_intervals(self) -> u16
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_seconds(self) -> u32
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -4879,7 +4879,7 @@ pub const bitcoin_units::locktime::relative::NumberOfBlocks::ZERO: Self
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_count(blocks: u16) -> Self
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
-pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: core::option::Option<bitcoin_units::block::BlockHeight>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_count(self) -> u16
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::clone(&self) -> bitcoin_units::locktime::relative::NumberOfBlocks [impl: impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks]
@@ -6275,9 +6275,9 @@ pub const fn bitcoin_units::locktime::relative::LockTime::is_block_time(self) ->
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by(self, other: Self) -> bool
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by_sequence(self, other: bitcoin_units::sequence::Sequence) -> bool
 pub const fn bitcoin_units::locktime::relative::LockTime::is_same_unit(self, other: Self) -> bool
-pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by(self, chain_tip_height: bitcoin_units::block::BlockHeight, chain_tip_mtp: bitcoin_units::block::BlockMtp, utxo_mined_at_height: bitcoin_units::block::BlockHeight, utxo_mined_at_mtp: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByError>
-pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_height(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError>
-pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_time(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError>
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by(self, chain_tip_height: bitcoin_units::block::BlockHeight, chain_tip_mtp: bitcoin_units::block::BlockMtp, utxo_mined_at_height: core::option::Option<bitcoin_units::block::BlockHeight>, utxo_mined_at_mtp: core::option::Option<bitcoin_units::block::BlockMtp>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByError>
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_height(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: core::option::Option<bitcoin_units::block::BlockHeight>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError>
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_time(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: core::option::Option<bitcoin_units::block::BlockMtp>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError>
 pub fn bitcoin_units::locktime::relative::LockTime::to_consensus_u32(self) -> u32
 pub fn bitcoin_units::locktime::relative::LockTime::to_sequence(self) -> bitcoin_units::sequence::Sequence
 impl core::clone::Clone for bitcoin_units::locktime::relative::LockTime
@@ -6565,7 +6565,7 @@ pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_hex(s: &str) 
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
-pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidTimeError>
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: core::option::Option<bitcoin_units::block::BlockMtp>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidTimeError>
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_512_second_intervals(self) -> u16
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_seconds(self) -> u32
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -6650,7 +6650,7 @@ pub const bitcoin_units::locktime::relative::NumberOfBlocks::ZERO: Self
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_count(blocks: u16) -> Self
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
-pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: core::option::Option<bitcoin_units::block::BlockHeight>) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_count(self) -> u16
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks
   pub fn bitcoin_units::locktime::relative::NumberOfBlocks::clone(&self) -> bitcoin_units::locktime::relative::NumberOfBlocks [impl: impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks]
