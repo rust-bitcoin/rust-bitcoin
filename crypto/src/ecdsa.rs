@@ -56,16 +56,19 @@ impl Signature {
         Self { signature, sighash_type: EcdsaSighashType::All }
     }
 
-    /// Deserializes from slice following the standardness rules for [`EcdsaSighashType`].
+    /// Deserializes from slice.
     ///
+    /// Non-standard sighash types are accepted here since they're consensus valid, so we use
+    /// [`EcdsaSighashType::from_consensus`] here instead of [`EcdsaSighashType::from_standard`]
+    /// to deserialize the sighash type.
+    /// 
     /// # Errors
     ///
     /// * [`DecodeError::EmptySignature`] if the slice is empty.
     /// * [`DecodeError::InvalidDer`] if the slice is not a valid DER encoding for an ECDSA signature.
     pub fn from_slice(sl: &[u8]) -> Result<Self, DecodeError> {
         let (sighash_type, sig) = sl.split_last().ok_or(DecodeError::EmptySignature)?;
-        let sighash_type = EcdsaSighashType::from_standard(u32::from(*sighash_type))
-            .map_err(DecodeError::SighashType)?;
+        let sighash_type = EcdsaSighashType::from_consensus(u32::from(*sighash_type));
         let signature = secp256k1::ecdsa::Signature::from_der(sig)
             .map_err(|_| DecodeError::InvalidDer(InvalidDerError))?;
         Ok(Self { signature, sighash_type })
