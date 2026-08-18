@@ -108,8 +108,10 @@ impl<T> ScriptBuf<T> {
     ///
     /// This method reallocates if the capacity is greater than length of the script but should not
     /// when they are equal. If you know beforehand that you need to create a script of exact size
-    /// use [`reserve_exact`](Self::reserve_exact) before adding data to the script so that the
-    /// reallocation can be avoided.
+    /// use [`reserve_exact`] before adding data to the script so that the reallocation can be
+    /// avoided.
+    ///
+    /// [`reserve_exact`]: Self::reserve_exact
     #[must_use]
     #[inline]
     pub fn into_boxed_script(self) -> Box<Script<T>> {
@@ -140,12 +142,14 @@ impl<T> ScriptBuf<T> {
     /// `self.len() + additional`. Does nothing if the capacity is already sufficient.
     ///
     /// Note that the allocator may give the collection more space than it requests. Therefore,
-    /// capacity cannot be relied upon to be precisely minimal. Prefer [`reserve`](Self::reserve)
+    /// capacity cannot be relied upon to be precisely minimal. Prefer [`reserve`]
     /// if future insertions are expected.
     ///
     /// # Panics
     ///
     /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    ///
+    /// [`reserve`]: Self::reserve
     #[inline]
     pub fn reserve_exact(&mut self, additional_len: usize) { self.1.reserve_exact(additional_len); }
 

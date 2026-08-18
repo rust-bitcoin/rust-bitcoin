@@ -775,9 +775,11 @@ pub struct TxIn {
     pub sequence: Sequence,
     /// Witness data: an array of byte-arrays.
     /// Note that this field is *not* (de)serialized with the rest of the [`TxIn`] in
-    /// [`Encode`](encoding::Encode)/[`Decode`](encoding::Decode), as it is (de)serialized at the
-    /// end of the full [`Transaction`]. It *is* (de)serialized with the rest of the [`TxIn`] in
-    /// other (de)serialization routines.
+    /// [`Encode`]/[`Decode`], as it is (de)serialized at the end of the full [`Transaction`].
+    /// It *is* (de)serialized with the rest of the [`TxIn`] in other (de)serialization routines.
+    ///
+    /// [`Encode`]: encoding::Encode
+    /// [`Decode`]: encoding::Decode
     pub witness: Witness,
 }
 
@@ -1275,7 +1277,9 @@ pub mod error {
     #[cfg(feature = "alloc")]
     use crate::witness::WitnessDecoderError;
 
-    /// An error consensus decoding a [`Transaction`](super::Transaction).
+    /// An error consensus decoding a [`Transaction`].
+    ///
+    /// [`Transaction`]: super::Transaction
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct TransactionDecoderError(pub(super) TransactionDecoderErrorInner);
@@ -1375,7 +1379,9 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a [`TxIn`](super::TxIn).
+    /// An error consensus decoding a [`TxIn`].
+    ///
+    /// [`TxIn`]: super::TxIn
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct TxInDecoderError(pub(super) <super::TxInInnerDecoder as encoding::Decoder>::Error);
@@ -1398,7 +1404,9 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// An error consensus decoding a [`TxOut`](super::TxOut).
+    /// An error consensus decoding a [`TxOut`].
+    ///
+    /// [`TxOut`]: super::TxOut
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct TxOutDecoderError(pub(super) <super::TxOutInnerDecoder as encoding::Decoder>::Error);
@@ -1490,7 +1498,9 @@ pub mod error {
         }
     }
 
-    /// An error consensus decoding a [`Version`](super::Version).
+    /// An error consensus decoding a [`Version`].
+    ///
+    /// [`Version`]: super::Version
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
 

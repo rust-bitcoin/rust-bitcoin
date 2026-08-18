@@ -36,9 +36,9 @@ crate::transparent_newtype! {
     /// # Validity
     ///
     /// [`Script`] does not have any validity invariants - it's essentially just a marked slice of
-    /// bytes. This is similar to [`Path`](std::path::Path) vs [`OsStr`](std::ffi::OsStr) where they
-    /// are trivially cast-able to each-other and `Path` doesn't guarantee being a usable FS path but
-    /// having a newtype still has value because of added methods, readability and basic type checking.
+    /// bytes. This is similar to [`Path`] vs [`OsStr`] where they are trivially cast-able to each-other
+    /// and `Path` doesn't guarantee being a usable FS path but having a newtype still has value because
+    /// of added methods, readability and basic type checking.
     ///
     /// Although at least data pushes could be checked not to overflow the script, bad scripts are
     /// allowed to be in a transaction (outputs just become unspendable) and there even are such
@@ -77,14 +77,16 @@ crate::transparent_newtype! {
     ///
     /// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)
     ///
+    /// [`Path`]: std::path::Path
+    /// [`OsStr`]: std::ffi::OsStr
     #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
     pub struct Script<T>(PhantomData<T>, [u8]);
 
     impl<T> Script<T> {
-        /// Treat byte slice as [`Script`]
+        /// Treat byte slice as [`Script`].
         pub const fn from_bytes(bytes: &_) -> &Self;
 
-        /// Treat mutable byte slice as [`Script`]
+        /// Treat mutable byte slice as [`Script`].
         pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
 
         pub(crate) fn from_boxed_bytes(bytes: Box<_>) -> Box<Self>;
@@ -174,7 +176,9 @@ impl<T> Script<T> {
     #[inline]
     pub const fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
 
-    /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
+    /// Converts a [`Box<Script>`] into a [`ScriptBuf`] without copying or allocating.
+    ///
+    /// [`Box<Script>`]: Box
     #[must_use]
     #[inline]
     pub fn into_script_buf(self: Box<Self>) -> ScriptBuf<T> {
