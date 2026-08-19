@@ -475,6 +475,14 @@ impl<'a> Arbitrary<'a> for &'a PushBytes {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PushBytesBuf {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        <&PushBytes>::arbitrary(u).map(PushBytes::to_owned)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alloc::vec;
