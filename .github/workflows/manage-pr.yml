@@ -13,18 +13,11 @@ jobs:
       - name: Checkout master
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          path: master
-          persist-credentials: false
-      - name: Checkout merge commit
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          path: merge
-          ref: "refs/pull/${{ github.event.number }}/merge"
           persist-credentials: false
       - name: Generate label config
-        run: cd master && SCAN_DIR=../merge ./.github/gen_label_config.sh
+        run: ./.github/gen_label_config.sh
       - name: Update labels
         uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
         with:
-          configuration-path: master/.github/labeler.yml
+          configuration-path: .github/labeler.yml
           sync-labels: true
