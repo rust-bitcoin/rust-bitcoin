@@ -300,7 +300,7 @@ apoelstra@wpsoftware.net, encrypted with his public key from
 
 ## Testing
 
-Related to the security aspect, rust bitcoin developers take testing very
+Related to the security aspect, rust-bitcoin developers take testing very
 seriously. Due to the modular nature of the project, writing new test cases is
 easy and good test coverage of the codebase is an important goal. Refactoring
 the project to enable fine-grained unit testing is also an ongoing effort.
