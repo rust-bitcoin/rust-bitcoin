@@ -111,13 +111,13 @@ use witness_program::WitnessProgram;
 
 const OP_PUSHBYTES_0: Opcode = Opcode::from_u8(0x00);
 
-/// Mainnet (bitcoin) pubkey address prefix.
+/// Bitcoin Mainnet pubkey address prefix.
 pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0; // 0x00
-/// Mainnet (bitcoin) script address prefix.
+/// Bitcoin Mainnet script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5; // 0x05
-/// Test (testnet, signet, regtest) pubkey address prefix.
+/// Bitcoin test networks (testnet, signet, regtest) pubkey address prefix.
 pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
-/// Test (testnet, signet, regtest) script address prefix.
+/// Bitcoin test networks (testnet, signet, regtest) script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
 
 /// Extension functionality for the [`ScriptPubKeyBuf`] type.

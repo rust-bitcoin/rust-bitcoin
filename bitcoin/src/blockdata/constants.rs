@@ -209,33 +209,33 @@ impl_array_newtype_stringify!(ChainHash, 32);
 
 impl ChainHash {
     // Mainnet value can be verified at https://github.com/lightning/bolts/blob/master/00-introduction.md
-    /// `ChainHash` for mainnet bitcoin.
+    /// `ChainHash` for Bitcoin Mainnet.
     pub const BITCOIN: Self = Self([
         111, 226, 140, 10, 182, 241, 179, 114, 193, 166, 162, 70, 174, 99, 247, 79, 147, 30, 131,
         101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0,
     ]);
-    /// `ChainHash` for testnet3 bitcoin.
+    /// `ChainHash` for Bitcoin testnet3.
     #[deprecated(since = "TBD", note = "use `TESTNET3` instead")]
     pub const TESTNET: Self = Self([
         67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151,
         32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0,
     ]);
-    /// `ChainHash` for testnet3 bitcoin.
+    /// `ChainHash` for Bitcoin testnet3.
     pub const TESTNET3: Self = Self([
         67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151,
         32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0,
     ]);
-    /// `ChainHash` for testnet4 bitcoin.
+    /// `ChainHash` for Bitcoin testnet4.
     pub const TESTNET4: Self = Self([
         67, 240, 139, 218, 176, 80, 227, 91, 86, 124, 134, 75, 145, 244, 127, 80, 174, 114, 90,
         226, 222, 83, 188, 251, 186, 242, 132, 218, 0, 0, 0, 0,
     ]);
-    /// `ChainHash` for signet bitcoin.
+    /// `ChainHash` for Bitcoin signet.
     pub const SIGNET: Self = Self([
         246, 30, 238, 59, 99, 163, 128, 164, 119, 160, 99, 175, 50, 178, 187, 201, 124, 159, 249,
         240, 31, 44, 66, 37, 233, 115, 152, 129, 8, 0, 0, 0,
     ]);
-    /// `ChainHash` for regtest bitcoin.
+    /// `ChainHash` for Bitcoin regtest.
     pub const REGTEST: Self = Self([
         6, 34, 110, 70, 17, 26, 11, 89, 202, 175, 18, 96, 67, 235, 91, 191, 40, 195, 79, 58, 94,
         51, 42, 31, 199, 178, 183, 60, 241, 136, 145, 15,

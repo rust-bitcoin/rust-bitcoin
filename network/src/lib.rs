@@ -48,14 +48,14 @@ pub use self::error::ParseNetworkError;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum NetworkKind {
-    /// The Bitcoin mainnet network.
+    /// Bitcoin Mainnet.
     Main,
-    /// Some kind of testnet network (testnet, signet, regtest).
+    /// Some kind of Bitcoin testnet network (testnet, signet, regtest).
     Test,
 }
 
 impl NetworkKind {
-    /// Returns `true` if this represents the Bitcoin mainnet.
+    /// Returns `true` if this represents Bitcoin Mainnet.
     pub const fn is_mainnet(self) -> bool { matches!(self, Self::Main) }
 }
 
@@ -79,7 +79,7 @@ impl From<Network> for NetworkKind {
 /// crate instead.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
 pub enum Network {
-    /// Mainnet Bitcoin.
+    /// Bitcoin Mainnet.
     Bitcoin,
     /// Bitcoin's testnet network.
     Testnet(TestnetVersion),
