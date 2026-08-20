@@ -42,6 +42,20 @@ impl WScriptHash {
     /// # Errors
     ///
     /// Returns an error if the script exceeds 10,000 bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::script::{ScriptPubKeyBuf, WScriptHash, WitnessScriptBuf};
+    ///
+    /// // Far too big for P2SH, but unremarkable for P2WSH.
+    /// let witness_script = WitnessScriptBuf::from_bytes(vec![0x51; 1_000]);
+    /// assert!(ScriptPubKeyBuf::new_p2wsh(witness_script.wscript_hash()?).is_p2wsh());
+    ///
+    /// let too_big = WitnessScriptBuf::from_bytes(vec![0x51; 10_001]);
+    /// assert_eq!(too_big.wscript_hash().unwrap_err().invalid_size(), 10_001);
+    /// # Ok::<_, bitcoin_primitives::script::WitnessScriptSizeError>(())
+    /// ```
     #[inline]
     pub fn from_script(witness_script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
         if witness_script.len() > MAX_WITNESS_SCRIPT_SIZE {

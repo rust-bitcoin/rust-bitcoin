@@ -46,6 +46,22 @@ mod primitive {
         /// The encoding of Bitcoin script restricts data pushes to be less than 2^32 bytes long.
         /// This type represents slices that are guaranteed to be within the limit so they can be put in
         /// the script safely.
+        ///
+        /// # Examples
+        ///
+        /// ```rust
+        /// use bitcoin_primitives::script::{PushBytes, ScriptSigBuf};
+        ///
+        /// let public_key = [0xab; 33];
+        /// let signature: &[u8] = &[0xcd; 71];
+        ///
+        /// let mut script_sig = ScriptSigBuf::new();
+        /// script_sig.push_slice(public_key);
+        /// script_sig.push_slice(<&PushBytes>::try_from(signature)?);
+        ///
+        /// assert_eq!(script_sig.len(), (1 + 33) + (1 + 71));
+        /// # Ok::<_, bitcoin_primitives::script::PushBytesError>(())
+        /// ```
         #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
         pub struct PushBytes([u8]);
 
@@ -199,6 +215,20 @@ mod primitive {
     }
 
     /// Owned, growable counterpart to [`PushBytes`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::script::{PushBytesBuf, ScriptPubKeyBuf};
+    ///
+    /// let mut payload = PushBytesBuf::new();
+    /// payload.extend_from_slice(b"hello")?;
+    /// payload.push(b'!')?;
+    ///
+    /// let script_pubkey = ScriptPubKeyBuf::new_op_return(payload);
+    /// assert_eq!(script_pubkey.len(), 1 + 1 + 6); // OP_RETURN, push opcode, data.
+    /// # Ok::<_, bitcoin_primitives::script::PushBytesError>(())
+    /// ```
     #[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     pub struct PushBytesBuf(Vec<u8>);
 

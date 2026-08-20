@@ -44,6 +44,19 @@ impl ScriptHash {
     /// # Errors
     ///
     /// Returns an error if the script exceeds 520 bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::script::{RedeemScriptBuf, ScriptHash, ScriptPubKeyBuf};
+    ///
+    /// let redeem_script = RedeemScriptBuf::from_bytes(vec![0x51]);
+    /// assert!(ScriptPubKeyBuf::new_p2sh(redeem_script.script_hash()?).is_p2sh());
+    ///
+    /// let too_big = RedeemScriptBuf::from_bytes(vec![0x51; 521]);
+    /// assert_eq!(too_big.script_hash().unwrap_err().invalid_size(), 521);
+    /// # Ok::<_, bitcoin_primitives::script::RedeemScriptSizeError>(())
+    /// ```
     #[inline]
     pub fn from_script<T>(redeem_script: &Script<T>) -> Result<Self, RedeemScriptSizeError>
     where

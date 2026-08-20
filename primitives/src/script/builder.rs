@@ -12,6 +12,23 @@ use crate::prelude::Vec;
 ///
 /// [`Builder`] is backed by [`ScriptBuf`] and inherits its panic behavior. This means that
 /// attempting to construct scripts larger than `isize::MAX` bytes will panic.
+///
+/// # Examples
+///
+/// ```rust
+/// use bitcoin_primitives::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
+/// use bitcoin_primitives::script::{Builder, ScriptPubKeyBuf};
+///
+/// let script: ScriptPubKeyBuf = Builder::new()
+///     .push_opcode(OP_DUP)
+///     .push_opcode(OP_HASH160)
+///     .push_slice([0xab; 20])
+///     .push_opcode(OP_EQUALVERIFY)
+///     .push_opcode(OP_CHECKSIG)
+///     .into_script();
+///
+/// assert!(script.is_p2pkh());
+/// ```
 #[derive(PartialEq, Eq, Clone)]
 pub struct Builder<T>(ScriptBuf<T>);
 

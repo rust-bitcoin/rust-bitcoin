@@ -3,6 +3,45 @@
 //! A witness.
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
+//!
+//! # Examples
+//!
+//! A P2WPKH spend:
+//!
+//! ```rust
+//! use bitcoin_primitives::witness::Witness;
+//!
+//! let signature = [0xab; 72];
+//! let public_key = [0xcd; 33];
+//!
+//! let witness = Witness::from_slice(&[signature.as_slice(), public_key.as_slice()]);
+//!
+//! assert_eq!(witness.len(), 2);
+//! assert!(!witness.is_empty());
+//! assert_eq!(witness.get(0), Some(signature.as_slice()));
+//! assert_eq!(witness.last(), Some(public_key.as_slice()));
+//!
+//! // Serialized size includes a compact-size element count and a prefix per element.
+//! assert_eq!(witness.size(), 1 + (1 + 72) + (1 + 33));
+//! ```
+//!
+//! A P2WSH spend is assembled incrementally, ending with the witness script itself:
+//!
+//! ```rust
+//! use bitcoin_primitives::witness::Witness;
+//!
+//! let witness_script = [0x51];
+//!
+//! let mut witness = Witness::new();
+//! assert!(witness.is_empty());
+//!
+//! witness.push([]); // Empty element, for the OP_CHECKMULTISIG off-by-one.
+//! witness.push([0xab; 72]);
+//! witness.push(witness_script);
+//!
+//! assert_eq!(witness.last(), Some(witness_script.as_slice()));
+//! assert_eq!(witness.iter().count(), 3);
+//! ```
 
 use core::fmt;
 use core::ops::Index;
@@ -89,6 +128,16 @@ impl Witness {
     }
 
     /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
+    ///
+    /// # Examples
+    /// ```
+    /// use bitcoin_primitives::witness::Witness;
+    ///
+    /// let mut witness = Witness::from_slice(&[b"A", b"B", b"C", b"D"]);
+    ///
+    /// assert_eq!(witness.get(0), Some(b"A".as_slice()));
+    /// assert_eq!(witness.get(3), Some(b"D".as_slice()));
+    /// ```
     pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
         let witness_elements = slice.len();
         let index_size = witness_elements * 4;
@@ -136,6 +185,18 @@ impl Witness {
     /// # Panics
     ///
     /// If the size calculation overflows.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::witness::Witness;
+    ///
+    /// let witness = Witness::from_slice(&[[0xab; 72].as_slice(), [0xcd; 33].as_slice()]);
+    ///
+    /// // 1 + (1 + 72) + (1 + 33), not 72 + 33.
+    /// assert_eq!(witness.size(), 108);
+    /// assert_eq!(Witness::new().size(), 1); // 1 byte for the '0' encoded as compact size.
+    /// ```
     pub fn size(&self) -> usize {
         let mut size: usize = 0;
 
@@ -160,6 +221,22 @@ impl Witness {
     }
 
     /// Pushes a new element on the witness, requires an allocation.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::witness::Witness;
+    ///
+    /// let witness_script = [0x51];
+    ///
+    /// // A P2WSH spend, script last.
+    /// let mut witness = Witness::new();
+    /// witness.push([]); // Empty element, for the OP_CHECKMULTISIG off-by-one.
+    /// witness.push([0xab; 72]);
+    /// witness.push(witness_script);
+    ///
+    /// assert_eq!(witness.last(), Some(witness_script.as_slice()));
+    /// ```
     #[inline]
     pub fn push<T: AsRef<[u8]>>(&mut self, new_element: T) {
         self.push_slice(new_element.as_ref());
@@ -240,6 +317,20 @@ impl Witness {
     /// # Errors
     ///
     /// This function will return an error if any of the hex strings are invalid.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::witness::Witness;
+    ///
+    /// let witness = Witness::from_hex(["ab", "cdef"])?;
+    /// assert_eq!(witness.get(0), Some([0xab].as_slice()));
+    /// assert_eq!(witness.get(1), Some([0xcd, 0xef].as_slice()));
+    ///
+    /// // An empty element is the empty string.
+    /// assert_eq!(Witness::from_hex(["", "51"])?.get(0), Some([].as_slice()));
+    /// # Ok::<_, hex::DecodeVariableLengthBytesError>(())
+    /// ```
     #[cfg(feature = "hex")]
     pub fn from_hex<I, T>(iter: I) -> Result<Self, DecodeVariableLengthBytesError>
     where

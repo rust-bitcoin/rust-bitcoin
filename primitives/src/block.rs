@@ -6,6 +6,64 @@
 //! which commits to an earlier block to form the blockchain. This
 //! module describes structures and functions needed to describe
 //! these blocks and the blockchain.
+//!
+//! # Examples
+//!
+//! ```rust
+//! # #[cfg(feature = "alloc")]
+//! # fn example() -> Result<(), bitcoin_primitives::block::InvalidBlockError> {
+//! use bitcoin_primitives::block::{self, Block, Header, InvalidBlockError, Version};
+//! use bitcoin_primitives::{
+//!     absolute, transaction, Amount, BlockHash, BlockTime, CompactTarget, OutPoint,
+//!     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+//! };
+//!
+//! let coinbase = Transaction {
+//!     version: transaction::Version::ONE,
+//!     lock_time: absolute::LockTime::ZERO,
+//!     inputs: vec![TxIn {
+//!         previous_output: OutPoint::COINBASE_PREVOUT,
+//!         script_sig: ScriptSigBuf::from_bytes(vec![0x51, 0x52]),
+//!         sequence: Sequence::MAX,
+//!         witness: Witness::new(),
+//!     }],
+//!     outputs: vec![TxOut {
+//!         amount: Amount::from_sat_u32(50_000),
+//!         script_pubkey: ScriptPubKeyBuf::new(),
+//!     }],
+//! };
+//! assert!(coinbase.is_coinbase());
+//!
+//! let transactions = vec![coinbase];
+//! let merkle_root =
+//!     block::compute_merkle_root(&transactions).ok_or(InvalidBlockError::NoTransactions)?;
+//!
+//! let header = Header {
+//!     version: Version::TWO,
+//!     prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
+//!     merkle_root,
+//!     time: BlockTime::from_u32(1_231_006_505),
+//!     bits: CompactTarget::from_consensus(0x1d00_ffff),
+//!     nonce: 2_083_236_893,
+//! };
+//! assert_eq!(Header::SIZE, 80);
+//!
+//! // Decoding gives a `Block<Unchecked>`. `validate` must be called to get a `Block<Checked>`.
+//! let block = Block::new_unchecked(header, transactions);
+//! assert!(block.check_merkle_root());
+//!
+//! let block_hash = block.block_hash();
+//! let block = block.validate()?;
+//!
+//! // The content accessors exist only on the checked type.
+//! assert_eq!(block.transactions().len(), 1);
+//! assert_eq!(block.block_hash(), block_hash);
+//! assert_eq!(block.header().merkle_root, merkle_root);
+//! # Ok(())
+//! # }
+//! # #[cfg(feature = "alloc")]
+//! # example().unwrap();
+//! ```
 
 #[cfg(feature = "alloc")]
 use core::borrow::Borrow;
@@ -107,6 +165,45 @@ impl Block<Unchecked> {
     /// Ignores block validation logic and just assumes you know what you are doing.
     ///
     /// You should only use this function if you trust the block i.e., it comes from a trusted node.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use bitcoin_primitives::block::{Block, Header, Version};
+    /// # use bitcoin_primitives::merkle_tree::TxMerkleNode;
+    /// # use bitcoin_primitives::{
+    /// #     absolute, transaction, Amount, BlockHash, BlockTime, CompactTarget, OutPoint,
+    /// #     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+    /// # };
+    /// # let coinbase = Transaction {
+    /// #     version: transaction::Version::ONE,
+    /// #     lock_time: absolute::LockTime::ZERO,
+    /// #     inputs: vec![TxIn {
+    /// #         previous_output: OutPoint::COINBASE_PREVOUT,
+    /// #         script_sig: ScriptSigBuf::from_bytes(vec![0x51, 0x52]),
+    /// #         sequence: Sequence::MAX,
+    /// #         witness: Witness::new(),
+    /// #     }],
+    /// #     outputs: vec![TxOut { amount: Amount::ZERO, script_pubkey: ScriptPubKeyBuf::new() }],
+    /// # };
+    /// # let header = Header {
+    /// #     version: Version::TWO,
+    /// #     prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
+    /// #     merkle_root: TxMerkleNode::from_byte_array([0xff; 32]),
+    /// #     time: BlockTime::from_u32(1_231_006_505),
+    /// #     bits: CompactTarget::from_consensus(0x1d00_ffff),
+    /// #     nonce: 0,
+    /// # };
+    /// // This header's Merkle root does not match the transaction list.
+    /// let block = Block::new_unchecked(header, vec![coinbase]);
+    /// assert!(!block.check_merkle_root());
+    ///
+    /// // `validate` would have rejected this block.
+    /// assert_eq!(block.assume_checked(None).cached_witness_root(), None);
+    /// ```
+    ///
+    /// [`validate`]: Self::validate
+    /// [`cached_witness_root`]: Block<Checked>::cached_witness_root
     #[must_use]
     #[inline]
     pub fn assume_checked(self, witness_root: Option<WitnessMerkleNode>) -> Block<Checked> {
@@ -140,6 +237,52 @@ impl Block<Unchecked> {
     /// * The first transaction is not a coinbase transaction.
     /// * The Merkle root of the header does not match the Merkle root of the transaction list.
     /// * The witness commitment in the coinbase does not match the transaction list.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use bitcoin_primitives::block::{self, Block, Header, InvalidBlockError, Version};
+    /// # use bitcoin_primitives::merkle_tree::TxMerkleNode;
+    /// # use bitcoin_primitives::{
+    /// #     absolute, transaction, Amount, BlockHash, BlockTime, CompactTarget, OutPoint,
+    /// #     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+    /// # };
+    /// # let coinbase = Transaction {
+    /// #     version: transaction::Version::ONE,
+    /// #     lock_time: absolute::LockTime::ZERO,
+    /// #     inputs: vec![TxIn {
+    /// #         previous_output: OutPoint::COINBASE_PREVOUT,
+    /// #         script_sig: ScriptSigBuf::from_bytes(vec![0x51, 0x52]),
+    /// #         sequence: Sequence::MAX,
+    /// #         witness: Witness::new(),
+    /// #     }],
+    /// #     outputs: vec![TxOut { amount: Amount::ZERO, script_pubkey: ScriptPubKeyBuf::new() }],
+    /// # };
+    /// # fn header_with(merkle_root: TxMerkleNode) -> Header {
+    /// #     Header {
+    /// #         version: Version::TWO,
+    /// #         prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
+    /// #         merkle_root,
+    /// #         time: BlockTime::from_u32(1_231_006_505),
+    /// #         bits: CompactTarget::from_consensus(0x1d00_ffff),
+    /// #         nonce: 0,
+    /// #     }
+    /// # }
+    /// let transactions = vec![coinbase];
+    /// let root = block::compute_merkle_root(&transactions).unwrap();
+    ///
+    /// let block = Block::new_unchecked(header_with(root), transactions.clone());
+    /// assert_eq!(block.validate()?.transactions().len(), 1);
+    ///
+    /// // A header committing to a different transaction list is rejected.
+    /// let wrong_root = header_with(TxMerkleNode::from_byte_array([0xff; 32]));
+    /// let block = Block::new_unchecked(wrong_root, transactions);
+    /// assert_eq!(block.validate().unwrap_err(), InvalidBlockError::InvalidMerkleRoot);
+    /// # Ok::<_, InvalidBlockError>(())
+    /// ```
+    ///
+    /// [`assume_checked`]: Self::assume_checked
+    /// [`cached_witness_root`]: Block<Checked>::cached_witness_root
     pub fn validate(self) -> Result<Block<Checked>, InvalidBlockError> {
         if self.transactions.is_empty() {
             return Err(InvalidBlockError::NoTransactions);
@@ -194,6 +337,44 @@ impl Block<Unchecked> {
     /// save re-calculating it.
     ///
     /// [`assume_checked`]: Block<Unchecked>::assume_checked
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use bitcoin_primitives::block::{self, Block, Header, Version};
+    /// # use bitcoin_primitives::{
+    /// #     absolute, transaction, Amount, BlockHash, BlockTime, CompactTarget, OutPoint,
+    /// #     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+    /// # };
+    /// # let coinbase = Transaction {
+    /// #     version: transaction::Version::ONE,
+    /// #     lock_time: absolute::LockTime::ZERO,
+    /// #     inputs: vec![TxIn {
+    /// #         previous_output: OutPoint::COINBASE_PREVOUT,
+    /// #         script_sig: ScriptSigBuf::from_bytes(vec![0x51, 0x52]),
+    /// #         sequence: Sequence::MAX,
+    /// #         witness: Witness::new(),
+    /// #     }],
+    /// #     outputs: vec![TxOut { amount: Amount::ZERO, script_pubkey: ScriptPubKeyBuf::new() }],
+    /// # };
+    /// # let merkle_root = block::compute_merkle_root(&[coinbase.clone()]).expect("one transaction");
+    /// # let header = Header {
+    /// #     version: Version::TWO,
+    /// #     prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
+    /// #     merkle_root,
+    /// #     time: BlockTime::from_u32(1_231_006_505),
+    /// #     bits: CompactTarget::from_consensus(0x1d00_ffff),
+    /// #     nonce: 0,
+    /// # };
+    /// // This block's only transaction has an empty witness.
+    /// let block = Block::new_unchecked(header, vec![coinbase]);
+    ///
+    /// let (is_valid, witness_root) = block.check_witness_commitment();
+    /// assert!(is_valid);
+    /// assert_eq!(witness_root, None);
+    ///
+    /// assert_eq!(block.assume_checked(witness_root).cached_witness_root(), None);
+    /// ```
     pub fn check_witness_commitment(&self) -> (bool, Option<WitnessMerkleNode>) {
         if self.transactions.is_empty() {
             return (false, None);
@@ -275,6 +456,25 @@ impl From<&Block> for BlockHash {
 }
 
 /// Marker that the block's merkle root has been successfully validated.
+///
+/// # Examples
+///
+/// ```rust
+/// use bitcoin_primitives::block::{Block, Checked};
+///
+/// fn count_transactions(block: &Block<Checked>) -> usize { block.transactions().len() }
+/// ```
+///
+/// The same function does not compile against an unchecked block:
+///
+/// ```compile_fail
+/// use bitcoin_primitives::block::{Block, Unchecked};
+///
+/// fn count_transactions(block: &Block<Unchecked>) -> usize { block.transactions().len() }
+/// ```
+///
+/// [`validate`]: Block<Unchecked>::validate
+/// [`assume_checked`]: Block<Unchecked>::assume_checked
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg(feature = "alloc")]
 pub enum Checked {}
@@ -488,7 +688,27 @@ impl Header {
     pub const SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4; // 80
 
     /// Returns the block hash.
-    // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_primitives::block::{Header, Version};
+    /// use bitcoin_primitives::merkle_tree::TxMerkleNode;
+    /// use bitcoin_primitives::{BlockHash, BlockTime, CompactTarget};
+    ///
+    /// let mut header = Header {
+    ///     version: Version::TWO,
+    ///     prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
+    ///     merkle_root: TxMerkleNode::from_byte_array([0xab; 32]),
+    ///     time: BlockTime::from_u32(1_231_006_505),
+    ///     bits: CompactTarget::from_consensus(0x1d00_ffff),
+    ///     nonce: 0,
+    /// };
+    /// let block_hash = header.block_hash();
+    ///
+    /// header.nonce += 1;
+    /// assert_ne!(header.block_hash(), block_hash);
+    /// ```
     pub fn block_hash(&self) -> BlockHash {
         let hash = hashes::encode_to_hash::<_, sha256d::HashEngine>(self);
         BlockHash::from_byte_array(hash.to_byte_array())
