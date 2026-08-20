@@ -86,8 +86,10 @@ crate::internal_macros::define_extension_trait! {
             } else if script.is_witness_program() {
                 let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
 
-                let version = WitnessVersion::try_from(opcode)?;
-                let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
+                let version = WitnessVersion::try_from(opcode)
+                    .map_err(FromScriptError::WitnessVersion)?;
+                let program = WitnessProgram::new(version, &script.as_bytes()[2..])
+                    .map_err(FromScriptError::WitnessProgram)?;
                 Ok(Self::from_witness_program(program, network))
             } else {
                 Err(FromScriptError::UnrecognizedScript)
