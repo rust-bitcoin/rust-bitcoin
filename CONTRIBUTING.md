@@ -348,6 +348,9 @@ and in the PR description that indicates the patch was created using an LLM.
 First time contributions by way of LLM generated patches are not welcome. Thanks
 for your time, please be respectful of ours.
 
+Commit messages, PR descriptions and Github comments must be substantially written
+by a human being. PRs entirely created by automonous agents are not permitted and
+will result in an organization-wide ban of the account opening them.
 
 ## Going further
 
