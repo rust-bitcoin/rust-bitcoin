@@ -1045,7 +1045,8 @@ impl Address<NetworkUnchecked> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
-            Err(NetworkValidationError { required, address: self }.into())
+            Err(NetworkValidationError { required, address: self })
+                .map_err(ParseError::NetworkValidation)
         }
     }
 
@@ -1072,11 +1073,12 @@ impl Address<NetworkUnchecked> {
     pub fn from_bech32_str(s: &str) -> Result<Self, Bech32Error> {
         let (hrp, witness_version, data) =
             bech32::segwit::decode(s).map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
-        let version = WitnessVersion::try_from(witness_version.to_u8())?;
+        let version = WitnessVersion::try_from(witness_version.to_u8())
+            .map_err(Bech32Error::WitnessVersion)?;
         let program = WitnessProgram::new(version, &data)
             .expect("bech32 guarantees valid program length for witness");
 
-        let hrp = KnownHrp::from_hrp(hrp)?;
+        let hrp = KnownHrp::from_hrp(hrp).map_err(Bech32Error::UnknownHrp)?;
         let inner = AddressInner::Segwit { program, hrp };
         Ok(Self::from_inner(inner))
     }
@@ -1095,9 +1097,10 @@ impl Address<NetworkUnchecked> {
     ///   - [`SCRIPT_ADDRESS_PREFIX_TEST`]
     pub fn from_base58_str(s: &str) -> Result<Self, Base58Error> {
         if s.len() > 50 {
-            return Err(LegacyAddressTooLongError { length: s.len() }.into());
+            return Err(LegacyAddressTooLongError { length: s.len() })
+                .map_err(Base58Error::LegacyAddressTooLong);
         }
-        let data = base58::decode_check_to_array::<21>(s)?;
+        let data = base58::decode_check_to_array::<21>(s).map_err(Base58Error::ParseBase58)?;
 
         let (prefix, &data) = data.split_first();
 
@@ -1118,7 +1121,9 @@ impl Address<NetworkUnchecked> {
                 let hash = ScriptHash::from_byte_array(data);
                 AddressInner::P2sh { hash, network: NetworkKind::Test }
             }
-            invalid => return Err(InvalidLegacyPrefixError { invalid }.into()),
+            invalid =>
+                return Err(InvalidLegacyPrefixError { invalid })
+                    .map_err(Base58Error::InvalidLegacyPrefix),
         };
 
         Ok(Self::from_inner(inner))
@@ -1169,18 +1174,20 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
 
     fn from_str(s: &str) -> Result<Self, ParseError> {
         if ["bc1", "bcrt1", "tb1"].iter().any(|&prefix| s.to_lowercase().starts_with(prefix)) {
-            let address = Address::from_bech32_str(s)?;
+            let address = Address::from_bech32_str(s).map_err(ParseError::Bech32)?;
             // We know that `U` is only ever `NetworkUnchecked` but the compiler does not.
             Ok(Self::from_inner(address.to_inner()))
         } else if ["1", "2", "3", "m", "n"].iter().any(|&prefix| s.starts_with(prefix)) {
-            let address = Address::from_base58_str(s)?;
+            let address = Address::from_base58_str(s).map_err(ParseError::Base58)?;
             Ok(Self::from_inner(address.to_inner()))
         } else {
             let hrp = match s.rfind('1') {
                 Some(pos) => &s[..pos],
                 None => s,
             };
-            Err(UnknownHrpError(hrp.into()).into())
+            Err(UnknownHrpError(hrp.into()))
+                .map_err(Bech32Error::UnknownHrp)
+                .map_err(ParseError::Bech32)
         }
     }
 }
