@@ -27,9 +27,9 @@ pub use self::error::{
     ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError
 };
 
-/// Version bytes for extended public keys on the Bitcoin network.
+/// Version bytes for extended public keys on Bitcoin Mainnet.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
-/// Version bytes for extended private keys on the Bitcoin network.
+/// Version bytes for extended private keys on Bitcoin Mainnet.
 const VERSION_BYTES_MAINNET_PRIVATE: [u8; 4] = [0x04, 0x88, 0xAD, 0xE4];
 /// Version bytes for extended public keys on any of the testnet networks.
 const VERSION_BYTES_TESTNETS_PUBLIC: [u8; 4] = [0x04, 0x35, 0x87, 0xCF];

@@ -12,7 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::write_err;
 
-/// A bitcoin block hash.
+/// A Bitcoin block hash.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BlockHash(sha256d::Hash);
 

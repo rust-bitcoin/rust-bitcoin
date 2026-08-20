@@ -18,7 +18,7 @@ use crate::DecoderStatus;
 /// Default maximum size of a decoded object in bytes.
 ///
 /// Matches Bitcoin Core's default [serialization limit]. This is
-/// a high level anti-DoS limit which all bitcoin types should
+/// a high level anti-DoS limit which all Bitcoin types should
 /// easily fit within.
 ///
 /// [serialization limit]: https://github.com/bitcoin/bitcoin/blob/a7c29df0e5ace05b6186612671d6103c112ec922/src/serialize.h#L32

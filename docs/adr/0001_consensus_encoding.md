@@ -44,16 +44,16 @@ Martin Habovštiak wrote a general purpose sans-I/O encoding/decoding crate, [`p
 
 **Cons:**
 
-* Is general purpose, so has a few layers of abstraction and complexity not required in the bitcoin domain.
+* Is general purpose, so has a few layers of abstraction and complexity not required in the Bitcoin domain.
 
 #### Option 3: Create dedicated consensus_encoding crate
 
-Extract consensus encoding/decoding logic into a new crate which is sans-I/O and focused only on the bitcoin domain.
+Extract consensus encoding/decoding logic into a new crate which is sans-I/O and focused only on the Bitcoin domain.
 
 **Pros:**
 
 * Removes ties to std I/O and I/O errors.
-* Interface is tailored for the bitcoin domain.
+* Interface is tailored for the Bitcoin domain.
 
 **Cons:**
 
