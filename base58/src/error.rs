@@ -87,18 +87,6 @@ impl std::error::Error for DecodeCheckError {
     }
 }
 
-impl From<InvalidCharacterError> for DecodeCheckError {
-    fn from(e: InvalidCharacterError) -> Self { Self(DecodeCheckErrorInner::Decode(e)) }
-}
-
-impl From<IncorrectChecksumError> for DecodeCheckError {
-    fn from(e: IncorrectChecksumError) -> Self { Self(DecodeCheckErrorInner::IncorrectChecksum(e)) }
-}
-
-impl From<TooShortError> for DecodeCheckError {
-    fn from(e: TooShortError) -> Self { Self(DecodeCheckErrorInner::TooShort(e)) }
-}
-
 /// Checksum was not correct.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct IncorrectChecksumError {

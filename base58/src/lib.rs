@@ -75,8 +75,8 @@ use internals::array_vec::ArrayVec;
 use internals::slice::SliceExt;
 
 use crate::error::{
-    Base256Error, DecodeCheckArrayErrorInner, IncorrectChecksumError, TooShortError,
-    UnexpectedLengthError,
+    Base256Error, DecodeCheckArrayErrorInner, DecodeCheckErrorInner, IncorrectChecksumError,
+    TooShortError, UnexpectedLengthError,
 };
 #[cfg(not(feature = "alloc"))]
 use crate::error::{DecodeCheckError, InputTooLongErrorInner, InvalidCharacterError};
@@ -167,18 +167,24 @@ fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Er
 pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     // 11/15 is just over log_256(58)
     let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
-    build_base256(data, &mut scratch).map_err(|e| match e {
-        Base256Error::Buffer(_) => unreachable!("Vec cannot fail try_push"),
-        Base256Error::InvalidChar(err) => err,
-    })?;
+    build_base256(data, &mut scratch)
+        .map_err(|e| match e {
+            Base256Error::Buffer(_) => unreachable!("Vec cannot fail try_push"),
+            Base256Error::InvalidChar(err) => err,
+        })
+        .map_err(DecodeCheckErrorInner::Decode)
+        .map_err(DecodeCheckError)?;
 
     // Copy leading zeroes directly
     let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).map(|_| 0).collect();
     // Copy rest of string
     ret.extend(scratch.into_iter().rev());
 
-    let (remaining, &data_check) =
-        ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
+    let (remaining, &data_check) = ret
+        .split_last_chunk::<4>()
+        .ok_or(TooShortError { length: ret.len() })
+        .map_err(DecodeCheckErrorInner::TooShort)
+        .map_err(DecodeCheckError)?;
 
     let hash_check = *sha256d::Hash::hash(remaining).as_byte_array().sub_array::<0, 4>();
 
@@ -187,7 +193,8 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 
     if actual != expected {
         return Err(IncorrectChecksumError { incorrect: actual, expected })
-            .map_err(DecodeCheckError::from);
+            .map_err(DecodeCheckErrorInner::IncorrectChecksum)
+            .map_err(DecodeCheckError);
     }
 
     ret.truncate(remaining.len());
@@ -233,8 +240,9 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
                     expected: N,
                     actual: data.len() * 11 / 15,
                 }),
-            Base256Error::InvalidChar(err) =>
-                DecodeCheckArrayErrorInner::Decode(DecodeCheckError::from(err)),
+            Base256Error::InvalidChar(err) => DecodeCheckArrayErrorInner::Decode(DecodeCheckError(
+                DecodeCheckErrorInner::Decode(err),
+            )),
         })
         .map_err(DecodeCheckArrayError)?;
 
@@ -256,7 +264,8 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     let (payload, &data_check) = decoded
         .split_last_chunk::<4>()
         .ok_or(TooShortError { length: decoded_len })
-        .map_err(DecodeCheckError::from)
+        .map_err(DecodeCheckErrorInner::TooShort)
+        .map_err(DecodeCheckError)
         .map_err(DecodeCheckArrayErrorInner::Decode)
         .map_err(DecodeCheckArrayError)?;
 
@@ -272,7 +281,8 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
 
     if actual != expected {
         return Err(IncorrectChecksumError { incorrect: actual, expected })
-            .map_err(DecodeCheckError::from)
+            .map_err(DecodeCheckErrorInner::IncorrectChecksum)
+            .map_err(DecodeCheckError)
             .map_err(DecodeCheckArrayErrorInner::Decode)
             .map_err(DecodeCheckArrayError);
     }
@@ -660,7 +670,12 @@ mod tests {
         // Check that empty slice passes roundtrip.
         assert_eq!(decode_check(Base58CkString::encode_unbounded(&[]).as_str()), Ok(vec![]));
         // Check that `len > 4` is enforced.
-        assert_eq!(decode_check("Ldp"), Err(TooShortError { length: 3 }.into()));
+        assert_eq!(
+            decode_check("Ldp"),
+            Err(TooShortError { length: 3 })
+                .map_err(DecodeCheckErrorInner::TooShort)
+                .map_err(DecodeCheckError),
+        );
     }
 }
 
