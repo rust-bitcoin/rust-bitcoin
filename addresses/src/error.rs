@@ -48,14 +48,6 @@ impl std::error::Error for FromScriptError {
     }
 }
 
-impl From<witness_program::Error> for FromScriptError {
-    fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
-}
-
-impl From<witness_version::InvalidWitnessVersionError> for FromScriptError {
-    fn from(e: witness_version::InvalidWitnessVersionError) -> Self { Self::WitnessVersion(e) }
-}
-
 /// Address type is either invalid or not supported in rust-bitcoin.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -110,22 +102,6 @@ impl std::error::Error for ParseError {
             Self::NetworkValidation(ref e) => Some(e),
         }
     }
-}
-
-impl From<Base58Error> for ParseError {
-    fn from(e: Base58Error) -> Self { Self::Base58(e) }
-}
-
-impl From<Bech32Error> for ParseError {
-    fn from(e: Bech32Error) -> Self { Self::Bech32(e) }
-}
-
-impl From<UnknownHrpError> for ParseError {
-    fn from(e: UnknownHrpError) -> Self { Self::Bech32(e.into()) }
-}
-
-impl From<NetworkValidationError> for ParseError {
-    fn from(e: NetworkValidationError) -> Self { Self::NetworkValidation(e) }
 }
 
 /// Unknown HRP error.
@@ -212,18 +188,6 @@ impl std::error::Error for Bech32Error {
     }
 }
 
-impl From<witness_version::InvalidWitnessVersionError> for Bech32Error {
-    fn from(e: witness_version::InvalidWitnessVersionError) -> Self { Self::WitnessVersion(e) }
-}
-
-impl From<witness_program::Error> for Bech32Error {
-    fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
-}
-
-impl From<UnknownHrpError> for Bech32Error {
-    fn from(e: UnknownHrpError) -> Self { Self::UnknownHrp(e) }
-}
-
 /// Bech32 parsing related error.
 // This wrapper exists because we do not want to expose the `bech32` crate in our public API.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -284,22 +248,6 @@ impl std::error::Error for Base58Error {
             Self::InvalidLegacyPrefix(ref e) => Some(e),
         }
     }
-}
-
-impl From<base58::DecodeCheckError> for Base58Error {
-    fn from(e: base58::DecodeCheckError) -> Self { Self::ParseBase58(e) }
-}
-
-impl From<LegacyAddressTooLongError> for Base58Error {
-    fn from(e: LegacyAddressTooLongError) -> Self { Self::LegacyAddressTooLong(e) }
-}
-
-impl From<InvalidBase58PayloadLengthError> for Base58Error {
-    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
-}
-
-impl From<InvalidLegacyPrefixError> for Base58Error {
-    fn from(e: InvalidLegacyPrefixError) -> Self { Self::InvalidLegacyPrefix(e) }
 }
 
 /// Decoded base58 data was an invalid length.
