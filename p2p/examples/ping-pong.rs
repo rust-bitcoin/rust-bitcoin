@@ -71,9 +71,8 @@ fn main() {
                 _ => unimplemented!("{:?}", msg.payload()),
             }
         }
-    } else {
-        eprintln!("failed to open connection");
     }
+    eprintln!("failed to open connection");
 }
 
 fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
