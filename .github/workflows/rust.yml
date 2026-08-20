@@ -146,7 +146,9 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        with:
+          toolchain: stable
       - name: "Add architecture i386 and install dependencies"
         run: |
           sudo dpkg --add-architecture i386
@@ -179,7 +181,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install rust-src"
@@ -217,7 +219,9 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        with:
+          toolchain: stable
       - name: "Run policy script"
         run: ./contrib/check-for-policy-violations.sh
 
@@ -234,7 +238,9 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        with:
+          toolchain: stable
       - name: "Run primitives API checker script"
         run: |
           contrib/generate-primitives-re-export-test.sh && (cd ./primitives && cargo test --all-features)
@@ -253,7 +259,9 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        with:
+          toolchain: stable
       - name: "Check Encode coverage"
         run: ./contrib/check-encodable-coverage.sh
 
@@ -267,7 +275,9 @@ jobs:
           persist-credentials: false
           fetch-depth: 0 # required for full diff context
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        with:
+          toolchain: stable
       - name: "Fetch base branch for diff"
         run: git fetch origin master
       - name: "Retrieve relative diff"
