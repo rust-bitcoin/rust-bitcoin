@@ -49,6 +49,7 @@ impl fmt::Display for DisplayFullError {
 #[cfg(feature = "alloc")]
 #[cfg(not(feature = "std"))]
 impl fmt::Display for DisplayFullError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
@@ -164,6 +165,7 @@ pub mod as_sat {
 
         use crate::SignedAmount;
 
+        #[inline]
         pub fn serialize<A, S: Serializer>(a: &[A], s: S) -> Result<S::Ok, S::Error>
         where
             A: Into<SignedAmount> + Copy,
@@ -328,6 +330,7 @@ pub mod as_btc {
 
         use crate::amount::{Denomination, SignedAmount};
 
+        #[inline]
         pub fn serialize<A, S: Serializer>(a: &[A], s: S) -> Result<S::Ok, S::Error>
         where
             A: Into<SignedAmount> + Copy,
@@ -497,6 +500,7 @@ pub mod as_str {
 
         use crate::amount::{Denomination, SignedAmount};
 
+        #[inline]
         pub fn serialize<A, S: Serializer>(a: &[A], s: S) -> Result<S::Ok, S::Error>
         where
             A: Into<SignedAmount> + Copy,

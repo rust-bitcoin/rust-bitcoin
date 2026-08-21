@@ -34,6 +34,7 @@ macro_rules! impl_op_for_references {
         $(where $($bounds)*)?
         {
             type Output = $($main_output)*;
+            #[inline]
             fn $op($($main_args)*) -> Self::Output {
                 $($main_impl)*
             }
@@ -43,6 +44,7 @@ macro_rules! impl_op_for_references {
         $(where $($bounds)*)?
         {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
+            #[inline]
             fn $op(self, rhs: $other_ty) -> Self::Output {
                 (*self).$op(rhs)
             }
@@ -52,6 +54,7 @@ macro_rules! impl_op_for_references {
         $(where $($bounds)*)?
         {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
+            #[inline]
             fn $op(self, rhs: &$other_ty) -> Self::Output {
                 self.$op(*rhs)
             }
@@ -61,6 +64,7 @@ macro_rules! impl_op_for_references {
         $(where $($bounds)*)?
         {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
+            #[inline]
             fn $op(self, rhs: &$other_ty) -> Self::Output {
                 (*self).$op(*rhs)
             }

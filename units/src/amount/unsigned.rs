@@ -460,6 +460,7 @@ impl Amount {
     ///
     /// Be aware that integer division loses the remainder if no exact division
     /// can be made. See also [`Self::div_by_weight_ceil`].
+    #[inline]
     pub const fn div_by_weight_floor(self, weight: Weight) -> NumOpResult<FeeRate> {
         let wu = weight.to_wu();
 
@@ -493,6 +494,7 @@ impl Amount {
     /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
+    #[inline]
     pub const fn div_by_weight_ceil(self, weight: Weight) -> NumOpResult<FeeRate> {
         let wu = weight.to_wu();
         if wu == 0 {
@@ -516,6 +518,7 @@ impl Amount {
     /// Computes the maximum weight that would result in a fee less than or equal to this amount
     /// at the given `fee_rate`. Uses floor division to ensure the resulting weight doesn't cause
     /// the fee to exceed the amount.
+    #[inline]
     pub const fn div_by_fee_rate_floor(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
         debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
         let msats = self.to_sat() * 1_000;
@@ -529,6 +532,7 @@ impl Amount {
     ///
     /// Computes the minimum weight that would result in a fee greater than or equal to this amount
     /// at the given `fee_rate`. Uses ceiling division to ensure the resulting weight is sufficient.
+    #[inline]
     pub const fn div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
         // Use ceil because result is used as the divisor.
         let rate = fee_rate.to_sat_per_kwu_ceil();
@@ -551,6 +555,7 @@ impl default::Default for Amount {
 }
 
 impl fmt::Debug for Amount {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Amount({} SAT)", self.to_sat())
     }
@@ -642,6 +647,7 @@ crate::decoder_newtype! {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Amount {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let sats = u.int_in_range(Self::MIN.to_sat()..=Self::MAX.to_sat())?;
         Ok(Self::from_sat(sats).expect("range is valid"))

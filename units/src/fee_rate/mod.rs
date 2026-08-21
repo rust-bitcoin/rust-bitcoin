@@ -209,6 +209,7 @@ impl FeeRate {
     /// Computes the absolute fee amount for a given [`Weight`] at this fee rate. When the resulting
     /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
     /// enough instead of falling short if rounded down.
+    #[inline]
     pub const fn mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
         let wu = weight.to_wu();
         if let Some(fee_kwu) = self.to_sat_per_kwu_ceil().checked_mul(wu) {
@@ -265,6 +266,7 @@ impl<'a> core::iter::Sum<&'a Self> for FeeRate {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeRate {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=4)?;
         match choice {
