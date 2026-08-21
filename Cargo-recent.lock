@@ -266,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-taproot-primitives"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arbitrary",
  "bitcoin-consensus-encoding 1.2.0",
