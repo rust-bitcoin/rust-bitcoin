@@ -13,6 +13,8 @@
 //! Note that libFuzzer stops using its built-in mutators as soon as a custom one is defined,
 //! so every path through a mutator has to call [`Mutate`] to keep them.
 
+pub mod p2p_frame;
+
 /// The signature of `libfuzzer_sys::fuzzer_mutate`.
 ///
 /// Mutates `data[..size]` in place, growing or shrinking it to at most `max_size`, and returns
