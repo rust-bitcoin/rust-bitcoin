@@ -41,6 +41,8 @@ mod encapsulate {
 pub use encapsulate::FeeRate;
 use internals::const_casts;
 
+pub use self::error::FromFloatError;
+
 impl FeeRate {
     /// The zero fee rate.
     ///
@@ -115,6 +117,108 @@ impl FeeRate {
         match rate.checked_mul(1_000) {
             Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
             None => R::Error(E::while_doing(MathOp::Mul)),
+        }
+    }
+
+    /// Constructs a new [`FeeRate`] from satoshis per 1,000 weight units, expressed as a float.
+    ///
+    /// The value is rounded to the nearest satoshi per 1,000,000 virtual bytes, the internal
+    /// representation of [`FeeRate`].
+    ///
+    /// Please be aware of the risk of using floating-point numbers.
+    ///
+    /// # Errors
+    ///
+    /// If `sat_kwu` is `NaN`, infinite, negative, or too large to be represented.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::FeeRate;
+    /// let fee_rate = FeeRate::from_sat_per_kwu_f64(25.0)?;
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(25));
+    /// # Ok::<_, bitcoin_units::fee_rate::FromFloatError>(())
+    /// ```
+    #[inline]
+    pub fn from_sat_per_kwu_f64(sat_kwu: f64) -> Result<Self, FromFloatError> {
+        Self::from_float(sat_kwu, 4_000.0)
+    }
+
+    /// Constructs a new [`FeeRate`] from satoshis per virtual byte, expressed as a float.
+    ///
+    /// The value is rounded to the nearest satoshi per 1,000,000 virtual bytes, the internal
+    /// representation of [`FeeRate`].
+    ///
+    /// Please be aware of the risk of using floating-point numbers.
+    ///
+    /// # Errors
+    ///
+    /// If `sat_vb` is `NaN`, infinite, negative, or too large to be represented.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::FeeRate;
+    /// let fee_rate = FeeRate::from_sat_per_vb_f64(0.1)?;
+    /// assert_eq!(fee_rate.to_sat_per_kwu_floor(), 25);
+    /// # Ok::<_, bitcoin_units::fee_rate::FromFloatError>(())
+    /// ```
+    #[inline]
+    pub fn from_sat_per_vb_f64(sat_vb: f64) -> Result<Self, FromFloatError> {
+        Self::from_float(sat_vb, 1_000_000.0)
+    }
+
+    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes),
+    /// expressed as a float.
+    ///
+    /// The value is rounded to the nearest satoshi per 1,000,000 virtual bytes, the internal
+    /// representation of [`FeeRate`].
+    ///
+    /// Please be aware of the risk of using floating-point numbers.
+    ///
+    /// # Errors
+    ///
+    /// If `sat_kvb` is `NaN`, infinite, negative, or too large to be represented.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::FeeRate;
+    /// let fee_rate = FeeRate::from_sat_per_kvb_f64(11.0)?;
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kvb(11));
+    /// # Ok::<_, bitcoin_units::fee_rate::FromFloatError>(())
+    /// ```
+    #[inline]
+    pub fn from_sat_per_kvb_f64(sat_kvb: f64) -> Result<Self, FromFloatError> {
+        Self::from_float(sat_kvb, 1_000.0)
+    }
+
+    fn from_float(value: f64, factor: f64) -> Result<Self, FromFloatError> {
+        use error::FromFloatErrorInner;
+
+        if value.is_nan() {
+            return Err(FromFloatError(FromFloatErrorInner::Nan));
+        }
+        if value.is_infinite() {
+            return Err(FromFloatError(FromFloatErrorInner::Infinite));
+        }
+        if value < 0.0 {
+            return Err(FromFloatError(FromFloatErrorInner::Negative));
+        }
+        let sat_mvb = value * factor;
+        // 2^64, the smallest float that does not fit in a `u64`. Also catches the
+        // multiplication overflowing to infinity.
+        if sat_mvb >= 18_446_744_073_709_551_616.0 {
+            return Err(FromFloatError(FromFloatErrorInner::Overflow));
+        }
+        // Cast truncates the fractional part; rounding is done manually because `f64::round`
+        // is not available in `core`.
+        let floor = sat_mvb as u64;
+        if sat_mvb % 1.0 >= 0.5 {
+            // A nonzero fractional part implies `sat_mvb < 2^53`, so this cannot overflow.
+            Ok(Self::from_sat_per_mvb(floor + 1))
+        } else {
+            Ok(Self::from_sat_per_mvb(floor))
         }
     }
 
@@ -277,6 +381,49 @@ impl<'a> Arbitrary<'a> for FeeRate {
     }
 }
 
+/// Error types for fee rate conversions.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    /// Error returned when constructing a [`FeeRate`](super::FeeRate) from a float fails.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct FromFloatError(pub(super) FromFloatErrorInner);
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(super) enum FromFloatErrorInner {
+        Nan,
+        Infinite,
+        Negative,
+        Overflow,
+    }
+
+    impl From<Infallible> for FromFloatError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for FromFloatError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            use FromFloatErrorInner as E;
+
+            match self.0 {
+                E::Nan => write!(f, "fee rate is NaN"),
+                E::Infinite => write!(f, "fee rate is infinite"),
+                E::Negative => write!(f, "fee rate is negative"),
+                E::Overflow => write!(f, "fee rate is too large"),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for FromFloatError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use core::num::NonZeroU64;
@@ -400,6 +547,76 @@ mod tests {
     fn fee_rate_from_sat_per_kvb() {
         let fee_rate = FeeRate::from_sat_per_kvb(11);
         assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(11_000));
+    }
+
+    #[test]
+    fn fee_rate_from_sat_per_kwu_f64() {
+        let fee_rate = FeeRate::from_sat_per_kwu_f64(0.25).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(1_000));
+
+        let fee_rate = FeeRate::from_sat_per_kwu_f64(250.0).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(250));
+    }
+
+    #[test]
+    fn fee_rate_from_sat_per_vb_f64() {
+        let fee_rate = FeeRate::from_sat_per_vb_f64(0.1).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(100_000));
+
+        let fee_rate = FeeRate::from_sat_per_vb_f64(3.0).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_vb(3));
+    }
+
+    #[test]
+    fn fee_rate_from_sat_per_kvb_f64() {
+        let fee_rate = FeeRate::from_sat_per_kvb_f64(2.5).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(2_500));
+
+        let fee_rate = FeeRate::from_sat_per_kvb_f64(11.0).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kvb(11));
+    }
+
+    #[test]
+    fn fee_rate_from_float_rounds_to_nearest() {
+        // 0.4 sat/MvB rounds down, 0.5 and 0.6 sat/MvB round up.
+        assert_eq!(FeeRate::from_sat_per_kvb_f64(0.0004).unwrap(), FeeRate::ZERO);
+        assert_eq!(FeeRate::from_sat_per_kvb_f64(0.0005).unwrap(), FeeRate::from_sat_per_mvb(1));
+        assert_eq!(FeeRate::from_sat_per_kvb_f64(0.0006).unwrap(), FeeRate::from_sat_per_mvb(1));
+        assert_eq!(FeeRate::from_sat_per_vb_f64(-0.0).unwrap(), FeeRate::ZERO);
+    }
+
+    #[test]
+    fn fee_rate_from_float_errors() {
+        use super::error::FromFloatErrorInner;
+
+        assert_eq!(
+            FeeRate::from_sat_per_vb_f64(f64::NAN).unwrap_err(),
+            FromFloatError(FromFloatErrorInner::Nan)
+        );
+        assert_eq!(
+            FeeRate::from_sat_per_vb_f64(f64::INFINITY).unwrap_err(),
+            FromFloatError(FromFloatErrorInner::Infinite)
+        );
+        assert_eq!(
+            FeeRate::from_sat_per_vb_f64(f64::NEG_INFINITY).unwrap_err(),
+            FromFloatError(FromFloatErrorInner::Infinite)
+        );
+        assert_eq!(
+            FeeRate::from_sat_per_vb_f64(-0.1).unwrap_err(),
+            FromFloatError(FromFloatErrorInner::Negative)
+        );
+        assert_eq!(
+            FeeRate::from_sat_per_vb_f64(f64::MAX).unwrap_err(),
+            FromFloatError(FromFloatErrorInner::Overflow)
+        );
+
+        // 18_446_744_073_709 sat/vB is the largest whole sat/vB value that fits, one more
+        // overflows the internal u64 sat/MvB representation.
+        assert!(FeeRate::from_sat_per_vb_f64(18_446_744_073_709.0).is_ok());
+        assert_eq!(
+            FeeRate::from_sat_per_vb_f64(18_446_744_073_710.0).unwrap_err(),
+            FromFloatError(FromFloatErrorInner::Overflow)
+        );
     }
 
     #[test]

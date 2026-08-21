@@ -145,20 +145,21 @@ struct Errors {
     j: amount::error::TooPreciseError,
     k: amount::error::UnknownDenominationError,
     l: block::TooBigForRelativeHeightError,
+    m: fee_rate::FromFloatError,
     #[cfg(feature = "serde")]
-    m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
+    n: fee_rate::serde::OverflowError,
+    o: locktime::absolute::ConversionError,
+    p: locktime::absolute::ParseHeightError,
+    q: locktime::absolute::ParseTimeError,
+    r: locktime::relative::InvalidHeightError,
+    s: locktime::relative::InvalidTimeError,
+    t: locktime::relative::TimeOverflowError,
+    u: parse_int::ParseIntError,
+    v: parse_int::PrefixedHexError,
+    w: parse_int::UnprefixedHexError,
     #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
+    x: pow::CompactTargetDecoderError,
+    y: result::NumOpError,
 }
 
 /// A struct that includes all public decoder types.
@@ -269,6 +270,7 @@ fn c_good_err_display() {
     assert_display::<amount::error::TooPreciseError>();
     assert_display::<amount::error::UnknownDenominationError>();
     assert_display::<block::TooBigForRelativeHeightError>();
+    assert_display::<fee_rate::FromFloatError>();
     #[cfg(feature = "serde")]
     assert_display::<fee_rate::serde::OverflowError>();
     assert_display::<locktime::absolute::ConversionError>();
@@ -430,7 +432,7 @@ fn p_consistent_exports_sequence() {
 fn p_consistent_exports_fee_rate() {
     #[cfg(feature = "serde")]
     use bitcoin_units::fee_rate::serde::OverflowError;
-    use bitcoin_units::fee_rate::FeeRate;
+    use bitcoin_units::fee_rate::{FeeRate, FromFloatError};
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `locktime::absolute` module.
