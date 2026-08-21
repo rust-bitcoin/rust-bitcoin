@@ -2,7 +2,7 @@
 
 //! The [`Wtxid`] type.
 //!
-//! In order to print and parse txids enable the "hex" feature.
+//! In order to print and parse wtxids enable the "hex" feature.
 
 #[cfg(feature = "hex")]
 use core::{fmt, str};

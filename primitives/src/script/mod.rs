@@ -498,7 +498,7 @@ impl<'de, T> serde::Deserialize<'de> for &'de Script<T> {
 
 #[cfg(feature = "serde")]
 impl<T> serde::Serialize for ScriptBuf<T> {
-    /// User-facing serialization for `Script`.
+    /// User-facing serialization for [`ScriptBuf`].
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
