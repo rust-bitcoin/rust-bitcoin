@@ -19,14 +19,17 @@ pub use super::push_bytes::PushBytesError;
 pub struct ScriptBufDecoderError(pub(super) ByteVecDecoderError);
 
 impl From<Infallible> for ScriptBufDecoderError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for ScriptBufDecoderError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write_err!(f, "decoder error"; self.0) }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for ScriptBufDecoderError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }

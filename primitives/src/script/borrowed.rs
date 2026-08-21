@@ -147,6 +147,7 @@ impl<T> Script<T> {
     ///
     /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
     /// `to_hex_string_no_length_prefix`.
+    #[inline]
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     pub fn to_hex_string_prefixed(&self) -> String {
@@ -160,6 +161,7 @@ impl<T> Script<T> {
     ///
     /// This is **not** consensus encoding. The returned hex string will not include the length
     /// prefix. See `to_hex_string_prefixed`.
+    #[inline]
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     pub fn to_hex_string_no_length_prefix(&self) -> String {
@@ -203,6 +205,7 @@ impl<T> Script<T> {
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
     /// Constructs a new script builder
+    #[inline]
     pub fn builder() -> Builder<T> { Builder::new() }
 
     /// Returns witness version of the script, if any.
@@ -337,6 +340,7 @@ impl<T> Encode for Script<T> {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         ScriptEncoder::new(PrefixedBytesEncoder::new(self.as_bytes()))
     }

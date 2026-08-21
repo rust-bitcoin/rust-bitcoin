@@ -75,6 +75,7 @@ pub struct WitnessScriptSizeError {
 #[cfg(feature = "alloc")]
 impl WitnessScriptSizeError {
     /// Returns the invalid witness script size.
+    #[inline]
     pub fn invalid_size(&self) -> usize { self.size }
 }
 
@@ -94,6 +95,7 @@ impl fmt::Display for WitnessScriptSizeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessScriptSizeError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         let Self { size: _ } = self;
         None

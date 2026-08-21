@@ -80,6 +80,7 @@ pub struct RedeemScriptSizeError {
 #[cfg(feature = "alloc")]
 impl RedeemScriptSizeError {
     /// Returns the invalid redeem script size.
+    #[inline]
     pub fn invalid_size(&self) -> usize { self.size }
 }
 
@@ -99,6 +100,7 @@ impl fmt::Display for RedeemScriptSizeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for RedeemScriptSizeError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         let Self { size: _ } = self;
         None
