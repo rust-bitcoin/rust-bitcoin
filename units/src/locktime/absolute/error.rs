@@ -21,11 +21,13 @@ pub struct LockTimeDecoderError(pub(super) encoding::UnexpectedEofError);
 
 #[cfg(feature = "encoding")]
 impl From<Infallible> for LockTimeDecoderError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 #[cfg(feature = "encoding")]
 impl fmt::Display for LockTimeDecoderError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write_err!(f, "lock time decoder error"; self.0)
     }
@@ -58,6 +60,7 @@ impl IncompatibleHeightError {
 }
 
 impl From<Infallible> for IncompatibleHeightError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -101,6 +104,7 @@ impl IncompatibleTimeError {
 }
 
 impl From<Infallible> for IncompatibleTimeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -129,6 +133,7 @@ impl std::error::Error for IncompatibleTimeError {
 pub struct ParseHeightError(ParseError);
 
 impl From<Infallible> for ParseHeightError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -156,6 +161,7 @@ impl From<ParseError> for ParseHeightError {
 pub struct ParseTimeError(ParseError);
 
 impl From<Infallible> for ParseTimeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -277,6 +283,7 @@ impl ParseError {
 }
 
 impl From<Infallible> for ParseError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -320,10 +327,12 @@ impl ConversionError {
 }
 
 impl From<Infallible> for ConversionError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for ConversionError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "invalid lock time value {}, {}", self.input, self.unit)
     }
@@ -348,6 +357,7 @@ enum LockTimeUnit {
 }
 
 impl fmt::Display for LockTimeUnit {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Blocks =>

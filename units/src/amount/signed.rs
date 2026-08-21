@@ -526,6 +526,7 @@ impl default::Default for SignedAmount {
 }
 
 impl fmt::Debug for SignedAmount {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "SignedAmount({} SAT)", self.to_sat())
     }
@@ -574,6 +575,7 @@ impl From<Amount> for SignedAmount {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for SignedAmount {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let sats = u.int_in_range(Self::MIN.to_sat()..=Self::MAX.to_sat())?;
         Ok(Self::from_sat(sats).expect("range is valid"))

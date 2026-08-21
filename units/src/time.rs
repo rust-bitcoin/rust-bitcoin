@@ -175,11 +175,13 @@ pub mod error {
 
     #[cfg(feature = "encoding")]
     impl From<Infallible> for BlockTimeDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "encoding")]
     impl fmt::Display for BlockTimeDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "block time decoder error"; self.0)
         }
