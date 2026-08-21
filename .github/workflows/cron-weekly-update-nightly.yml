@@ -13,6 +13,7 @@ jobs:
       id-token: write
       pull-requests: write
     strategy:
+      fail-fast: false
       matrix:
         # Update toolchain on master and LTS branches.
         branch: [master, 0.32.xxx, 0.32.xx]
@@ -22,7 +23,7 @@ jobs:
           ref: ${{ matrix.branch }}
           persist-credentials: false
       - name: Install cargo-rbmt
-        run: cargo install --git https://github.com/rust-bitcoin/rust-bitcoin-maintainer-tools.git --rev $(cat rbmt-version) cargo-rbmt
+        run: cargo install --locked cargo-rbmt@"$(grep '^rbmt.version' Cargo.toml | cut -d'"' -f2)"
       - name: Update nightly toolchain in Cargo.toml
         run: |
           cargo rbmt toolchains --update-nightly
