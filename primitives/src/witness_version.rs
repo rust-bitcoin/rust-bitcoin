@@ -12,6 +12,8 @@
 use core::fmt;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use units::parse_int;
 
 use crate::opcodes::all::{OP_1, OP_16};
@@ -178,6 +180,15 @@ impl<'de> serde::Deserialize<'de> for WitnessVersion {
     {
         let version = u8::deserialize(deserializer)?;
         Self::try_from(version).map_err(serde::de::Error::custom)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for WitnessVersion {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let version = u.int_in_range(0..=16)?;
+        Ok(Self::try_from(version).expect("range is valid"))
     }
 }
 
