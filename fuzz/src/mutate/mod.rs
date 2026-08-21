@@ -13,6 +13,7 @@
 //! Note that libFuzzer stops using its built-in mutators as soon as a custom one is defined,
 //! so every path through a mutator has to call [`Mutate`] to keep them.
 
+pub mod address;
 pub mod p2p_frame;
 
 /// The signature of `libfuzzer_sys::fuzzer_mutate`.
