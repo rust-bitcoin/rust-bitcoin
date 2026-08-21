@@ -22,6 +22,7 @@ impl DisabledLockTimeError {
 }
 
 impl From<Infallible> for DisabledLockTimeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -51,6 +52,7 @@ pub enum IsSatisfiedByError {
 }
 
 impl From<Infallible> for IsSatisfiedByError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -87,6 +89,7 @@ pub enum IsSatisfiedByHeightError {
 }
 
 impl From<Infallible> for IsSatisfiedByHeightError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -118,6 +121,7 @@ impl std::error::Error for IsSatisfiedByHeightError {
 pub struct IncompatibleHeightError(pub(crate) NumberOf512Seconds);
 
 impl From<Infallible> for IncompatibleHeightError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -130,6 +134,7 @@ impl fmt::Display for IncompatibleHeightError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for IncompatibleHeightError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         let Self(_) = self;
         None
@@ -148,6 +153,7 @@ pub enum IsSatisfiedByTimeError {
 }
 
 impl From<Infallible> for IsSatisfiedByTimeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -179,6 +185,7 @@ impl std::error::Error for IsSatisfiedByTimeError {
 pub struct IncompatibleTimeError(pub(crate) NumberOfBlocks);
 
 impl From<Infallible> for IncompatibleTimeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -191,6 +198,7 @@ impl fmt::Display for IncompatibleTimeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for IncompatibleTimeError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         let Self(_) = self;
         None
@@ -206,10 +214,12 @@ pub struct TimeOverflowError {
 }
 
 impl From<Infallible> for TimeOverflowError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for TimeOverflowError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -238,10 +248,12 @@ pub struct InvalidHeightError {
 }
 
 impl From<Infallible> for InvalidHeightError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for InvalidHeightError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_mined_at: {}", self.chain_tip, self.utxo_mined_at
         )
@@ -267,10 +279,12 @@ pub struct InvalidTimeError {
 }
 
 impl From<Infallible> for InvalidTimeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for InvalidTimeError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_mined_at: {}", self.chain_tip, self.utxo_mined_at
         )

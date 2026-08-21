@@ -107,6 +107,7 @@ macro_rules! impl_u32_wrapper {
 
         #[cfg(feature = "arbitrary")]
         impl<'a> Arbitrary<'a> for $newtype {
+            #[inline]
             fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
                 let choice = u.int_in_range(0..=2)?;
                 match choice {
@@ -641,10 +642,12 @@ pub mod error {
     pub struct TooBigForRelativeHeightError(pub(super) u32);
 
     impl From<Infallible> for TooBigForRelativeHeightError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for TooBigForRelativeHeightError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(
                 f,
@@ -657,6 +660,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for TooBigForRelativeHeightError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self(_) = self;
             None
@@ -672,11 +676,13 @@ pub mod error {
 
     #[cfg(feature = "encoding")]
     impl From<Infallible> for BlockHeightDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "encoding")]
     impl fmt::Display for BlockHeightDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "block height decoder error"; self.0)
         }
@@ -685,6 +691,7 @@ pub mod error {
     #[cfg(feature = "encoding")]
     #[cfg(feature = "std")]
     impl std::error::Error for BlockHeightDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 }

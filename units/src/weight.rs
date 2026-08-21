@@ -195,6 +195,7 @@ crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Weight, to_wu);
 
 /// Alternative will display the unit.
 impl fmt::Display for Weight {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
             write!(f, "{} wu", self.to_wu())
@@ -321,6 +322,7 @@ impl<'de> Deserialize<'de> for Weight {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Weight {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let w = u64::arbitrary(u)?;
         Ok(Self::from_wu(w))

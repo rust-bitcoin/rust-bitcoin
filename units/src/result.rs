@@ -376,6 +376,7 @@ pub enum MathOp {
 
 impl MathOp {
     /// Returns `true` if this operation error'ed due to overflow.
+    #[inline]
     pub fn is_overflow(self) -> bool {
         matches!(self, Self::Add | Self::Sub | Self::Mul | Self::Neg)
     }
@@ -402,6 +403,7 @@ impl MathOp {
 }
 
 impl fmt::Display for MathOp {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Add => write!(f, "add"),
@@ -446,10 +448,12 @@ pub mod error {
     }
 
     impl From<Infallible> for NumOpError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for NumOpError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "math operation '{}' gave an invalid numeric result", self.operation())
         }
@@ -467,6 +471,7 @@ pub mod error {
 
 #[cfg(feature = "arbitrary")]
 impl<'a, T: Arbitrary<'a>> Arbitrary<'a> for NumOpResult<T> {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match bool::arbitrary(u)? {
             true => Ok(Self::Valid(T::arbitrary(u)?)),
@@ -477,6 +482,7 @@ impl<'a, T: Arbitrary<'a>> Arbitrary<'a> for NumOpResult<T> {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for MathOp {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=5)?;
         match choice {
