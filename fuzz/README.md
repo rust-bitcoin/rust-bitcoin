@@ -112,6 +112,50 @@ INFO: A corpus is not provided, starting from an empty corpus
 ```
 If you don't see this, you should quickly see an error.
 
+## Custom mutators
+
+Some targets sit behind a checksum, or behind a checksummed string encoding. Random byte
+mutation cannot satisfy those: changing any byte invalidates the envelope, so the fuzzer
+spends its whole budget being rejected and never reaches the parser inside.
+
+This is the same wall that [fuzzing with weak cryptography](#fuzzing-with-weak-cryptography)
+runs into, approached from the other side. Weak crypto lowers the wall for the whole binary,
+which is why that section warns about spurious bug reports: a hash the fuzzer can break no
+longer upholds the invariants the surrounding code was written against. A custom mutator leaves
+the wall where it is and computes the answer instead, so the target still runs against real
+hashing and whatever it finds is real.
+
+That only works where the answer is computable. A checksum over bytes we already hold is; a
+preimage or a forged signature is not, and those still need the weak-crypto build. So the two
+compose rather than compete: `fuzz.sh` passes `--cfg=hashes_fuzz` by default and the mutators
+work under it, because a mutator computes its checksum with the same hash implementation its
+target verifies with. Drop the flag and the checksummed targets keep working just as well.
+
+The mutators live in `src/mutate/`, one per envelope shape, and are attached to a target with
+`libfuzzer_sys::fuzz_mutator!`.
+
+Two things are worth knowing before writing another one.
+
+libFuzzer stops generating inputs of its own as soon as a custom mutator exists, so a mutator
+that only ever emits well-formed inputs makes every error path unreachable. The ones here
+deliberately leave a share of their output alone, or broken, for that reason.
+
+`libfuzzer_sys::fuzzer_mutate` is an `extern "C"` call into the libFuzzer runtime, which is
+only linked into a fuzz target binary. Mutators therefore take it as a parameter rather than
+calling it directly, which is what lets `src/mutate/` be an ordinary library with ordinary unit
+tests:
+
+```bash
+cargo test -p bitcoin-fuzz --lib
+```
+
+Those tests are worth extending along with any mutator, since a mutator that quietly stops
+producing valid inputs looks exactly like a target that has stopped finding bugs.
+
+libFuzzer prints `INFO: found LLVMFuzzerCustomMutator` on startup when a mutator is wired up
+correctly, and disables `-len_control` as a side effect. If that line is missing, the target is
+being fuzzed without its mutator.
+
 ## Reproducing Failures
 
 If a fuzztest fails, it will exit with a summary which looks something like
