@@ -12,7 +12,20 @@ fn do_test(data: &[u8]) {
         Ok(addr) => addr.assume_checked(),
         Err(_) => return,
     };
-    assert_eq!(addr.to_string(), data_str);
+    let encoded = addr.to_string();
+
+    // `Display` writes the canonical encoding. base58 is case-sensitive and so round-trips
+    // exactly, but bech32 accepts an all-uppercase address and always writes it back lowercase.
+    if encoded != data_str {
+        assert_eq!(encoded, data_str.to_lowercase());
+    }
+
+    // Whatever it wrote has to parse back to the address it was written from.
+    let reparsed = encoded
+        .parse::<bitcoin_0_32::address::Address<_>>()
+        .expect("an encoded address should parse")
+        .assume_checked();
+    assert_eq!(reparsed, addr);
 }
 
 fuzz_target!(|data: &[u8]| {
