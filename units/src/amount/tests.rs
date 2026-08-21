@@ -193,8 +193,10 @@ fn display_math_op() {
         (MathOp::Add, "add"),
         (MathOp::Sub, "sub"),
         (MathOp::Mul, "mul"),
-        (MathOp::Div, "div"),
-        (MathOp::Rem, "rem"),
+        (MathOp::DivByZero, "div (by zero)"),
+        (MathOp::DivOverflow, "div (overflow)"),
+        (MathOp::RemByZero, "rem (by zero)"),
+        (MathOp::RemOverflow, "rem (overflow)"),
         (MathOp::Neg, "neg"),
     ];
 
@@ -1652,7 +1654,7 @@ fn checked_rem() {
 fn amount_div_by_weight_floor_error() {
     // Division by zero weight returns error
     let err = sat(100).div_by_weight_floor(Weight::ZERO).unwrap_err();
-    assert_eq!(err, NumOpError::while_doing(MathOp::Div));
+    assert_eq!(err, NumOpError::while_doing(MathOp::DivByZero));
 
     // Overflow case: Amount::MAX * 1000 overflows
     let err = Amount::MAX.div_by_weight_floor(Weight::from_wu(1)).unwrap_err();
@@ -1663,7 +1665,7 @@ fn amount_div_by_weight_floor_error() {
 fn amount_div_by_weight_ceil_error() {
     // Division by zero weight returns error
     let err = sat(100).div_by_weight_ceil(Weight::ZERO).unwrap_err();
-    assert_eq!(err, NumOpError::while_doing(MathOp::Div));
+    assert_eq!(err, NumOpError::while_doing(MathOp::DivByZero));
 
     // Overflow case: Amount::MAX * 1000 overflows
     let err = Amount::MAX.div_by_weight_ceil(Weight::from_wu(1)).unwrap_err();
