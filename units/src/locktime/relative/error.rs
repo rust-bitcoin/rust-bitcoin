@@ -319,7 +319,7 @@ mod tests {
         // InvalidHeightError - is_satisfied_by with invalid args
         let blocks = NumberOfBlocks::from_count(10);
         let e = blocks
-            .is_satisfied_by(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .is_satisfied_by(BlockHeight::from_u32(5), Some(BlockHeight::from_u32(10)))
             .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
@@ -327,7 +327,7 @@ mod tests {
 
         // InvalidTimeError - is_satisfied_by with invalid args
         let time = NumberOf512Seconds::from_512_second_intervals(10);
-        let e = time.is_satisfied_by(BlockMtp::from_u32(5), BlockMtp::from_u32(10)).unwrap_err();
+        let e = time.is_satisfied_by(BlockMtp::from_u32(5), Some(BlockMtp::from_u32(10))).unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
@@ -343,8 +343,8 @@ mod tests {
             .is_satisfied_by(
                 BlockHeight::from_u32(5),
                 BlockMtp::ZERO,
-                BlockHeight::from_u32(10),
-                BlockMtp::ZERO,
+                Some(BlockHeight::from_u32(10)),
+                Some(BlockMtp::ZERO),
             )
             .unwrap_err();
         assert!(!e.to_string().is_empty());
@@ -355,8 +355,8 @@ mod tests {
             .is_satisfied_by(
                 BlockHeight::ZERO,
                 BlockMtp::from_u32(5),
-                BlockHeight::ZERO,
-                BlockMtp::from_u32(10),
+                Some(BlockHeight::ZERO),
+                Some(BlockMtp::from_u32(10)),
             )
             .unwrap_err();
         assert!(!e.to_string().is_empty());
@@ -366,14 +366,14 @@ mod tests {
         // IsSatisfiedByHeightError
         // Incompatible type
         let e = time_lock
-            .is_satisfied_by_height(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .is_satisfied_by_height(BlockHeight::from_u32(5), Some(BlockHeight::from_u32(10)))
             .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
         // Satisfaction type
         let e = height_lock
-            .is_satisfied_by_height(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .is_satisfied_by_height(BlockHeight::from_u32(5), Some(BlockHeight::from_u32(10)))
             .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
@@ -382,14 +382,14 @@ mod tests {
         // IsSatisfiedByTimeError
         // Incompatible type
         let e = height_lock
-            .is_satisfied_by_time(BlockMtp::from_u32(5), BlockMtp::from_u32(10))
+            .is_satisfied_by_time(BlockMtp::from_u32(5), Some(BlockMtp::from_u32(10)))
             .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
         // Satisfaction type
         let e = time_lock
-            .is_satisfied_by_time(BlockMtp::from_u32(5), BlockMtp::from_u32(10))
+            .is_satisfied_by_time(BlockMtp::from_u32(5), Some(BlockMtp::from_u32(10)))
             .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
