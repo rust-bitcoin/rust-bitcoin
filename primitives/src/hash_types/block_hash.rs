@@ -69,10 +69,12 @@ crate::decoder_newtype! {
 pub struct BlockHashDecoderError(encoding::UnexpectedEofError);
 
 impl From<Infallible> for BlockHashDecoderError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for BlockHashDecoderError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write_err!(f, "block hash decoder error"; self.0)
     }
@@ -80,6 +82,7 @@ impl fmt::Display for BlockHashDecoderError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for BlockHashDecoderError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 

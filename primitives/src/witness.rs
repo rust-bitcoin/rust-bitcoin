@@ -293,6 +293,7 @@ impl Witness {
     /// assert_eq!(witness.get_back(3), Some(b"A".as_slice()));
     /// assert_eq!(witness.get_back(4), None);
     /// ```
+    #[inline]
     pub fn get_back(&self, index: usize) -> Option<&[u8]> {
         if self.witness_elements <= index {
             None
@@ -369,6 +370,7 @@ impl encoding::Encode for Witness {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         let num_elements = CompactSizeEncoder::new(self.len());
         let witness_elements =
@@ -411,6 +413,7 @@ pub struct WitnessDecoder {
 
 impl WitnessDecoder {
     /// Constructs a new witness decoder.
+    #[inline]
     pub const fn new() -> Self {
         Self {
             content: Vec::new(),
@@ -424,6 +427,7 @@ impl WitnessDecoder {
 }
 
 impl Default for WitnessDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
@@ -698,6 +702,7 @@ impl fmt::Debug for Witness {
 /// prefixed with its compact size encoded length.
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Witness {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&HexPrimitive(self), f)
     }
@@ -705,6 +710,7 @@ impl fmt::LowerHex for Witness {
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Witness {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::UpperHex::fmt(&HexPrimitive(self), f)
     }
@@ -902,6 +908,7 @@ impl Default for Witness {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Witness {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let arbitrary_bytes = Vec::<Vec<u8>>::arbitrary(u)?;
         Ok(Self::from_slice(&arbitrary_bytes))
@@ -918,6 +925,7 @@ impl<'a> Arbitrary<'a> for Witness {
 ///
 /// The compact size may be bigger than what can be represented in a `usize` on a 16-bit machine but
 /// this shouldn't happen if we created the witness because one would get an OOM error before that.
+#[inline]
 fn cast_to_usize_if_valid(n: u64) -> Option<usize> {
     /// Maximum size, in bytes, of a vector we are allowed to decode.
     const MAX_VEC_SIZE: u64 = 4_000_000;
@@ -1033,10 +1041,12 @@ pub mod error {
     }
 
     impl From<Infallible> for WitnessDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for WitnessDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             use WitnessDecoderErrorInner as E;
 
@@ -1049,6 +1059,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for WitnessDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             use WitnessDecoderErrorInner as E;
 
@@ -1067,10 +1078,12 @@ pub mod error {
     }
 
     impl From<Infallible> for UnexpectedEofError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for UnexpectedEofError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "not enough witness elements for decoder, missing {}", self.missing_elements)
         }
@@ -1078,6 +1091,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for UnexpectedEofError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self { missing_elements: _ } = self;
             None

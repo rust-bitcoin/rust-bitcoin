@@ -160,8 +160,10 @@ fn calculate_root_batched(mut nodes: Vec<[u8; 32]>) -> Option<[u8; 32]> {
 // provided methods in the trait definition.
 impl MerkleNode for TxMerkleNode {
     type Leaf = Txid;
+    #[inline]
     fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 
+    #[inline]
     fn combine(&self, other: &Self) -> Self {
         let mut encoder = sha256d::Hash::engine();
         encoder.input(self.as_byte_array());
@@ -178,8 +180,10 @@ impl MerkleNode for TxMerkleNode {
 }
 impl MerkleNode for WitnessMerkleNode {
     type Leaf = Wtxid;
+    #[inline]
     fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 
+    #[inline]
     fn combine(&self, other: &Self) -> Self {
         let mut encoder = sha256d::Hash::engine();
         encoder.input(self.as_byte_array());

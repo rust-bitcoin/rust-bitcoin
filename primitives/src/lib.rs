@@ -145,6 +145,7 @@ use encoding::Encoder;
 use internals::array_vec::ArrayVec;
 
 // Encode a compact size to a slice without allocating
+#[inline]
 #[cfg(feature = "alloc")]
 pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
     let encoder = encoding::CompactSizeEncoder::new(value);

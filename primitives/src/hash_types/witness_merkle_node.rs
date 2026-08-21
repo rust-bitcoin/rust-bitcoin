@@ -30,9 +30,11 @@ include!("./generic.rs");
 
 impl WitnessMerkleNode {
     /// Convert a [`Wtxid`] hash to a leaf node of the tree.
+    #[inline]
     pub fn from_leaf(leaf: Wtxid) -> Self { MerkleNode::from_leaf(leaf) }
 
     /// Combine two nodes to get a single node. The final node of a tree is called the "root".
+    #[inline]
     #[must_use]
     pub fn combine(&self, other: &Self) -> Self { MerkleNode::combine(self, other) }
 
@@ -89,10 +91,12 @@ crate::decoder_newtype! {
 pub struct WitnessMerkleNodeDecoderError(encoding::UnexpectedEofError);
 
 impl From<Infallible> for WitnessMerkleNodeDecoderError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for WitnessMerkleNodeDecoderError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write_err!(f, "witness merkle node decoder error"; self.0)
     }
@@ -100,6 +104,7 @@ impl fmt::Display for WitnessMerkleNodeDecoderError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessMerkleNodeDecoderError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 

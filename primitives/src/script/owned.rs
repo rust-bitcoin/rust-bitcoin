@@ -328,6 +328,7 @@ impl ScriptPubKeyBuf {
     /// assert!(script_pubkey.is_p2sh());
     /// # Ok::<_, bitcoin_primitives::script::RedeemScriptSizeError>(())
     /// ```
+    #[inline]
     pub fn new_p2sh(script_hash: ScriptHash) -> Self {
         Builder::new()
             .push_opcode(OP_HASH160)
@@ -337,6 +338,7 @@ impl ScriptPubKeyBuf {
     }
 
     /// Generates pay to anchor output.
+    #[inline]
     pub fn new_p2a() -> Self {
         super::new_witness_program_unchecked(WitnessVersion::V1, P2A_PROGRAM)
     }

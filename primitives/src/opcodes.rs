@@ -300,6 +300,7 @@ pub(crate) fn fmt_opcode(op: u8, f: &mut fmt::Formatter) -> fmt::Result {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Opcode {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::from_u8(u8::arbitrary(u)?))
     }

@@ -103,11 +103,13 @@ impl WitnessVersion {
     /// NB: this is not the same as an integer representation of the opcode signifying witness
     /// version in Bitcoin script. Thus, there is no function to directly convert witness version
     /// into a byte since the conversion requires context (Bitcoin script or just a version number).
+    #[inline]
     pub fn to_num(self) -> u8 { self as u8 }
 }
 
 /// Prints [`WitnessVersion`] number (from 0 to 16) as integer, without any prefix or suffix.
 impl fmt::Display for WitnessVersion {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", *self as u8) }
 }
 
@@ -134,6 +136,7 @@ impl fmt::Binary for WitnessVersion {
 impl FromStr for WitnessVersion {
     type Err = ParseWitnessVersionError;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let version: u8 =
             parse_int::int_from_str(s).map_err(ParseWitnessVersionError::Unparsable)?;
@@ -144,6 +147,7 @@ impl FromStr for WitnessVersion {
 impl TryFrom<u8> for WitnessVersion {
     type Error = InvalidWitnessVersionError;
 
+    #[inline]
     fn try_from(no: u8) -> Result<Self, Self::Error> {
         Ok(match no {
             0 => Self::V0,
@@ -171,6 +175,7 @@ impl TryFrom<u8> for WitnessVersion {
 impl TryFrom<Opcode> for WitnessVersion {
     type Error = InvalidWitnessVersionError;
 
+    #[inline]
     fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
         match opcode.to_u8() {
             0 => Ok(Self::V0),
@@ -182,6 +187,7 @@ impl TryFrom<Opcode> for WitnessVersion {
 }
 
 impl From<WitnessVersion> for Opcode {
+    #[inline]
     fn from(version: WitnessVersion) -> Self {
         match version {
             WitnessVersion::V0 => OP_PUSHBYTES_0,
@@ -241,10 +247,12 @@ pub mod error {
     }
 
     impl From<Infallible> for ParseWitnessVersionError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for ParseWitnessVersionError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 Self::Unparsable(ref e) => write_err!(f, "integer parse error"; e),
@@ -255,6 +263,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for ParseWitnessVersionError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match *self {
                 Self::Unparsable(ref e) => Some(e),
@@ -273,10 +282,12 @@ pub mod error {
 
     impl InvalidWitnessVersionError {
         /// Returns the invalid non-witness version integer.
+        #[inline]
         pub fn invalid_version(&self) -> u8 { self.invalid }
     }
 
     impl fmt::Display for InvalidWitnessVersionError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "invalid witness script version: {}", self.invalid)
         }
@@ -284,6 +295,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidWitnessVersionError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self { invalid: _ } = self;
             None
