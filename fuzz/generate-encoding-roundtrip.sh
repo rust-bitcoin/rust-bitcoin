@@ -129,6 +129,27 @@ type_to_stem() {
     echo "$result"
 }
 
+# Extra content appended to a target, for types whose encoding is checksum-gated and so need a
+# custom mutator to be fuzzable at all. See fuzz/src/mutate/.
+mutator_block() {
+    case "$1" in
+        p2p::message::V1NetworkMessage)
+            cat <<'RUST'
+
+libfuzzer_sys::fuzz_mutator!(|data: &mut [u8], size: usize, max_size: usize, seed: u32| {
+    bitcoin_fuzz::mutate::p2p_frame::mutate_payload(
+        data,
+        size,
+        max_size,
+        seed,
+        libfuzzer_sys::fuzzer_mutate,
+    )
+});
+RUST
+            ;;
+    esac
+}
+
 generate_roundtrip() {
     local type="$1"
     local stem filepath
@@ -149,6 +170,8 @@ fuzz_target!(|data: &[u8]| {
     check_roundtrip::<$type>(data);
 });
 RUST
+
+    mutator_block "$type" >> "$filepath"
 }
 
 generate_script_roundtrip() {
