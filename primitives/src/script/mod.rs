@@ -300,6 +300,7 @@ impl<T> AsMut<[u8]> for ScriptBuf<T> {
 }
 
 impl<T> fmt::Debug for Script<T> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("Script(")?;
         fmt::Display::fmt(self, f)?;
@@ -449,6 +450,7 @@ impl<T: PartialOrd> PartialOrd<ScriptBuf<T>> for Script<T> {
 #[cfg(feature = "serde")]
 impl<T> serde::Serialize for Script<T> {
     /// User-facing serialization for [`Script`].
+    #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -499,6 +501,7 @@ impl<'de, T> serde::Deserialize<'de> for &'de Script<T> {
 #[cfg(feature = "serde")]
 impl<T> serde::Serialize for ScriptBuf<T> {
     /// User-facing serialization for `Script`.
+    #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

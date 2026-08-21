@@ -160,8 +160,10 @@ fn calculate_root_batched(mut nodes: Vec<[u8; 32]>) -> Option<[u8; 32]> {
 // provided methods in the trait definition.
 impl MerkleNode for TxMerkleNode {
     type Leaf = Txid;
+    #[inline]
     fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 
+    #[inline]
     fn combine(&self, other: &Self) -> Self {
         let mut encoder = sha256d::Hash::engine();
         encoder.input(self.as_byte_array());
@@ -169,6 +171,7 @@ impl MerkleNode for TxMerkleNode {
         Self::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
     }
 
+    #[inline]
     #[cfg(feature = "std")]
     #[cfg(any(target_arch = "aarch64", target_arch = "x86", target_arch = "x86_64"))]
     fn calculate_root<I: Iterator<Item = Self::Leaf>>(iter: I) -> Option<Self> {
@@ -178,8 +181,10 @@ impl MerkleNode for TxMerkleNode {
 }
 impl MerkleNode for WitnessMerkleNode {
     type Leaf = Wtxid;
+    #[inline]
     fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 
+    #[inline]
     fn combine(&self, other: &Self) -> Self {
         let mut encoder = sha256d::Hash::engine();
         encoder.input(self.as_byte_array());
@@ -187,6 +192,7 @@ impl MerkleNode for WitnessMerkleNode {
         Self::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
     }
 
+    #[inline]
     #[cfg(feature = "std")]
     #[cfg(any(target_arch = "aarch64", target_arch = "x86", target_arch = "x86_64"))]
     fn calculate_root<I: Iterator<Item = Self::Leaf>>(iter: I) -> Option<Self> {

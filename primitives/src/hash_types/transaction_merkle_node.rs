@@ -30,9 +30,11 @@ include!("./generic.rs");
 
 impl TxMerkleNode {
     /// Convert a [`Txid`] hash to a leaf node of the tree.
+    #[inline]
     pub fn from_leaf(leaf: Txid) -> Self { MerkleNode::from_leaf(leaf) }
 
     /// Combine two nodes to get a single node. The final node of a tree is called the "root".
+    #[inline]
     #[must_use]
     pub fn combine(&self, other: &Self) -> Self { MerkleNode::combine(self, other) }
 
@@ -45,6 +47,7 @@ impl TxMerkleNode {
     ///
     /// Unless you are certain your transaction list is nonempty and has no duplicates,
     /// you should not unwrap the [`Option`] returned by this method!
+    #[inline]
     pub fn calculate_root<I: IntoIterator<Item = Txid>>(iter: I) -> Option<Self> {
         MerkleNode::calculate_root(iter.into_iter())
     }
@@ -89,10 +92,12 @@ crate::decoder_newtype! {
 pub struct TxMerkleNodeDecoderError(encoding::UnexpectedEofError);
 
 impl From<Infallible> for TxMerkleNodeDecoderError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for TxMerkleNodeDecoderError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write_err!(f, "tx merkle node decoder error"; self.0)
     }
@@ -100,6 +105,7 @@ impl fmt::Display for TxMerkleNodeDecoderError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for TxMerkleNodeDecoderError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 

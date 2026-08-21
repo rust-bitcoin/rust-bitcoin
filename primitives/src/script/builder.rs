@@ -31,6 +31,7 @@ impl<T> Builder<T> {
     /// If your pushes should be interpreted as numbers, ensure your input does
     /// not have any leading zeros. In particular, the number 0 should be encoded
     /// as an empty string rather than as a single 0 byte.
+    #[inline]
     #[must_use]
     pub fn push_slice<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
         self.0.push_slice(data);
@@ -42,6 +43,7 @@ impl<T> Builder<T> {
     /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
     ///
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
+    #[inline]
     #[must_use]
     pub fn push_slice_non_minimal<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
         self.0.push_slice_non_minimal(data);
@@ -49,6 +51,7 @@ impl<T> Builder<T> {
     }
 
     /// Adds a single opcode to the script.
+    #[inline]
     #[must_use]
     pub fn push_opcode(mut self, data: Opcode) -> Self {
         self.0.push_opcode(data);
@@ -56,18 +59,22 @@ impl<T> Builder<T> {
     }
 
     /// Converts the [`Builder`] into [`ScriptBuf`].
+    #[inline]
     pub fn into_script(self) -> ScriptBuf<T> { self.0 }
 
     /// Returns the internal script
+    #[inline]
     pub fn as_script(&self) -> &Script<T> { &self.0 }
 }
 
 impl<T> Default for Builder<T> {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
 /// Constructs a new builder from an existing vector.
 impl<T> From<Vec<u8>> for Builder<T> {
+    #[inline]
     fn from(v: Vec<u8>) -> Self {
         let script = ScriptBuf::from(v);
         Self(script)
@@ -75,10 +82,12 @@ impl<T> From<Vec<u8>> for Builder<T> {
 }
 
 impl<T> fmt::Display for Builder<T> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 impl<T> fmt::Debug for Builder<T> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("Builder").field(&self.0).finish()
     }

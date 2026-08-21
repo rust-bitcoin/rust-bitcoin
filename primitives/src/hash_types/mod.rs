@@ -58,10 +58,12 @@ macro_rules! impl_bytelike_traits {
         }
 
         impl $crate::_export::_core::borrow::Borrow<[u8; { $len }]> for $ty {
+            #[inline]
             fn borrow(&self) -> &[u8; { $len }] { self.as_byte_array() }
         }
 
         impl $crate::_export::_core::borrow::Borrow<[u8]> for $ty {
+            #[inline]
             fn borrow(&self) -> &[u8] { self.as_byte_array() }
         }
     };
@@ -82,6 +84,7 @@ pub(in crate::hash_types) use impl_bytelike_traits;
 macro_rules! impl_serde(
     ($t:ident, $len:expr) => (
         impl $crate::serde::Serialize for $t {
+            #[inline]
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> core::result::Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
                     s.collect_str(self)
@@ -92,6 +95,7 @@ macro_rules! impl_serde(
         }
 
         impl<'de> $crate::serde::Deserialize<'de> for $t {
+            #[inline]
             fn deserialize<D: $crate::serde::Deserializer<'de>>(d: D) -> core::result::Result<$t, D::Error> {
                 use $crate::hash_types::serde_details::{BytesVisitor, HexVisitor};
 
@@ -132,6 +136,7 @@ pub mod serde_details {
     pub struct HexVisitor<ValueT>(PhantomData<ValueT>);
 
     impl<ValueT> Default for HexVisitor<ValueT> {
+        #[inline]
         fn default() -> Self { Self(PhantomData) }
     }
 
@@ -169,6 +174,7 @@ pub mod serde_details {
     pub struct BytesVisitor<const N: usize>();
 
     impl<const N: usize> Default for BytesVisitor<N> {
+        #[inline]
         fn default() -> Self { Self() }
     }
 

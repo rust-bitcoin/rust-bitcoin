@@ -163,6 +163,7 @@ impl Block<Unchecked> {
     }
 
     /// Checks if Merkle root of header matches Merkle root of the transaction list.
+    #[inline]
     pub fn check_merkle_root(&self) -> bool {
         match compute_merkle_root(&self.transactions) {
             Some(merkle_root) => self.header.merkle_root == merkle_root,
@@ -254,6 +255,7 @@ impl<V: Validation> Block<V> {
 
 #[cfg(feature = "alloc")]
 impl<V: Validation> PartialEq for Block<V> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.header == other.header && self.transactions == other.transactions
     }
@@ -310,6 +312,7 @@ where
 {
     type Err = encoding::FromHexError<BlockDecoderError>;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> { encoding::decode_from_hex(s) }
 }
 
@@ -319,6 +322,7 @@ impl<V: Validation> fmt::Display for Block<V>
 where
     Self: encoding::Encode,
 {
+    #[inline]
     #[allow(clippy::use_self)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&HexPrimitive(self), f)
@@ -328,6 +332,7 @@ where
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 impl<V: Validation> fmt::LowerHex for Block<V> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&HexPrimitive(self), f)
     }
@@ -336,6 +341,7 @@ impl<V: Validation> fmt::LowerHex for Block<V> {
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 impl<V: Validation> fmt::UpperHex for Block<V> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::UpperHex::fmt(&HexPrimitive(self), f)
     }
@@ -351,6 +357,7 @@ where
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockEncoder::new(Encoder2::new(
             self.header.encoder(),
@@ -402,6 +409,7 @@ crate::decoder_newtype! {
 ///
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
 /// you should not unwrap the [`Option`] returned by this method!
+#[inline]
 #[cfg(feature = "alloc")]
 pub fn compute_merkle_root<T>(transactions: T) -> Option<TxMerkleNode>
 where
@@ -489,6 +497,7 @@ impl Header {
 
     /// Returns the block hash.
     // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
+    #[inline]
     pub fn block_hash(&self) -> BlockHash {
         let hash = hashes::encode_to_hash::<_, sha256d::HashEngine>(self);
         BlockHash::from_byte_array(hash.to_byte_array())
@@ -499,11 +508,13 @@ impl Header {
 impl core::str::FromStr for Header {
     type Err = encoding::FromHexError<HeaderDecoderError>;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> { encoding::decode_from_hex(s) }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&HexPrimitive(self), f)
     }
@@ -511,6 +522,7 @@ impl fmt::Display for Header {
 
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Header {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&HexPrimitive(self), f)
     }
@@ -518,12 +530,14 @@ impl fmt::LowerHex for Header {
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Header {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::UpperHex::fmt(&HexPrimitive(self), f)
     }
 }
 
 impl fmt::Debug for Header {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Header")
             .field("block_hash", &self.block_hash())
@@ -540,6 +554,7 @@ impl fmt::Debug for Header {
 impl encoding::Encode for Header {
     type Encoder<'e> = HeaderEncoder<'e>;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         HeaderEncoder::new(encoding::Encoder6::new(
             self.version.encoder(),
@@ -611,6 +626,7 @@ crate::decoder_newtype! {
 }
 
 impl HeaderDecoder {
+    #[inline]
     fn from_inner(e: <HeaderInnerDecoder as encoding::Decoder>::Error) -> HeaderDecoderError {
         match e {
             encoding::Decoder6Error::First(e) => HeaderDecoderError::Version(e),
@@ -732,6 +748,7 @@ impl Default for Version {
 
 impl encoding::Encode for Version {
     type Encoder<'e> = VersionEncoder<'e>;
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus().to_le_bytes(),
@@ -790,11 +807,13 @@ pub mod error {
 
     #[cfg(feature = "alloc")]
     impl From<Infallible> for BlockDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "alloc")]
     impl fmt::Display for BlockDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "block decoder error"; self.0)
         }
@@ -803,6 +822,7 @@ pub mod error {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "std")]
     impl std::error::Error for BlockDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
@@ -823,11 +843,13 @@ pub mod error {
 
     #[cfg(feature = "alloc")]
     impl From<Infallible> for InvalidBlockError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "alloc")]
     impl fmt::Display for InvalidBlockError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::InvalidMerkleRoot =>
@@ -843,6 +865,7 @@ pub mod error {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidBlockError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::InvalidMerkleRoot => None,
@@ -874,10 +897,12 @@ pub mod error {
     }
 
     impl From<Infallible> for HeaderDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for HeaderDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 Self::Version(ref e) => write_err!(f, "header decoder error"; e),
@@ -892,6 +917,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for HeaderDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match *self {
                 Self::Version(ref e) => Some(e),
@@ -911,10 +937,12 @@ pub mod error {
     pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
 
     impl From<Infallible> for VersionDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for VersionDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "version decoder error"; self.0)
         }
@@ -922,6 +950,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for VersionDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 }
@@ -929,6 +958,7 @@ pub mod error {
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for Block {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let header = Header::arbitrary(u)?;
         let transactions = Vec::<Transaction>::arbitrary(u)?;
@@ -938,6 +968,7 @@ impl<'a> Arbitrary<'a> for Block {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Header {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             version: Version::arbitrary(u)?,
@@ -952,6 +983,7 @@ impl<'a> Arbitrary<'a> for Header {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Version {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // Equally weight known versions and arbitrary versions
         let choice = u.int_in_range(0..=3)?;

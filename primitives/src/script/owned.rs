@@ -61,6 +61,7 @@ impl<T> ScriptBuf<T> {
     ///
     /// * If `s` cannot be parsed into a vector.
     /// * If the parsed bytes cannot be decoded as a valid script (incl. the length prefix).
+    #[inline]
     #[cfg(feature = "hex")]
     pub fn from_hex_prefixed(
         s: &str,
@@ -80,6 +81,7 @@ impl<T> ScriptBuf<T> {
     /// # Errors
     ///
     /// Errors if `s` cannot be parsed into a vector.
+    #[inline]
     #[cfg(feature = "hex")]
     pub fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError> {
         let v = hex::decode_to_vec(s)?;
@@ -171,9 +173,11 @@ impl<T> ScriptBuf<T> {
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
     /// Constructs a new script builder
+    #[inline]
     pub fn builder() -> Builder<T> { Builder::new() }
 
     /// Adds a single opcode to the script.
+    #[inline]
     pub fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
 
     /// Adds instructions to push some arbitrary data onto the stack.
@@ -211,6 +215,7 @@ impl<T> ScriptBuf<T> {
     /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
     ///
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
+    #[inline]
     pub fn push_slice_non_minimal<D: AsRef<PushBytes>>(&mut self, data: D) {
         let data = data.as_ref();
         self.reserve(Self::reserved_len_for_slice(data.len()));
@@ -218,6 +223,7 @@ impl<T> ScriptBuf<T> {
     }
 
     /// Computes the sum of `len` and the length of an appropriate push opcode.
+    #[inline]
     fn reserved_len_for_slice(len: usize) -> usize {
         len + match len {
             0..=0x4b => 1,
@@ -231,6 +237,7 @@ impl<T> ScriptBuf<T> {
     /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
     ///
     /// Note: if the returned value leaks the original [`ScriptBuf`] will become empty.
+    #[inline]
     fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_, T> {
         let vec = core::mem::take(self).into_bytes();
         ScriptBufAsVec(self, vec)
@@ -269,11 +276,13 @@ impl<T> ScriptBuf<T> {
 
 impl ScriptPubKeyBuf {
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
+    #[inline]
     pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
         Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
     }
 
     /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
+    #[inline]
     pub fn new_p2sh(script_hash: ScriptHash) -> Self {
         Builder::new()
             .push_opcode(OP_HASH160)
@@ -283,6 +292,7 @@ impl ScriptPubKeyBuf {
     }
 
     /// Generates pay to anchor output.
+    #[inline]
     pub fn new_p2a() -> Self {
         super::new_witness_program_unchecked(WitnessVersion::V1, P2A_PROGRAM)
     }
@@ -290,6 +300,7 @@ impl ScriptPubKeyBuf {
 
 impl<T: ScriptHashableTag> ScriptBuf<T> {
     /// Generates a P2WSH witness program script with a given hash of the witness script.
+    #[inline]
     pub fn new_p2wsh(script_hash: WScriptHash) -> Self {
         // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
         super::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
@@ -298,6 +309,7 @@ impl<T: ScriptHashableTag> ScriptBuf<T> {
 
 // Cannot derive due to generics.
 impl<T> Default for ScriptBuf<T> {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
@@ -323,10 +335,12 @@ pub struct ScriptBufDecoder<T>(ByteVecDecoder, PhantomData<T>);
 
 impl<T> ScriptBufDecoder<T> {
     /// Constructs a new [`ScriptBuf`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(ByteVecDecoder::new(), PhantomData) }
 }
 
 impl<T> Default for ScriptBufDecoder<T> {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
@@ -358,10 +372,12 @@ pub(crate) struct ScriptBufAsVec<'a, T>(&'a mut ScriptBuf<T>, Vec<u8>);
 impl<T> core::ops::Deref for ScriptBufAsVec<'_, T> {
     type Target = Vec<u8>;
 
+    #[inline]
     fn deref(&self) -> &Self::Target { &self.1 }
 }
 
 impl<T> core::ops::DerefMut for ScriptBufAsVec<'_, T> {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target { &mut self.1 }
 }
 
