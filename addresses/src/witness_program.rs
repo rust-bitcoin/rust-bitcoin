@@ -7,7 +7,10 @@
 //!
 //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use crypto::key::{FullPublicKey, TweakedPublicKey, UntweakedPublicKey};
+
 use internals::array_vec::ArrayVec;
 use primitives::script::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
 use primitives::witness_version::WitnessVersion;
@@ -189,6 +192,13 @@ pub mod error {
                 Self::InvalidLength(_) | Self::InvalidSegwitV0Length(_) => None,
             }
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for WitnessProgram {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+       Self::new(u.arbitrary()?, u.arbitrary()?).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 

@@ -9,6 +9,8 @@
 //!
 //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use core::fmt;
 use core::str::FromStr;
 
@@ -251,6 +253,14 @@ pub mod error {
         }
     }
 }
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for WitnessVersion {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Self::try_from(u8::arbitrary(u)?).map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

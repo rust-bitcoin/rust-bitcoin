@@ -17,6 +17,7 @@ exclude = ["tests", "contrib"]
 default = ["std"]
 std = ["alloc", "base58/std", "bech32/std", "crypto/std", "hashes/std", "internals/std", "network/std", "primitives/std", "serde/std", "taproot_primitives/std"]
 alloc = ["base58/alloc", "bech32/alloc", "crypto/alloc", "hashes/alloc", "internals/alloc", "network/alloc", "primitives/alloc", "serde/alloc", "taproot_primitives/alloc"]
+arbitrary = ["dep:arbitrary", "network/arbitrary", "primitives/arbitrary", "crypto/arbitrary"]
 
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.5.0", default-features = false, features = [] }
@@ -28,6 +29,7 @@ taproot_primitives = { package = "bitcoin-taproot-primitives", path = "../taproo
 network = { package = "bitcoin-network-kind", path = "../network", version = "1.0.0", default-features = false, features = []}
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.103.0", default-features = false, features = ["hex"] }
 
+arbitrary = { version = "1.4.1", optional = true }
 serde = { version = "1.0.195", default-features = false, features = [ "derive" ], optional = true }
 
 [dev-dependencies]
