@@ -18,13 +18,24 @@ use bitcoin_units::{
 };
 
 /// A struct that includes all public non-error enums.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
+/// C-COMMON-TRAITS: `Copy`, `Clone`, `Debug`, `PartialEq`, `Eq`
+// None of these implement `PartialOrd` or `Ord`.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 struct Enums {
     a: amount::Denomination,
     b: absolute::LockTime,
     c: relative::LockTime,
     d: result::MathOp,
     e: result::NumOpResult<Amount>,
+}
+
+/// An enum that includes all public non-error enums that implement `Hash`.
+/// C-COMMON-TRAITS: `Hash`
+#[derive(Hash)]
+struct EnumsHash {
+    a: amount::Denomination,
+    b: absolute::LockTime,
+    c: relative::LockTime,
 }
 
 impl Enums {
@@ -40,12 +51,12 @@ impl Enums {
 }
 
 /// A struct that includes all public non-error structs.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
-                 // Does not include encoders and decoders.
+/// C-COMMON-TRAITS: `Copy`, `Clone`, `Debug`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+// Does not include encoders, decoders, or `amount::Display`.
 struct Structs {
     // Full path to show alphabetic sort order.
     a: amount::Amount,
-    b: amount::Display,
     c: amount::SignedAmount,
     d: block::BlockHeight,
     e: block::BlockHeightInterval,
@@ -66,7 +77,6 @@ impl Structs {
     fn max() -> Self {
         Self {
             a: Amount::MAX,
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::MAX,
             d: BlockHeight::MAX,
             e: BlockHeightInterval::MAX,
@@ -96,28 +106,6 @@ impl Types {
     fn new() -> Self { Self { a: Enums::new(), b: Structs::max() } }
 }
 
-/// A struct that includes all public non-error non-helper structs.
-// C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct CommonTraits {
-    // Full path to show alphabetic sort order.
-    a: amount::Amount,
-    // b: amount::Display,
-    c: amount::SignedAmount,
-    d: block::BlockHeight,
-    e: block::BlockHeightInterval,
-    f: block::BlockMtp,
-    g: block::BlockMtpInterval,
-    h: fee_rate::FeeRate,
-    i: locktime::absolute::Height,
-    j: locktime::absolute::MedianTimePast,
-    k: locktime::relative::NumberOf512Seconds,
-    l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
-}
-
 /// A struct that includes all types that implement `Default`.
 #[derive(Debug, Default, PartialEq, Eq)] // C-COMMON-TRAITS: `Default`
 struct Default {
@@ -133,32 +121,44 @@ struct Default {
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
-    a: amount::error::InputTooLargeError,
-    b: amount::error::InvalidCharacterError,
-    c: amount::error::MissingDenominationError,
-    d: amount::error::MissingDigitsError,
-    e: amount::error::OutOfRangeError,
-    f: amount::error::ParseAmountError,
-    g: amount::error::ParseDenominationError,
-    h: amount::error::ParseError,
-    i: amount::error::PossiblyConfusingDenominationError,
-    j: amount::error::TooPreciseError,
-    k: amount::error::UnknownDenominationError,
-    l: block::TooBigForRelativeHeightError,
+    a: amount::ParseError,
+    b: amount::ParseAmountError,
+    c: amount::OutOfRangeError,
+    d: amount::TooPreciseError,
+    e: amount::InputTooLargeError,
+    f: amount::MissingDigitsError,
+    g: amount::InvalidCharacterError,
+    h: amount::BadPositionError,
+    i: amount::MissingDenominationError,
+    j: amount::UnknownDenominationError,
+    k: amount::PossiblyConfusingDenominationError,
+    l: amount::AmountDecoderError,
+    m: block::TooBigForRelativeHeightError,
+    n:block::BlockHeightDecoderError,
     #[cfg(feature = "serde")]
-    m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
+    o: fee_rate::serde::OverflowError,
+    p: locktime::absolute::LockTimeDecoderError,
+    q: locktime::absolute::IncompatibleHeightError,
+    r: locktime::absolute::IncompatibleTimeError,
+    s: locktime::absolute::ParseHeightError,
+    t: locktime::absolute::ParseTimeError,
+    u: locktime::absolute::ConversionError,
+    v: locktime::relative::DisabledLockTimeError,
+    w: locktime::relative::IncompatibleHeightError,
+    x: locktime::relative::IncompatibleTimeError,
+    y: locktime::relative::TimeOverflowError,
+    z: locktime::relative::InvalidHeightError,
+    aa: locktime::relative::InvalidTimeError,
+    ab: parse_int::ParseIntError,
+    ac: parse_int::PrefixedHexError,
+    ad: parse_int::UnprefixedHexError,
     #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
+    ae: pow::CompactTargetDecoderError,
+    af: pow::ParseWorkError,
+    ag: pow::ParseTargetError,
+    ah: result::NumOpError,
+    ai: sequence::SequenceDecoderError,
+    aj: time::BlockTimeDecoderError,
 }
 
 /// A struct that includes all public decoder types.
@@ -181,108 +181,94 @@ struct DecoderErrors {
     a: amount::error::AmountDecoderError,
     b: block::BlockHeightDecoderError,
     c: locktime::absolute::LockTimeDecoderError,
-    d: sequence::SequenceDecoderError,
-    e: time::BlockTimeDecoderError,
+    d: pow::CompactTargetDecoderError,
+    e: sequence::SequenceDecoderError,
+    f: time::BlockTimeDecoderError,
+}
+
+/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
+#[test]
+fn all_types_implement_send_sync() {
+    fn is_send_sync<T: Send + Sync>() {}
+
+    is_send_sync::<Enums>();
+    is_send_sync::<Errors>();
+    is_send_sync::<Structs>();
 }
 
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
     let t = Types::new();
+    // TODO: Test error types.
+    // let errors = Errors::new();
 
-    let debug = format!("{:?}", t.a.a);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.b);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.c);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.d);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.e);
-    assert!(!debug.is_empty());
+    assert!(!format!("{:?}", t.a.a).is_empty());
+    assert!(!format!("{:?}", t.a.b).is_empty());
+    assert!(!format!("{:?}", t.a.c).is_empty());
+    assert!(!format!("{:?}", t.a.d).is_empty());
+    assert!(!format!("{:?}", t.a.e).is_empty());
 
-    let debug = format!("{:?}", t.b.a);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.b);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.c);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.d);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.e);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.f);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.g);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.h);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.i);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.j);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.k);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.l);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.m);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.n);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.o);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.p);
-    assert!(!debug.is_empty());
-}
-
-/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
-#[test]
-fn c_send_sync() {
-    fn assert_send<T: Send>() {}
-    fn assert_sync<T: Sync>() {}
-
-    //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
-    assert_send::<Types>();
-    assert_sync::<Types>();
-
-    // Error types should implement the Send and Sync traits (C-GOOD-ERR).
-    assert_send::<Errors>();
-    assert_sync::<Errors>();
+    assert!(!format!("{:?}", t.b.a).is_empty());
+    assert!(!format!("{:?}", t.b.c).is_empty());
+    assert!(!format!("{:?}", t.b.d).is_empty());
+    assert!(!format!("{:?}", t.b.e).is_empty());
+    assert!(!format!("{:?}", t.b.f).is_empty());
+    assert!(!format!("{:?}", t.b.g).is_empty());
+    assert!(!format!("{:?}", t.b.h).is_empty());
+    assert!(!format!("{:?}", t.b.i).is_empty());
+    assert!(!format!("{:?}", t.b.j).is_empty());
+    assert!(!format!("{:?}", t.b.k).is_empty());
+    assert!(!format!("{:?}", t.b.l).is_empty());
+    assert!(!format!("{:?}", t.b.m).is_empty());
+    assert!(!format!("{:?}", t.b.n).is_empty());
+    assert!(!format!("{:?}", t.b.o).is_empty());
+    assert!(!format!("{:?}", t.b.p).is_empty());
 }
 
 /// C-GOOD-ERR: Tests that all public error types implement Display.
 #[test]
 fn c_good_err_display() {
-    use core::fmt;
+    fn assert_display<T: core::fmt::Display>() {}
 
-    fn assert_display<T: fmt::Display>() {}
-
-    assert_display::<amount::error::InputTooLargeError>();
-    assert_display::<amount::error::InvalidCharacterError>();
-    assert_display::<amount::error::MissingDenominationError>();
-    assert_display::<amount::error::MissingDigitsError>();
-    assert_display::<amount::error::OutOfRangeError>();
-    assert_display::<amount::error::ParseAmountError>();
-    assert_display::<amount::error::ParseDenominationError>();
-    assert_display::<amount::error::ParseError>();
-    assert_display::<amount::error::PossiblyConfusingDenominationError>();
-    assert_display::<amount::error::TooPreciseError>();
-    assert_display::<amount::error::UnknownDenominationError>();
+    assert_display::<amount::ParseError>();
+    assert_display::<amount::ParseAmountError>();
+    assert_display::<amount::OutOfRangeError>();
+    assert_display::<amount::TooPreciseError>();
+    assert_display::<amount::InputTooLargeError>();
+    assert_display::<amount::MissingDigitsError>();
+    assert_display::<amount::InvalidCharacterError>();
+    assert_display::<amount::BadPositionError>();
+    assert_display::<amount::MissingDenominationError>();
+    assert_display::<amount::UnknownDenominationError>();
+    assert_display::<amount::PossiblyConfusingDenominationError>();
+    assert_display::<amount::AmountDecoderError>();
     assert_display::<block::TooBigForRelativeHeightError>();
+    assert_display::<block::BlockHeightDecoderError>();
     #[cfg(feature = "serde")]
     assert_display::<fee_rate::serde::OverflowError>();
-    assert_display::<locktime::absolute::ConversionError>();
+    assert_display::<locktime::absolute::LockTimeDecoderError>();
+    assert_display::<locktime::absolute::IncompatibleHeightError>();
+    assert_display::<locktime::absolute::IncompatibleTimeError>();
     assert_display::<locktime::absolute::ParseHeightError>();
     assert_display::<locktime::absolute::ParseTimeError>();
+    assert_display::<locktime::absolute::ConversionError>();
+    assert_display::<locktime::relative::DisabledLockTimeError>();
+    assert_display::<locktime::relative::IncompatibleHeightError>();
+    assert_display::<locktime::relative::IncompatibleTimeError>();
+    assert_display::<locktime::relative::TimeOverflowError>();
     assert_display::<locktime::relative::InvalidHeightError>();
     assert_display::<locktime::relative::InvalidTimeError>();
-    assert_display::<locktime::relative::TimeOverflowError>();
     assert_display::<parse_int::ParseIntError>();
     assert_display::<parse_int::PrefixedHexError>();
     assert_display::<parse_int::UnprefixedHexError>();
     #[cfg(feature = "encoding")]
     assert_display::<pow::CompactTargetDecoderError>();
+    assert_display::<pow::ParseWorkError>();
+    assert_display::<pow::ParseTargetError>();
     assert_display::<result::NumOpError>();
+    assert_display::<sequence::SequenceDecoderError>();
+    assert_display::<time::BlockTimeDecoderError>();
 }
 
 /// C-OBJECT: Tests that traits are object-safe where appropriate.
@@ -303,10 +289,21 @@ fn c_object() {
 fn c_serde() {
     fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
 
+    // assert_serde::<amount::Denomination>();
+    assert_serde::<absolute::LockTime>();
+    assert_serde::<relative::LockTime>();
+    // assert_serde::<result::MathOp>();
+    // assert_serde::<result::NumOpResult<Amount>>();
     assert_serde::<BlockHeight>();
     assert_serde::<BlockHeightInterval>();
     assert_serde::<BlockMtp>();
     assert_serde::<BlockMtpInterval>();
+    assert_serde::<locktime::absolute::Height>();
+    assert_serde::<locktime::absolute::MedianTimePast>();
+    assert_serde::<locktime::relative::NumberOf512Seconds>();
+    assert_serde::<locktime::relative::NumberOfBlocks>();
+    assert_serde::<pow::CompactTarget>();
+    assert_serde::<BlockTime>();
     assert_serde::<Weight>();
     assert_serde::<Sequence>();
 }
@@ -541,8 +538,6 @@ impl<'a> Arbitrary<'a> for Structs {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = Self {
             a: Amount::arbitrary(u)?,
-            // Skip the `Display` type.
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::arbitrary(u)?,
             d: BlockHeight::arbitrary(u)?,
             e: BlockHeightInterval::arbitrary(u)?,
