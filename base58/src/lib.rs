@@ -37,23 +37,17 @@
 //! ```
 
 #![no_std]
-// Experimental features we need.
-#![cfg_attr(bench, feature(test))]
 // Coding conventions.
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
-// Instead of littering the codebase for non-fuzzing and bench code just globally allow.
+// Instead of littering the codebase for non-fuzzing code just globally allow.
 #![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
-#![cfg_attr(bench, allow(dead_code, unused_imports))]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::incompatible_msrv)] // Has FPs and we're testing it which is more reliable anyway.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
-
-#[cfg(bench)]
-extern crate test;
 
 #[cfg(feature = "std")]
 extern crate std;
@@ -657,30 +651,5 @@ mod tests {
         assert_eq!(decode_check(Base58CkString::encode_unbounded(&[]).as_str()), Ok(vec![]));
         // Check that `len > 4` is enforced.
         assert_eq!(decode_check("Ldp"), Err(TooShortError { length: 3 }.into()));
-    }
-}
-
-#[cfg(bench)]
-mod benches {
-    use test::{black_box, Bencher};
-
-    #[bench]
-    pub fn bench_encode_check_50(bh: &mut Bencher) {
-        let data: alloc::vec::Vec<_> = (0u8..50).collect();
-
-        bh.iter(|| {
-            let r = super::Base58CkString::encode_unbounded(&data);
-            black_box(r.as_str());
-        });
-    }
-
-    #[bench]
-    pub fn bench_encode_check_xpub(bh: &mut Bencher) {
-        let data: alloc::vec::Vec<_> = (0u8..78).collect(); // length of xpub
-
-        bh.iter(|| {
-            let r = super::Base58CkString::encode_unbounded(&data);
-            black_box(r.as_str());
-        });
     }
 }
