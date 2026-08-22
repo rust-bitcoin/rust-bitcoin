@@ -707,6 +707,7 @@ pub struct bitcoin_units::absolute::LockTimeEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
   pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>]
   pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>]
+  pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
   pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
@@ -2060,6 +2061,7 @@ pub struct bitcoin_units::amount::AmountEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::amount::AmountEncoder<'e>
   pub fn bitcoin_units::amount::AmountEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::amount::AmountEncoder<'e>]
   pub fn bitcoin_units::amount::AmountEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::amount::AmountEncoder<'e>]
+  pub fn bitcoin_units::amount::AmountEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::amount::AmountEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::amount::AmountEncoder<'e>
   pub fn bitcoin_units::amount::AmountEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::amount::AmountEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_units::amount::AmountEncoder<'e>
@@ -3215,6 +3217,7 @@ pub struct bitcoin_units::block::BlockHeightEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::block::BlockHeightEncoder<'e>
   pub fn bitcoin_units::block::BlockHeightEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::block::BlockHeightEncoder<'e>]
   pub fn bitcoin_units::block::BlockHeightEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::block::BlockHeightEncoder<'e>]
+  pub fn bitcoin_units::block::BlockHeightEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::block::BlockHeightEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::block::BlockHeightEncoder<'e>
   pub fn bitcoin_units::block::BlockHeightEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::block::BlockHeightEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_units::block::BlockHeightEncoder<'e>
@@ -4763,6 +4766,7 @@ pub struct bitcoin_units::locktime::absolute::LockTimeEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
   pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>]
   pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>]
+  pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
   pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
@@ -6739,6 +6743,7 @@ pub struct bitcoin_units::pow::CompactTargetEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::pow::CompactTargetEncoder<'e>
   pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::pow::CompactTargetEncoder<'e>]
   pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::pow::CompactTargetEncoder<'e>]
+  pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::pow::CompactTargetEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::pow::CompactTargetEncoder<'e>
   pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::pow::CompactTargetEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_units::pow::CompactTargetEncoder<'e>
@@ -9058,6 +9063,7 @@ pub struct bitcoin_units::sequence::SequenceEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::sequence::SequenceEncoder<'e>
   pub fn bitcoin_units::sequence::SequenceEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::sequence::SequenceEncoder<'e>]
   pub fn bitcoin_units::sequence::SequenceEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::sequence::SequenceEncoder<'e>]
+  pub fn bitcoin_units::sequence::SequenceEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::sequence::SequenceEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::sequence::SequenceEncoder<'e>
   pub fn bitcoin_units::sequence::SequenceEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::sequence::SequenceEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_units::sequence::SequenceEncoder<'e>
@@ -9326,6 +9332,7 @@ pub struct bitcoin_units::time::BlockTimeEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::time::BlockTimeEncoder<'e>
   pub fn bitcoin_units::time::BlockTimeEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::time::BlockTimeEncoder<'e>]
   pub fn bitcoin_units::time::BlockTimeEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::time::BlockTimeEncoder<'e>]
+  pub fn bitcoin_units::time::BlockTimeEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::time::BlockTimeEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::time::BlockTimeEncoder<'e>
   pub fn bitcoin_units::time::BlockTimeEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::time::BlockTimeEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_units::time::BlockTimeEncoder<'e>

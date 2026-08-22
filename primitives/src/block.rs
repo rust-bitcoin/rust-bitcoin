@@ -351,6 +351,7 @@ where
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockEncoder::new(Encoder2::new(
             self.header.encoder(),
@@ -540,6 +541,7 @@ impl fmt::Debug for Header {
 impl encoding::Encode for Header {
     type Encoder<'e> = HeaderEncoder<'e>;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         HeaderEncoder::new(encoding::Encoder6::new(
             self.version.encoder(),
@@ -732,6 +734,7 @@ impl Default for Version {
 
 impl encoding::Encode for Version {
     type Encoder<'e> = VersionEncoder<'e>;
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus().to_le_bytes(),
