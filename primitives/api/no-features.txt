@@ -347,6 +347,7 @@ pub struct bitcoin_primitives::block::BlockHashEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::BlockHashEncoder<'e>
   pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::BlockHashEncoder<'e>]
   pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::BlockHashEncoder<'e>]
+  pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::BlockHashEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::block::BlockHashEncoder<'e>
   pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::block::BlockHashEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_primitives::block::BlockHashEncoder<'e>
@@ -481,6 +482,7 @@ pub struct bitcoin_primitives::block::HeaderEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::HeaderEncoder<'e>
   pub fn bitcoin_primitives::block::HeaderEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::HeaderEncoder<'e>]
   pub fn bitcoin_primitives::block::HeaderEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::HeaderEncoder<'e>]
+  pub fn bitcoin_primitives::block::HeaderEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::HeaderEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::block::HeaderEncoder<'e>
   pub fn bitcoin_primitives::block::HeaderEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::block::HeaderEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_primitives::block::HeaderEncoder<'e>
@@ -659,6 +661,7 @@ pub struct bitcoin_primitives::block::VersionEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::VersionEncoder<'e>
   pub fn bitcoin_primitives::block::VersionEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::VersionEncoder<'e>]
   pub fn bitcoin_primitives::block::VersionEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::VersionEncoder<'e>]
+  pub fn bitcoin_primitives::block::VersionEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::VersionEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::block::VersionEncoder<'e>
   pub fn bitcoin_primitives::block::VersionEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::block::VersionEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_primitives::block::VersionEncoder<'e>
@@ -927,6 +930,7 @@ pub struct bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
   pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>]
   pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>]
+  pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
   pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
@@ -1519,6 +1523,7 @@ pub struct bitcoin_primitives::transaction::OutPointEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::OutPointEncoder<'e>
   pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::OutPointEncoder<'e>]
   pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::OutPointEncoder<'e>]
+  pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::OutPointEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::OutPointEncoder<'e>
   pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::OutPointEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_primitives::transaction::OutPointEncoder<'e>
@@ -1752,6 +1757,7 @@ pub struct bitcoin_primitives::transaction::VersionEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::VersionEncoder<'e>
   pub fn bitcoin_primitives::transaction::VersionEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::VersionEncoder<'e>]
   pub fn bitcoin_primitives::transaction::VersionEncoder<'e>::current_chunk(&self) -> &[u8] [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::VersionEncoder<'e>]
+  pub fn bitcoin_primitives::transaction::VersionEncoder<'e>::drain_with(&mut self, sink: &mut dyn core::ops::function::FnMut(&[u8])) [impl: impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::VersionEncoder<'e>]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::VersionEncoder<'e>
   pub fn bitcoin_primitives::transaction::VersionEncoder<'e>::len(&self) -> usize [impl: impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::VersionEncoder<'e>]
 impl<'e> core::clone::Clone for bitcoin_primitives::transaction::VersionEncoder<'e>
