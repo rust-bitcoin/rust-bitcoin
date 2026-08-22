@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
+# [0.104.0] - 2026-08-20
+
+- Make `ScriptHash` and `WScriptHash` `no-alloc` [#6711](https://github.com/rust-bitcoin/rust-bitcoin/pull/6711)
+- Remove `BlockHashDecoder` from `transaction` module [#6730](https://github.com/rust-bitcoin/rust-bitcoin/pull/6730)
+- Make the `WitnessesEncoder` private [#6667](https://github.com/rust-bitcoin/rust-bitcoin/pull/6667)
+- Fix witness commitment check (BIP-141) [#6250](https://github.com/rust-bitcoin/rust-bitcoin/pull/6250)
+- Add serde impls for `WitnessVersion` [#6644]()
+- Add impl `Clone` for `Box<{custom DST}>` [#6571]()
+- Apply the witness item size limit to every element [#6642]()
+- Replace Block `PartialEq`/`Eq` derive with manual impl [#6623]()
+- Add `fmt` traits for `WitnessVersion` [#6621]()
+- Add `Hash` derive to `Opcode` [#6622]()
+- Use generic arguments for functions [#6606]()
+- Rename `witness_version` errors [#6583]()
+- Make `Witness` `FromIterator` infallible [#6554]()
+- Seal `PushBytesErrorReport` [#6590]()
+- Add `Extend` impl to `Witness` [#6561]()
+- Drop `WitnessCommitment::GENESIS_PREVIOUS_BLOCK_HASH` [#6584]()
+- Add `Debug` impl to `witness::Iter` [#6562]()
+- Depend on `crypto 0.3.0`
+- Depend on `units 0.6.0`
+- Depend on `consensus-encoding 1.1.0`
+
 # [0.103.1] - 2026-08-06
+
+**YANKED**
 
 - Explicitly depend on `consensus-encoding 1.1.0`
 
