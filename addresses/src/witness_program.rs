@@ -9,7 +9,9 @@
 
 use crypto::key::{FullPublicKey, TweakedPublicKey, UntweakedPublicKey};
 use internals::array_vec::ArrayVec;
-use primitives::script::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
+use primitives::script::WScriptHash;
+#[cfg(feature = "alloc")]
+use primitives::script::{PushBytes, WitnessScript, WitnessScriptSizeError};
 use primitives::witness_version::WitnessVersion;
 use taproot_primitives::{TapNodeHash, TapTweak as _};
 
@@ -36,7 +38,7 @@ pub struct WitnessProgram {
     /// The SegWit version associated with this witness program.
     version: WitnessVersion,
     /// The witness program (between 2 and 40 bytes).
-    program: ArrayVec<u8, MAX_SIZE>,
+    pub(super) program: ArrayVec<u8, MAX_SIZE>,
 }
 
 impl WitnessProgram {
@@ -89,6 +91,7 @@ impl WitnessProgram {
     /// # Errors
     ///
     /// Returns an error if the script exceeds 10,000 bytes.
+    #[cfg(feature = "alloc")]
     pub fn p2wsh(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
         WScriptHash::from_script(script).map(Self::p2wsh_from_hash)
     }
@@ -125,6 +128,7 @@ impl WitnessProgram {
     pub fn version(&self) -> WitnessVersion { self.version }
 
     /// Returns the witness program.
+    #[cfg(feature = "alloc")]
     #[allow(clippy::missing_panics_doc)] // expect panic is unreachable by witness program limit
     pub fn program(&self) -> &PushBytes {
         self.program

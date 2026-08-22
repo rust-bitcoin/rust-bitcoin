@@ -1,15 +1,17 @@
 //! Error code for the address module.
 
-#[cfg(feature = "alloc")]
-use alloc::string::String;
 use core::convert::Infallible;
 use core::fmt;
 
+use internals::error::InputString;
 use internals::write_err;
+#[cfg(feature = "alloc")]
 use network::Network;
 use primitives::witness_version;
 
-use crate::{witness_program, Address, NetworkUnchecked};
+use crate::witness_program;
+#[cfg(feature = "alloc")]
+use crate::{Address, NetworkUnchecked};
 
 /// Error while generating address from script.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -59,11 +61,12 @@ impl From<witness_version::InvalidWitnessVersionError> for FromScriptError {
 /// Address type is either invalid or not supported in rust-bitcoin.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct UnknownAddressTypeError(pub String);
+pub struct UnknownAddressTypeError(pub(super) InputString);
 
 impl fmt::Display for UnknownAddressTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "failed to parse {} as address type", self.0)
+        // Outputs "failed to parse <input string> as address type".
+        write!(f, "{}", self.0.display_cannot_parse("address type"))
     }
 }
 
@@ -76,6 +79,7 @@ impl std::error::Error for UnknownAddressTypeError {
 }
 
 /// Address parsing error.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ParseError {
@@ -87,10 +91,12 @@ pub enum ParseError {
     NetworkValidation(NetworkValidationError),
 }
 
+#[cfg(feature = "alloc")]
 impl From<Infallible> for ParseError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -112,18 +118,22 @@ impl std::error::Error for ParseError {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Base58Error> for ParseError {
     fn from(e: Base58Error) -> Self { Self::Base58(e) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Bech32Error> for ParseError {
     fn from(e: Bech32Error) -> Self { Self::Bech32(e) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<UnknownHrpError> for ParseError {
     fn from(e: UnknownHrpError) -> Self { Self::Bech32(e.into()) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<NetworkValidationError> for ParseError {
     fn from(e: NetworkValidationError) -> Self { Self::NetworkValidation(e) }
 }
@@ -131,10 +141,13 @@ impl From<NetworkValidationError> for ParseError {
 /// Unknown HRP error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct UnknownHrpError(pub String);
+pub struct UnknownHrpError(pub(super) InputString);
 
 impl fmt::Display for UnknownHrpError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "unknown hrp: {}", self.0) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Outputs "'<input string>' is not a known hrp" or "unknown hrp"
+        self.0.unknown_variant("hrp", f)
+    }
 }
 
 #[cfg(feature = "std")]
@@ -146,6 +159,7 @@ impl std::error::Error for UnknownHrpError {
 }
 
 /// Address's network differs from required one.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NetworkValidationError {
     /// Network that was required.
@@ -154,6 +168,7 @@ pub struct NetworkValidationError {
     pub(crate) address: Address<NetworkUnchecked>,
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for NetworkValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "address ")?;
@@ -171,6 +186,7 @@ impl std::error::Error for NetworkValidationError {
 }
 
 /// Bech32 related error.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Bech32Error {
@@ -184,10 +200,12 @@ pub enum Bech32Error {
     UnknownHrp(UnknownHrpError),
 }
 
+#[cfg(feature = "alloc")]
 impl From<Infallible> for Bech32Error {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for Bech32Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -212,27 +230,33 @@ impl std::error::Error for Bech32Error {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<witness_version::InvalidWitnessVersionError> for Bech32Error {
     fn from(e: witness_version::InvalidWitnessVersionError) -> Self { Self::WitnessVersion(e) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<witness_program::Error> for Bech32Error {
     fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<UnknownHrpError> for Bech32Error {
     fn from(e: UnknownHrpError) -> Self { Self::UnknownHrp(e) }
 }
 
 /// Bech32 parsing related error.
 // This wrapper exists because we do not want to expose the `bech32` crate in our public API.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseBech32Error(pub(crate) bech32::segwit::DecodeError);
 
+#[cfg(feature = "alloc")]
 impl From<Infallible> for ParseBech32Error {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for ParseBech32Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write_err!(f, "bech32 parsing error"; self.0)
@@ -249,11 +273,9 @@ impl std::error::Error for ParseBech32Error {
 #[non_exhaustive]
 pub enum Base58Error {
     /// Parse legacy Base58 error.
-    ParseBase58(base58::DecodeCheckError),
+    ParseBase58(base58::DecodeCheckArrayError),
     /// Legacy address is too long.
     LegacyAddressTooLong(LegacyAddressTooLongError),
-    /// Invalid base58 payload data length for legacy address.
-    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
     /// Invalid legacy address prefix in base58 data payload.
     InvalidLegacyPrefix(InvalidLegacyPrefixError),
 }
@@ -267,8 +289,6 @@ impl fmt::Display for Base58Error {
         match self {
             Self::ParseBase58(ref e) => write_err!(f, "legacy parsing error"; e),
             Self::LegacyAddressTooLong(ref e) => write_err!(f, "legacy address length error"; e),
-            Self::InvalidBase58PayloadLength(ref e) =>
-                write_err!(f, "legacy payload length error"; e),
             Self::InvalidLegacyPrefix(ref e) => write_err!(f, "legacy prefix error"; e),
         }
     }
@@ -280,52 +300,21 @@ impl std::error::Error for Base58Error {
         match self {
             Self::ParseBase58(ref e) => Some(e),
             Self::LegacyAddressTooLong(ref e) => Some(e),
-            Self::InvalidBase58PayloadLength(ref e) => Some(e),
             Self::InvalidLegacyPrefix(ref e) => Some(e),
         }
     }
 }
 
-impl From<base58::DecodeCheckError> for Base58Error {
-    fn from(e: base58::DecodeCheckError) -> Self { Self::ParseBase58(e) }
+impl From<base58::DecodeCheckArrayError> for Base58Error {
+    fn from(e: base58::DecodeCheckArrayError) -> Self { Self::ParseBase58(e) }
 }
 
 impl From<LegacyAddressTooLongError> for Base58Error {
     fn from(e: LegacyAddressTooLongError) -> Self { Self::LegacyAddressTooLong(e) }
 }
 
-impl From<InvalidBase58PayloadLengthError> for Base58Error {
-    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
-}
-
 impl From<InvalidLegacyPrefixError> for Base58Error {
     fn from(e: InvalidLegacyPrefixError) -> Self { Self::InvalidLegacyPrefix(e) }
-}
-
-/// Decoded base58 data was an invalid length.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidBase58PayloadLengthError {
-    /// The base58 payload length we got after decoding address string.
-    pub(crate) length: usize,
-}
-
-impl InvalidBase58PayloadLengthError {
-    /// Returns the invalid payload length.
-    pub fn invalid_base58_payload_length(&self) -> usize { self.length }
-}
-
-impl fmt::Display for InvalidBase58PayloadLengthError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "decoded base58 data was an invalid length: {} (expected 21)", self.length)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidBase58PayloadLengthError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { length: _ } = self;
-        None
-    }
 }
 
 /// Legacy base58 address was too long, max 50 characters.

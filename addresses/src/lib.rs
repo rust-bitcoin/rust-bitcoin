@@ -5,7 +5,30 @@
 //! Bitcoin addresses do not appear on chain; rather, they are conventions used by Bitcoin (wallet)
 //! software to communicate where coins should be sent and are based on the output type e.g., P2WPKH.
 //!
-//! This crate can be used in a no-std environment but requires an allocator.
+//! This crate can be used in a no-std environment, with or without an allocator.
+//!
+//! # Working without an allocator
+//!
+//! Substantial portions of the crate functionality are available without an allocator
+//! (i.e. the `alloc` feature).
+//!
+//! Available without `alloc`:
+//!
+//! - Constructing addresses: [`Address::p2pkh`], [`Address::p2sh_from_hash`], [`Address::p2wpkh`],
+//!   [`Address::p2wsh_from_hash`], [`Address::p2tr`], [`Address::p2tr_tweaked`], [`Address::p2a`],
+//!   and [`Address::from_witness_program`].
+//! - Parsing legacy (base58) addresses with [`Address::from_base58_str`].
+//! - Formatting addresses using `Display` and `Debug`. Both legacy and SegWit addresses can be
+//!   displayed.
+//! - Inspecting addresses e.g., [`Address::address_type`], [`Address::to_address_data`],
+//!   [`Address::is_valid_for_network`], and [`Address::is_related_to_pubkey`].
+//!
+//! Requires `alloc`:
+//!
+//! - Parsing bech32 (SegWit) addresses i.e., `Address::from_bech32_str`. Importantly, this also
+//!   means `FromStr`/`str::parse` and `serde` deserialization require `alloc`.
+//! - Anything that builds a script e.g., `Address::script_pubkey`, `Address::p2sh`,
+//!   `Address::p2wsh`, `Address::p2shwpkh`, `Address::p2shwsh`, and `ScriptPubKeyBufExt`.
 //!
 //! # Examples
 //!
@@ -50,7 +73,6 @@
 //! ref: <https://sprovoost.nl/2022/11/10/what-is-a-bitcoin-address/>
 
 #![no_std]
-#![cfg(feature = "alloc")]
 // Experimental features we need.
 #![doc(test(attr(warn(unused))))]
 // Coding conventions.
@@ -77,13 +99,20 @@ pub mod witness_program;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-        Base58Error, Bech32Error, FromScriptError, InvalidBase58PayloadLengthError,
-        InvalidLegacyPrefixError, LegacyAddressTooLongError, NetworkValidationError,
-        ParseError, UnknownAddressTypeError, UnknownHrpError, ParseBech32Error,
+    Base58Error, FromScriptError, InvalidLegacyPrefixError,
+    LegacyAddressTooLongError, UnknownAddressTypeError, UnknownHrpError
+};
+#[cfg(feature = "alloc")]
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::{
+    Bech32Error, NetworkValidationError,
+    ParseError, ParseBech32Error,
 };
 
-use alloc::borrow::ToOwned;
+#[cfg(feature = "alloc")]
 use alloc::format;
+#[cfg(feature = "alloc")]
 use alloc::string::String;
 use core::fmt;
 use core::marker::PhantomData;
@@ -97,18 +126,26 @@ use crypto::key::{
 use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt as _;
 use network::{Network, NetworkKind};
+#[cfg(feature = "alloc")]
 use primitives::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
+#[cfg(feature = "alloc")]
 use primitives::opcodes::Opcode;
+#[cfg(feature = "alloc")]
 use primitives::script::{
-    Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptHashableTag,
-    ScriptPubKey, ScriptPubKeyBuf, WScriptHash, WitnessScript, WitnessScriptSizeError,
+    Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHashableTag, ScriptPubKey,
+    ScriptPubKeyBuf, WitnessScript, WitnessScriptSizeError,
 };
+use primitives::script::{ScriptHash, WScriptHash};
+#[cfg(feature = "alloc")]
 use primitives::witness_version::WitnessVersion;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use taproot_primitives::{TapNodeHash, TapTweak as _};
+use taproot_primitives::TapNodeHash;
+#[cfg(feature = "alloc")]
+use taproot_primitives::TapTweak as _;
 use witness_program::WitnessProgram;
 
+#[cfg(feature = "alloc")]
 const OP_PUSHBYTES_0: Opcode = Opcode::from_u8(0x00);
 
 /// Mainnet (bitcoin) pubkey address prefix.
@@ -223,7 +260,7 @@ impl FromStr for AddressType {
             "p2wsh" => Ok(Self::P2wsh),
             "p2tr" => Ok(Self::P2tr),
             "p2a" => Ok(Self::P2a),
-            _ => Err(UnknownAddressTypeError(s.to_owned())),
+            _ => Err(UnknownAddressTypeError(s.into())),
         }
     }
 }
@@ -236,7 +273,9 @@ mod sealed {
     pub trait NetworkValidationUnchecked {}
     impl NetworkValidationUnchecked for super::NetworkUnchecked {}
 
+    #[cfg(feature = "alloc")]
     pub trait Sealed {}
+    #[cfg(feature = "alloc")]
     impl Sealed for super::ScriptPubKeyBuf {}
 }
 
@@ -301,7 +340,9 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Test => PUBKEY_ADDRESS_PREFIX_TEST,
                 };
                 prefixed[1..].copy_from_slice(hash.as_byte_array());
-                base58::Base58CkString::encode_unbounded(&prefixed[..]).fmt(fmt)
+                base58::Base58CkString::encode(&prefixed[..])
+                    .expect("prefixed is short enough to be encode infallibly")
+                    .fmt(fmt)
             }
             Self::P2sh { hash, network } => {
                 let mut prefixed = [0; 21];
@@ -310,13 +351,15 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Test => SCRIPT_ADDRESS_PREFIX_TEST,
                 };
                 prefixed[1..].copy_from_slice(hash.as_byte_array());
-                base58::Base58CkString::encode_unbounded(&prefixed[..]).fmt(fmt)
+                base58::Base58CkString::encode(&prefixed[..])
+                    .expect("prefixed is short enough to be encode infallibly")
+                    .fmt(fmt)
             }
             Self::Segwit { program, hrp } => {
                 let hrp = hrp.to_hrp();
                 let version = Fe32::try_from(program.version().to_num())
                     .expect("version nums 0-16 are valid fe32 values");
-                let program = program.program().as_ref();
+                let program = program.program.as_slice();
 
                 if fmt.alternate() {
                     bech32::segwit::encode_upper_to_fmt_unchecked(fmt, hrp, version, program)
@@ -354,6 +397,7 @@ impl KnownHrp {
     }
 
     /// Constructs a new [`KnownHrp`] from a [`bech32::Hrp`].
+    #[cfg(feature = "alloc")]
     fn from_hrp(hrp: Hrp) -> Result<Self, UnknownHrpError> {
         if hrp == bech32::hrp::BC {
             Ok(Self::Mainnet)
@@ -362,7 +406,7 @@ impl KnownHrp {
         } else if hrp == bech32::hrp::BCRT {
             Ok(Self::Regtest)
         } else {
-            Err(UnknownHrpError(hrp.to_lowercase()))
+            Err(UnknownHrpError(hrp.as_str().into()))
         }
     }
 
@@ -435,6 +479,7 @@ transparent_newtype! {
     /// The types `Address` and `Address<NetworkChecked>` are synonymous, i.e. they can be used interchangeably.
     ///
     /// ```rust
+    /// # #[cfg(feature = "alloc")] {
     /// use std::str::FromStr;
     /// use bitcoin_addresses::{Address, NetworkUnchecked, NetworkChecked};
     /// use bitcoin_addresses::network::Network;
@@ -450,6 +495,7 @@ transparent_newtype! {
     /// // variant 3
     /// let _address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
     ///                .unwrap().require_network(Network::Bitcoin).unwrap();
+    /// # }
     /// ```
     ///
     /// ### Formatting addresses
@@ -460,10 +506,12 @@ transparent_newtype! {
     /// 1. `Display` is implemented only for `Address<NetworkChecked>`:
     ///
     /// ```
+    /// # #[cfg(feature = "alloc")] {
     /// # use bitcoin_addresses::{Address, NetworkChecked};
     /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
     ///                .unwrap().assume_checked();
     /// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    /// # }
     /// ```
     ///
     /// ```ignore
@@ -478,17 +526,21 @@ transparent_newtype! {
     ///    check the network and use `Display` in user-facing context.
     ///
     /// ```
+    /// # #[cfg(feature = "alloc")] {
     /// # use bitcoin_addresses::{Address, NetworkUnchecked};
     /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
     ///                .unwrap();
     /// assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
+    /// # }
     /// ```
     ///
     /// ```
+    /// # #[cfg(feature = "alloc")] {
     /// # use bitcoin_addresses::{Address, NetworkChecked};
     /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
     ///                .unwrap().assume_checked();
     /// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    /// # }
     /// ```
     ///
     /// # Relevant BIPs
@@ -521,6 +573,7 @@ impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 impl<'de, U: NetworkValidationUnchecked> serde::Deserialize<'de> for Address<U> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -618,6 +671,7 @@ impl Address {
     ///
     /// Returns an error if the script exceeds 520 bytes.
     #[inline]
+    #[cfg(feature = "alloc")]
     pub fn p2sh<T: ScriptHashableTag>(
         redeem_script: &Script<T>,
         network: impl Into<NetworkKind>,
@@ -649,6 +703,7 @@ impl Address {
     ///
     /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     #[allow(clippy::missing_panics_doc)] // script cannot cause hash failure due to size
+    #[cfg(feature = "alloc")]
     pub fn p2shwpkh(pk: FullPublicKey, network: impl Into<NetworkKind>) -> Self {
         let builder =
             ScriptPubKey::builder().push_opcode(OP_PUSHBYTES_0).push_slice(pk.wpubkey_hash());
@@ -661,6 +716,7 @@ impl Address {
     /// # Errors
     ///
     /// Returns an error if the script exceeds 10,000 bytes.
+    #[cfg(feature = "alloc")]
     pub fn p2wsh(
         witness_script: &WitnessScript,
         hrp: impl Into<KnownHrp>,
@@ -684,6 +740,7 @@ impl Address {
     ///
     /// Returns an error if the script exceeds 10,000 bytes.
     #[allow(clippy::missing_panics_doc)] // script cannot cause hash failure due to size
+    #[cfg(feature = "alloc")]
     pub fn p2shwsh(
         witness_script: &WitnessScript,
         network: impl Into<NetworkKind>,
@@ -800,6 +857,7 @@ impl Address {
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
     /// Generates a script pubkey spending to this address.
+    #[cfg(feature = "alloc")]
     pub fn script_pubkey(&self) -> ScriptPubKeyBuf {
         use AddressInner::{P2pkh, P2sh, Segwit};
 
@@ -841,6 +899,7 @@ impl Address {
     /// # })().unwrap();
     /// # assert_eq!(writer, ADDRESS);
     /// ```
+    #[cfg(feature = "alloc")]
     pub fn to_qr_uri(self) -> String { format!("bitcoin:{:#}", self) }
 
     /// Returns true if the given pubkey is directly related to the address payload.
@@ -868,6 +927,7 @@ impl Address {
 
     /// Returns true if the address creates a particular script
     /// This function doesn't make any allocations.
+    #[cfg(feature = "alloc")]
     pub fn matches_script_pubkey(&self, script: &ScriptPubKey) -> bool {
         use AddressInner::{P2pkh, P2sh, Segwit};
 
@@ -894,7 +954,7 @@ impl Address {
         match *self.inner() {
             AddressInner::P2sh { ref hash, network: _ } => hash.as_ref(),
             AddressInner::P2pkh { ref hash, network: _ } => hash.as_ref(),
-            AddressInner::Segwit { ref program, hrp: _ } => program.program().as_bytes(),
+            AddressInner::Segwit { ref program, hrp: _ } => program.program.as_slice(),
         }
     }
 }
@@ -913,6 +973,7 @@ impl Address<NetworkUnchecked> {
     /// network a simple comparison is not enough anymore. Instead this function can be used.
     ///
     /// ```rust
+    /// # #[cfg(feature = "alloc")] {
     /// use network::{Network, TestnetVersion};
     /// use bitcoin_addresses::{Address, NetworkUnchecked};
     ///
@@ -926,6 +987,7 @@ impl Address<NetworkUnchecked> {
     /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
     /// assert!(address.is_valid_for_network(Network::Bitcoin));
     /// assert_eq!(address.is_valid_for_network(Network::Testnet(TestnetVersion::V4)), false);
+    /// # }
     /// ```
     pub fn is_valid_for_network(&self, n: Network) -> bool {
         match *self.inner() {
@@ -978,6 +1040,7 @@ impl Address<NetworkUnchecked> {
     /// let _ = parse_and_validate_address_show_types(network).unwrap();
     /// ```
     #[inline]
+    #[cfg(feature = "alloc")]
     pub fn require_network(self, required: Network) -> Result<Address, ParseError> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
@@ -1005,6 +1068,7 @@ impl Address<NetworkUnchecked> {
     /// - [`Bech32Error::UnknownHrp`] if the human-readable part is not one of the known Bitcoin
     ///   HRPs (`bc`, `tb`, or `bcrt`).
     #[allow(clippy::missing_panics_doc)]
+    #[cfg(feature = "alloc")]
     pub fn from_bech32_str(s: &str) -> Result<Self, Bech32Error> {
         let (hrp, witness_version, data) =
             bech32::segwit::decode(s).map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
@@ -1022,10 +1086,8 @@ impl Address<NetworkUnchecked> {
     /// # Errors
     ///
     /// - [`Base58Error::LegacyAddressTooLong`] if the input string is longer than 50 characters.
-    /// - [`Base58Error::ParseBase58`] if the input string is invalid base58, less than 4 bytes or
-    ///   the checksum does not match the expected value.
-    /// - [`Base58Error::InvalidBase58PayloadLength`] if the resulting decoded slice is not 21
-    ///   bytes.
+    /// - [`Base58Error::ParseBase58`] if the input string is invalid base58, or the string doesn't
+    ///   decode to exactly 21 bytes.
     /// - [`Base58Error::InvalidLegacyPrefix`] if the address prefix is not one of:
     ///   - [`PUBKEY_ADDRESS_PREFIX_MAIN`]
     ///   - [`PUBKEY_ADDRESS_PREFIX_TEST`]
@@ -1035,10 +1097,7 @@ impl Address<NetworkUnchecked> {
         if s.len() > 50 {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
-        let data = base58::decode_check(s)?;
-        let data: &[u8; 21] = (&*data)
-            .try_into()
-            .map_err(|_| InvalidBase58PayloadLengthError { length: data.len() })?;
+        let data = base58::decode_check_to_array::<21>(s)?;
 
         let (prefix, &data) = data.split_first();
 
@@ -1066,6 +1125,7 @@ impl Address<NetworkUnchecked> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Address> for ScriptPubKeyBuf {
     fn from(a: Address) -> Self { a.script_pubkey() }
 }
@@ -1103,6 +1163,7 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
 ///
 /// - [`UnknownHrpError`] if the address does not begin with one of the above SegWit or
 ///   legacy prefixes.
+#[cfg(feature = "alloc")]
 impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
     type Err = ParseError;
 
@@ -1119,7 +1180,7 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
                 Some(pos) => &s[..pos],
                 None => s,
             };
-            Err(UnknownHrpError(hrp.to_owned()).into())
+            Err(UnknownHrpError(hrp.into()).into())
         }
     }
 }
@@ -1138,6 +1199,7 @@ fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
 ///
 /// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
 // This function is duplicated in bitcoin and primitives. If you make any changes, please update all three.
+#[cfg(feature = "alloc")]
 fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     version: WitnessVersion,
     program: T,
@@ -1151,10 +1213,9 @@ fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
 
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
 
+#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
-    use alloc::string::ToString;
-
     use network::TestnetVersion;
     use primitives::RedeemScriptBuf;
 
@@ -1381,7 +1442,7 @@ mod tests {
     #[test]
     fn invalid_address_parses_error() {
         let got = "invalid".parse::<AddressType>();
-        let want = Err(UnknownAddressTypeError("invalid".to_string()));
+        let want = Err(UnknownAddressTypeError("invalid".into()));
         assert_eq!(got, want);
     }
 
@@ -1425,12 +1486,6 @@ mod tests {
         let encoded = base58::Base58CkString::encode_unbounded(&payload);
 
         let err = Address::<NetworkUnchecked>::from_base58_str(encoded.as_str()).unwrap_err();
-        match err {
-            Base58Error::InvalidBase58PayloadLength(inner) => {
-                assert_eq!(inner.invalid_base58_payload_length(), 22); // Payload size
-                assert_ne!(inner.invalid_base58_payload_length(), encoded.len()); // Not string size
-            }
-            other => panic!("unexpected error: {other:?}"),
-        }
+        assert!(matches!(err, Base58Error::ParseBase58(_)));
     }
 }
