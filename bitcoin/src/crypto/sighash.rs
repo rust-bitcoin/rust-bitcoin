@@ -308,6 +308,16 @@ impl SplitAnyoneCanPay for EcdsaSighashType {
             AllPlusAnyoneCanPay => (All, true),
             NonePlusAnyoneCanPay => (None, true),
             SinglePlusAnyoneCanPay => (Single, true),
+            NonStandard(n) => {
+                // Check sighash tyoe
+                let sighash_type = match n & 0x1f {
+                    0x02 => None,
+                    0x03 => Single,
+                    _ => All,
+                };
+                // Check ACP
+                (sighash_type, n & 0x80 == 0x80)
+            }
         }
     }
 }
@@ -669,7 +679,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
     /// this is the general (and hard) part.
     ///
-    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
+    /// The `sighash_type` supports arbitrary values via [`EcdsaSighashType::NonStandard`],
     /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
     /// signature in a transaction.
     ///
@@ -684,18 +694,17 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<W: Write, U: Into<u32>, T: ScriptHashableTag>(
+    pub fn legacy_encode_signing_data_to<W: Write, T: ScriptHashableTag>(
         &self,
         mut writer: W,
         input_index: usize,
         script_pubkey: &crate::script::Script<T>,
-        sighash_type: U,
+        sighash_type: EcdsaSighashType,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
         if let Err(e) = self.tx.borrow().tx_in(input_index) {
             return EncodeSigningDataResult::WriteResult(Err(SigningDataError::Sighash(e)));
         }
-        let sighash_type: u32 = sighash_type.into();
 
         if is_invalid_use_of_sighash_single(
             sighash_type,
@@ -714,10 +723,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             mut writer: W,
             input_index: usize,
             script_pubkey: &crate::script::Script<T>,
-            sighash_type: u32,
+            sighash_type: EcdsaSighashType,
         ) -> Result<(), io::Error> {
-            let (sighash, anyone_can_pay) =
-                EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
+            let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
             io::encode_to_writer(&self_.version, &mut writer)?;
             // Add all inputs necessary..
@@ -772,7 +780,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 _ => unreachable!(),
             };
             io::encode_to_writer(&self_.lock_time, &mut writer)?;
-            writer.write_all(&sighash_type.to_le_bytes())?;
+            writer.write_all(&sighash_type.to_u32().to_le_bytes())?;
             Ok(())
         }
 
@@ -794,7 +802,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
     /// this is the general (and hard) part.
     ///
-    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
+    /// The `sighash_type` supports arbitrary values via [`EcdsaSighashType::NonStandard`],
     /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
     /// signature in a transaction.
     ///
@@ -811,7 +819,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &self,
         input_index: usize,
         script_pubkey: &crate::script::Script<T>,
-        sighash_type: u32,
+        sighash_type: EcdsaSighashType,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
         match self
@@ -939,9 +947,8 @@ impl<'a> Annex<'a> {
     pub fn as_bytes(&self) -> &[u8] { self.0 }
 }
 
-fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, outputs_len: usize) -> bool {
-    let ty = EcdsaSighashType::from_consensus(sighash);
-    ty.is_single() && input_index >= outputs_len
+fn is_invalid_use_of_sighash_single(sighash: EcdsaSighashType, input_index: usize, outputs_len: usize) -> bool {
+    sighash.is_single() && input_index >= outputs_len
 }
 
 /// Result of [`SighashCache::legacy_encode_signing_data_to`].
@@ -976,12 +983,12 @@ impl<E> EncodeSigningDataResult<E> {
     /// # let mut writer = sha256d::Hash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptPubKeyBuf::new();
-    /// # let sighash_u32 = 0u32;
+    /// # let sighash_type = bitcoin::EcdsaSighashType::All;
     /// # const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
     /// # let raw_tx = hex::decode_to_vec(SOME_TX).unwrap();
     /// # let tx: Transaction = decode_from_slice(&raw_tx).unwrap();
     /// let cache = SighashCache::new(&tx);
-    /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_u32)
+    /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_type)
     ///         .is_sighash_single_bug()
     ///         .expect("writer can't fail") {
     ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug
@@ -1372,13 +1379,13 @@ mod tests {
         let script = ScriptPubKeyBuf::new();
         let cache = SighashCache::new(&tx);
 
-        let sighash_single = 3;
+        let sighash_single = EcdsaSighashType::Single;
         let got = cache.legacy_signature_hash(1, &script, sighash_single).expect("sighash");
         let want = LegacySighash::from_byte_array(UINT256_ONE);
         assert_eq!(got, want);
 
         // https://github.com/rust-bitcoin/rust-bitcoin/issues/4112
-        let sighash_single = 131;
+        let sighash_single = EcdsaSighashType::SinglePlusAnyoneCanPay;
         let got = cache.legacy_signature_hash(1, &script, sighash_single).expect("sighash");
         let want = LegacySighash::from_byte_array(UINT256_ONE);
         assert_eq!(got, want);
@@ -1406,7 +1413,7 @@ mod tests {
             let want = LegacySighash::from_byte_array(bytes);
 
             let cache = SighashCache::new(&tx);
-            let got = cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap();
+            let got = cache.legacy_signature_hash(input_index, &script, EcdsaSighashType::from_consensus(hash_type as u32)).unwrap();
 
             assert_eq!(got, want);
         }
@@ -1606,7 +1613,7 @@ mod tests {
             }))
         );
         assert_eq!(
-            c.legacy_signature_hash(10, ScriptPubKey::new(), 0u32),
+            c.legacy_signature_hash(10, ScriptPubKey::new(), EcdsaSighashType::All),
             Err(InputsIndexError(IndexOutOfBoundsError {
                 index: 10,
                 length: 1
@@ -1909,6 +1916,43 @@ mod tests {
         );
     }
 
+    #[test]
+    fn mainnet_input_with_non_standard_sighash_type_verifies() {
+        use secp256k1::PublicKey;
+
+        // https://github.com/rust-bitcoin/rust-bitcoin/issues/6647
+        //
+        // Mainnet tx 969c4f116f0a68406d30dc80bf17991fb8fe7fa1b240382baefa2c324b79d50d
+        // (block 508011), a P2SH-P2WPKH input whose signature uses sighash type byte 0x65.
+        let tx = decode_from_slice::<Transaction>(&hex!(
+            "01000000000101447e208868dbc8e930fc6eba4fe0d0abfe0d9dc2db4ba70542e02467f00205c90\
+                100000017160014e20c60563894174c253ae937ba59ace46ab9ffb1ffffffff010845f30500000000\
+                1976a91414ac7fc2a782bde1555b753d75ff4ed146683cae88ac024730440220120003c32cca7eabf\
+                07bad5c31125accc09d13c39546fa93833b8b69a2c72ed7022057083dc2ed348156874b8af859ac7a\
+                9c16e5ce39353f3f1ac2226b49c2b319af652103f73386ac6e567581f8d0611ad7a8536c3cd0253e5\
+                35f6fc4707514b2ab54198700000000"
+        ))
+        .unwrap();
+
+        let witness = &tx.inputs[0].witness;
+        let sig = crate::ecdsa::Signature::from_slice(witness.get(0).unwrap())
+            .expect("non-standard sighash types parse");
+        assert_eq!(sig.sighash_type, EcdsaSighashType::NonStandard(0x65));
+        let pk = PublicKey::from_slice(witness.get(1).unwrap()).unwrap();
+
+        // redeemScript from the scriptSig: the v0 witness program.
+        let redeem = ScriptPubKeyBuf::from_hex_no_length_prefix(
+            "0014e20c60563894174c253ae937ba59ace46ab9ffb1",
+        )
+        .unwrap();
+        let amount = Amount::from_sat_u32(99_830_000);
+
+        let sighash = SighashCache::new(&tx)
+            .p2wpkh_signature_hash(0, &redeem, amount, sig.sighash_type)
+            .unwrap();
+
+        secp256k1::ecdsa::verify(&sig.signature, sighash, &pk).expect("consensus digest verifies");
+    }
     #[test]
     fn bip143_p2wpkh_nested_in_p2sh() {
         let tx = decode_from_slice::<Transaction>(
