@@ -308,6 +308,16 @@ impl SplitAnyoneCanPay for EcdsaSighashType {
             AllPlusAnyoneCanPay => (All, true),
             NonePlusAnyoneCanPay => (None, true),
             SinglePlusAnyoneCanPay => (Single, true),
+            NonStandard(n) => {
+                // Check sighash tyoe
+                let sighash_type = match n & 0x1f {
+                    0x02 => None,
+                    0x03 => Single,
+                    _ => All,
+                };
+                // Check ACP
+                (sighash_type, n & 0x80 == 0x80)
+            }
         }
     }
 }
@@ -1909,6 +1919,43 @@ mod tests {
         );
     }
 
+    #[test]
+    fn mainnet_input_with_non_standard_sighash_type_verifies() {
+        use secp256k1::PublicKey;
+
+        // https://github.com/rust-bitcoin/rust-bitcoin/issues/6647
+        //
+        // Mainnet tx 969c4f116f0a68406d30dc80bf17991fb8fe7fa1b240382baefa2c324b79d50d
+        // (block 508011), a P2SH-P2WPKH input whose signature uses sighash type byte 0x65.
+        let tx = decode_from_slice::<Transaction>(&hex!(
+            "01000000000101447e208868dbc8e930fc6eba4fe0d0abfe0d9dc2db4ba70542e02467f00205c90\
+                100000017160014e20c60563894174c253ae937ba59ace46ab9ffb1ffffffff010845f30500000000\
+                1976a91414ac7fc2a782bde1555b753d75ff4ed146683cae88ac024730440220120003c32cca7eabf\
+                07bad5c31125accc09d13c39546fa93833b8b69a2c72ed7022057083dc2ed348156874b8af859ac7a\
+                9c16e5ce39353f3f1ac2226b49c2b319af652103f73386ac6e567581f8d0611ad7a8536c3cd0253e5\
+                35f6fc4707514b2ab54198700000000"
+        ))
+        .unwrap();
+
+        let witness = &tx.inputs[0].witness;
+        let sig = crate::ecdsa::Signature::from_slice(witness.get(0).unwrap())
+            .expect("non-standard sighash types parse");
+        assert_eq!(sig.sighash_type, EcdsaSighashType::NonStandard(0x65));
+        let pk = PublicKey::from_slice(witness.get(1).unwrap()).unwrap();
+
+        // redeemScript from the scriptSig: the v0 witness program.
+        let redeem = ScriptPubKeyBuf::from_hex_no_length_prefix(
+            "0014e20c60563894174c253ae937ba59ace46ab9ffb1",
+        )
+        .unwrap();
+        let amount = Amount::from_sat_u32(99_830_000);
+
+        let sighash = SighashCache::new(&tx)
+            .p2wpkh_signature_hash(0, &redeem, amount, sig.sighash_type)
+            .unwrap();
+
+        secp256k1::ecdsa::verify(&sig.signature, sighash, &pk).expect("consensus digest verifies");
+    }
     #[test]
     fn bip143_p2wpkh_nested_in_p2sh() {
         let tx = decode_from_slice::<Transaction>(
