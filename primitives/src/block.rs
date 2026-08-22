@@ -140,21 +140,24 @@ impl Block<Unchecked> {
     /// * The first transaction is not a coinbase transaction.
     /// * The Merkle root of the header does not match the Merkle root of the transaction list.
     /// * The witness commitment in the coinbase does not match the transaction list.
-    pub fn validate(self) -> Result<Block<Checked>, InvalidBlockError> {
+    ///
+    /// If function errors we return the block because `self` is consumed.
+    #[allow(clippy::result_large_err)] // Because of the block.
+    pub fn validate(self) -> Result<Block<Checked>, (InvalidBlockError, Self)> {
         if self.transactions.is_empty() {
-            return Err(InvalidBlockError::NoTransactions);
+            return Err((InvalidBlockError::NoTransactions, self));
         }
 
         if !self.transactions[0].is_coinbase() {
-            return Err(InvalidBlockError::InvalidCoinbase);
+            return Err((InvalidBlockError::InvalidCoinbase, self));
         }
 
         if !self.check_merkle_root() {
-            return Err(InvalidBlockError::InvalidMerkleRoot);
+            return Err((InvalidBlockError::InvalidMerkleRoot, self));
         }
 
         match self.check_witness_commitment() {
-            (false, _) => Err(InvalidBlockError::InvalidWitnessCommitment),
+            (false, _) => Err((InvalidBlockError::InvalidWitnessCommitment, self)),
             (true, witness_root) => {
                 let block = Self::new_unchecked(self.header, self.transactions);
                 Ok(block.assume_checked(witness_root))
@@ -1150,7 +1153,7 @@ mod tests {
         let transactions = Vec::new(); // Empty transactions
 
         let block = Block::new_unchecked(header, transactions);
-        let err = block.validate().unwrap_err();
+        let (err, _block) = block.validate().unwrap_err();
         assert_eq!(err, InvalidBlockError::NoTransactions);
     }
 
@@ -1181,7 +1184,7 @@ mod tests {
         let transactions = vec![non_coinbase_tx];
         let block = Block::new_unchecked(header, transactions);
 
-        let err = block.validate().unwrap_err();
+        let (err, _block) = block.validate().unwrap_err();
         assert_eq!(err, InvalidBlockError::InvalidCoinbase);
     }
 
@@ -1298,7 +1301,8 @@ mod tests {
 
         let block = Block::new_unchecked(header, transactions);
         assert_eq!(block.check_witness_commitment(), (false, None));
-        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+        let (err, _block) = block.validate().unwrap_err();
+        assert!(matches!(err, InvalidBlockError::InvalidWitnessCommitment));
     }
 
     #[test]
@@ -1848,7 +1852,8 @@ mod tests {
 
         let block = Block::new_unchecked(header, transactions);
         assert_eq!(block.check_witness_commitment(), (false, None));
-        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+        let (err, _block) = block.validate().unwrap_err();
+        assert!(matches!(err, InvalidBlockError::InvalidWitnessCommitment));
     }
 
     #[test]

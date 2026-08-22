@@ -130,7 +130,7 @@ impl BlockCheckedExt for Block<Checked> {
         transactions: Vec<Transaction>,
     ) -> Result<Self, InvalidBlockError> {
         let block = Block::new_unchecked(header, transactions);
-        block.validate()
+        block.validate().map_err(|e| e.0) // e.1 is the block.
     }
 
     fn merkle_root(&self) -> TxMerkleNode { self.header().merkle_root }
