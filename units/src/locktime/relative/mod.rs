@@ -474,13 +474,10 @@ impl NumberOfBlocks {
         utxo_mined_at: Option<crate::BlockHeight>,
     ) -> Result<bool, InvalidHeightError> {
         match utxo_mined_at {
-            Some(mined_at) => {
-                chain_tip
-                    .checked_sub(mined_at)
-                    .ok_or(InvalidHeightError { chain_tip, utxo_mined_at: mined_at })
-                    .map(|diff| u32::from(self.to_count()).saturating_sub(1) <= diff.to_u32())
-
-            },
+            Some(mined_at) => chain_tip
+                .checked_sub(mined_at)
+                .ok_or(InvalidHeightError { chain_tip, utxo_mined_at: mined_at })
+                .map(|diff| u32::from(self.to_count()).saturating_sub(1) <= diff.to_u32()),
             None => {
                 // We want 0-value relative timelocks to be able to go into transactions in the
                 // mempool if their parent is also in the mempool.
@@ -626,12 +623,10 @@ impl NumberOf512Seconds {
         utxo_mined_at: Option<crate::BlockMtp>,
     ) -> Result<bool, InvalidTimeError> {
         match utxo_mined_at {
-            Some(mined_at) => {
-                chain_tip
-                    .checked_sub(mined_at)
-                    .ok_or(InvalidTimeError { chain_tip, utxo_mined_at: mined_at })
-                    .map(|diff| self.to_seconds() <= diff.to_u32())
-            }
+            Some(mined_at) => chain_tip
+                .checked_sub(mined_at)
+                .ok_or(InvalidTimeError { chain_tip, utxo_mined_at: mined_at })
+                .map(|diff| self.to_seconds() <= diff.to_u32()),
             None => {
                 // We want 0-value relative timelocks to be able to go into transactions in the
                 // mempool if their parent is also in the mempool.
@@ -943,16 +938,24 @@ mod tests {
         let utxo_mtp = BlockMtp::new(utxo_timestamps);
 
         let lock1 = LockTime::Blocks(NumberOfBlocks::from_count(10));
-        assert!(lock1.is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp)).unwrap());
+        assert!(lock1
+            .is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp))
+            .unwrap());
 
         let lock2 = LockTime::Blocks(NumberOfBlocks::from_count(21));
-        assert!(lock2.is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp)).unwrap());
+        assert!(lock2
+            .is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp))
+            .unwrap());
 
         let lock3 = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(10));
-        assert!(lock3.is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp)).unwrap());
+        assert!(lock3
+            .is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp))
+            .unwrap());
 
         let lock4 = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(20000));
-        assert!(!lock4.is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp)).unwrap());
+        assert!(!lock4
+            .is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp))
+            .unwrap());
 
         assert!(LockTime::ZERO
             .is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp))
@@ -962,7 +965,9 @@ mod tests {
             .unwrap());
 
         let lock6 = LockTime::from_seconds_floor(5000).unwrap();
-        assert!(lock6.is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp)).unwrap());
+        assert!(lock6
+            .is_satisfied_by(chain_height, chain_mtp, Some(utxo_height), Some(utxo_mtp))
+            .unwrap());
 
         let max_height_lock = LockTime::Blocks(NumberOfBlocks::MAX);
         assert!(!max_height_lock
@@ -979,10 +984,20 @@ mod tests {
         let max_utxo_height = BlockHeight::MAX;
         let max_utxo_mtp = max_chain_mtp;
         assert!(!max_height_lock
-            .is_satisfied_by(max_chain_height, max_chain_mtp, Some(max_utxo_height), Some(max_utxo_mtp))
+            .is_satisfied_by(
+                max_chain_height,
+                max_chain_mtp,
+                Some(max_utxo_height),
+                Some(max_utxo_mtp)
+            )
             .unwrap());
         assert!(!max_time_lock
-            .is_satisfied_by(max_chain_height, max_chain_mtp, Some(max_utxo_height), Some(max_utxo_mtp))
+            .is_satisfied_by(
+                max_chain_height,
+                max_chain_mtp,
+                Some(max_utxo_height),
+                Some(max_utxo_mtp)
+            )
             .unwrap());
     }
 
@@ -1132,7 +1147,7 @@ mod tests {
 
     #[test]
     fn parent_child_cannot_be_mined_in_the_same_block_lock_by_count_if_non_zero() {
-       let height_lock = LockTime::from_block_count(1);
+        let height_lock = LockTime::from_block_count(1);
         // Value is meaningless, we only check that lock is ZERO.
         let chain_state = BlockHeight::from_u32(100);
 
@@ -1150,7 +1165,7 @@ mod tests {
 
     #[test]
     fn parent_child_cannot_be_mined_in_the_same_block_lock_by_time_if_non_zero() {
-       let height_lock = LockTime::from_512_second_intervals(1);
+        let height_lock = LockTime::from_512_second_intervals(1);
         // Value is meaningless, we only check that lock is ZERO.
         let chain_state = crate::BlockMtp::from_u32(83_176_862);
 

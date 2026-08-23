@@ -327,7 +327,8 @@ mod tests {
 
         // InvalidTimeError - is_satisfied_by with invalid args
         let time = NumberOf512Seconds::from_512_second_intervals(10);
-        let e = time.is_satisfied_by(BlockMtp::from_u32(5), Some(BlockMtp::from_u32(10))).unwrap_err();
+        let e =
+            time.is_satisfied_by(BlockMtp::from_u32(5), Some(BlockMtp::from_u32(10))).unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
