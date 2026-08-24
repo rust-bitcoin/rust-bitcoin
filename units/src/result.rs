@@ -376,11 +376,18 @@ pub enum MathOp {
 
 impl MathOp {
     /// Returns `true` if this operation error'ed due to overflow.
+    ///
+    /// Note that if your [`ops::Div`] and [`ops::Rem`] implementation overflows for `MIN / -1` then
+    /// this function will fail to mark that as 'oveflow', i.e., returns `false`. For all uses of
+    /// [`NumOpResult`] in this library this function is sane.
     pub fn is_overflow(self) -> bool {
         matches!(self, Self::Add | Self::Sub | Self::Mul | Self::Neg)
     }
 
     /// Returns `true` if this operation error'ed due to division by zero.
+    ///
+    /// Note that this function is only sane if used with a `NumOpResult` where division is
+    /// implemented such that `MIN / -1` is valid (which is the case for all uses in this library).
     #[inline]
     pub fn is_div_by_zero(self) -> bool { !self.is_overflow() }
 
