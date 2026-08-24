@@ -1,6 +1,22 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! Bitcoin scripts.
+//!
+//! # Examples
+//!
+//! ```rust
+//! use bitcoin_primitives::script::{ScriptPubKeyBuf, WScriptHash, WitnessScriptBuf};
+//! use bitcoin_primitives::witness_version::WitnessVersion;
+//!
+//! let witness_script = WitnessScriptBuf::from_bytes(vec![0x51]);
+//! let script_pubkey = ScriptPubKeyBuf::new_p2wsh(WScriptHash::from_script(&witness_script)?);
+//!
+//! assert_eq!(script_pubkey.witness_version(), Some(WitnessVersion::V0));
+//! assert!(script_pubkey.is_witness_program());
+//! assert!(script_pubkey.is_p2wsh());
+//! assert!(!script_pubkey.is_p2wpkh());
+//! # Ok::<_, bitcoin_primitives::script::WitnessScriptSizeError>(())
+//! ```
 
 mod borrowed;
 mod builder;
