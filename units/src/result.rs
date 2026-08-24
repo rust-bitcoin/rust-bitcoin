@@ -54,9 +54,9 @@ pub use self::error::NumOpError;
 /// # Ok::<_, amount::OutOfRangeError>(())
 /// ```
 ///
-/// ### Divide-by-zero (overflow in [`Div`] or [`Rem`])
+/// ### Failure in chained operations
 ///
-/// In some instances one may wish to differentiate div-by-zero from overflow.
+/// In some instances one may wish to differentiate one math op failure from another.
 ///
 /// ```
 /// # use bitcoin_units::{Amount, FeeRate, NumOpResult, result::NumOpError};
@@ -70,12 +70,12 @@ pub use self::error::NumOpError;
 /// let max_fee = a + b;
 /// let _fee = match max_fee / fee_rate {
 ///     NumOpResult::Valid(fee) => fee,
-///     NumOpResult::Error(e) if e.is_div_by_zero() => {
-///         // Do something when div by zero.
+///     NumOpResult::Error(e) if e.operation().is_division() => {
+///         // Do something when division fails (div by zero or perhaps MIN / -1).
 ///         return Err(e);
 ///     },
 ///     NumOpResult::Error(e) => {
-///         // We separate div-by-zero from overflow in case it needs to be handled separately.
+///         // And something else if the addition overflowed.
 ///         //
 ///         // This branch could be hit since `max_fee` came from some previous calculation. And if
 ///         // an input to that calculation was from the user then overflow could be an attack vector.
@@ -375,16 +375,6 @@ pub enum MathOp {
 }
 
 impl MathOp {
-    /// Returns `true` if this operation error'ed due to overflow.
-    #[inline]
-    pub fn is_overflow(self) -> bool {
-        matches!(self, Self::Add | Self::Sub | Self::Mul | Self::Neg)
-    }
-
-    /// Returns `true` if this operation error'ed due to division by zero.
-    #[inline]
-    pub fn is_div_by_zero(self) -> bool { !self.is_overflow() }
-
     /// Returns `true` if this operation error'ed due to addition.
     #[inline]
     pub fn is_addition(self) -> bool { self == Self::Add }
@@ -396,6 +386,14 @@ impl MathOp {
     /// Returns `true` if this operation error'ed due to multiplication.
     #[inline]
     pub fn is_multiplication(self) -> bool { self == Self::Mul }
+
+    /// Returns `true` if this operation error'ed due to division.
+    #[inline]
+    pub fn is_division(self) -> bool { self == Self::Div }
+
+    /// Returns `true` if this operation error'ed due to remainder.
+    #[inline]
+    pub fn is_remainder(self) -> bool { self == Self::Rem }
 
     /// Returns `true` if this operation error'ed due to negation.
     #[inline]
@@ -433,14 +431,6 @@ pub mod error {
         /// Constructs a [`NumOpError`] caused by `op`.
         #[inline]
         pub(crate) const fn while_doing(op: MathOp) -> Self { Self(op) }
-
-        /// Returns `true` if this operation error'ed due to overflow.
-        #[inline]
-        pub fn is_overflow(self) -> bool { self.0.is_overflow() }
-
-        /// Returns `true` if this operation error'ed due to division by zero.
-        #[inline]
-        pub fn is_div_by_zero(self) -> bool { self.0.is_div_by_zero() }
 
         /// Returns the [`MathOp`] that caused this error.
         #[inline]
@@ -508,17 +498,6 @@ mod tests {
 
     #[test]
     fn mathop_predicates() {
-        assert!(MathOp::Add.is_overflow());
-        assert!(MathOp::Sub.is_overflow());
-        assert!(MathOp::Mul.is_overflow());
-        assert!(MathOp::Neg.is_overflow());
-        assert!(!MathOp::Div.is_overflow());
-        assert!(!MathOp::Rem.is_overflow());
-
-        assert!(MathOp::Div.is_div_by_zero());
-        assert!(MathOp::Rem.is_div_by_zero());
-        assert!(!MathOp::Add.is_div_by_zero());
-
         assert!(MathOp::Add.is_addition());
         assert!(!MathOp::Sub.is_addition());
 
@@ -530,6 +509,12 @@ mod tests {
 
         assert!(MathOp::Neg.is_negation());
         assert!(!MathOp::Add.is_negation());
+
+        assert!(MathOp::Div.is_division());
+        assert!(!MathOp::Rem.is_division());
+
+        assert!(MathOp::Rem.is_remainder());
+        assert!(!MathOp::Div.is_remainder());
     }
 
     #[test]
