@@ -2,7 +2,6 @@
 
 //! Provides a monadic type returned by mathematical operations ([`core::ops`]).
 
-use core::convert::Infallible;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -354,8 +353,7 @@ impl_opt_ext!(Amount, SignedAmount, u64, i64, FeeRate, Weight);
 
 /// The math operation that caused the error.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum MathOp {
+pub(crate) enum MathOp {
     /// Addition failed ([`core::ops::Add`] resulted in an invalid value).
     Add,
     /// Subtraction failed ([`core::ops::Sub`] resulted in an invalid value).
@@ -368,36 +366,26 @@ pub enum MathOp {
     Rem,
     /// Negation failed ([`core::ops::Neg`] resulted in an invalid value).
     Neg,
-    /// Stops users from casting this enum to an integer.
-    // May get removed if one day Rust supports disabling casts natively.
-    #[doc(hidden)]
-    _DoNotUse(Infallible),
 }
 
 impl MathOp {
     /// Returns `true` if this operation error'ed due to addition.
-    #[inline]
-    pub fn is_addition(self) -> bool { self == Self::Add }
+    fn is_addition(self) -> bool { self == Self::Add }
 
     /// Returns `true` if this operation error'ed due to subtraction.
-    #[inline]
-    pub fn is_subtraction(self) -> bool { self == Self::Sub }
+    fn is_subtraction(self) -> bool { self == Self::Sub }
 
     /// Returns `true` if this operation error'ed due to multiplication.
-    #[inline]
-    pub fn is_multiplication(self) -> bool { self == Self::Mul }
+    fn is_multiplication(self) -> bool { self == Self::Mul }
 
     /// Returns `true` if this operation error'ed due to division.
-    #[inline]
-    pub fn is_division(self) -> bool { self == Self::Div }
+    fn is_division(self) -> bool { self == Self::Div }
 
     /// Returns `true` if this operation error'ed due to remainder.
-    #[inline]
-    pub fn is_remainder(self) -> bool { self == Self::Rem }
+    fn is_remainder(self) -> bool { self == Self::Rem }
 
     /// Returns `true` if this operation error'ed due to negation.
-    #[inline]
-    pub fn is_negation(self) -> bool { self == Self::Neg }
+    fn is_negation(self) -> bool { self == Self::Neg }
 }
 
 impl fmt::Display for MathOp {
@@ -410,7 +398,6 @@ impl fmt::Display for MathOp {
             Self::Div => write!(f, "div"),
             Self::Rem => write!(f, "rem"),
             Self::Neg => write!(f, "neg"),
-            Self::_DoNotUse(infallible) => match infallible {},
         }
     }
 }
@@ -432,9 +419,29 @@ pub mod error {
         #[inline]
         pub(crate) const fn while_doing(op: MathOp) -> Self { Self(op) }
 
-        /// Returns the [`MathOp`] that caused this error.
+        /// Returns `true` if this operation error'ed due to addition.
         #[inline]
-        pub fn operation(self) -> MathOp { self.0 }
+        pub fn is_addition(self) -> bool { self.0.is_addition() }
+
+        /// Returns `true` if this operation error'ed due to subtraction.
+        #[inline]
+        pub fn is_subtraction(self) -> bool { self.0.is_subtraction() }
+
+        /// Returns `true` if this operation error'ed due to multiplication.
+        #[inline]
+        pub fn is_multiplication(self) -> bool { self.0.is_multiplication() }
+
+        /// Returns `true` if this operation error'ed due to division.
+        #[inline]
+        pub fn is_division(self) -> bool { self.0.is_division() }
+
+        /// Returns `true` if this operation error'ed due to remainder.
+        #[inline]
+        pub fn is_remainder(self) -> bool { self.0.is_remainder() }
+
+        /// Returns `true` if this operation error'ed due to negation.
+        #[inline]
+        pub fn is_negation(self) -> bool { self.0.is_negation() }
     }
 
     impl From<Infallible> for NumOpError {
@@ -445,7 +452,7 @@ pub mod error {
     impl fmt::Display for NumOpError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "math operation '{}' gave an invalid numeric result", self.operation())
+            write!(f, "math operation '{}' gave an invalid numeric result", self.0)
         }
     }
 

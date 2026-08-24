@@ -23,7 +23,6 @@ struct Enums {
     a: amount::Denomination,
     b: absolute::LockTime,
     c: relative::LockTime,
-    d: result::MathOp,
     e: result::NumOpResult<Amount>,
 }
 
@@ -33,7 +32,6 @@ impl Enums {
             a: amount::Denomination::Bitcoin,
             b: absolute::LockTime::Blocks(absolute::Height::MAX),
             c: relative::LockTime::Blocks(relative::NumberOfBlocks::MAX),
-            d: result::MathOp::Add,
             e: result::NumOpResult::Valid(Amount::MAX),
         }
     }
@@ -195,8 +193,6 @@ fn c_debug_nonempty() {
     let debug = format!("{:?}", t.a.b);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.a.c);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.d);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.a.e);
     assert!(!debug.is_empty());
@@ -474,7 +470,7 @@ fn p_consistent_exports_parse() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `result` module.
 #[test]
 fn p_consistent_exports_result() {
-    use bitcoin_units::result::{MathOp, NumOpError, NumOpResult};
+    use bitcoin_units::result::{NumOpError, NumOpResult};
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `pow` module.
@@ -569,7 +565,6 @@ impl<'a> Arbitrary<'a> for Enums {
             a: amount::Denomination::arbitrary(u)?,
             b: absolute::LockTime::arbitrary(u)?,
             c: relative::LockTime::arbitrary(u)?,
-            d: result::MathOp::arbitrary(u)?,
             e: result::NumOpResult::<Amount>::arbitrary(u)?,
         };
         Ok(a)
