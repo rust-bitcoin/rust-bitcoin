@@ -474,8 +474,7 @@ impl Amount {
                 None => return R::Error(E::while_doing(MathOp::Div)),
             }
         }
-        // Use `MathOp::Mul` because `Div` implies div by zero.
-        R::Error(E::while_doing(MathOp::Mul))
+        R::Error(E::while_doing(MathOp::Div))
     }
 
     /// Checked weight ceiling division.
@@ -509,8 +508,7 @@ impl Amount {
                 return FeeRate::from_per_kwu(amount);
             }
         }
-        // Use `MathOp::Mul` because `Div` implies div by zero.
-        R::Error(E::while_doing(MathOp::Mul))
+        R::Error(E::while_doing(MathOp::Div))
     }
 
     /// Checked fee rate floor division.
