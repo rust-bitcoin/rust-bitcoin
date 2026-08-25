@@ -116,9 +116,9 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 ///
 /// # Errors
 ///
-/// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
+/// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet)
+/// or the scratch buffer is unable to be written to.
 fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Error<T::Err>> {
-    // Build in base 256
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
         let mut carry = BASE58_DIGITS.get(usize::from(d58))
@@ -132,7 +132,6 @@ fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Er
             carry /= 256;
         }
         while carry > 0 {
-            // This function (build_base256) is only ever called with a Vec (infallible) or an ArrayVec with a pre-checked size.
             scratch.try_push(carry as u8).map_err(Base256Error::Buffer)?; // cast loses data intentionally
             carry /= 256;
         }
@@ -227,11 +226,10 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// assert!(decode_check_to_array::<20>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").is_err());
 /// # Ok::<_, base58ck::DecodeCheckArrayError>(())
 /// ```
-#[allow(clippy::missing_panics_doc)] // payload length is checked before cast unwrap
+#[allow(clippy::missing_panics_doc)] // All lengths are checked before each expect.
 pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
     let () = AssertPayloadFits::<N>::OK;
 
-    // 11/15 is just over log_256(58), so the decoded length never exceeds the input length.
     let mut scratch = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
     build_base256(data, &mut scratch)
         .map_err(|e| match e {
@@ -257,7 +255,6 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     let mut decoded = [0u8; SHORT_OPT_BUFFER_LEN];
     scratch.as_mut_slice().reverse();
 
-    // Copy the scratch into a subslice, erroring if out of range.
     decoded
         .get_mut(leading_zeros..decoded_len)
         .expect("decoded_len = N + 4 <= 128 per above and compile-time check")
