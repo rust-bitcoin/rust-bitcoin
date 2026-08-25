@@ -11,9 +11,9 @@
 //!
 //! Decoding can be done with [`decode_check_to_array`] or [`decode_check`], both of which verify
 //! the checksum. [`decode_check_to_array`] decodes into a fixed-size array, but only accepts
-//! inputs of at most 128 characters. The expected decoded length must be specified by the generic
-//! `usize`. With the `alloc` feature enabled, [`decode_check`] decodes strings of any length into
-//! a `Vec<u8>`.
+//! inputs that decode to at most 128 bytes (including checksum). The expected decoded length must
+//! be specified by the generic `usize`. With the `alloc` feature enabled, [`decode_check`] decodes
+//! strings of any length into a `Vec<u8>`.
 //!
 //! # Examples
 //!
@@ -199,9 +199,9 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 
 /// Decodes a base58check-encoded string into a fixed-size array, verifying the checksum.
 ///
-/// This does not require `alloc`, but it only works for inputs up to 128 characters long. `N` is
-/// the expected length of the decoded payload (excluding the 4 byte checksum). Decoding will fail if
-/// the payload is any other length.
+/// This does not require `alloc`, but it only works for inputs that decode to at most 128 bytes.
+/// `N` is the expected length of the decoded payload (excluding the 4 byte checksum). Decoding
+/// will fail if the payload is any other length.
 ///
 /// `N` is compile-time checked to ensure that `N + 4` does not exceed the 128 byte limit, since
 /// such a call could never succeed. Use [`decode_check`] for payloads that large.
@@ -209,10 +209,9 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// # Errors
 ///
 /// * The input contains an invalid base58 character.
-/// * The decoded data is less than 4 bytes (too short for checksum verification).
+/// * The input does not decode to exactly `N` bytes followed by a 4 byte checksum.
+/// * The input decodes to more than 128 bytes (including the checksum).
 /// * The checksum does not match the expected value.
-/// * The input is longer than 128 characters.
-/// * The decoded payload length is not exactly `N` bytes.
 ///
 /// # Examples
 ///
