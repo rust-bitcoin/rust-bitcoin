@@ -74,14 +74,13 @@ use internals::array_vec::ArrayVec;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
 
-#[cfg(feature = "alloc")]
-use crate::error::TooShortError;
 use crate::error::{
-    Base256Error, DecodeCheckArrayErrorInner, DecodeCheckErrorInner, IncorrectChecksumError,
-    UnexpectedLengthError,
+    Base256Error, DecodeCheckArrayErrorInner, IncorrectChecksumError, UnexpectedLengthError,
 };
+#[cfg(feature = "alloc")]
+use crate::error::{DecodeCheckErrorInner, TooShortError};
 #[cfg(not(feature = "alloc"))]
-use crate::error::{DecodeCheckError, InputTooLongErrorInner, InvalidCharacterError};
+use crate::error::{InputTooLongErrorInner, InvalidCharacterError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "alloc")]
@@ -242,9 +241,7 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
                     expected: N,
                     actual: data.len() * 11 / 15,
                 }),
-            Base256Error::InvalidChar(err) => DecodeCheckArrayErrorInner::Decode(DecodeCheckError(
-                DecodeCheckErrorInner::Decode(err),
-            )),
+            Base256Error::InvalidChar(err) => DecodeCheckArrayErrorInner::InvalidCharacter(err),
         })
         .map_err(DecodeCheckArrayError)?;
 
@@ -276,9 +273,7 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
 
     if actual != expected {
         return Err(IncorrectChecksumError { incorrect: actual, expected })
-            .map_err(DecodeCheckErrorInner::IncorrectChecksum)
-            .map_err(DecodeCheckError)
-            .map_err(DecodeCheckArrayErrorInner::Decode)
+            .map_err(DecodeCheckArrayErrorInner::IncorrectChecksum)
             .map_err(DecodeCheckArrayError);
     }
 
@@ -629,12 +624,12 @@ mod tests {
 
         assert!(matches!(
             decode_check_to_array::<21>("¢").unwrap_err(),
-            DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(_))
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::InvalidCharacter(_))
         ));
 
         assert!(matches!(
             decode_check_to_array::<21>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHG").unwrap_err(),
-            DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(_))
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::IncorrectChecksum(_))
         ));
 
         let long = "1".repeat(STRING_LEN);
