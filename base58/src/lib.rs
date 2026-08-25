@@ -553,6 +553,10 @@ mod tests {
             Base58CkString::encode_unbounded(&addr[..]).as_str(),
             "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"
         );
+
+        let data = [0xFFu8; 90];
+        #[cfg(feature = "alloc")]
+        let _ = Base58CkString::encode_unbounded(&data);
     }
 
     #[test]
