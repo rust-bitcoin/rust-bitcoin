@@ -32,6 +32,7 @@ macro_rules! do_impl {
             #[doc = "\n - If the input string is not a valid hex encoding of a [`"]
             #[doc = stringify!($ty)]
             #[doc = "`]."]
+            #[inline]
             pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
                 Ok($ty(U256::from_hex(s)?))
             }
@@ -44,6 +45,7 @@ macro_rules! do_impl {
             #[doc = "\n - If the input string is not a valid hex encoding of a [`"]
             #[doc = stringify!($ty)]
             #[doc = "`]."]
+            #[inline]
             pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
                 Ok($ty(U256::from_unprefixed_hex(s)?))
             }
@@ -100,6 +102,7 @@ pub struct Work(U256);
 
 impl Work {
     /// Converts this [`Work`] to [`Target`].
+    #[inline]
     pub fn to_target(self) -> Target { Target(self.0.inverse()) }
 }
 
@@ -108,11 +111,13 @@ impl_fmt_traits_for_u32_wrapper!(Work);
 
 impl Add for Work {
     type Output = Self;
+    #[inline]
     fn add(self, rhs: Self) -> Self { Self(self.0 + rhs.0) }
 }
 
 impl Sub for Work {
     type Output = Self;
+    #[inline]
     fn sub(self, rhs: Self) -> Self { Self(self.0 - rhs.0) }
 }
 
@@ -225,6 +230,7 @@ impl Target {
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
     /// block with this target (see `Self::difficulty`).
+    #[inline]
     pub fn to_work(self) -> Work { Work(self.0.inverse()) }
 }
 do_impl!(Target, ParseTargetError);
@@ -265,6 +271,7 @@ impl CompactTarget {
     /// Computes the [`Target`] value from this compact representation.
     ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
+    #[inline]
     pub fn to_target(self) -> Target { Target::from_compact(self) }
 
     /// Constructs a new [`CompactTarget`] from a prefixed hex string.
@@ -308,6 +315,7 @@ impl fmt::Display for CompactTarget {
 parse_int::impl_parse_str_from_int_infallible!(CompactTarget, u32, from_consensus);
 
 impl From<CompactTarget> for Target {
+    #[inline]
     fn from(c: CompactTarget) -> Self { Self::from_compact(c) }
 }
 
@@ -368,11 +376,13 @@ pub mod error {
 
     #[cfg(feature = "encoding")]
     impl From<Infallible> for CompactTargetDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "encoding")]
     impl fmt::Display for CompactTargetDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "compact target decoder error"; self.0)
         }
@@ -381,6 +391,7 @@ pub mod error {
     #[cfg(feature = "std")]
     #[cfg(feature = "encoding")]
     impl std::error::Error for CompactTargetDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
@@ -391,6 +402,7 @@ pub mod error {
     pub struct ParseWorkError(pub(super) ParseU256Error);
 
     impl From<Infallible> for ParseWorkError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
@@ -414,6 +426,7 @@ pub mod error {
     pub struct ParseTargetError(pub(super) ParseU256Error);
 
     impl From<Infallible> for ParseTargetError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
@@ -433,6 +446,7 @@ pub mod error {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for CompactTarget {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::from_consensus(u.arbitrary()?))
     }
@@ -440,6 +454,7 @@ impl<'a> Arbitrary<'a> for CompactTarget {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Target {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::from_be_bytes(<[u8; 32]>::arbitrary(u)?))
     }
@@ -447,6 +462,7 @@ impl<'a> Arbitrary<'a> for Target {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Work {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::from_be_bytes(<[u8; 32]>::arbitrary(u)?))
     }
@@ -456,9 +472,11 @@ include!("../include/u256.rs");
 
 impl U256 {
     /// Constructs a new [`U256`] from a prefixed hex string.
+    #[inline]
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> { parse_int::hex_u256_prefixed(s) }
 
     /// Constructs a new [`U256`] from an unprefixed hex string.
+    #[inline]
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         parse_int::hex_u256_unprefixed(s)
     }
@@ -467,6 +485,7 @@ impl U256 {
 macro_rules! impl_hex {
     ($hex:path, $lookup:expr) => {
         impl $hex for U256 {
+            #[inline]
             fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
                 if f.alternate() {
                     f.write_str("0x")?;
@@ -495,6 +514,7 @@ impl_hex!(
 
 #[cfg(feature = "serde")]
 impl serde::Serialize for U256 {
+    #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -502,6 +522,7 @@ impl serde::Serialize for U256 {
         struct DisplayHex(U256);
 
         impl fmt::Display for DisplayHex {
+            #[inline]
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:x}", self.0) }
         }
 

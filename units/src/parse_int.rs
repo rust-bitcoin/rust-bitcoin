@@ -76,6 +76,7 @@ pub fn int_from_string<T: Integer>(s: alloc::string::String) -> Result<T, ParseI
 pub fn int_from_box<T: Integer>(s: alloc::boxed::Box<str>) -> Result<T, ParseIntError> { int(s) }
 
 // This must be private because we do not want `InputString` to appear in the public API.
+#[inline]
 fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIntError> {
     s.as_ref().parse().map_err(|error| {
         ParseIntError {
@@ -363,6 +364,7 @@ parse_hex_for!(
     fn hex_u128_unchecked();
 );
 
+#[inline]
 pub(crate) fn hex_u256_prefixed(s: &str) -> Result<crate::pow::U256, PrefixedHexError> {
     let checked = hex_remove_prefix(s)?;
     hex_u256_unchecked(checked)
@@ -370,6 +372,7 @@ pub(crate) fn hex_u256_prefixed(s: &str) -> Result<crate::pow::U256, PrefixedHex
         .map_err(PrefixedHexError)
 }
 
+#[inline]
 pub(crate) fn hex_u256_unprefixed(s: &str) -> Result<crate::pow::U256, UnprefixedHexError> {
     let checked = hex_check_unprefixed(s)?;
     hex_u256_unchecked(checked)
@@ -453,10 +456,12 @@ pub mod error {
     }
 
     impl From<Infallible> for ParseIntError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for ParseIntError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             let signed = if self.is_signed { "signed" } else { "unsigned" };
             write_err!(f, "{} ({}, {}-bit)", self.input.display_cannot_parse("integer"), signed, self.bits; self.source)
@@ -493,10 +498,12 @@ pub mod error {
     }
 
     impl From<Infallible> for PrefixedHexError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for PrefixedHexError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             use PrefixedHexErrorInner as E;
 
@@ -533,10 +540,12 @@ pub mod error {
     }
 
     impl From<Infallible> for UnprefixedHexError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for UnprefixedHexError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             use UnprefixedHexErrorInner as E;
 
@@ -568,10 +577,12 @@ pub mod error {
 
     impl MissingPrefixError {
         /// Constructs a new error from the string with the missing prefix.
+        #[inline]
         pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
     }
 
     impl fmt::Display for MissingPrefixError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(
                 f,
@@ -603,6 +614,7 @@ pub mod error {
     }
 
     impl fmt::Display for ContainsPrefixError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(
                 f,

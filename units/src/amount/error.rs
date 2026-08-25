@@ -26,10 +26,12 @@ pub(crate) enum ParseErrorInner {
 }
 
 impl From<Infallible> for ParseError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for ParseError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
             ParseErrorInner::Amount(ref e) => write_err!(f, "invalid amount"; e),
@@ -42,6 +44,7 @@ impl fmt::Display for ParseError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self.0 {
             ParseErrorInner::Amount(ref e) => Some(e),
@@ -77,10 +80,12 @@ pub(crate) enum ParseAmountErrorInner {
 }
 
 impl From<Infallible> for ParseAmountError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for ParseAmountError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParseAmountErrorInner as E;
 
@@ -170,10 +175,12 @@ impl OutOfRangeError {
 }
 
 impl From<Infallible> for OutOfRangeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for OutOfRangeError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.is_greater_than_max {
             write!(f, "the amount is greater than {}", self.valid_range().1)
@@ -199,10 +206,12 @@ pub struct TooPreciseError {
 }
 
 impl From<Infallible> for TooPreciseError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for TooPreciseError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.position {
             0 => f.write_str("the amount is less than 1 satoshi but it's not zero"),
@@ -231,10 +240,12 @@ pub struct InputTooLargeError {
 }
 
 impl From<Infallible> for InputTooLargeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for InputTooLargeError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.len - INPUT_STRING_LEN_LIMIT {
             1 => write!(
@@ -269,6 +280,7 @@ pub struct MissingDigitsError {
 }
 
 impl From<Infallible> for MissingDigitsError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -306,10 +318,12 @@ pub struct InvalidCharacterError {
 }
 
 impl From<Infallible> for InvalidCharacterError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for InvalidCharacterError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.invalid_char {
             '.' => f.write_str("there is more than one decimal separator (dot) in the input"),
@@ -340,10 +354,12 @@ pub struct BadPositionError {
 }
 
 impl From<Infallible> for BadPositionError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for BadPositionError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.char {
             '_' => match self.position {
@@ -379,10 +395,12 @@ pub enum ParseDenominationError {
 }
 
 impl From<Infallible> for ParseDenominationError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for ParseDenominationError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Unknown(ref e) => write_err!(f, "denomination parse error"; e),
@@ -408,10 +426,12 @@ impl std::error::Error for ParseDenominationError {
 pub struct MissingDenominationError;
 
 impl From<Infallible> for MissingDenominationError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for MissingDenominationError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "the input does not contain a denomination")
     }
@@ -432,6 +452,7 @@ impl std::error::Error for MissingDenominationError {
 pub struct UnknownDenominationError(pub(super) InputString);
 
 impl From<Infallible> for UnknownDenominationError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -457,10 +478,12 @@ impl std::error::Error for UnknownDenominationError {
 pub struct PossiblyConfusingDenominationError(pub(super) InputString);
 
 impl From<Infallible> for PossiblyConfusingDenominationError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for PossiblyConfusingDenominationError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: possibly confusing denomination - we intentionally do not support 'M' and 'P' so as to not confuse mega/milli and peta/pico", self.0.display_cannot_parse("bitcoin denomination"))
     }
@@ -510,11 +533,13 @@ pub(super) enum AmountDecoderErrorInner {
 
 #[cfg(feature = "encoding")]
 impl From<Infallible> for AmountDecoderError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 #[cfg(feature = "encoding")]
 impl fmt::Display for AmountDecoderError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use AmountDecoderErrorInner as E;
 

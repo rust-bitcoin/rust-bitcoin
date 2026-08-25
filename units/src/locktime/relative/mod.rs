@@ -359,6 +359,7 @@ impl From<NumberOf512Seconds> for LockTime {
 }
 
 impl fmt::Display for LockTime {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
             match *self {
@@ -468,6 +469,7 @@ impl NumberOfBlocks {
     /// # Errors
     ///
     /// If `chain_tip` is not valid for `utxo_mined_at` i.e., if you get the args mixed up.
+    #[inline]
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockHeight,
@@ -620,6 +622,7 @@ impl NumberOf512Seconds {
     /// # Errors
     ///
     /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    #[inline]
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockMtp,
@@ -674,6 +677,7 @@ impl<'de> Deserialize<'de> for NumberOf512Seconds {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for LockTime {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=1)?;
 
@@ -686,6 +690,7 @@ impl<'a> Arbitrary<'a> for LockTime {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for NumberOfBlocks {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
 
@@ -699,6 +704,7 @@ impl<'a> Arbitrary<'a> for NumberOfBlocks {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for NumberOf512Seconds {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
 

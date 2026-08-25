@@ -225,6 +225,7 @@ impl_sub_assign_for_results!(SignedAmount);
 impl ops::Neg for Amount {
     type Output = SignedAmount;
 
+    #[inline]
     fn neg(self) -> Self::Output { self.to_signed().neg() }
 }
 
@@ -240,12 +241,14 @@ impl ops::Neg for SignedAmount {
 impl ops::Neg for NumOpResult<Amount> {
     type Output = NumOpResult<SignedAmount>;
 
+    #[inline]
     fn neg(self) -> Self::Output { self.map(ops::Neg::neg) }
 }
 
 impl ops::Neg for NumOpResult<SignedAmount> {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output { self.map(ops::Neg::neg) }
 }
 

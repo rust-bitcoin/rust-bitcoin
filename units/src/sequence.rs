@@ -306,11 +306,13 @@ pub mod error {
 
     #[cfg(feature = "encoding")]
     impl From<Infallible> for SequenceDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "encoding")]
     impl fmt::Display for SequenceDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "sequence decoder error"; self.0)
         }
@@ -353,6 +355,7 @@ impl<'a> Arbitrary<'a> for Sequence {
 #[cfg(feature = "arbitrary")]
 #[cfg(not(feature = "alloc"))]
 impl<'a> Arbitrary<'a> for Sequence {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // Equally weight the cases of meaningful sequence numbers
         let choice = u.int_in_range(0..=4)?;

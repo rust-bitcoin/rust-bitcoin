@@ -463,6 +463,7 @@ impl fmt::Debug for LockTime {
 }
 
 impl fmt::Display for LockTime {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
             match *self {
@@ -783,6 +784,7 @@ pub const fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for LockTime {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let l = u32::arbitrary(u)?;
         Ok(Self::from_consensus(l))
@@ -791,6 +793,7 @@ impl<'a> Arbitrary<'a> for LockTime {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Height {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
         match choice {
@@ -808,6 +811,7 @@ impl<'a> Arbitrary<'a> for Height {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for MedianTimePast {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
         match choice {

@@ -111,6 +111,7 @@ pub mod as_sat_per_kwu_floor {
 
         use crate::FeeRate;
 
+        #[inline]
         pub fn serialize<S: Serializer>(f: &[FeeRate], s: S) -> Result<S::Ok, S::Error> {
             s.collect_seq(f.iter().map(|rate| rate.to_sat_per_kwu_floor()))
         }
@@ -236,6 +237,7 @@ pub mod as_sat_per_vb_floor {
 
         use crate::FeeRate;
 
+        #[inline]
         pub fn serialize<S: Serializer>(f: &[FeeRate], s: S) -> Result<S::Ok, S::Error> {
             s.collect_seq(f.iter().map(|rate| rate.to_sat_per_vb_floor()))
         }
@@ -361,6 +363,7 @@ pub mod as_sat_per_vb_ceil {
 
         use crate::FeeRate;
 
+        #[inline]
         pub fn serialize<S: Serializer>(f: &[FeeRate], s: S) -> Result<S::Ok, S::Error> {
             s.collect_seq(f.iter().map(|rate| rate.to_sat_per_vb_ceil()))
         }
@@ -408,10 +411,12 @@ pub mod error {
     pub struct OverflowError;
 
     impl From<Infallible> for OverflowError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for OverflowError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "overflow occurred while deserializing fee rate per virtual byte")
         }
