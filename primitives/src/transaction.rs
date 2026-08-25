@@ -499,13 +499,13 @@ impl encoding::Decoder for TransactionDecoder {
             // Attempt to push to the currently-active decoder and return early on success.
             match &mut self.state {
                 State::Version(decoder) => {
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Version(e)))?.needs_more() {
+                    if decoder.push_bytes(bytes).map_err(Inner::Version).map_err(E)?.needs_more() {
                         // Still more bytes required.
                         return Ok(DecoderStatus::NeedsMore);
                     }
                 }
                 State::Inputs(_, _, decoder) =>
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Inputs(e)))?.needs_more() {
+                    if decoder.push_bytes(bytes).map_err(Inner::Inputs).map_err(E)?.needs_more() {
                         return Ok(DecoderStatus::NeedsMore);
                     },
                 State::SegwitFlag(_) =>
@@ -513,15 +513,15 @@ impl encoding::Decoder for TransactionDecoder {
                         return Ok(DecoderStatus::NeedsMore);
                     },
                 State::Outputs(_, _, _, decoder) =>
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Outputs(e)))?.needs_more() {
+                    if decoder.push_bytes(bytes).map_err(Inner::Outputs).map_err(E)?.needs_more() {
                         return Ok(DecoderStatus::NeedsMore);
                     },
                 State::Witnesses(_, _, _, _, decoder) =>
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Witness(e)))?.needs_more() {
+                    if decoder.push_bytes(bytes).map_err(Inner::Witness).map_err(E)?.needs_more() {
                         return Ok(DecoderStatus::NeedsMore);
                     },
                 State::LockTime(_, _, _, decoder) =>
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::LockTime(e)))?.needs_more() {
+                    if decoder.push_bytes(bytes).map_err(Inner::LockTime).map_err(E)?.needs_more() {
                         return Ok(DecoderStatus::NeedsMore);
                     },
                 State::Done(..) => return Ok(DecoderStatus::Ready),
@@ -531,11 +531,11 @@ impl encoding::Decoder for TransactionDecoder {
             // If the above failed, end the current decoder and go to the next state.
             match mem::replace(&mut self.state, State::Errored) {
                 State::Version(decoder) => {
-                    let version = decoder.end().map_err(|e| E(Inner::Version(e)))?;
+                    let version = decoder.end().map_err(Inner::Version).map_err(E)?;
                     self.state = State::Inputs(version, Attempt::First, VecDecoder::<TxIn>::new());
                 }
                 State::Inputs(version, attempt, decoder) => {
-                    let inputs = decoder.end().map_err(|e| E(Inner::Inputs(e)))?;
+                    let inputs = decoder.end().map_err(Inner::Inputs).map_err(E)?;
 
                     if Attempt::First == attempt {
                         if inputs.is_empty() {
@@ -567,7 +567,7 @@ impl encoding::Decoder for TransactionDecoder {
                     self.state = State::Inputs(version, Attempt::Second, VecDecoder::<TxIn>::new());
                 }
                 State::Outputs(version, inputs, is_segwit, decoder) => {
-                    let outputs = decoder.end().map_err(|e| E(Inner::Outputs(e)))?;
+                    let outputs = decoder.end().map_err(Inner::Outputs).map_err(E)?;
                     // Handle the zero-input case described in the `Transaction` docs.
                     if is_segwit == IsSegwit::Yes && !inputs.is_empty() {
                         self.state = State::Witnesses(
@@ -585,7 +585,7 @@ impl encoding::Decoder for TransactionDecoder {
                 State::Witnesses(version, mut inputs, outputs, iteration, decoder) => {
                     let iteration = iteration.0;
 
-                    inputs[iteration].witness = decoder.end().map_err(|e| E(Inner::Witness(e)))?;
+                    inputs[iteration].witness = decoder.end().map_err(Inner::Witness).map_err(E)?;
                     if iteration < inputs.len() - 1 {
                         self.state = State::Witnesses(
                             version,
@@ -604,7 +604,7 @@ impl encoding::Decoder for TransactionDecoder {
                     }
                 }
                 State::LockTime(version, inputs, outputs, decoder) => {
-                    let lock_time = decoder.end().map_err(|e| E(Inner::LockTime(e)))?;
+                    let lock_time = decoder.end().map_err(Inner::LockTime).map_err(E)?;
                     self.state = State::Done(Transaction { version, lock_time, inputs, outputs });
                     return Ok(DecoderStatus::Ready);
                 }

@@ -440,14 +440,15 @@ impl encoding::Decoder for WitnessDecoder {
             if self
                 .witness_count_decoder
                 .push_bytes(bytes)
-                .map_err(|e| E(Inner::LengthPrefixDecode(e)))?
+                .map_err(Inner::LengthPrefixDecode)
+                .map_err(E)?
                 .needs_more()
             {
                 return Ok(DecoderStatus::NeedsMore);
             }
             // Take ownership of the decoder in order to consume it.
             let decoder = core::mem::take(&mut self.witness_count_decoder);
-            let witness_elements = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
+            let witness_elements = decoder.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
             self.witness_elements = Some(witness_elements);
 
             // Short circuit for zero witness elements.
@@ -502,7 +503,8 @@ impl encoding::Decoder for WitnessDecoder {
                 if self
                     .element_length_decoder
                     .push_bytes(bytes)
-                    .map_err(|e| E(Inner::LengthPrefixDecode(e)))?
+                    .map_err(Inner::LengthPrefixDecode)
+                    .map_err(E)?
                     .needs_more()
                 {
                     return Ok(DecoderStatus::NeedsMore);
@@ -513,7 +515,7 @@ impl encoding::Decoder for WitnessDecoder {
                     &mut self.element_length_decoder,
                     CompactSizeDecoder::new_with_limit(MAX_WITNESS_ITEM_SIZE),
                 );
-                let element_length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
+                let element_length = decoder.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
 
                 // keep the element length prefix in the content area.
                 let encoded_compact_size = crate::compact_size_encode(element_length);
@@ -537,7 +539,9 @@ impl encoding::Decoder for WitnessDecoder {
 
         let Some(witness_elements) = self.witness_elements else {
             // Never read the witness element count.
-            return Err(E(Inner::UnexpectedEof(UnexpectedEofError { missing_elements: 0 })));
+            return Err(UnexpectedEofError { missing_elements: 0 })
+                .map_err(Inner::UnexpectedEof)
+                .map_err(E);
         };
 
         let remaining = witness_elements - self.element_idx;
@@ -566,7 +570,9 @@ impl encoding::Decoder for WitnessDecoder {
 
             Ok(Witness { content: self.content, witness_elements, indices_start })
         } else {
-            Err(E(Inner::UnexpectedEof(UnexpectedEofError { missing_elements: remaining })))
+            Err(UnexpectedEofError { missing_elements: remaining })
+                .map_err(Inner::UnexpectedEof)
+                .map_err(E)
         }
     }
 
