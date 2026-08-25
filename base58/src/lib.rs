@@ -203,6 +203,9 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// the expected length of the decoded payload (excluding the 4 byte checksum). Decoding will fail if
 /// the payload is any other length.
 ///
+/// `N` is compile-time checked to ensure that `N + 4` does not exceed the 128 byte limit, since
+/// such a call could never succeed. Use [`decode_check`] for payloads that large.
+///
 /// # Errors
 ///
 /// * The input contains an invalid base58 character.
@@ -226,6 +229,8 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// ```
 #[allow(clippy::missing_panics_doc)] // payload length is checked before cast unwrap
 pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
+    let () = AssertPayloadFits::<N>::OK;
+
     // 11/15 is just over log_256(58), so the decoded length never exceeds the input length.
     let mut scratch = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
     build_base256(data, &mut scratch)
@@ -284,6 +289,17 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     }
 
     Ok(payload.try_into().expect("payload length checked to equal N"))
+}
+
+/// Compile-time check that `decode_check_to_array` was asked for a payload that can fit in the
+/// fixed-size buffer, along with its 4 byte checksum.
+struct AssertPayloadFits<const N: usize>;
+
+impl<const N: usize> AssertPayloadFits<N> {
+    const OK: () = assert!(
+        N + 4 <= SHORT_OPT_BUFFER_LEN,
+        "decode_check_to_array cannot decode a payload this large, use decode_check instead"
+    );
 }
 
 const SHORT_OPT_BUFFER_LEN: usize = 128;
