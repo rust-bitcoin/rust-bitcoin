@@ -29,11 +29,16 @@ jobs:
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         id: cache-fuzz
         with:
+          # Cargo's install metadata has to be cached along with the binaries it
+          # tracks, otherwise cargo refuses to overwrite the restored binaries.
           path: |
             ~/.cargo/bin
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
             fuzz/target
             target
-          key: cache-fuzz-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+          # cached cargo-rbmt binary goes stale when it is bumped.
+          key: cache-fuzz-${{ hashFiles('**/Cargo.toml','**/Cargo.lock','rbmt-version') }}
       - uses: ./.github/actions/setup-rbmt
       - name: Install cargo-fuzz
         run: cargo install --locked --force --version 0.13.2 cargo-fuzz
