@@ -74,9 +74,11 @@ use internals::array_vec::ArrayVec;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
 
+#[cfg(feature = "alloc")]
+use crate::error::TooShortError;
 use crate::error::{
     Base256Error, DecodeCheckArrayErrorInner, DecodeCheckErrorInner, IncorrectChecksumError,
-    TooShortError, UnexpectedLengthError,
+    UnexpectedLengthError,
 };
 #[cfg(not(feature = "alloc"))]
 use crate::error::{DecodeCheckError, InputTooLongErrorInner, InvalidCharacterError};
@@ -249,31 +251,24 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     let leading_zeros = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).count();
     let decoded_len = leading_zeros + scratch.len();
 
+    if decoded_len != N + 4 {
+        return Err(UnexpectedLengthError { expected: N, actual: decoded_len.saturating_sub(4) })
+            .map_err(DecodeCheckArrayErrorInner::UnexpectedLength)
+            .map_err(DecodeCheckArrayError);
+    }
+
     let mut decoded = [0u8; SHORT_OPT_BUFFER_LEN];
     scratch.as_mut_slice().reverse();
 
     // Copy the scratch into a subslice, erroring if out of range.
-    let write_slice = decoded
+    decoded
         .get_mut(leading_zeros..decoded_len)
-        .ok_or(UnexpectedLengthError { expected: N, actual: data.len() * 11 / 15 })
-        .map_err(DecodeCheckArrayErrorInner::UnexpectedLength)
-        .map_err(DecodeCheckArrayError)?;
-    write_slice.copy_from_slice(&scratch);
+        .expect("decoded_len = N + 4 <= 128 per above and compile-time check")
+        .copy_from_slice(&scratch);
     let decoded = &decoded[..decoded_len];
 
-    let (payload, &data_check) = decoded
-        .split_last_chunk::<4>()
-        .ok_or(TooShortError { length: decoded_len })
-        .map_err(DecodeCheckErrorInner::TooShort)
-        .map_err(DecodeCheckError)
-        .map_err(DecodeCheckArrayErrorInner::Decode)
-        .map_err(DecodeCheckArrayError)?;
-
-    if payload.len() != N {
-        return Err(UnexpectedLengthError { expected: N, actual: payload.len() })
-            .map_err(DecodeCheckArrayErrorInner::UnexpectedLength)
-            .map_err(DecodeCheckArrayError);
-    }
+    let (payload, &data_check) =
+        decoded.split_last_chunk::<4>().expect("decoded length checked as >= 4 above");
 
     let hash_check = *sha256d::Hash::hash(payload).as_byte_array().sub_array::<0, 4>();
     let expected = u32::from_le_bytes(hash_check);
@@ -620,7 +615,7 @@ mod tests {
         use crate::error::DecodeCheckArrayErrorInner;
 
         const STRING_LEN: usize = SHORT_OPT_BUFFER_LEN + 1;
-        const APPROX_LEN: usize = STRING_LEN * 11 / 15;
+        const DECODE_LEN: usize = STRING_LEN - 4;
 
         let encoded = "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"; // 21 byte payload
 
@@ -646,7 +641,7 @@ mod tests {
         assert!(matches!(
             decode_check_to_array::<21>(&long).unwrap_err(),
             DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
-                crate::UnexpectedLengthError { expected: 21, actual: APPROX_LEN }
+                crate::UnexpectedLengthError { expected: 21, actual: DECODE_LEN }
             ))
         ));
     }
