@@ -120,15 +120,11 @@ fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Er
     // Build in base 256
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
-        if usize::from(d58) >= BASE58_DIGITS.len() {
-            return Err(InvalidCharacterError::new(d58)).map_err(Base256Error::InvalidChar);
-        }
-        let mut carry = match BASE58_DIGITS[usize::from(d58)] {
-            Some(d58) => u32::from(d58),
-            None => {
-                return Err(InvalidCharacterError::new(d58)).map_err(Base256Error::InvalidChar);
-            }
-        };
+        let mut carry = BASE58_DIGITS.get(usize::from(d58))
+            .copied()
+            .flatten()
+            .ok_or(Base256Error::InvalidChar(InvalidCharacterError::new(d58)))
+            .map(u32::from)?;
         for d256 in scratch.slice_mut() {
             carry += u32::from(*d256) * 58;
             *d256 = carry as u8; // cast loses data intentionally
