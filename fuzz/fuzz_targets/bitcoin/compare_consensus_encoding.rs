@@ -154,6 +154,16 @@ fn addrv2_payload_should_skip(data: &[u8]) -> bool {
     .unwrap_or(false)
 }
 
+/// Returns `true` if `V1NetworkMessage` carries a command that only the master decodes.
+fn v1_network_message_should_skip(data: &[u8]) -> bool {
+    const MASTER_ONLY: &[&str] = &["sendtxrcncl", "feature"];
+
+    // A V1 header is `magic(4) || command(12) || ...`
+    data.get(4..16)
+        .and_then(|command| std::str::from_utf8(command).ok())
+        .is_some_and(|command| MASTER_ONLY.contains(&command.trim_end_matches('\0')))
+}
+
 #[rustfmt::skip] // rustfmt butchers all of these with inconsistent newlines.
 fn do_test(data: &[u8]) {
     compare_encoding!(data, Block);
@@ -211,7 +221,11 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, p2p::message::NetworkHeader, (bitcoin_0_32::block::Header, u8));
     compare_encoding!(data, p2p::message::Ping, u64);
     compare_encoding!(data, p2p::message::Pong, u64);
-    compare_encoding!(data, p2p::message::V1NetworkMessage, bitcoin_0_32::p2p::message::RawNetworkMessage);
+    // Skip messages unknown to bitcoin 0.32, which never fails them, while master
+    // decoder parses can recognize and reject them.
+    if !v1_network_message_should_skip(data) {
+        compare_encoding!(data, p2p::message::V1NetworkMessage, bitcoin_0_32::p2p::message::RawNetworkMessage);
+    }
     compare_encoding!(data, p2p::message_blockdata::BlockLocator, Vec<bitcoin_0_32::BlockHash>);
     compare_encoding!(data, p2p::message_network::Alert, Vec<u8>);
     compare_encoding!(data, p2p::message_network::UserAgent, String);
