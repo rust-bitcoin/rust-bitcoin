@@ -276,7 +276,37 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_crash() {
+    fn v1_network_message_feature_is_skipped() {
+        let mut a = Vec::new();
+        extend_vec_from_hex(
+            concat!(
+                "1101fc00",                 // magic
+                "666561747572650000000000", // command: "feature"
+                "00000000",                 // payload_len: 0
+                "01000000",                 // checksum
+            ),
+            &mut a,
+        );
+        super::do_test(&a);
+    }
+
+    #[test]
+    fn v1_network_message_sendtxrcncl_is_skipped() {
+        let mut a = Vec::new();
+        extend_vec_from_hex(
+            concat!(
+                "1101fc00",                 // magic
+                "73656e64747872636e636c00", // command: "sendtxrcncl"
+                "00000000",                 // payload_len: 0
+                "01000000",                 // checksum
+            ),
+            &mut a,
+        );
+        super::do_test(&a);
+    }
+
+    #[test]
+    fn arbitrary_short_input_does_not_panic() {
         let mut a = Vec::new();
         extend_vec_from_hex("00003cb1133bb113", &mut a);
         super::do_test(&a);
