@@ -31,7 +31,7 @@ jobs:
         with:
           ref: master
           persist-credentials: false
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/bin/cargo-fuzz
@@ -67,7 +67,7 @@ jobs:
           ref: ${{ needs.setup.outputs.source_sha }}
           path: rust-bitcoin
           persist-credentials: false
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/bin
