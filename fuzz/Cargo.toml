@@ -17,6 +17,7 @@ cargo-fuzz = true
 # choke on it otherwise. See https://github.com/nix-community/crate2nix/issues/373
 bitcoin = { path = "../bitcoin", version = "0.33.0-beta", features = [ "serde", "arbitrary" ] }
 bitcoin_0_32 = { version = "0.32.102", package = "bitcoin", features = [ "encoding", "serde" ] }
+bitcoin_bip158 = { path = "../bip158", package = "bitcoin-bip158" }
 bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
 p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
 
@@ -51,6 +52,20 @@ allowed_duplicates = [
     "secp256k1",
     "secp256k1-sys",
 ]
+
+[[bin]]
+name = "bip158_build_filter"
+path = "fuzz_targets/bip158/build_filter.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bip158_parse_filter"
+path = "fuzz_targets/bip158/parse_filter.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_arbitrary_block"
