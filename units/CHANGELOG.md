@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-20
+
+* Rename locktime height accessors and query methods [#6689](https://github.com/rust-bitcoin/rust-bitcoin/pull/6689)
+* Implement `Neg` for `Amount` and `NumOpResult` [#6710](https://github.com/rust-bitcoin/rust-bitcoin/pull/6710)
+* Add `Div` and `DivAssign` for `NonZero` to `Amount` types [#6676](https://github.com/rust-bitcoin/rust-bitcoin/pull/6676)
+* Add support for satisfaction of parent/child transactions [#6649](https://github.com/rust-bitcoin/rust-bitcoin/pull/6649)
+* Flatten error constructors [#6694](https://github.com/rust-bitcoin/rust-bitcoin/pull/6694)
+* Add `Weight::to_vb_*` functions, deprecating `to_vbytes_*` [#6678](https://github.com/rust-bitcoin/rust-bitcoin/pull/6678)
+* Implement `serde` traits for absolute locktime types [#6633](https://github.com/rust-bitcoin/rust-bitcoin/pull/6633)
+* Add `RemAssign` to `NumOpResult<Amount/SignedAmount>` [#6669](https://github.com/rust-bitcoin/rust-bitcoin/pull/6669)
+* Add `CompactTarget::to_consensus_u32` [#6683](https://github.com/rust-bitcoin/rust-bitcoin/pull/6683)
+* Remove `From<u16>` from `NumberOfBlocks` [#6661](https://github.com/rust-bitcoin/rust-bitcoin/pull/6661)
+* Make `Sum` impl generic for `Signed/Amount -> NumOpResult` [#6648](https://github.com/rust-bitcoin/rust-bitcoin/pull/6648)
+* Add `to_target` conversion to `CompactTarget` [#6650](https://github.com/rust-bitcoin/rust-bitcoin/pull/6650)
+* Make `Sequence` inner field private and remove default [#6645](https://github.com/rust-bitcoin/rust-bitcoin/pull/6645)
+* Make `Weight % Weight` return `Weight` [#6652](https://github.com/rust-bitcoin/rust-bitcoin/pull/6652)
+* Fix off-by-one error in satisfied by height [#6582](https://github.com/rust-bitcoin/rust-bitcoin/pull/6582)
+* Restore the +1 in relative locktime satisfied by height [#6640](https://github.com/rust-bitcoin/rust-bitcoin/pull/6640)
+* Fix off-by-one in `MedianTimePast::is_satisfied_by` [#6384](https://github.com/rust-bitcoin/rust-bitcoin/pull/6384)
+
 ## [0.5.0] - 2026-06-09
 
 * Remove `_unchecked` hex parsing function [#6292](https://github.com/rust-bitcoin/rust-bitcoin/pull/6292)
