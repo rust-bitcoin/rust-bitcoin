@@ -880,7 +880,15 @@ impl Address {
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
     /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
+    ///
+    /// # Errors
+    ///
+    /// - [`FromScriptError::UnrecognizedScript`] if the given script is not p2pkh, p2sh, or
+    ///   SegWit program.
+    /// - [`FromScriptError::WitnessProgram`] if the given script has a valid SegWit version, but
+    ///   is not a valid witness program. See [`WitnessProgram::new`] for more details.
     #[cfg(feature = "alloc")]
+    #[allow(clippy::missing_panics_doc)] // Slices have known lengths before array casts
     pub fn from_script(
         script: &ScriptPubKey,
         params: impl Into<AddressParams>,
