@@ -42,10 +42,10 @@
 
 use addresses::witness_program::WitnessProgram;
 use crypto::key::PubkeyHash;
+use network::Network;
 use primitives::script::{ScriptHash, ScriptPubKey};
 use primitives::witness_version::WitnessVersion;
 
-use crate::network::Params;
 use crate::script::ScriptExt as _;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -72,9 +72,9 @@ crate::internal_macros::define_extension_trait! {
         /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
         fn from_script(
             script: &ScriptPubKey,
-            params: impl AsRef<Params>,
+            network: impl Into<Network>,
         ) -> Result<Address, FromScriptError> {
-            let network = params.as_ref().network;
+            let network = network.into();
             if script.is_p2pkh() {
                 let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
                 let hash = PubkeyHash::from_byte_array(bytes);
@@ -118,7 +118,7 @@ mod tests {
 
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
-    use crate::network::{params, NetworkKind, TestnetVersion};
+    use crate::network::{NetworkKind, TestnetVersion};
     use crate::script::{RedeemScriptBuf, ScriptPubKeyBuf, WitnessScriptBuf};
     use crate::{FullPublicKey, LegacyPublicKey, Network, XOnlyPublicKey};
 
@@ -390,7 +390,7 @@ mod tests {
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
         assert_eq!(
-            Address::from_script(&invalid_segwitv0_script, &params::MAINNET),
+            Address::from_script(&invalid_segwitv0_script, Network::Bitcoin),
             Err(FromScriptError::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
         );
     }
