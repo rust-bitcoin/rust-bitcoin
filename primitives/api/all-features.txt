@@ -2742,6 +2742,8 @@ impl core::ops::index::IndexMut<core::ops::range::RangeToInclusive<usize>> for b
   pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: core::ops::range::RangeToInclusive<usize>) -> &mut Self::Output [impl: impl core::ops::index::IndexMut<core::ops::range::RangeToInclusive<usize>> for bitcoin_primitives::script::PushBytes]
 impl core::ops::index::IndexMut<usize> for bitcoin_primitives::script::PushBytes
   pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: usize) -> &mut Self::Output [impl: impl core::ops::index::IndexMut<usize> for bitcoin_primitives::script::PushBytes]
+impl<'a> arbitrary::Arbitrary<'a> for &'a bitcoin_primitives::script::PushBytes
+  pub fn &'a bitcoin_primitives::script::PushBytes::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for &'a bitcoin_primitives::script::PushBytes]
 impl<'a> core::convert::From<&'a [u8; 0]> for &'a bitcoin_primitives::script::PushBytes
   pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 0]) -> Self [impl: impl<'a> core::convert::From<&'a [u8; 0]> for &'a bitcoin_primitives::script::PushBytes]
 impl<'a> core::convert::From<&'a [u8; 10]> for &'a bitcoin_primitives::script::PushBytes
@@ -3289,6 +3291,8 @@ impl core::ops::deref::Deref for bitcoin_primitives::script::PushBytesBuf
   pub fn bitcoin_primitives::script::PushBytesBuf::deref(&self) -> &Self::Target [impl: impl core::ops::deref::Deref for bitcoin_primitives::script::PushBytesBuf]
 impl core::ops::deref::DerefMut for bitcoin_primitives::script::PushBytesBuf
   pub fn bitcoin_primitives::script::PushBytesBuf::deref_mut(&mut self) -> &mut Self::Target [impl: impl core::ops::deref::DerefMut for bitcoin_primitives::script::PushBytesBuf]
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::script::PushBytesBuf
+  pub fn bitcoin_primitives::script::PushBytesBuf::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self> [impl: impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::script::PushBytesBuf]
 impl<'a> core::convert::From<&'a [u8; 0]> for bitcoin_primitives::script::PushBytesBuf
   pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 0]) -> Self [impl: impl<'a> core::convert::From<&'a [u8; 0]> for bitcoin_primitives::script::PushBytesBuf]
 impl<'a> core::convert::From<&'a [u8; 10]> for bitcoin_primitives::script::PushBytesBuf

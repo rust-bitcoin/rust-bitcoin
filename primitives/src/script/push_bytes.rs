@@ -10,6 +10,9 @@ use core::borrow::{Borrow, BorrowMut};
 use core::convert::Infallible;
 use core::ops::{Deref, DerefMut};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 // This is not the usual re-export, `primitive` here is a code audit thing.
@@ -491,6 +494,22 @@ impl std::error::Error for PushBytesError {
         #[cfg(not(any(target_pointer_width = "16", target_pointer_width = "32")))]
         let Self { len: _ } = self;
         None
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for &'a PushBytes {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        <&'a [u8]>::arbitrary(u)?.try_into().map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PushBytesBuf {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        <&PushBytes>::arbitrary(u).map(PushBytes::to_owned)
     }
 }
 
