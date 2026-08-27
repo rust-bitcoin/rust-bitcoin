@@ -256,7 +256,7 @@ fuzz_target!(|data| {
     do_test(data);
 });
 
-#[cfg(all(test, fuzzing))]
+#[cfg(test)]
 mod tests {
     fn extend_vec_from_hex(hex: &str, out: &mut Vec<u8>) {
         let mut b = 0;
