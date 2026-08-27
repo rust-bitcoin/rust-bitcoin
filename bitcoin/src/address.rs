@@ -43,10 +43,9 @@
 use addresses::witness_program::WitnessProgram;
 use crypto::key::PubkeyHash;
 use network::Network;
+use primitives::opcodes::Opcode;
 use primitives::script::{ScriptHash, ScriptPubKey};
 use primitives::witness_version::WitnessVersion;
-
-use crate::script::ScriptExt as _;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -84,7 +83,13 @@ crate::internal_macros::define_extension_trait! {
                 let hash = ScriptHash::from_byte_array(bytes);
                 Ok(Self::p2sh_from_hash(hash, network))
             } else if script.is_witness_program() {
-                let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
+                // script.first_opcode() is from ScriptExt. The logic is inlined here.
+                let opcode = script
+                    .as_bytes()
+                    .first()
+                    .copied()
+                    .map(Opcode::from_u8)
+                    .expect("is_witness_program guarantees len > 4");
 
                 let version = WitnessVersion::try_from(opcode)
                     .map_err(FromScriptError::WitnessVersion)?;
