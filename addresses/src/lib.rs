@@ -856,6 +856,40 @@ impl Address {
     ///
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
+    /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
+    #[cfg(feature = "alloc")]
+    pub fn from_script(
+        script: &ScriptPubKey,
+        network: impl Into<Network>,
+    ) -> Result<Self, FromScriptError> {
+        let network = network.into();
+        if script.is_p2pkh() {
+            let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
+            let hash = PubkeyHash::from_byte_array(bytes);
+            Ok(Self::p2pkh(hash, network))
+        } else if script.is_p2sh() {
+            let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
+            let hash = ScriptHash::from_byte_array(bytes);
+            Ok(Self::p2sh_from_hash(hash, network))
+        } else if script.is_witness_program() {
+            // script.first_opcode() is from ScriptExt. The logic is inlined here.
+            let opcode = script
+                .as_bytes()
+                .first()
+                .copied()
+                .map(Opcode::from_u8)
+                .expect("is_witness_program guarantees len > 4");
+
+            let version = WitnessVersion::try_from(opcode)
+                .map_err(FromScriptError::WitnessVersion)?;
+            let program = WitnessProgram::new(version, &script.as_bytes()[2..])
+                .map_err(FromScriptError::WitnessProgram)?;
+            Ok(Self::from_witness_program(program, network))
+        } else {
+            Err(FromScriptError::UnrecognizedScript)
+        }
+    }
+
     /// Generates a script pubkey spending to this address.
     #[cfg(feature = "alloc")]
     pub fn script_pubkey(&self) -> ScriptPubKeyBuf {
