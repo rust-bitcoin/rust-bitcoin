@@ -241,7 +241,7 @@ impl_fmt_traits_for_u32_wrapper!(Target);
 /// This is used to encode a target into the block header. Satoshi made this part of consensus code
 /// in the original version of Bitcoin, likely copying an idea from OpenSSL.
 ///
-/// OpenSSL's bignum (BN) type has an encoding, which is even called "compact" as in bitcoin, which
+/// OpenSSL's bignum (BN) type has an encoding, which is even called "compact" as in Bitcoin, which
 /// is exactly this format.
 ///
 /// # Note on order/equality

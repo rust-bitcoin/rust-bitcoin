@@ -18,7 +18,7 @@ use crate::script::{PushBytes, PushBytesBuf, WitnessScript, MAX_WITNESS_SCRIPT_S
 
 /// SegWit (256-bit) version of a Bitcoin Script bytecode hash.
 ///
-/// Note: there is another "script hash" object in bitcoin ecosystem (Electrum protocol) that
+/// Note: there is another "script hash" object in the Bitcoin ecosystem (Electrum protocol) that
 /// looks similar to this one also being SHA256, however, they hash semantically different
 /// scripts and have reversed representations, so this type cannot be used for both.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

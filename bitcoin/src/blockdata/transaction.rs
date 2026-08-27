@@ -1183,7 +1183,7 @@ mod tests {
         // will also fail. But these will show you where the failure is so I'll leave them in.
         assert_eq!(realtx.version, Version::ONE);
         assert_eq!(realtx.inputs.len(), 1);
-        // In particular this one is easy to get backward -- in bitcoin hashes are encoded
+        // In particular this one is easy to get backward -- in Bitcoin hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
         assert_eq!(
             format!("{:x}", realtx.inputs[0].previous_output.txid),
@@ -1223,7 +1223,7 @@ mod tests {
         // will also fail. But these will show you where the failure is so I'll leave them in.
         assert_eq!(realtx.version, Version::TWO);
         assert_eq!(realtx.inputs.len(), 1);
-        // In particular this one is easy to get backward -- in bitcoin hashes are encoded
+        // In particular this one is easy to get backward -- in Bitcoin hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
         assert_eq!(
             format!("{:x}", realtx.inputs[0].previous_output.txid),

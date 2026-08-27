@@ -339,7 +339,7 @@ impl encoding::Decode for ServiceFlags {
 pub struct Magic([u8; 4]);
 
 impl Magic {
-    /// Bitcoin mainnet network magic bytes.
+    /// Bitcoin Mainnet network magic bytes.
     pub const BITCOIN: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
     /// Bitcoin testnet3 network magic bytes.
     pub const TESTNET3: Self = Self([0x0B, 0x11, 0x09, 0x07]);

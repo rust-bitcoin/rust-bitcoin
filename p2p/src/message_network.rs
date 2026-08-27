@@ -185,7 +185,7 @@ crate::decoder_newtype! {
     }
 }
 
-/// A bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
+/// A Bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
 /// connection between two peers is established. It is intended to advertise client software in a
 /// well-defined format.
 ///

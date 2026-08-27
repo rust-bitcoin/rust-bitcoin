@@ -18,7 +18,7 @@ use crate::script::{PushBytes, PushBytesBuf, Script, ScriptHashableTag, MAX_REDE
 
 /// A 160-bit hash of Bitcoin Script bytecode.
 ///
-/// Note: there is another "script hash" object in bitcoin ecosystem (Electrum protocol) that
+/// Note: there is another "script hash" object in the Bitcoin ecosystem (Electrum protocol) that
 /// uses 256-bit hash and hashes a semantically different script. Thus, this type cannot
 /// represent it.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
