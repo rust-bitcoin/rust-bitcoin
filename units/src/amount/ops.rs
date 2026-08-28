@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides a monadic type returned by mathematical operations ([`core::ops`]).
+//! Implements mathematical operators from [`core::ops`] and basic conversions.
 
 use core::num::{NonZeroI64, NonZeroU64};
 use core::ops;
