@@ -1,5 +1,7 @@
 //! Shared utilities for fuzz targets.
 
+pub mod mutate;
+
 use std::fmt;
 use std::ops::Deref;
 
