@@ -403,7 +403,7 @@ impl XOnlyPublicKey {
     /// Serializes the x-only public key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
     pub fn serialize(&self) -> ([u8; constants::SCHNORR_PUBLIC_KEY_SIZE], Parity) {
-        (self.to_inner().serialize(), self.parity())
+        (self.to_inner().to_byte_array(), self.parity())
     }
 
     /// Converts this x-only public key to a full public key.
@@ -2475,7 +2475,7 @@ mod tests {
     fn keypair_secp_roundtrip() {
         let bitcoin_key = Keypair::generate();
         let secp_key =
-            secp256k1::Keypair::from_seckey_byte_array(bitcoin_key.to_secret_bytes()).unwrap();
+            secp256k1::Keypair::from_secret_bytes(bitcoin_key.to_secret_bytes()).unwrap();
         assert_eq!(Keypair::from_secp(secp_key), bitcoin_key);
     }
 

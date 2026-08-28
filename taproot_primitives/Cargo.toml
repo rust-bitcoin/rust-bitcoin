@@ -27,7 +27,7 @@ hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.0.0", de
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
 
 arbitrary = { version = "1.4.1", optional = true }
-secp256k1 = { version = "0.32.0-beta.2", default-features = false }
+secp256k1 = { version = "0.33.0", default-features = false }
 serde = { version = "1.0.195", default-features = false, features = [ "derive" ], optional = true }
 
 [dev-dependencies]
