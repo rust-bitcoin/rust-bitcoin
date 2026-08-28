@@ -49,15 +49,14 @@ mod encapsulate {
     /// }
     /// # }
     /// ```
-    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct SignedAmount(i64);
+    pub struct SignedAmount(Repr);
 
     impl SignedAmount {
         /// The maximum value of an amount.
-        pub const MAX: Self = Self(21_000_000 * 100_000_000);
+        pub const MAX: Self = unsafe { Self::from_sat_unchecked(21_000_000 * 100_000_000) };
 
         /// The minimum value of an amount.
-        pub const MIN: Self = Self(-21_000_000 * 100_000_000);
+        pub const MIN: Self = unsafe { Self::from_sat_unchecked(-21_000_000 * 100_000_000) };
 
         /// Gets the number of satoshis in this [`SignedAmount`].
         ///
@@ -68,7 +67,7 @@ mod encapsulate {
         /// assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
         /// ```
         #[inline]
-        pub const fn to_sat(self) -> i64 { self.0 }
+        pub const fn to_sat(self) -> i64 { unsafe { core::mem::transmute::<Repr, i64>(self.0) } }
 
         /// Constructs a new [`SignedAmount`] from the given number of satoshis.
         ///
@@ -92,9 +91,67 @@ mod encapsulate {
             } else if satoshi > Self::MAX_MONEY.to_sat() {
                 Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
             } else {
-                Ok(Self(satoshi))
+                Ok(unsafe { Self::from_sat_unchecked(satoshi) })
             }
         }
+
+        const unsafe fn from_sat_unchecked(satoshi: i64) -> Self {
+            Self(core::mem::transmute::<i64, Repr>(satoshi))
+        }
+    }
+
+    impl Copy for SignedAmount {}
+
+    // Ensures the compiler doesn't call into .0.clone() which copies field-by-field but forces a dumb copy
+    // Explicit on purpose
+    #[allow(clippy::expl_impl_clone_on_copy)]
+    impl Clone for SignedAmount {
+        fn clone(&self) -> SignedAmount {
+            *self
+        }
+    }
+
+    #[repr(C)]
+    #[repr(align(8))]
+    #[derive(Copy, Clone)]
+    struct Repr {
+        #[cfg(target_endian = "big")]
+        _first: First,
+        #[cfg(target_endian = "big")]
+        _second: Second,
+        _remaining: [u8; 6],
+        #[cfg(target_endian = "little")]
+        _second: Second,
+        #[cfg(target_endian = "little")]
+        _first: First,
+    }
+
+    #[repr(u8)]
+    #[derive(Copy, Clone)]
+    enum First {
+        _Zero = 0,
+        _Max = 0xff
+    }
+
+    #[repr(u8)]
+    #[derive(Copy, Clone)]
+    enum Second {
+        _0 = 0,
+        _1 = 1,
+        _2 = 2,
+        _3 = 3,
+        _4 = 4,
+        _5 = 5,
+        _6 = 6,
+        _7 = 7,
+        _F8 = 0xF8,
+        _F9 = 0xF9,
+        _FA = 0xFA,
+        _FB = 0xFB,
+        _FC = 0xFC,
+        _FD = 0xFD,
+        _FE = 0xFE,
+        _FF = 0xFF,
     }
 }
 #[doc(inline)]
@@ -515,6 +572,32 @@ impl SignedAmount {
             Ok(Amount::from_sat(self.to_sat() as u64)
                 .expect("a positive signed amount is always valid"))
         }
+    }
+}
+
+impl Eq for SignedAmount {}
+
+impl PartialEq for SignedAmount {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_sat() == other.to_sat()
+    }
+}
+
+impl Ord for SignedAmount {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        self.to_sat().cmp(&other.to_sat())
+    }
+}
+
+impl PartialOrd for SignedAmount {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl core::hash::Hash for SignedAmount {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.to_sat().hash(state);
     }
 }
 
