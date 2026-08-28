@@ -113,10 +113,20 @@ crate::internal_macros::impl_op_for_references! {
 
         fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathOp::Rem) }
     }
+    impl ops::Rem<NonZeroU64> for Amount {
+        type Output = Amount;
+
+        fn rem(self, modulus: NonZeroU64) -> Self::Output { Self::from_sat(self.to_sat() % modulus.get()).expect("construction from remainder cannot fail") }
+    }
     impl ops::Rem<u64> for NumOpResult<Amount> {
         type Output = NumOpResult<Amount>;
 
         fn rem(self, modulus: u64) -> Self::Output { self.and_then(|lhs| lhs % modulus) }
+    }
+    impl ops::Rem<NonZeroU64> for NumOpResult<Amount> {
+        type Output = NumOpResult<Amount>;
+
+        fn rem(self, modulus: NonZeroU64) -> Self::Output { self.map(|lhs| lhs % modulus) }
     }
 
     impl ops::Add<SignedAmount> for SignedAmount {
@@ -199,10 +209,20 @@ crate::internal_macros::impl_op_for_references! {
 
         fn rem(self, modulus: i64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathOp::Rem) }
     }
+    impl ops::Rem<NonZeroI64> for SignedAmount {
+        type Output = SignedAmount;
+
+        fn rem(self, modulus: NonZeroI64) -> Self::Output { SignedAmount::from_sat(self.to_sat() % modulus.get()).expect("construction from reamainder cannot fail") }
+    }
     impl ops::Rem<i64> for NumOpResult<SignedAmount> {
         type Output = NumOpResult<SignedAmount>;
 
         fn rem(self, modulus: i64) -> Self::Output { self.and_then(|lhs| lhs % modulus) }
+    }
+    impl ops::Rem<NonZeroI64> for NumOpResult<SignedAmount> {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn rem(self, modulus: NonZeroI64) -> Self::Output { self.map(|lhs| lhs % modulus) }
     }
 }
 
@@ -216,6 +236,10 @@ impl_div_assign!(NumOpResult<Amount>, NonZeroU64);
 impl_div_assign!(NumOpResult<SignedAmount>, NonZeroI64);
 impl_rem_assign!(NumOpResult<Amount>, u64);
 impl_rem_assign!(NumOpResult<SignedAmount>, i64);
+impl_rem_assign!(Amount, NonZeroU64);
+impl_rem_assign!(SignedAmount, NonZeroI64);
+impl_rem_assign!(NumOpResult<Amount>, NonZeroU64);
+impl_rem_assign!(NumOpResult<SignedAmount>, NonZeroI64);
 
 impl_add_assign_for_results!(Amount);
 impl_add_assign_for_results!(SignedAmount);
@@ -454,6 +478,21 @@ mod tests {
     }
 
     #[test]
+    fn test_rem_assign_nz_amount() {
+        fn nz(x: u64) -> NonZeroU64 { NonZeroU64::new(x).unwrap() }
+
+        let mut res = Amount::from_sat_u32(100);
+        res %= nz(30_u64);
+        assert_eq!(res, Amount::from_sat_u32(10));
+
+        res %= &nz(4_u64);
+        assert_eq!(res, Amount::from_sat_u32(2));
+
+        res %= nz(5_u64);
+        assert_eq!(res, Amount::from_sat_u32(2));
+    }
+
+    #[test]
     fn test_rem_assign_signed_amount() {
         let ssat = SignedAmount::from_sat_i32(-50);
 
@@ -469,6 +508,21 @@ mod tests {
 
         res %= 5_i64;
         assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+    }
+
+    #[test]
+    fn test_rem_assign_nz_signed_amount() {
+        fn nz(x: i64) -> NonZeroI64 { NonZeroI64::new(x).unwrap() }
+
+        let mut res = SignedAmount::from_sat_i32(-100);
+        res %= nz(30_i64);
+        assert_eq!(res, SignedAmount::from_sat_i32(-10));
+
+        res %= &nz(4_i64);
+        assert_eq!(res, SignedAmount::from_sat_i32(-2));
+
+        res %= nz(5_i64);
+        assert_eq!(res, SignedAmount::from_sat_i32(-2));
     }
 
     #[test]
