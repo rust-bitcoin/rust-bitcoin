@@ -545,6 +545,71 @@ impl Amount {
         let msats = self.to_sat() * 1_000;
         NumOpResult::Valid(Weight::from_wu(msats.div_ceil(rate)))
     }
+
+    /// Efficiently sums the amounts.
+    ///
+    /// This function is a logical equivalent to iterating and summing the amounts, however it is
+    /// optimized for summing large slices of amounts where overflow is considered unlikely. The
+    /// exact optimizations are unspecified but they take advantage of the 21M bound.
+    ///
+    /// For performance, this function may use SIMD or similar techniques which may cause it to do
+    /// potentially more work in case of overflow than what a simple loop with `checked_add` would
+    /// do. This should be considered if DoS is a concern, however it's not expected that the
+    /// additional work will be larger than addition of a reasonably small multiple of 8784
+    /// elements.
+    ///
+    /// Also note that because this method is trying to optimize for SIMD, among other things,
+    /// passing only a handful of amounts is expected to be **slower** than just adding them up
+    /// naively.
+    ///
+    /// Turning on AVX2 target feature or a similar one may produce significantly better assembly
+    /// but we cannot guarantee any particular optimization. The general idea behind this is mainly
+    /// avoiding unneeded overflow checks and we mostly let the compiler handle the rest.
+    #[inline]
+    pub fn sum(amounts: &[Self]) -> NumOpResult<Self> {
+        use crate::result::OptionExt;
+
+        Self::sum_inner(amounts).valid_or_error(MathOp::Add)
+    }
+
+    /// Implements `sum` - see its doc for details.
+    ///
+    /// Convenience function to be able to use the ? operator, since we don't need to keep math
+    /// operation around - we know it's addition.
+    #[inline]
+    fn sum_inner(amounts: &[Self]) -> Option<Self> {
+        use internals::slice::SliceExt;
+
+        let mut sum = Self::ZERO;
+        // u64::MAX / 21M btc gives us 8784, so summing up that many items is guaranteed not to
+        // overflow. By adding up chunks of that many amounts we can process each without overflow
+        // checks and only check overflows after each chunk. By skipping overflow checks, the
+        // compiler can auto-vectorize this. This number also happens to be divisible by 16 (and
+        // 48), so the compiler will nicely take advantage of it.
+        let (chunks, remaining) = amounts.bitcoin_as_chunks::<8784>();
+        // Notably add_unchecked is not faster - I already checked, it produces same assembly. Same
+        // with assert_unchecked.
+        for partial in chunks.iter().map(|chunk| chunk.iter().copied().map(Self::to_sat).sum::<u64>()) {
+            sum = sum.try_add_sat(partial)?;
+        }
+
+        // The remainder is guaranteed to be even smaller than 8784, so it can be also summed
+        // efficiently. The compiler will only have to account for it no longer being guaranteed to
+        // be divisible by 16.
+        sum = sum.try_add_sat(remaining.iter().copied().map(Amount::to_sat).sum::<u64>())?;
+
+        Some(sum)
+    }
+
+    /// Helper that more efficiently adds a potentially-out-of-range number of sats.
+    ///
+    /// Branching on overflow check is likely a bit more efficient than a range check and we only
+    /// care about the number becoming out-of-range. This method thus should be more efficient than
+    /// converting the right hand side and then doing addition.
+    #[inline(always)]
+    fn try_add_sat(self, sats: u64) -> Option<Self> {
+        self.to_sat().checked_add(sats).and_then(|sats| Self::from_sat(sats).ok())
+    }
 }
 
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Amount, to_sat);
@@ -651,5 +716,30 @@ impl<'a> Arbitrary<'a> for Amount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let sats = u.int_in_range(Self::MIN.to_sat()..=Self::MAX.to_sat())?;
         Ok(Self::from_sat(sats).expect("range is valid"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Amount;
+
+    #[test]
+    fn sum() {
+        let short = [Amount::from_sat_u32(42); 1000];
+        assert_eq!(Amount::sum(&short).unwrap(), Amount::from_sat_u32(42 * 1000));
+        let exact = [Amount::from_sat_u32(42); 8784];
+        assert_eq!(Amount::sum(&exact).unwrap(), Amount::from_sat_u32(42 * 8784));
+        let longer = [Amount::from_sat_u32(42); 8784 + 30];
+        assert_eq!(Amount::sum(&longer).unwrap(), Amount::from_sat_u32(42 * (8784 + 30)));
+        let very_long = [Amount::from_sat_u32(42); 8784 * 5 + 30];
+        assert_eq!(Amount::sum(&very_long).unwrap(), Amount::from_sat_u32(42 * (8784 * 5 + 30)));
+        let overflowing_short = [Amount::MAX; 2];
+        assert!(Amount::sum(&overflowing_short).is_error());
+        let overflowing_exact = [Amount::MAX; 8784];
+        assert!(Amount::sum(&overflowing_exact).is_error());
+        let overflowing_longer = [Amount::MAX; 8784 + 30];
+        assert!(Amount::sum(&overflowing_longer).is_error());
+        let overflowing_very_long = [Amount::MAX; 8784 * 5 + 30];
+        assert!(Amount::sum(&overflowing_very_long).is_error());
     }
 }
