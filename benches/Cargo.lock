@@ -37,7 +37,7 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "base58ck"
-version = "0.3.0"
+version = "0.5.0"
 dependencies = [
  "bitcoin-internals",
  "bitcoin_hashes",
@@ -57,21 +57,40 @@ checksum = "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d"
 
 [[package]]
 name = "bitcoin"
-version = "0.33.0-beta.0"
+version = "0.33.0-beta"
 dependencies = [
  "base58ck",
  "base64",
  "bech32",
+ "bitcoin-addresses",
  "bitcoin-consensus-encoding",
+ "bitcoin-crypto",
  "bitcoin-internals",
  "bitcoin-io",
+ "bitcoin-key-expression",
  "bitcoin-network-kind",
  "bitcoin-primitives",
+ "bitcoin-taproot-primitives",
  "bitcoin-units",
  "bitcoin_hashes",
  "bitcoinconsensus",
- "hex-conservative 0.3.0",
+ "hex-conservative",
  "secp256k1",
+]
+
+[[package]]
+name = "bitcoin-addresses"
+version = "0.0.0"
+dependencies = [
+ "base58ck",
+ "bech32",
+ "bitcoin-crypto",
+ "bitcoin-internals",
+ "bitcoin-network-kind",
+ "bitcoin-primitives",
+ "bitcoin-taproot-primitives",
+ "bitcoin_hashes",
+ "serde",
 ]
 
 [[package]]
@@ -83,26 +102,39 @@ dependencies = [
  "bitcoin_hashes",
  "chacha20-poly1305",
  "criterion",
- "hex_lit",
+ "hex-conservative",
 ]
 
 [[package]]
 name = "bitcoin-consensus-encoding"
-version = "1.0.0-rc.3"
+version = "1.2.0"
 dependencies = [
  "bitcoin-internals",
+ "hex-conservative",
+ "serde",
+]
+
+[[package]]
+name = "bitcoin-crypto"
+version = "0.3.0"
+dependencies = [
+ "base58ck",
+ "bitcoin-internals",
+ "bitcoin-network-kind",
+ "bitcoin-primitives",
+ "bitcoin_hashes",
+ "hex-conservative",
+ "secp256k1",
+ "serde",
 ]
 
 [[package]]
 name = "bitcoin-internals"
-version = "0.5.0"
-dependencies = [
- "hex-conservative 0.3.0",
-]
+version = "0.6.0"
 
 [[package]]
 name = "bitcoin-io"
-version = "0.4.0-rc.0"
+version = "0.6.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
@@ -110,8 +142,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitcoin-network-kind"
+name = "bitcoin-key-expression"
 version = "0.1.0"
+dependencies = [
+ "base58ck",
+ "bitcoin-crypto",
+ "bitcoin-internals",
+ "bitcoin-network-kind",
+ "bitcoin_hashes",
+ "hex-conservative",
+ "secp256k1",
+ "serde",
+]
+
+[[package]]
+name = "bitcoin-network-kind"
+version = "1.0.0"
 dependencies = [
  "bitcoin-internals",
  "serde",
@@ -119,19 +165,30 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-primitives"
-version = "1.0.0-rc.2"
+version = "0.103.1"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-units",
  "bitcoin_hashes",
- "hex-conservative 0.3.0",
- "hex-conservative 1.0.1",
+ "hex-conservative",
+]
+
+[[package]]
+name = "bitcoin-taproot-primitives"
+version = "0.1.0"
+dependencies = [
+ "bitcoin-consensus-encoding",
+ "bitcoin-crypto",
+ "bitcoin-internals",
+ "bitcoin_hashes",
+ "secp256k1",
+ "serde",
 ]
 
 [[package]]
 name = "bitcoin-units"
-version = "1.0.0-rc.4"
+version = "0.5.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
@@ -140,11 +197,11 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.19.0"
+version = "1.2.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
- "hex-conservative 0.3.0",
+ "hex-conservative",
 ]
 
 [[package]]
@@ -186,7 +243,7 @@ checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
 
 [[package]]
 name = "chacha20-poly1305"
-version = "0.1.2"
+version = "0.2.1"
 
 [[package]]
 name = "ciborium"
@@ -340,24 +397,12 @@ dependencies = [
 
 [[package]]
 name = "hex-conservative"
-version = "0.3.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4afe881d0527571892c4034822e59bb10c6c991cce6abe8199b6f5cf10766f55"
+checksum = "35431185f361ccf3ffc58254628af5f1f5d5f28531da2e02e5d6c82bbc282a10"
 dependencies = [
  "arrayvec",
 ]
-
-[[package]]
-name = "hex-conservative"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "366fa3443ac84474447710ec17bb00b05dfbd096137817981e86f992f21a2793"
-
-[[package]]
-name = "hex_lit"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3011d1213f159867b13cfd6ac92d2cd5f1345762c63be3554e84092d85a50bbd"
 
 [[package]]
 name = "itertools"
@@ -585,9 +630,9 @@ dependencies = [
 
 [[package]]
 name = "secp256k1"
-version = "0.32.0-beta.2"
+version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c5fdc7d6e800869d3fd60ff857c479bf0a83ea7bf44b389e64461e844204994"
+checksum = "519be132ce0792413872b1f2606f0fd8cbcf305c7120127704c60085c9bd4d63"
 dependencies = [
  "rand",
  "secp256k1-sys",
@@ -595,9 +640,9 @@ dependencies = [
 
 [[package]]
 name = "secp256k1-sys"
-version = "0.12.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d3be00697c88c00fe102af8dc316038cc2062eab8da646e7463f4c0e70ca9fd"
+checksum = "0dba61e98ffcb8aaa452eb2be632df2f54a48f72a8facf8d275ec63610c55b7d"
 dependencies = [
  "cc",
 ]
