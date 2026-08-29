@@ -75,10 +75,9 @@ refresh() {
   done
 
   # Copy without replacing the crashes into the fuzz_crashes store.
-  for dir in "$crashes"/crash-*/; do
+  for dir in "$crashes"/*/; do
     [ -d "$dir" ] || continue
     name=$(basename "$dir")
-    name=${name#crash-}
     mkdir -p "fuzz_crashes/$name"
     find "$dir" -maxdepth 1 -type f -exec cp -n -t "fuzz_crashes/$name/" {} +
   done
