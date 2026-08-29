@@ -313,10 +313,13 @@ impl HeaderAndShortIds {
             return Err(Error::UnknownVersion);
         }
 
+        let short_id_capacity =
+            block.transactions().len().checked_sub(prefill.len()).ok_or(Error::InvalidPrefill)?;
+
         let siphash_keys = ShortId::calculate_siphash_keys(block.header(), nonce);
 
         let mut prefilled = Vec::with_capacity(prefill.len() + 1); // +1 for coinbase tx
-        let mut short_ids = Vec::with_capacity(block.transactions().len() - prefill.len());
+        let mut short_ids = Vec::with_capacity(short_id_capacity);
         let mut last_prefill = 0;
         for (idx, tx) in block.transactions().iter().enumerate() {
             // Check if we should prefill this tx.
@@ -890,6 +893,18 @@ mod test {
         let compact = HeaderAndShortIds::from_block(&block, 42, 2, &[2]).unwrap();
         let idxs = compact.prefilled_txs.iter().map(|t| t.idx).collect::<Vec<_>>();
         assert_eq!(idxs, [0, 1]);
+    }
+
+    #[test]
+    fn too_many_prefill_indexes_return_error_instead_of_panicking() {
+        let block = dummy_block();
+        let block = Block::new_unchecked(*block.header(), vec![block.transactions()[0].clone()])
+            .assume_checked(None);
+
+        assert_eq!(
+            HeaderAndShortIds::from_block(&block, 42, 2, &[1, 2]),
+            Err(Error::InvalidPrefill)
+        );
     }
 
     #[test]
