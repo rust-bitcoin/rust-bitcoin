@@ -9,14 +9,17 @@ use alloc::borrow::Cow;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::mem;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decoder4, Encoder4, PrefixedBytesEncoder,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decode as _, Decoder as _, Decoder2, Decoder4,
+    Encoder4, PrefixedBytesEncoder,
 };
 use hashes::sha256d;
 
+use self::error::VersionMessageDecoderErrorInner as Inner;
 use crate::address::{Address, AddressDecoder};
 use crate::{ProtocolVersion, ServiceFlags};
 
@@ -140,48 +143,270 @@ impl encoding::Decode for VersionMessage {
     type Decoder = VersionMessageDecoder;
 }
 
-type VersionMessageInnerDecoder = encoding::Decoder2<
-    encoding::Decoder3<
-        crate::ProtocolVersionDecoder,
-        crate::ServiceFlagsDecoder,
-        encoding::ArrayDecoder<8>,
-    >,
-    encoding::Decoder6<
-        AddressDecoder,
-        AddressDecoder,
-        encoding::ArrayDecoder<8>,
-        UserAgentDecoder,
-        encoding::ArrayDecoder<4>,
-        encoding::ArrayDecoder<1>,
-    >,
+/// Decoder for the mandatory prefix of a `version` payload: protocol version, services,
+/// timestamp and the receiver address.
+type VersionRequiredDecoder = Decoder4<
+    crate::ProtocolVersionDecoder,
+    crate::ServiceFlagsDecoder,
+    ArrayDecoder<8>,
+    AddressDecoder,
 >;
 
-crate::decoder_newtype! {
-    /// The Decoder for [`VersionMessage`].
-    #[derive(Debug, Default, Clone)]
-    pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+/// Decoder for the sender address and the nonce.
+///
+/// Bitcoin Core reads these two as a single unit (`vRecv.ignore(26); vRecv >> nNonce;`) so a
+/// payload is not allowed to stop between them.
+type VersionSenderNonceDecoder = Decoder2<AddressDecoder, ArrayDecoder<8>>;
 
-    fn end(
-        result: Result<
-            <VersionMessageInnerDecoder as encoding::Decoder>::Output,
-            <VersionMessageInnerDecoder as encoding::Decoder>::Error,
-        >
-    ) -> Result<VersionMessage, VersionMessageDecoderError> {
-        let (
-            (version, services, timestamp),
-            (receiver, sender, nonce, user_agent, start_height, relay),
-        ) = result.map_err(VersionMessageDecoderError)?;
+/// Byte length of the sender address plus the nonce.
+const VERSION_SENDER_NONCE_LEN: usize = 34;
+
+/// Position of the decoder inside a `version` payload.
+///
+/// The `After*` variants are stop points: a payload that ends there is accepted and the fields
+/// which were not reached keep their Bitcoin Core defaults. Being inside one of the sub-decoder
+/// variants means the payload ended in the middle of a field, which is rejected.
+#[derive(Debug, Clone)]
+enum VersionMessageDecoderState {
+    Required(VersionRequiredDecoder),
+    AfterRequired,
+    SenderNonce(VersionSenderNonceDecoder),
+    AfterSenderNonce,
+    UserAgent(UserAgentDecoder),
+    AfterUserAgent,
+    StartHeight(ArrayDecoder<4>),
+    AfterStartHeight,
+    Relay(ArrayDecoder<1>),
+    Done,
+}
+
+/// The Decoder for [`VersionMessage`].
+///
+/// Constructed with [`Default::default`] the decoder requires every field to be present, which is
+/// the only thing it can do when nothing tells it where the payload ends.
+///
+/// Constructed with [`VersionMessageDecoder::with_payload_len`] the decoder is given the payload
+/// length declared by the enclosing V1 message header. With that context it accepts the shorter
+/// payloads Bitcoin Core accepts: everything after the receiver address is optional and missing
+/// fields get Core's defaults (`sender` unroutable, `nonce` 1, `user_agent` empty, `start_height`
+/// -1, `relay` true). See `net_processing.cpp` `PeerManagerImpl::ProcessMessage`.
+///
+/// Knowing the declared length is what makes [`encoding::Decoder::read_limit`] safe here. It
+/// returns the number of payload bytes still unread rather than the number of bytes the next
+/// field wants, so it never reaches zero while optional bytes are still in flight, and the caller
+/// can never be told to stop early and hand this message's bytes to the next decoder.
+#[derive(Debug, Clone)]
+pub struct VersionMessageDecoder {
+    state: VersionMessageDecoderState,
+    /// Payload length declared by the enclosing message header, when there is one.
+    payload_len: Option<usize>,
+    /// Payload bytes consumed so far.
+    consumed: usize,
+    version: Option<ProtocolVersion>,
+    services: Option<ServiceFlags>,
+    timestamp: i64,
+    receiver: Option<Address>,
+    // Optional fields, pre-filled with the Bitcoin Core defaults.
+    sender: Address,
+    nonce: u64,
+    user_agent: UserAgent,
+    start_height: i32,
+    relay: bool,
+}
+
+impl VersionMessageDecoder {
+    fn new(payload_len: Option<usize>) -> Self {
+        Self {
+            state: VersionMessageDecoderState::Required(VersionRequiredDecoder::default()),
+            payload_len,
+            consumed: 0,
+            version: None,
+            services: None,
+            timestamp: 0,
+            receiver: None,
+            sender: Address::useless(),
+            nonce: 1,
+            user_agent: UserAgent { user_agent: String::new() },
+            start_height: -1,
+            relay: true,
+        }
+    }
+
+    /// Constructs a decoder for a `version` payload of `payload_len` bytes.
+    ///
+    /// The length comes from the enclosing message header. Supplying it is what allows the
+    /// optional fields to be left out, the way Bitcoin Core allows it.
+    pub fn with_payload_len(payload_len: usize) -> Self { Self::new(Some(payload_len)) }
+
+    /// Returns true when the declared payload has been fully consumed, so an optional field
+    /// boundary reached now is the end of the message.
+    fn at_declared_end(&self) -> bool { self.payload_len == Some(self.consumed) }
+
+    /// Drives the state machine over `bytes`, which the caller has already trimmed to the
+    /// declared payload.
+    fn push_within_payload(
+        &mut self,
+        bytes: &mut &[u8],
+    ) -> Result<encoding::DecoderStatus, VersionMessageDecoderError> {
+        use VersionMessageDecoderState as S;
+
+        /// Feeds bytes to the sub-decoder held in the current state. On completion the state
+        /// moves to the next stop point and the decoded value is handed back.
+        macro_rules! advance {
+            ($variant:ident, $decoder:expr, $wrap:path, $next:expr) => {{
+                let before = bytes.len();
+                let status =
+                    $decoder.push_bytes(bytes).map_err(|e| VersionMessageDecoderError($wrap(e)))?;
+                self.consumed += before - bytes.len();
+                if status.needs_more() {
+                    return Ok(encoding::DecoderStatus::NeedsMore);
+                }
+                let S::$variant(decoder) = mem::replace(&mut self.state, $next) else {
+                    unreachable!("state was just matched")
+                };
+                decoder.end().map_err(|e| VersionMessageDecoderError($wrap(e)))?
+            }};
+        }
+
+        /// Moves past a stop point, unless the declared payload says the message ends here.
+        macro_rules! stop_or_continue {
+            ($next:expr) => {{
+                if self.at_declared_end() {
+                    return Ok(encoding::DecoderStatus::Ready);
+                }
+                self.state = $next;
+            }};
+        }
+
+        loop {
+            match &mut self.state {
+                S::Required(decoder) => {
+                    let (version, services, timestamp, receiver) =
+                        advance!(Required, decoder, Inner::Required, S::AfterRequired);
+                    self.version = Some(version);
+                    self.services = Some(services);
+                    self.timestamp = i64::from_le_bytes(timestamp);
+                    self.receiver = Some(receiver);
+                }
+                S::AfterRequired =>
+                    stop_or_continue!(S::SenderNonce(VersionSenderNonceDecoder::default())),
+                S::SenderNonce(decoder) => {
+                    let (sender, nonce) =
+                        advance!(SenderNonce, decoder, Inner::SenderNonce, S::AfterSenderNonce);
+                    self.sender = sender;
+                    self.nonce = u64::from_le_bytes(nonce);
+                }
+                S::AfterSenderNonce => stop_or_continue!(S::UserAgent(UserAgent::decoder())),
+                S::UserAgent(decoder) => {
+                    self.user_agent =
+                        advance!(UserAgent, decoder, Inner::UserAgent, S::AfterUserAgent);
+                }
+                S::AfterUserAgent => stop_or_continue!(S::StartHeight(ArrayDecoder::<4>::new())),
+                S::StartHeight(decoder) => {
+                    let start_height =
+                        advance!(StartHeight, decoder, Inner::StartHeight, S::AfterStartHeight);
+                    self.start_height = i32::from_le_bytes(start_height);
+                }
+                S::AfterStartHeight => stop_or_continue!(S::Relay(ArrayDecoder::<1>::new())),
+                S::Relay(decoder) => {
+                    let relay = advance!(Relay, decoder, Inner::Relay, S::Done);
+                    self.relay = relay[0] != 0;
+                }
+                S::Done => return Ok(encoding::DecoderStatus::Ready),
+            }
+        }
+    }
+
+    /// Assembles the message. Only called from a stop point, so every field is either decoded or
+    /// still holding its Bitcoin Core default.
+    fn build(self) -> Result<VersionMessage, VersionMessageDecoderError> {
+        let (Some(version), Some(services), Some(receiver)) =
+            (self.version, self.services, self.receiver)
+        else {
+            return Err(VersionMessageDecoderError(Inner::UnexpectedEnd));
+        };
         Ok(VersionMessage {
             version,
             services,
-            timestamp: i64::from_le_bytes(timestamp),
+            timestamp: self.timestamp,
             receiver,
-            sender,
-            nonce: u64::from_le_bytes(nonce),
-            user_agent,
-            start_height: i32::from_le_bytes(start_height),
-            relay: relay[0] != 0,
+            sender: self.sender,
+            nonce: self.nonce,
+            user_agent: self.user_agent,
+            start_height: self.start_height,
+            relay: self.relay,
         })
+    }
+}
+
+impl Default for VersionMessageDecoder {
+    fn default() -> Self { Self::new(None) }
+}
+
+impl encoding::Decoder for VersionMessageDecoder {
+    type Output = VersionMessage;
+    type Error = VersionMessageDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
+        let Some(payload_len) = self.payload_len else {
+            return self.push_within_payload(bytes);
+        };
+        // Never read past the declared payload, the bytes after it belong to the next message.
+        let allowed = payload_len.saturating_sub(self.consumed).min(bytes.len());
+        let mut window = &bytes[..allowed];
+        let status = self.push_within_payload(&mut window)?;
+        let used = allowed - window.len();
+        *bytes = &bytes[used..];
+        Ok(status)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        use VersionMessageDecoderState as S;
+
+        if let Some(payload_len) = self.payload_len {
+            if self.consumed != payload_len {
+                return Err(VersionMessageDecoderError(Inner::PayloadLength {
+                    expected: payload_len,
+                    actual: self.consumed,
+                }));
+            }
+        }
+        // Stopping short is only legal when the declared payload length says the message really
+        // ended here. Without that context every field is required.
+        let truncation_allowed = self.payload_len.is_some();
+        match &self.state {
+            S::Done => self.build(),
+            S::AfterRequired | S::AfterSenderNonce | S::AfterUserAgent | S::AfterStartHeight
+                if truncation_allowed =>
+                self.build(),
+            _ => Err(VersionMessageDecoderError(Inner::UnexpectedEnd)),
+        }
+    }
+
+    fn read_limit(&self) -> usize {
+        use VersionMessageDecoderState as S;
+
+        if matches!(self.state, S::Done) {
+            return 0;
+        }
+        match self.payload_len {
+            // The declared payload is the only honest limit: an optional field boundary is not
+            // the end of the message unless the header says the payload ends there.
+            Some(payload_len) => payload_len.saturating_sub(self.consumed),
+            None => match &self.state {
+                S::Required(decoder) => decoder.read_limit(),
+                S::AfterRequired => VERSION_SENDER_NONCE_LEN,
+                S::SenderNonce(decoder) => decoder.read_limit(),
+                // At least the user agent length prefix.
+                S::AfterSenderNonce => 1,
+                S::UserAgent(decoder) => decoder.read_limit(),
+                S::AfterUserAgent => 4,
+                S::StartHeight(decoder) => decoder.read_limit(),
+                S::AfterStartHeight => 1,
+                S::Relay(decoder) => decoder.read_limit(),
+                S::Done => 0,
+            },
+        }
     }
 }
 
@@ -596,9 +821,31 @@ pub mod error {
     ///
     /// [`VersionMessage`]: super::VersionMessage
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct VersionMessageDecoderError(
-        pub(super) <super::VersionMessageInnerDecoder as encoding::Decoder>::Error,
-    );
+    pub struct VersionMessageDecoderError(pub(super) VersionMessageDecoderErrorInner);
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(super) enum VersionMessageDecoderErrorInner {
+        /// Error decoding the mandatory prefix of the payload.
+        Required(<super::VersionRequiredDecoder as encoding::Decoder>::Error),
+        /// Error decoding the sender address and nonce.
+        SenderNonce(<super::VersionSenderNonceDecoder as encoding::Decoder>::Error),
+        /// Error decoding the user agent.
+        UserAgent(UserAgentDecoderError),
+        /// Error decoding the start height.
+        StartHeight(encoding::UnexpectedEofError),
+        /// Error decoding the relay flag.
+        Relay(encoding::UnexpectedEofError),
+        /// The payload ended somewhere Bitcoin Core would not accept, either inside a field or
+        /// before the mandatory prefix was complete.
+        UnexpectedEnd,
+        /// The payload length declared by the message header does not match the bytes consumed.
+        PayloadLength {
+            /// Length declared by the message header.
+            expected: usize,
+            /// Bytes the decoder consumed.
+            actual: usize,
+        },
+    }
 
     impl From<Infallible> for VersionMessageDecoderError {
         fn from(never: Infallible) -> Self { match never {} }
@@ -606,13 +853,38 @@ pub mod error {
 
     impl fmt::Display for VersionMessageDecoderError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write_err!(f, "version message decoder error"; self.0)
+            use VersionMessageDecoderErrorInner as E;
+
+            match &self.0 {
+                E::Required(e) => write_err!(f, "version message decoder error"; e),
+                E::SenderNonce(e) => write_err!(f, "version message sender/nonce error"; e),
+                E::UserAgent(e) => write_err!(f, "version message user agent error"; e),
+                E::StartHeight(e) => write_err!(f, "version message start height error"; e),
+                E::Relay(e) => write_err!(f, "version message relay error"; e),
+                E::UnexpectedEnd => write!(f, "version message payload ended unexpectedly"),
+                E::PayloadLength { expected, actual } => write!(
+                    f,
+                    "version message payload length mismatch, declared {} consumed {}",
+                    expected, actual
+                ),
+            }
         }
     }
 
     #[cfg(feature = "std")]
     impl std::error::Error for VersionMessageDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            use VersionMessageDecoderErrorInner as E;
+
+            match &self.0 {
+                E::Required(e) => Some(e),
+                E::SenderNonce(e) => Some(e),
+                E::UserAgent(e) => Some(e),
+                E::StartHeight(e) => Some(e),
+                E::Relay(e) => Some(e),
+                E::UnexpectedEnd | E::PayloadLength { .. } => None,
+            }
+        }
     }
 
     /// An error decoding a [`UserAgent`] message.
@@ -866,6 +1138,23 @@ mod tests {
         assert!(real_decode.relay);
 
         assert_eq!(encoding::encode_to_vec(&real_decode), from_sat);
+    }
+
+    #[test]
+    fn version_message_without_declared_length_requires_every_field() {
+        // The plain `Decode` path has no payload length to work from, so it cannot tell a short
+        // payload from a truncated one and keeps requiring all nine fields.
+        let mut required = Vec::new();
+        required.extend_from_slice(&70_016u32.to_le_bytes());
+        required.extend_from_slice(&1u64.to_le_bytes());
+        required.extend_from_slice(&1_548_554_224i64.to_le_bytes());
+        required.extend_from_slice(&0u64.to_le_bytes());
+        required.extend_from_slice(&[0u8; 16]);
+        required.extend_from_slice(&8333u16.to_be_bytes());
+        assert_eq!(required.len(), 46);
+
+        encoding::decode_from_slice::<VersionMessage>(&required)
+            .expect_err("a bare 46 byte payload carries no length context");
     }
 
     #[test]

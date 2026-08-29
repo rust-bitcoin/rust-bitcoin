@@ -1069,7 +1069,11 @@ impl NetworkMessageDecoderInner {
     fn new(command: CommandString, payload_len: usize) -> Self {
         use encoding::Decode as _;
         match command.as_ref() {
-            "version" => Self::Version(message_network::VersionMessage::decoder()),
+            // The V1 header declares the payload length, which is what lets the version
+            // decoder treat the fields after the receiver address as optional the way Bitcoin
+            // Core does.
+            "version" =>
+                Self::Version(message_network::VersionMessageDecoder::with_payload_len(payload_len)),
             "verack" | "sendheaders" | "mempool" | "getaddr" | "wtxidrelay" | "filterclear"
             | "sendaddrv2" => Self::Empty(command),
             "addr" => Self::Addr(AddrPayload::decoder()),
@@ -2912,5 +2916,165 @@ mod test {
 
         encoding::decode_from_slice::<V1NetworkMessage>(&malformed_v1_message)
             .expect_err("Message with invalid payload checksum should be rejected");
+    }
+
+    /// Builds the 46 mandatory bytes of a `version` payload: version, services, timestamp and
+    /// the receiver address. This is what Bitcoin Core requires and nothing more.
+    fn version_required_bytes() -> Vec<u8> {
+        let mut payload = Vec::new();
+        payload.extend_from_slice(&70_016u32.to_le_bytes());
+        payload.extend_from_slice(&1u64.to_le_bytes());
+        payload.extend_from_slice(&1_548_554_224i64.to_le_bytes());
+        // Receiver address: services, 16 address bytes, big endian port.
+        payload.extend_from_slice(&0u64.to_le_bytes());
+        payload.extend_from_slice(&[0u8; 16]);
+        payload.extend_from_slice(&8333u16.to_be_bytes());
+        assert_eq!(payload.len(), 46);
+        payload
+    }
+
+    /// Wraps a raw payload in a V1 message frame with a matching header and checksum.
+    fn v1_frame(command: &[u8; 12], payload: &[u8]) -> Vec<u8> {
+        let mut engine = sha256d::HashEngine::new();
+        engine.input(payload);
+        let checksum = engine.finalize().to_byte_array();
+
+        let mut frame = Vec::new();
+        frame.extend_from_slice(&Magic::BITCOIN.to_bytes());
+        frame.extend_from_slice(command);
+        frame.extend_from_slice(&u32::try_from(payload.len()).unwrap().to_le_bytes());
+        frame.extend_from_slice(&checksum[..4]);
+        frame.extend_from_slice(payload);
+        frame
+    }
+
+    fn v1_version_frame(payload: &[u8]) -> Vec<u8> { v1_frame(b"version\0\0\0\0\0", payload) }
+
+    #[test]
+    fn version_message_with_only_required_fields() {
+        let frame = v1_version_frame(&version_required_bytes());
+        let msg = encoding::decode_from_slice::<V1NetworkMessage>(&frame).unwrap();
+
+        let NetworkMessage::Version(version) = msg.payload else { panic!("wrong message type") };
+        assert_eq!(version.version.0, 70_016);
+        assert_eq!(version.services, ServiceFlags::NETWORK);
+        assert_eq!(version.timestamp, 1_548_554_224);
+        // Bitcoin Core defaults for the fields that were not sent.
+        assert_eq!(version.sender, Address::useless());
+        assert_eq!(version.nonce, 1);
+        assert_eq!(version.user_agent.to_string(), "");
+        assert_eq!(version.start_height, -1);
+        assert!(version.relay);
+    }
+
+    #[test]
+    fn version_message_stopping_after_nonce() {
+        let mut payload = version_required_bytes();
+        // Sender address.
+        payload.extend_from_slice(&0u64.to_le_bytes());
+        payload.extend_from_slice(&[0u8; 16]);
+        payload.extend_from_slice(&8333u16.to_be_bytes());
+        // Nonce.
+        payload.extend_from_slice(&42u64.to_le_bytes());
+        assert_eq!(payload.len(), 80);
+
+        let frame = v1_version_frame(&payload);
+        let msg = encoding::decode_from_slice::<V1NetworkMessage>(&frame).unwrap();
+
+        let NetworkMessage::Version(version) = msg.payload else { panic!("wrong message type") };
+        assert_eq!(version.nonce, 42);
+        assert_eq!(version.user_agent.to_string(), "");
+        assert_eq!(version.start_height, -1);
+        assert!(version.relay);
+    }
+
+    #[test]
+    fn version_message_stopping_after_user_agent() {
+        let mut payload = version_required_bytes();
+        payload.extend_from_slice(&0u64.to_le_bytes());
+        payload.extend_from_slice(&[0u8; 16]);
+        payload.extend_from_slice(&8333u16.to_be_bytes());
+        payload.extend_from_slice(&42u64.to_le_bytes());
+        // User agent "/x/" with its compact size prefix.
+        payload.extend_from_slice(&[0x03, b'/', b'x', b'/']);
+
+        let frame = v1_version_frame(&payload);
+        let msg = encoding::decode_from_slice::<V1NetworkMessage>(&frame).unwrap();
+
+        let NetworkMessage::Version(version) = msg.payload else { panic!("wrong message type") };
+        assert_eq!(version.user_agent.to_string(), "/x/");
+        assert_eq!(version.start_height, -1);
+        assert!(version.relay);
+    }
+
+    #[test]
+    fn version_message_truncated_inside_a_field_is_rejected() {
+        // Core reads addr_from and nonce as one unit, so stopping between them is invalid.
+        let mut sender_only = version_required_bytes();
+        sender_only.extend_from_slice(&0u64.to_le_bytes());
+        sender_only.extend_from_slice(&[0u8; 16]);
+        sender_only.extend_from_slice(&8333u16.to_be_bytes());
+        assert_eq!(sender_only.len(), 72);
+
+        for payload_len in [45, 47, 60, 72, 79] {
+            let mut payload = sender_only.clone();
+            payload.truncate(payload_len);
+            let frame = v1_version_frame(&payload);
+            encoding::decode_from_slice::<V1NetworkMessage>(&frame)
+                .expect_err("payload stopping inside a field must be rejected");
+        }
+    }
+
+    #[test]
+    fn short_version_message_does_not_eat_the_next_message() {
+        // This is the framing hazard: if the version decoder decides it is finished at 46 bytes
+        // without knowing the declared payload length, the bytes it declines to read are handed
+        // to whatever decodes next.
+        let mut buffer = v1_version_frame(&version_required_bytes());
+        buffer.extend_from_slice(&v1_frame(b"verack\0\0\0\0\0\0", &[]));
+
+        let mut cursor = buffer.as_slice();
+        let first = encoding::decode_from_slice_unbounded::<V1NetworkMessage>(&mut cursor).unwrap();
+        assert!(matches!(first.payload, NetworkMessage::Version(_)));
+
+        let second =
+            encoding::decode_from_slice_unbounded::<V1NetworkMessage>(&mut cursor).unwrap();
+        assert!(matches!(second.payload, NetworkMessage::Verack));
+        assert!(cursor.is_empty());
+    }
+
+    #[test]
+    fn version_message_read_limit_covers_the_whole_declared_payload() {
+        use encoding::Decoder as _;
+
+        // A full nine field payload. The decoder must never report a read limit of zero while
+        // payload bytes are still outstanding, whatever the field boundaries are.
+        let mut payload = version_required_bytes();
+        payload.extend_from_slice(&0u64.to_le_bytes());
+        payload.extend_from_slice(&[0u8; 16]);
+        payload.extend_from_slice(&8333u16.to_be_bytes());
+        payload.extend_from_slice(&42u64.to_le_bytes());
+        payload.extend_from_slice(&[0x03, b'/', b'x', b'/']);
+        payload.extend_from_slice(&7i32.to_le_bytes());
+        payload.push(0x01);
+
+        let mut decoder = message_network::VersionMessageDecoder::with_payload_len(payload.len());
+        for (i, byte) in payload.iter().enumerate() {
+            assert_eq!(
+                decoder.read_limit(),
+                payload.len() - i,
+                "read limit went wrong after {} bytes",
+                i
+            );
+            let mut one = &[*byte][..];
+            decoder.push_bytes(&mut one).unwrap();
+            assert!(one.is_empty());
+        }
+        assert_eq!(decoder.read_limit(), 0);
+
+        let version = decoder.end().unwrap();
+        assert_eq!(version.nonce, 42);
+        assert_eq!(version.start_height, 7);
+        assert!(version.relay);
     }
 }

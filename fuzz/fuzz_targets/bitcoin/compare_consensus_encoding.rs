@@ -64,6 +64,26 @@ fn is_known_decoder_divergence(err: &(dyn std::error::Error + 'static)) -> bool 
     false
 }
 
+/// Returns `true` if `data` is a V1 `version` frame that stops at one of the optional field
+/// boundaries Bitcoin Core accepts.
+///
+/// The new decoder follows Core and treats everything after the receiver address as optional.
+/// Bitcoin 0.32 requires every field up to and including `start_height`, so it needs at least
+/// 46 + 26 + 8 + 1 + 4 payload bytes. Anything shorter that the new decoder accepts is an
+/// intentional divergence, not a bug.
+fn is_core_compatible_short_version_message(data: &[u8]) -> bool {
+    const HEADER_LEN: usize = 24;
+    const COMMAND: &[u8] = b"version\0\0\0\0\0";
+    const OLD_DECODER_MIN_PAYLOAD_LEN: u32 = 85;
+
+    if data.len() < HEADER_LEN || &data[4..16] != COMMAND {
+        return false;
+    }
+    let payload_len =
+        u32::from_le_bytes(data[16..20].try_into().expect("4 bytes of declared length"));
+    payload_len < OLD_DECODER_MIN_PAYLOAD_LEN
+}
+
 /// Helper macro to compare encoding between old and new implementations for a type.
 ///
 /// Takes raw bytes, deserialises using the old bitcoin crate, then encodes with both
@@ -75,7 +95,12 @@ macro_rules! compare_encoding {
     };
 
     // Types in submodules need this because we can't easily concatenate crate prefixes.
-    ($data:expr, $new_ty:ty, $old_ty:ty) => {{
+    ($data:expr, $new_ty:ty, $old_ty:ty) => {
+        compare_encoding!($data, $new_ty, $old_ty, (|_: &[u8]| false) as fn(&[u8]) -> bool);
+    };
+
+    // `$relaxation` reports input the new decoder is meant to accept and the old one to reject.
+    ($data:expr, $new_ty:ty, $old_ty:ty, $relaxation:expr) => {{
         // Try to deserialise using both bitcoin crates. Skip if it can't be deserialised
         let old_result: Result<$old_ty, _> = bitcoin_0_32::consensus::encode::deserialize($data);
         let new_result: Result<$new_ty, _> = decode_from_slice($data);
@@ -95,7 +120,10 @@ macro_rules! compare_encoding {
                     panic!("Decoded with old decoder only: {:?}, {:?} {:?}", $data, old_obj, err);
                 },
             (Err(err), Ok(new_obj)) => {
-                panic!("Decoded with new decoder only: {:?}, {:?} {:?}", $data, new_obj, err);
+                let relaxation: fn(&[u8]) -> bool = $relaxation;
+                if !relaxation($data) {
+                    panic!("Decoded with new decoder only: {:?}, {:?} {:?}", $data, new_obj, err);
+                }
             }
             (_, _) => {}
         }
@@ -211,7 +239,12 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, p2p::message::NetworkHeader, (bitcoin_0_32::block::Header, u8));
     compare_encoding!(data, p2p::message::Ping, u64);
     compare_encoding!(data, p2p::message::Pong, u64);
-    compare_encoding!(data, p2p::message::V1NetworkMessage, bitcoin_0_32::p2p::message::RawNetworkMessage);
+    compare_encoding!(
+        data,
+        p2p::message::V1NetworkMessage,
+        bitcoin_0_32::p2p::message::RawNetworkMessage,
+        is_core_compatible_short_version_message as fn(&[u8]) -> bool
+    );
     compare_encoding!(data, p2p::message_blockdata::BlockLocator, Vec<bitcoin_0_32::BlockHash>);
     compare_encoding!(data, p2p::message_network::Alert, Vec<u8>);
     compare_encoding!(data, p2p::message_network::UserAgent, String);
