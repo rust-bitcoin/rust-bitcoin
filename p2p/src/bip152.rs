@@ -313,10 +313,13 @@ impl HeaderAndShortIds {
             return Err(Error::UnknownVersion);
         }
 
+        let short_id_capacity =
+            block.transactions().len().checked_sub(prefill.len()).ok_or(Error::InvalidPrefill)?;
+
         let siphash_keys = ShortId::calculate_siphash_keys(block.header(), nonce);
 
         let mut prefilled = Vec::with_capacity(prefill.len() + 1); // +1 for coinbase tx
-        let mut short_ids = Vec::with_capacity(block.transactions().len() - prefill.len());
+        let mut short_ids = Vec::with_capacity(short_id_capacity);
         let mut last_prefill = 0;
         for (idx, tx) in block.transactions().iter().enumerate() {
             // Check if we should prefill this tx.
