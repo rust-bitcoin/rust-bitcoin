@@ -170,6 +170,7 @@ dependencies = [
  "arbitrary",
  "bitcoin 0.32.102",
  "bitcoin 0.33.0-beta",
+ "bitcoin-bip158",
  "bitcoin-consensus-encoding 1.2.0",
  "bitcoin-p2p-messages",
  "libfuzzer-sys",
