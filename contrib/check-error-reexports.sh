@@ -6,7 +6,9 @@
 # The policy is: if a type is defined at `foo::error::BarError` then it must
 # also be accessible as `foo::BarError` (i.e. re-exported by the parent module).
 #
-# Uses the API text files to verify the policy. Types are identified by
+# Generates the workspace API text files with `cargo rbmt api`
+# and uses them to
+# verify the policy. Types are identified by
 # `pub struct` or `pub enum` lines whose path contains `::error::` as a path
 # segment (not as part of a type name). A re-export is present when the same
 # type name appears at the parent path in any `pub struct`, `pub enum`, or
@@ -18,6 +20,8 @@ set -euo pipefail
 
 main() {
     check_required_commands
+
+    generate_api_files
 
     local has_violations=false
 
@@ -76,10 +80,16 @@ main() {
 }
 
 check_required_commands() {
+    need_cmd cargo
     need_cmd find
     need_cmd grep
     need_cmd sed
     need_cmd sort
+}
+
+generate_api_files() {
+    say "Generating API files with cargo rbmt api..."
+    cargo rbmt api --snapshot > /dev/null
 }
 
 say() {

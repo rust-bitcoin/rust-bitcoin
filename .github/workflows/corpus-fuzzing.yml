@@ -76,17 +76,15 @@ jobs:
             rust-bitcoin/fuzz/target
             rust-bitcoin/target
           # cached cargo-rbmt binary goes stale when it is bumped.
-          key: fuzz-${{ hashFiles('rust-bitcoin/**/Cargo.toml', 'rust-bitcoin/rbmt-version') }}
+          key: fuzz-${{ hashFiles('rust-bitcoin/**/Cargo.toml') }}
           # On cache miss this loads the latest cache and avoids a rebuild from scratch.
           restore-keys: fuzz-
       - name: Install cargo-rbmt
         working-directory: rust-bitcoin
         run: |
           cargo install \
-            --git https://git.rust-bitcoin.org/rust-bitcoin/rust-bitcoin-maintainer-tools \
-            --rev "$(cat rbmt-version)" \
-            cargo-rbmt \
-            --locked
+            --locked \
+            cargo-rbmt@$(grep "^rbmt.version" Cargo.toml | cut -d'"' -f2)
       - name: Install nightly toolchain
         working-directory: rust-bitcoin
         run: rustup toolchain install "$(cargo rbmt toolchains --nightly)" --profile minimal --no-self-update
