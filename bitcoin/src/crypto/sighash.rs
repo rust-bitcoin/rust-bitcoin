@@ -947,7 +947,11 @@ impl<'a> Annex<'a> {
     pub fn as_bytes(&self) -> &[u8] { self.0 }
 }
 
-fn is_invalid_use_of_sighash_single(sighash: EcdsaSighashType, input_index: usize, outputs_len: usize) -> bool {
+fn is_invalid_use_of_sighash_single(
+    sighash: EcdsaSighashType,
+    input_index: usize,
+    outputs_len: usize,
+) -> bool {
     sighash.is_single() && input_index >= outputs_len
 }
 
@@ -1413,7 +1417,13 @@ mod tests {
             let want = LegacySighash::from_byte_array(bytes);
 
             let cache = SighashCache::new(&tx);
-            let got = cache.legacy_signature_hash(input_index, &script, EcdsaSighashType::from_consensus(hash_type as u32)).unwrap();
+            let got = cache
+                .legacy_signature_hash(
+                    input_index,
+                    &script,
+                    EcdsaSighashType::from_consensus(hash_type as u32),
+                )
+                .unwrap();
 
             assert_eq!(got, want);
         }

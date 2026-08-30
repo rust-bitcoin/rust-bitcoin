@@ -61,7 +61,7 @@ impl Signature {
     /// Non-standard sighash types are accepted here since they're consensus valid, so we use
     /// [`EcdsaSighashType::from_consensus`] here instead of [`EcdsaSighashType::from_standard`]
     /// to deserialize the sighash type.
-    /// 
+    ///
     /// # Errors
     ///
     /// * [`DecodeError::EmptySignature`] if the slice is empty.
