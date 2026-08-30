@@ -26,7 +26,7 @@ pub mod fee_rate {
     pub use units::fee_rate::serde;
     // Re-export everything from the [`units::fee_rate`] module.
     #[doc(inline)]
-    pub use units::fee_rate::FeeRate;
+    pub use units::fee_rate::{error, FeeRate, FromFloatError};
 }
 
 /// Provides absolute and relative locktimes.

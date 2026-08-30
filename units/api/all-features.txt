@@ -3745,6 +3745,53 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::block::error::TooBigForRel
 impl<T> core::convert::From<T> for bitcoin_units::block::error::TooBigForRelativeHeightError
   pub fn bitcoin_units::block::error::TooBigForRelativeHeightError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::block::error::TooBigForRelativeHeightError]
 pub mod bitcoin_units::fee_rate
+pub mod bitcoin_units::fee_rate::error
+pub struct bitcoin_units::fee_rate::error::FromFloatError(_)
+impl core::clone::Clone for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::clone(&self) -> bitcoin_units::fee_rate::error::FromFloatError [impl: impl core::clone::Clone for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::cmp::Eq for bitcoin_units::fee_rate::error::FromFloatError
+impl core::cmp::PartialEq for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::eq(&self, other: &bitcoin_units::fee_rate::error::FromFloatError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::from(never: core::convert::Infallible) -> Self [impl: impl core::convert::From<core::convert::Infallible> for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::error::Error for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::fmt::Debug for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::fmt::Display for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::marker::StructuralPartialEq for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::Freeze for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::Send for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::Sync for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::Unpin for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::UnsafeUnpin for bitcoin_units::fee_rate::error::FromFloatError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::fee_rate::error::FromFloatError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::fee_rate::error::FromFloatError
+impl<T, U> core::convert::Into<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::From<T>
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::Into<T>
+  pub type bitcoin_units::fee_rate::error::FromFloatError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::Into<T>]
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::TryFrom<T>
+  pub type bitcoin_units::fee_rate::error::FromFloatError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone
+  pub type bitcoin_units::fee_rate::error::FromFloatError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone]
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone]
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone]
+impl<T> alloc::string::ToString for bitcoin_units::fee_rate::error::FromFloatError where T: core::fmt::Display + ?core::marker::Sized
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_units::fee_rate::error::FromFloatError where T: core::fmt::Display + ?core::marker::Sized]
+impl<T> core::any::Any for bitcoin_units::fee_rate::error::FromFloatError where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_units::fee_rate::error::FromFloatError where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_units::fee_rate::error::FromFloatError where T: ?core::marker::Sized
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_units::fee_rate::error::FromFloatError where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_units::fee_rate::error::FromFloatError where T: ?core::marker::Sized
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_units::fee_rate::error::FromFloatError where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone
+  pub unsafe fn bitcoin_units::fee_rate::error::FromFloatError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::fee_rate::error::FromFloatError]
 pub mod bitcoin_units::fee_rate::serde
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::opt
@@ -3881,8 +3928,11 @@ pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -
 pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
 pub const fn bitcoin_units::FeeRate::from_per_vb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
 pub const fn bitcoin_units::FeeRate::from_sat_per_kvb(sat_kvb: u32) -> Self
+pub fn bitcoin_units::FeeRate::from_sat_per_kvb_f64(sat_kvb: f64) -> core::result::Result<Self, bitcoin_units::fee_rate::error::FromFloatError>
 pub const fn bitcoin_units::FeeRate::from_sat_per_kwu(sat_kwu: u32) -> Self
+pub fn bitcoin_units::FeeRate::from_sat_per_kwu_f64(sat_kwu: f64) -> core::result::Result<Self, bitcoin_units::fee_rate::error::FromFloatError>
 pub const fn bitcoin_units::FeeRate::from_sat_per_vb(sat_vb: u32) -> Self
+pub fn bitcoin_units::FeeRate::from_sat_per_vb_f64(sat_vb: f64) -> core::result::Result<Self, bitcoin_units::fee_rate::error::FromFloatError>
 pub const fn bitcoin_units::FeeRate::mul_by_weight(self, weight: bitcoin_units::Weight) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::FeeRate::to_fee(self, weight: bitcoin_units::Weight) -> bitcoin_units::Amount
 pub const fn bitcoin_units::FeeRate::to_sat_per_kvb_ceil(self) -> u64
@@ -4057,6 +4107,52 @@ impl<T> core::clone::CloneToUninit for bitcoin_units::FeeRate where T: core::clo
   pub unsafe fn bitcoin_units::FeeRate::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::FeeRate where T: core::clone::Clone]
 impl<T> core::convert::From<T> for bitcoin_units::FeeRate
   pub fn bitcoin_units::FeeRate::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::FeeRate]
+pub struct bitcoin_units::fee_rate::FromFloatError(_)
+impl core::clone::Clone for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::clone(&self) -> bitcoin_units::fee_rate::error::FromFloatError [impl: impl core::clone::Clone for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::cmp::Eq for bitcoin_units::fee_rate::error::FromFloatError
+impl core::cmp::PartialEq for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::eq(&self, other: &bitcoin_units::fee_rate::error::FromFloatError) -> bool [impl: impl core::cmp::PartialEq for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::from(never: core::convert::Infallible) -> Self [impl: impl core::convert::From<core::convert::Infallible> for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::error::Error for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)> [impl: impl core::error::Error for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::fmt::Debug for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Debug for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::fmt::Display for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result [impl: impl core::fmt::Display for bitcoin_units::fee_rate::error::FromFloatError]
+impl core::marker::StructuralPartialEq for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::Freeze for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::Send for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::Sync for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::Unpin for bitcoin_units::fee_rate::error::FromFloatError
+impl core::marker::UnsafeUnpin for bitcoin_units::fee_rate::error::FromFloatError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::fee_rate::error::FromFloatError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::fee_rate::error::FromFloatError
+impl<T, U> core::convert::Into<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::From<T>
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::into(self) -> U [impl: impl<T, U> core::convert::Into<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::From<T>]
+impl<T, U> core::convert::TryFrom<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::Into<T>
+  pub type bitcoin_units::fee_rate::error::FromFloatError::Error = core::convert::Infallible [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::Into<T>]
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error> [impl: impl<T, U> core::convert::TryFrom<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::Into<T>]
+impl<T, U> core::convert::TryInto<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::TryFrom<T>
+  pub type bitcoin_units::fee_rate::error::FromFloatError::Error = <U as core::convert::TryFrom<T>>::Error [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::TryFrom<T>]
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error> [impl: impl<T, U> core::convert::TryInto<U> for bitcoin_units::fee_rate::error::FromFloatError where U: core::convert::TryFrom<T>]
+impl<T> alloc::borrow::ToOwned for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone
+  pub type bitcoin_units::fee_rate::error::FromFloatError::Owned = T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone]
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::clone_into(&self, target: &mut T) [impl: impl<T> alloc::borrow::ToOwned for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone]
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::to_owned(&self) -> T [impl: impl<T> alloc::borrow::ToOwned for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone]
+impl<T> alloc::string::ToString for bitcoin_units::fee_rate::error::FromFloatError where T: core::fmt::Display + ?core::marker::Sized
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::to_string(&self) -> alloc::string::String [impl: impl<T> alloc::string::ToString for bitcoin_units::fee_rate::error::FromFloatError where T: core::fmt::Display + ?core::marker::Sized]
+impl<T> core::any::Any for bitcoin_units::fee_rate::error::FromFloatError where T: 'static + ?core::marker::Sized
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::type_id(&self) -> core::any::TypeId [impl: impl<T> core::any::Any for bitcoin_units::fee_rate::error::FromFloatError where T: 'static + ?core::marker::Sized]
+impl<T> core::borrow::Borrow<T> for bitcoin_units::fee_rate::error::FromFloatError where T: ?core::marker::Sized
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::borrow(&self) -> &T [impl: impl<T> core::borrow::Borrow<T> for bitcoin_units::fee_rate::error::FromFloatError where T: ?core::marker::Sized]
+impl<T> core::borrow::BorrowMut<T> for bitcoin_units::fee_rate::error::FromFloatError where T: ?core::marker::Sized
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::borrow_mut(&mut self) -> &mut T [impl: impl<T> core::borrow::BorrowMut<T> for bitcoin_units::fee_rate::error::FromFloatError where T: ?core::marker::Sized]
+impl<T> core::clone::CloneToUninit for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone
+  pub unsafe fn bitcoin_units::fee_rate::error::FromFloatError::clone_to_uninit(&self, dest: *mut u8) [impl: impl<T> core::clone::CloneToUninit for bitcoin_units::fee_rate::error::FromFloatError where T: core::clone::Clone]
+impl<T> core::convert::From<T> for bitcoin_units::fee_rate::error::FromFloatError
+  pub fn bitcoin_units::fee_rate::error::FromFloatError::from(t: T) -> T [impl: impl<T> core::convert::From<T> for bitcoin_units::fee_rate::error::FromFloatError]
 pub mod bitcoin_units::locktime
 pub mod bitcoin_units::locktime::absolute
 pub mod bitcoin_units::locktime::absolute::error
@@ -11237,8 +11333,11 @@ pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -
 pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
 pub const fn bitcoin_units::FeeRate::from_per_vb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
 pub const fn bitcoin_units::FeeRate::from_sat_per_kvb(sat_kvb: u32) -> Self
+pub fn bitcoin_units::FeeRate::from_sat_per_kvb_f64(sat_kvb: f64) -> core::result::Result<Self, bitcoin_units::fee_rate::error::FromFloatError>
 pub const fn bitcoin_units::FeeRate::from_sat_per_kwu(sat_kwu: u32) -> Self
+pub fn bitcoin_units::FeeRate::from_sat_per_kwu_f64(sat_kwu: f64) -> core::result::Result<Self, bitcoin_units::fee_rate::error::FromFloatError>
 pub const fn bitcoin_units::FeeRate::from_sat_per_vb(sat_vb: u32) -> Self
+pub fn bitcoin_units::FeeRate::from_sat_per_vb_f64(sat_vb: f64) -> core::result::Result<Self, bitcoin_units::fee_rate::error::FromFloatError>
 pub const fn bitcoin_units::FeeRate::mul_by_weight(self, weight: bitcoin_units::Weight) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::FeeRate::to_fee(self, weight: bitcoin_units::Weight) -> bitcoin_units::Amount
 pub const fn bitcoin_units::FeeRate::to_sat_per_kvb_ceil(self) -> u64
