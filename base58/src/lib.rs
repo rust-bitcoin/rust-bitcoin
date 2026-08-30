@@ -420,10 +420,8 @@ impl Base58CkString {
     }
 
     /// Returns the number of bytes/ASCII chars in the base58check-encoded string.
+    #[allow(clippy::len_without_is_empty)] // checksum means byte length is always > 0
     pub fn len(&self) -> usize { self.as_bytes().len() }
-
-    /// Returns true if the base58check-encoded string is empty.
-    pub fn is_empty(&self) -> bool { self.len() == 0 }
 }
 
 impl AsRef<str> for Base58CkString {
