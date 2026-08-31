@@ -670,6 +670,43 @@ impl<V: NetworkValidation> Address<V> {
             AddressInner::Segwit { program: _, ref hrp } => (*hrp).to_network_kind(),
         }
     }
+
+    /// Constructs a new address using the given [`AddressParams`].
+    ///
+    /// Only the network of the address is changed, the payload (public key hash, script
+    /// hash, or witness program) is left untouched.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "alloc")]
+    /// # fn example() -> Result<(), bitcoin_addresses::ParseError> {
+    /// use bitcoin_addresses::{Address, AddressParams};
+    ///
+    /// let mainnet: Address = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()?
+    ///     .require_network(AddressParams::MAINNET)?;
+    /// assert_eq!(mainnet.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    ///
+    /// // The same public key hash, but encoded with the testnet prefix.
+    /// let testnet = mainnet.with_params(AddressParams::TESTNET4);
+    /// assert_eq!(testnet.to_string(), "mhYCK8wSgwctbFnc3u9fCzzF8XgodR9KHX");
+    /// # Ok(())
+    /// # }
+    /// # #[cfg(feature = "alloc")]
+    /// # example().unwrap();
+    /// ```
+    pub fn with_params(&self, params: AddressParams) -> Address {
+        let new_inner = match *self.inner() {
+            AddressInner::P2pkh { hash, network: _ } =>
+                AddressInner::P2pkh { hash, network: params.network_kind },
+            AddressInner::P2sh { hash, network: _ } =>
+                AddressInner::P2sh { hash, network: params.network_kind },
+            AddressInner::Segwit { program, hrp: _ } =>
+                AddressInner::Segwit { program, hrp: params.hrp },
+        };
+        // Fine to return NetworkChecked, as .require_network(network) is infallible.
+        Address::from_inner(new_inner)
+    }
 }
 
 /// Methods and functions that can be called only on `Address<NetworkChecked>`.
