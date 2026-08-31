@@ -418,18 +418,13 @@ impl KnownHrp {
             Self::Regtest => bech32::hrp::BCRT,
         }
     }
-}
 
-impl From<Network> for KnownHrp {
-    fn from(n: Network) -> Self { Self::from_network(n) }
-}
-
-impl From<KnownHrp> for NetworkKind {
-    fn from(hrp: KnownHrp) -> Self {
-        match hrp {
-            KnownHrp::Mainnet => Self::Main,
-            KnownHrp::Testnets => Self::Test,
-            KnownHrp::Regtest => Self::Test,
+    /// Converts this to a [`NetworkKind`].
+    fn to_network_kind(self) -> NetworkKind {
+        match self {
+            Self::Mainnet => NetworkKind::Main,
+            Self::Testnets => NetworkKind::Test,
+            Self::Regtest => NetworkKind::Test,
         }
     }
 }
@@ -478,7 +473,7 @@ impl From<Network> for AddressParams {
 }
 
 impl From<KnownHrp> for AddressParams {
-    fn from(hrp: KnownHrp) -> Self { Self { network_kind: NetworkKind::from(hrp), hrp } }
+    fn from(hrp: KnownHrp) -> Self { Self { network_kind: hrp.to_network_kind(), hrp } }
 }
 
 impl From<AddressParams> for KnownHrp {
@@ -697,7 +692,7 @@ impl<V: NetworkValidation> Address<V> {
         match *self.inner() {
             AddressInner::P2pkh { hash: _, ref network } => *network,
             AddressInner::P2sh { hash: _, ref network } => *network,
-            AddressInner::Segwit { program: _, ref hrp } => NetworkKind::from(*hrp),
+            AddressInner::Segwit { program: _, ref hrp } => (*hrp).to_network_kind(),
         }
     }
 }
