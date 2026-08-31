@@ -816,12 +816,12 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    #[cfg(feature = "test-serde")]
+    #[cfg(feature = "serde")]
     fn u256_serde() {
         let check = |uint, hex| {
             let json = format!("\"{}\"", hex);
-            assert_eq!(::serde_json::to_string(&uint).unwrap(), json);
-            assert_eq!(::serde_json::from_str::<U256>(&json).unwrap(), uint);
+            assert_eq!(serde_json::to_string(&uint).unwrap(), json);
+            assert_eq!(serde_json::from_str::<U256>(&json).unwrap(), uint);
 
             let bin_encoded = bincode::serialize(&uint).unwrap();
             let bin_decoded: U256 = bincode::deserialize(&bin_encoded).unwrap();
@@ -846,15 +846,15 @@ mod tests {
             "deadbeeaa69b455cd41bb662a69b4550a69b455cd41bb662a69b4555deadbeef",
         );
 
-        assert!(::serde_json::from_str::<U256>(
+        assert!(serde_json::from_str::<U256>(
             "\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\""
         )
         .is_err()); // invalid char
-        assert!(::serde_json::from_str::<U256>(
+        assert!(serde_json::from_str::<U256>(
             "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
         )
         .is_err()); // invalid length
-        assert!(::serde_json::from_str::<U256>(
+        assert!(serde_json::from_str::<U256>(
             "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
         )
         .is_err()); // invalid length
