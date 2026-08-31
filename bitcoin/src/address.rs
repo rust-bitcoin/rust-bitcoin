@@ -223,7 +223,7 @@ mod tests {
         let key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
             .parse::<FullPublicKey>()
             .unwrap();
-        let addr = Address::p2wpkh(key, KnownHrp::Mainnet);
+        let addr = Address::p2wpkh(key, AddressParams::MAINNET);
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
         assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
         roundtrips(&addr, Bitcoin);
@@ -233,7 +233,7 @@ mod tests {
     fn p2wsh() {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
         let script = WitnessScriptBuf::from_hex_no_length_prefix("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
-        let addr = Address::p2wsh(&script, KnownHrp::Mainnet).expect("script is valid");
+        let addr = Address::p2wsh(&script, AddressParams::MAINNET).expect("script is valid");
         assert_eq!(
             &addr.to_string(),
             "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
@@ -272,7 +272,7 @@ mod tests {
         );
         let program = WitnessProgram::new(WitnessVersion::V13, &program).expect("valid program");
 
-        let addr = Address::from_witness_program(program, KnownHrp::Mainnet);
+        let addr = Address::from_witness_program(program, AddressParams::MAINNET);
         roundtrips(&addr, Bitcoin);
     }
 
@@ -374,7 +374,7 @@ mod tests {
         let internal_key = "cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115"
             .parse::<XOnlyPublicKey>()
             .unwrap();
-        let address = Address::p2tr(internal_key, None, KnownHrp::Mainnet);
+        let address = Address::p2tr(internal_key, None, AddressParams::MAINNET);
         assert_eq!(
             address.to_string(),
             "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"

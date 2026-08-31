@@ -418,18 +418,13 @@ impl KnownHrp {
             Self::Regtest => bech32::hrp::BCRT,
         }
     }
-}
 
-impl From<Network> for KnownHrp {
-    fn from(n: Network) -> Self { Self::from_network(n) }
-}
-
-impl From<KnownHrp> for NetworkKind {
-    fn from(hrp: KnownHrp) -> Self {
-        match hrp {
-            KnownHrp::Mainnet => Self::Main,
-            KnownHrp::Testnets => Self::Test,
-            KnownHrp::Regtest => Self::Test,
+    /// Converts this to a [`NetworkKind`].
+    fn to_network_kind(self) -> NetworkKind {
+        match self {
+            Self::Mainnet => NetworkKind::Main,
+            Self::Testnets => NetworkKind::Test,
+            Self::Regtest => NetworkKind::Test,
         }
     }
 }
@@ -475,14 +470,6 @@ impl From<Network> for AddressParams {
     fn from(n: Network) -> Self {
         Self { network_kind: NetworkKind::from(n), hrp: KnownHrp::from_network(n) }
     }
-}
-
-impl From<KnownHrp> for AddressParams {
-    fn from(hrp: KnownHrp) -> Self { Self { network_kind: NetworkKind::from(hrp), hrp } }
-}
-
-impl From<AddressParams> for KnownHrp {
-    fn from(params: AddressParams) -> Self { params.hrp }
 }
 
 /// The data encoded by an `Address`.
@@ -697,7 +684,7 @@ impl<V: NetworkValidation> Address<V> {
         match *self.inner() {
             AddressInner::P2pkh { hash: _, ref network } => *network,
             AddressInner::P2sh { hash: _, ref network } => *network,
-            AddressInner::Segwit { program: _, ref hrp } => NetworkKind::from(*hrp),
+            AddressInner::Segwit { program: _, ref hrp } => (*hrp).to_network_kind(),
         }
     }
 }
@@ -746,9 +733,9 @@ impl Address {
     /// Constructs a new pay-to-witness-public-key-hash (P2WPKH) [`Address`] from a public key.
     ///
     /// This is the native SegWit address type for an output redeemable with a single signature.
-    pub fn p2wpkh(pk: FullPublicKey, hrp: impl Into<KnownHrp>) -> Self {
+    pub fn p2wpkh(pk: FullPublicKey, params: impl Into<AddressParams>) -> Self {
         let program = WitnessProgram::p2wpkh(pk);
-        Self::from_witness_program(program, hrp)
+        Self::from_witness_program(program, params)
     }
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
@@ -772,16 +759,16 @@ impl Address {
     #[cfg(feature = "alloc")]
     pub fn p2wsh(
         witness_script: &WitnessScript,
-        hrp: impl Into<KnownHrp>,
+        params: impl Into<AddressParams>,
     ) -> Result<Self, WitnessScriptSizeError> {
         let program = WitnessProgram::p2wsh(witness_script)?;
-        Ok(Self::from_witness_program(program, hrp))
+        Ok(Self::from_witness_program(program, params))
     }
 
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script hash.
-    pub fn p2wsh_from_hash(hash: WScriptHash, hrp: impl Into<KnownHrp>) -> Self {
+    pub fn p2wsh_from_hash(hash: WScriptHash, params: impl Into<AddressParams>) -> Self {
         let program = WitnessProgram::p2wsh_from_hash(hash);
-        Self::from_witness_program(program, hrp)
+        Self::from_witness_program(program, params)
     }
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
@@ -808,30 +795,30 @@ impl Address {
     pub fn p2tr<K: Into<UntweakedPublicKey>>(
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
-        hrp: impl Into<KnownHrp>,
+        params: impl Into<AddressParams>,
     ) -> Self {
         let internal_key = internal_key.into();
         let program = WitnessProgram::p2tr(internal_key, merkle_root);
-        Self::from_witness_program(program, hrp)
+        Self::from_witness_program(program, params)
     }
 
     /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from a tweaked output key.
-    pub fn p2tr_tweaked(output_key: TweakedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
+    pub fn p2tr_tweaked(output_key: TweakedPublicKey, params: impl Into<AddressParams>) -> Self {
         let program = WitnessProgram::p2tr_tweaked(output_key);
-        Self::from_witness_program(program, hrp)
+        Self::from_witness_program(program, params)
     }
 
     /// Constructs a new pay-to-anchor (P2A) [`Address`].
-    pub fn p2a(hrp: impl Into<KnownHrp>) -> Self {
-        Self::from_witness_program(WitnessProgram::p2a(), hrp)
+    pub fn p2a(params: impl Into<AddressParams>) -> Self {
+        Self::from_witness_program(WitnessProgram::p2a(), params)
     }
 
     /// Constructs a new [`Address`] from an arbitrary [`WitnessProgram`].
     ///
     /// This only exists to support future witness versions. If you are doing normal mainnet things
     /// then you likely do not need this constructor.
-    pub fn from_witness_program(program: WitnessProgram, hrp: impl Into<KnownHrp>) -> Self {
-        let inner = AddressInner::Segwit { program, hrp: hrp.into() };
+    pub fn from_witness_program(program: WitnessProgram, params: impl Into<AddressParams>) -> Self {
+        let inner = AddressInner::Segwit { program, hrp: params.into().hrp };
         Self::from_inner(inner)
     }
 
@@ -1457,7 +1444,7 @@ mod tests {
         let pubkey = pubkey_string.parse::<LegacyPublicKey>().expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
-        let address = Address::p2tr_tweaked(tweaked_pubkey, KnownHrp::Mainnet);
+        let address = Address::p2tr_tweaked(tweaked_pubkey, AddressParams::MAINNET);
 
         assert_eq!(
             address,
@@ -1483,7 +1470,7 @@ mod tests {
         let pubkey = pubkey_string.parse::<LegacyPublicKey>().expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
-        let address = Address::p2tr_tweaked(tweaked_pubkey, KnownHrp::Mainnet);
+        let address = Address::p2tr_tweaked(tweaked_pubkey, AddressParams::MAINNET);
 
         assert_eq!(
             address,

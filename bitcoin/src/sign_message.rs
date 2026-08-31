@@ -287,7 +287,7 @@ mod tests {
 
         let p2pkh = Address::p2pkh(pubkey, AddressParams::MAINNET);
         assert_eq!(signature2.is_signed_by_address(&p2pkh, msg_hash), Ok(true));
-        let p2wpkh = Address::p2wpkh(pubkey, Network::Bitcoin);
+        let p2wpkh = Address::p2wpkh(pubkey, AddressParams::MAINNET);
         assert_eq!(
             signature2.is_signed_by_address(&p2wpkh, msg_hash),
             Err(super::MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
