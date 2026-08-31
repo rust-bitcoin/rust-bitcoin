@@ -434,6 +434,57 @@ impl From<KnownHrp> for NetworkKind {
     }
 }
 
+/// Parameters that define how an [`Address`] is serialized.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AddressParams {
+    /// Determines the version byte prefixed to legacy (base58) addresses.
+    network_kind: NetworkKind,
+    /// Determines the hrp of SegWit (bech32) addresses.
+    hrp: KnownHrp,
+}
+
+impl AddressParams {
+    /// The address parameters of the main Bitcoin network.
+    pub const MAINNET: Self = Self { network_kind: NetworkKind::Main, hrp: KnownHrp::Mainnet };
+
+    /// The address parameters of the testnet3 network.
+    pub const TESTNET3: Self = Self { network_kind: NetworkKind::Test, hrp: KnownHrp::Testnets };
+
+    /// The address parameters of the testnet4 network.
+    pub const TESTNET4: Self = Self { network_kind: NetworkKind::Test, hrp: KnownHrp::Testnets };
+
+    /// The address parameters of the signet network.
+    pub const SIGNET: Self = Self { network_kind: NetworkKind::Test, hrp: KnownHrp::Testnets };
+
+    /// The address parameters of the regtest network.
+    pub const REGTEST: Self = Self { network_kind: NetworkKind::Test, hrp: KnownHrp::Regtest };
+}
+
+impl fmt::Display for AddressParams {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self.hrp {
+            KnownHrp::Mainnet => "mainnet",
+            KnownHrp::Testnets => "testnet",
+            KnownHrp::Regtest => "regtest",
+        };
+        f.write_str(s)
+    }
+}
+
+impl From<Network> for AddressParams {
+    fn from(n: Network) -> Self {
+        Self { network_kind: NetworkKind::from(n), hrp: KnownHrp::from_network(n) }
+    }
+}
+
+impl From<KnownHrp> for AddressParams {
+    fn from(hrp: KnownHrp) -> Self { Self { network_kind: NetworkKind::from(hrp), hrp } }
+}
+
+impl From<AddressParams> for KnownHrp {
+    fn from(params: AddressParams) -> Self { params.hrp }
+}
+
 /// The data encoded by an `Address`.
 ///
 /// This is the data used to encumber an output that pays to this address i.e., it is the address

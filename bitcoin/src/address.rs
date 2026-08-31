@@ -42,6 +42,7 @@
 
 use addresses::witness_program::WitnessProgram;
 use crypto::key::PubkeyHash;
+use network::Network;
 use primitives::script::{ScriptHash, ScriptPubKey};
 use primitives::witness_version::WitnessVersion;
 
@@ -57,9 +58,25 @@ pub use self::error::{
 };
 #[doc(inline)]
 pub use addresses::{
-    Address, AddressData, AddressType, KnownHrp, NetworkUnchecked, NetworkValidation,
-    NetworkValidationUnchecked,
+    Address, AddressData, AddressParams, AddressType, KnownHrp, NetworkUnchecked,
+    NetworkValidation, NetworkValidationUnchecked,
 };
+
+impl From<&Params> for AddressParams {
+    fn from(params: &Params) -> Self {
+        match params.network {
+            Network::Bitcoin => Self::MAINNET,
+            Network::Regtest => Self::REGTEST,
+            Network::Signet => Self::SIGNET,
+            Network::Testnet(network::TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(_) => Self::TESTNET3,
+        }
+    }
+}
+
+impl From<Params> for AddressParams {
+    fn from(params: Params) -> Self { Self::from(&params) }
+}
 
 mod sealed {
     pub trait Sealed {}
