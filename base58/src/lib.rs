@@ -446,7 +446,7 @@ impl fmt::Debug for Base58CkString {
 #[cfg(feature = "alloc")]
 const fn encoded_reserve_len(unencoded_len: usize) -> usize {
     // log2(256) / log2(58) ~ 1.37 = 137 / 100
-    unencoded_len * 137 / 100
+    (unencoded_len * 137).div_ceil(100)
 }
 
 /// Returns the length to reserve when encoding base58 with checksum
@@ -565,6 +565,10 @@ mod tests {
             Base58CkString::encode_unbounded(&addr[..]).as_str(),
             "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"
         );
+
+        let data = [0xFFu8; 90];
+        #[cfg(feature = "alloc")]
+        let _ = Base58CkString::encode_unbounded(&data);
     }
 
     #[test]
