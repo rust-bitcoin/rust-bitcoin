@@ -99,7 +99,7 @@ impl TapSighashType {
 }
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum EcdsaSighashType {
     /// 0x1: Sign all outputs.
     All,
@@ -140,13 +140,6 @@ impl NonStandardSighashType {
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
 
-impl PartialEq for EcdsaSighashType {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool { self.to_u32() == other.to_u32() }
-}
-
-impl Eq for EcdsaSighashType {}
-
 impl PartialOrd for EcdsaSighashType {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> { Some(self.cmp(other)) }
@@ -155,13 +148,6 @@ impl PartialOrd for EcdsaSighashType {
 impl Ord for EcdsaSighashType {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering { self.to_u32().cmp(&other.to_u32()) }
-}
-
-impl core::hash::Hash for EcdsaSighashType {
-    #[inline]
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        core::hash::Hash::hash(&self.to_u32(), state);
-    }
 }
 
 impl fmt::Display for EcdsaSighashType {
