@@ -2,7 +2,7 @@
 #![cfg_attr(not(fuzzing), allow(unused))]
 
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::address::{Address, AddressExt as _};
+use bitcoin::address::{Address, AddressParams, AddressExt as _};
 use bitcoin::encoding::encode_to_vec;
 use bitcoin::script::{self, ScriptBuf, ScriptExt as _, ScriptPubKeyExt as _};
 use bitcoin::Network;
@@ -48,7 +48,7 @@ fn do_test(data: &[u8]) {
         assert_eq!(serialized, &encode_to_vec(script_buf.as_script())[..]);
 
         // Check if valid address and if that address roundtrips.
-        if let Ok(addr) = Address::from_script(&script_buf, Network::Bitcoin) {
+        if let Ok(addr) = Address::from_script(&script_buf, AddressParams::MAINNET) {
             assert_eq!(addr.script_pubkey(), script_buf);
         }
     }

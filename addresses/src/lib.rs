@@ -40,15 +40,14 @@
 //! {
 //! use bitcoin_crypto::secp256k1::rand;
 //! use bitcoin_crypto::key::LegacyPublicKey;
-//! use network::Network;
-//! use bitcoin_addresses::Address;
+//! use bitcoin_addresses::{Address, AddressParams};
 //!
 //! // Generate random key pair.
 //! let (_sk, pk) = secp256k1::generate_keypair(&mut rand::rng());
 //! let public_key = LegacyPublicKey::from_secp(pk); // Or `LegacyPublicKey::from(pk)`.
 //!
 //! // Generate a mainnet pay-to-pubkey-hash address.
-//! let address = Address::p2pkh(&public_key, Network::Bitcoin);
+//! let address = Address::p2pkh(&public_key, AddressParams::MAINNET);
 //! }
 //! ```
 //!
@@ -125,7 +124,7 @@ use crypto::key::{
 };
 use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt as _;
-use network::{Network, NetworkKind};
+use network::NetworkKind;
 #[cfg(feature = "alloc")]
 use primitives::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
 #[cfg(feature = "alloc")]
@@ -387,15 +386,6 @@ pub enum KnownHrp {
 }
 
 impl KnownHrp {
-    /// Constructs a new [`KnownHrp`] from [`Network`].
-    fn from_network(network: Network) -> Self {
-        match network {
-            Network::Bitcoin => Self::Mainnet,
-            Network::Testnet(_) | Network::Signet => Self::Testnets,
-            Network::Regtest => Self::Regtest,
-        }
-    }
-
     /// Constructs a new [`KnownHrp`] from a [`bech32::Hrp`].
     #[cfg(feature = "alloc")]
     fn from_hrp(hrp: Hrp) -> Result<Self, UnknownHrpError> {
@@ -466,12 +456,6 @@ impl fmt::Display for AddressParams {
     }
 }
 
-impl From<Network> for AddressParams {
-    fn from(n: Network) -> Self {
-        Self { network_kind: NetworkKind::from(n), hrp: KnownHrp::from_network(n) }
-    }
-}
-
 impl From<KnownHrp> for AddressParams {
     fn from(hrp: KnownHrp) -> Self { Self { network_kind: hrp.to_network_kind(), hrp } }
 }
@@ -527,20 +511,19 @@ transparent_newtype! {
     /// ```rust
     /// # #[cfg(feature = "alloc")] {
     /// use std::str::FromStr;
-    /// use bitcoin_addresses::{Address, NetworkUnchecked, NetworkChecked};
-    /// use bitcoin_addresses::network::Network;
+    /// use bitcoin_addresses::{Address, AddressParams, NetworkUnchecked, NetworkChecked};
     ///
     /// // variant 1
     /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
-    /// let _address: Address<NetworkChecked> = address.require_network(Network::Bitcoin).unwrap();
+    /// let _address: Address<NetworkChecked> = address.require_network(AddressParams::MAINNET).unwrap();
     ///
     /// // variant 2
     /// let _address: Address = Address::from_str("32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf").unwrap()
-    ///                .require_network(Network::Bitcoin).unwrap();
+    ///                .require_network(AddressParams::MAINNET).unwrap();
     ///
     /// // variant 3
     /// let _address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
-    ///                .unwrap().require_network(Network::Bitcoin).unwrap();
+    ///                .unwrap().require_network(AddressParams::MAINNET).unwrap();
     /// # }
     /// ```
     ///
@@ -1022,19 +1005,19 @@ impl Address<NetworkUnchecked> {
     ///
     /// ```rust
     /// # #[cfg(feature = "alloc")] {
-    /// use network::{Network, TestnetVersion};
-    /// use bitcoin_addresses::{Address, NetworkUnchecked};
+    /// use network::{TestnetVersion};
+    /// use bitcoin_addresses::{Address, AddressParams, NetworkUnchecked};
     ///
     /// let address: Address<NetworkUnchecked> = "2N83imGV3gPwBzKJQvWJ7cRUY2SpUyU6A5e".parse().unwrap();
-    /// assert!(address.is_valid_for_network(Network::Testnet(TestnetVersion::V3)));
-    /// assert!(address.is_valid_for_network(Network::Regtest));
-    /// assert!(address.is_valid_for_network(Network::Signet));
+    /// assert!(address.is_valid_for_network(AddressParams::TESTNET3));
+    /// assert!(address.is_valid_for_network(AddressParams::REGTEST));
+    /// assert!(address.is_valid_for_network(AddressParams::SIGNET));
     ///
-    /// assert_eq!(address.is_valid_for_network(Network::Bitcoin), false);
+    /// assert_eq!(address.is_valid_for_network(AddressParams::MAINNET), false);
     ///
     /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
-    /// assert!(address.is_valid_for_network(Network::Bitcoin));
-    /// assert_eq!(address.is_valid_for_network(Network::Testnet(TestnetVersion::V4)), false);
+    /// assert!(address.is_valid_for_network(AddressParams::MAINNET));
+    /// assert_eq!(address.is_valid_for_network(AddressParams::TESTNET4), false);
     /// # }
     /// ```
     pub fn is_valid_for_network(&self, params: impl Into<AddressParams>) -> bool {
@@ -1060,33 +1043,32 @@ impl Address<NetworkUnchecked> {
     ///  # Examples
     ///
     /// ```
-    /// use bitcoin_addresses::{Address, NetworkChecked, NetworkUnchecked, ParseError};
-    /// use network::Network;
+    /// use bitcoin_addresses::{Address, AddressParams, NetworkChecked, NetworkUnchecked, ParseError};
     ///
     /// const ADDR: &str = "bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs";
     ///
-    /// fn parse_and_validate_address(network: Network) -> Result<Address, ParseError> {
+    /// fn parse_and_validate_address(params: AddressParams) -> Result<Address, ParseError> {
     ///     let address = ADDR.parse::<Address<_>>()?
-    ///                       .require_network(network)?;
+    ///                       .require_network(params)?;
     ///     Ok(address)
     /// }
     ///
-    /// fn parse_and_validate_address_combinator(network: Network) -> Result<Address, ParseError> {
+    /// fn parse_and_validate_address_combinator(params: AddressParams) -> Result<Address, ParseError> {
     ///     let address = ADDR.parse::<Address<_>>()
-    ///                       .and_then(|a| a.require_network(network))?;
+    ///                       .and_then(|a| a.require_network(params))?;
     ///     Ok(address)
     /// }
     ///
-    /// fn parse_and_validate_address_show_types(network: Network) -> Result<Address, ParseError> {
+    /// fn parse_and_validate_address_show_types(params: AddressParams) -> Result<Address, ParseError> {
     ///     let address: Address<NetworkChecked> = ADDR.parse::<Address<NetworkUnchecked>>()?
-    ///                                                .require_network(network)?;
+    ///                                                .require_network(params)?;
     ///     Ok(address)
     /// }
     ///
-    /// let network = Network::Bitcoin;  // Don't hard code network in applications.
-    /// let _ = parse_and_validate_address(network).unwrap();
-    /// let _ = parse_and_validate_address_combinator(network).unwrap();
-    /// let _ = parse_and_validate_address_show_types(network).unwrap();
+    /// let params = AddressParams::MAINNET;  // Don't hard code network in applications.
+    /// let _ = parse_and_validate_address(params).unwrap();
+    /// let _ = parse_and_validate_address_combinator(params).unwrap();
+    /// let _ = parse_and_validate_address_show_types(params).unwrap();
     /// ```
     #[inline]
     #[cfg(feature = "alloc")]
@@ -1276,7 +1258,6 @@ include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
 #[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
-    use network::TestnetVersion;
     use primitives::RedeemScriptBuf;
 
     use super::*;
@@ -1336,7 +1317,7 @@ mod tests {
             let addr = address
                 .parse::<Address<_>>()
                 .unwrap()
-                .require_network(Network::Bitcoin)
+                .require_network(AddressParams::MAINNET)
                 .expect("mainnet");
             assert_eq!(&addr.address_type(), expected_type);
         }
@@ -1348,7 +1329,7 @@ mod tests {
             let addr = el
                 .parse::<Address<_>>()
                 .unwrap()
-                .require_network(Network::Bitcoin)
+                .require_network(AddressParams::MAINNET)
                 .expect("mainnet");
             assert_eq!(addr.to_qr_uri(), format!("bitcoin:{}", el));
         }
@@ -1368,7 +1349,7 @@ mod tests {
         let address = address_string
             .parse::<Address<_>>()
             .expect("address")
-            .require_network(Network::Bitcoin)
+            .require_network(AddressParams::MAINNET)
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
@@ -1389,7 +1370,7 @@ mod tests {
         let address = address_string
             .parse::<Address<_>>()
             .expect("address")
-            .require_network(Network::Bitcoin)
+            .require_network(AddressParams::MAINNET)
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
@@ -1410,7 +1391,7 @@ mod tests {
         let address = address_string
             .parse::<Address<_>>()
             .expect("address")
-            .require_network(Network::Bitcoin)
+            .require_network(AddressParams::MAINNET)
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
@@ -1431,7 +1412,7 @@ mod tests {
         let address = address_string
             .parse::<Address<_>>()
             .expect("address")
-            .require_network(Network::Testnet(TestnetVersion::V3))
+            .require_network(AddressParams::TESTNET3)
             .expect("testnet");
 
         let pubkey_string = "04e96e22004e3db93530de27ccddfdf1463975d2138ac018fc3e7ba1a2e5e0aad8e424d0b55e2436eb1d0dcd5cb2b8bcc6d53412c22f358de57803a6a655fbbd04";
@@ -1459,7 +1440,7 @@ mod tests {
             "bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e"
                 .parse::<Address<_>>()
                 .expect("address")
-                .require_network(Network::Bitcoin)
+                .require_network(AddressParams::MAINNET)
                 .expect("mainnet")
         );
 
@@ -1485,7 +1466,7 @@ mod tests {
             "bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e"
                 .parse::<Address<_>>()
                 .expect("address")
-                .require_network(Network::Bitcoin)
+                .require_network(AddressParams::MAINNET)
                 .expect("mainnet")
         );
 

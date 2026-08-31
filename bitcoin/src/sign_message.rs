@@ -265,7 +265,7 @@ mod tests {
     #[cfg(feature = "secp-recovery")]
     #[cfg(feature = "std")]
     fn message_signature() {
-        use crate::{Address, AddressParams, AddressType, FullPublicKey, Network, PrivateKey};
+        use crate::{Address, AddressParams, AddressType, FullPublicKey, PrivateKey};
 
         let message = "rust-bitcoin MessageSignature test";
         let msg_hash = super::signed_msg_hash(message);
@@ -299,7 +299,7 @@ mod tests {
             signature2.is_signed_by_address(&p2shwpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
         );
-        let p2pkh = Address::p2pkh(pubkey, Network::Bitcoin);
+        let p2pkh = Address::p2pkh(pubkey, AddressParams::MAINNET);
         assert_eq!(signature2.is_signed_by_address(&p2pkh, msg_hash), Ok(true));
 
         assert_eq!(pubkey, FullPublicKey::from_private_key(&privkey));
