@@ -12,6 +12,9 @@
 
 set -euo pipefail
 
+# shellcheck source=fuzz/rustflags.sh
+. "$(dirname "$0")/rustflags.sh"
+
 target=
 max_total_time=
 cycle_mode=false
@@ -80,12 +83,7 @@ fi
 while :; do
   for targetName in $targets; do
     echo "Fuzzing target $targetName for $max_total_time seconds"
-    # Enable fuzz stubs in the hashes and cryptography libraries by default,
-    # unless we are fuzzing the hashes targets themselves.
-    fuzz_rustflags=''
-    if [[ ! "$targetName" =~ ^hashes_ ]]; then
-      fuzz_rustflags='--cfg=hashes_fuzz --cfg=secp256k1_fuzz'
-    fi
+    fuzz_rustflags="$(fuzz_rustflags "$targetName")"
     # cargo-fuzz will check for the corpus at fuzz/corpus/<target>
     # Use chrt to run at SCHED_IDLE priority (lowest) to avoid blocking other work.
     chrt_cmd=''

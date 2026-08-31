@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+# shellcheck source=fuzz/rustflags.sh
+. "$(dirname "$0")/rustflags.sh"
+
 artifact_name="${1:?Usage: $0 ARTIFACT_NAME}"
 summary="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
 
@@ -43,8 +46,9 @@ for tdir in fuzz/artifacts/*/; do
         echo ""
       fi
       echo '```sh'
-      if [[ "$target" != hashes_* ]]; then
-        echo 'export RUSTFLAGS="--cfg=hashes_fuzz --cfg=secp256k1_fuzz"'
+      flags="$(fuzz_rustflags "$target")"
+      if [ -n "$flags" ]; then
+        echo "export RUSTFLAGS=\"$flags\""
       fi
       echo "base64 -d > crash <<'EOF' # paste the base64 line above in terminal"
       echo "EOF"
