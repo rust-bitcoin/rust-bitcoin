@@ -108,6 +108,8 @@ replay() {
     while IFS= read -r -d '' input; do
       echo "Replaying $target/$(basename "$input")"
       if ! RUSTFLAGS="${RUSTFLAGS:-} $rustflags" cargo +"$nightly" fuzz run "$target" "$input"; then
+        mkdir -p "artifacts/$target"
+        cp -n "$input" "artifacts/$target/"
         failed=1
       fi
     done < <(find "$dir" -maxdepth 1 -type f -print0)

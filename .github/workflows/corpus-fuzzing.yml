@@ -105,7 +105,7 @@ jobs:
       - name: Report crashes
         if: failure()
         working-directory: rust-bitcoin
-        run: ./fuzz/report-crashes.sh "crash-$TARGET"
+        run: ./fuzz/report-crashes.sh "crash-$TARGET" fuzz
       - name: Upload crash artifacts
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -199,3 +199,7 @@ jobs:
         run: cargo install --locked --version "$CARGO_FUZZ_VERSION" cargo-fuzz
       - name: Replay crash store
         run: rust-bitcoin/fuzz/corpora.sh replay .
+      - name: Report crashes
+        if: failure()
+        working-directory: rust-bitcoin
+        run: ./fuzz/report-crashes.sh "qa-assets fuzz_crashes store" crash-store
