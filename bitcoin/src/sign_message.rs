@@ -265,7 +265,7 @@ mod tests {
     #[cfg(feature = "secp-recovery")]
     #[cfg(feature = "std")]
     fn message_signature() {
-        use crate::{Address, AddressType, FullPublicKey, Network, NetworkKind, PrivateKey};
+        use crate::{Address, AddressParams, AddressType, FullPublicKey, Network, PrivateKey};
 
         let message = "rust-bitcoin MessageSignature test";
         let msg_hash = super::signed_msg_hash(message);
@@ -287,14 +287,14 @@ mod tests {
             .try_into()
             .expect("compressed was set to true");
 
-        let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
+        let p2pkh = Address::p2pkh(pubkey, AddressParams::MAINNET);
         assert_eq!(signature2.is_signed_by_address(&p2pkh, msg_hash), Ok(true));
         let p2wpkh = Address::p2wpkh(pubkey, Network::Bitcoin);
         assert_eq!(
             signature2.is_signed_by_address(&p2wpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
         );
-        let p2shwpkh = Address::p2shwpkh(pubkey, NetworkKind::Main);
+        let p2shwpkh = Address::p2shwpkh(pubkey, AddressParams::MAINNET);
         assert_eq!(
             signature2.is_signed_by_address(&p2shwpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
@@ -316,7 +316,7 @@ mod tests {
         use base64::prelude::{Engine as _, BASE64_STANDARD};
 
         use crate::crypto::key::LegacyPublicKey;
-        use crate::{Address, NetworkKind};
+        use crate::{Address, AddressParams};
 
         let message = "a different message from what was signed";
         let msg_hash = super::signed_msg_hash(message);
@@ -333,7 +333,7 @@ mod tests {
         )
         .expect("pubkey slice");
 
-        let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
+        let p2pkh = Address::p2pkh(pubkey, AddressParams::MAINNET);
         assert_eq!(signature.is_signed_by_address(&p2pkh, msg_hash), Ok(false));
     }
 

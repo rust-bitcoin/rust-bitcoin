@@ -708,9 +708,10 @@ impl Address {
     ///
     /// This is the preferred non-witness type address.
     #[inline]
-    pub fn p2pkh(pk: impl Into<PubkeyHash>, network: impl Into<NetworkKind>) -> Self {
+    pub fn p2pkh(pk: impl Into<PubkeyHash>, params: impl Into<AddressParams>) -> Self {
         let hash = pk.into();
-        Self::from_inner(AddressInner::P2pkh { hash, network: network.into() })
+        let network = params.into().network_kind;
+        Self::from_inner(AddressInner::P2pkh { hash, network })
     }
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] from a script.
@@ -725,10 +726,10 @@ impl Address {
     #[cfg(feature = "alloc")]
     pub fn p2sh<T: ScriptHashableTag>(
         redeem_script: &Script<T>,
-        network: impl Into<NetworkKind>,
+        params: impl Into<AddressParams>,
     ) -> Result<Self, RedeemScriptSizeError> {
         let hash = redeem_script.script_hash()?;
-        Ok(Self::p2sh_from_hash(hash, network))
+        Ok(Self::p2sh_from_hash(hash, params))
     }
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] from a script hash.
@@ -737,8 +738,9 @@ impl Address {
     ///
     /// The `hash` pre-image (redeem script) must not exceed 520 bytes in length
     /// otherwise outputs created from the returned address will be un-spendable.
-    pub fn p2sh_from_hash(hash: ScriptHash, network: impl Into<NetworkKind>) -> Self {
-        Self::from_inner(AddressInner::P2sh { hash, network: network.into() })
+    pub fn p2sh_from_hash(hash: ScriptHash, params: impl Into<AddressParams>) -> Self {
+        let network = params.into().network_kind;
+        Self::from_inner(AddressInner::P2sh { hash, network })
     }
 
     /// Constructs a new pay-to-witness-public-key-hash (P2WPKH) [`Address`] from a public key.
@@ -755,11 +757,11 @@ impl Address {
     /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     #[allow(clippy::missing_panics_doc)] // script cannot cause hash failure due to size
     #[cfg(feature = "alloc")]
-    pub fn p2shwpkh(pk: FullPublicKey, network: impl Into<NetworkKind>) -> Self {
+    pub fn p2shwpkh(pk: FullPublicKey, params: impl Into<AddressParams>) -> Self {
         let builder =
             ScriptPubKey::builder().push_opcode(OP_PUSHBYTES_0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
-        Self::p2sh_from_hash(script_hash, network)
+        Self::p2sh_from_hash(script_hash, params)
     }
 
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script.
@@ -794,12 +796,12 @@ impl Address {
     #[cfg(feature = "alloc")]
     pub fn p2shwsh(
         witness_script: &WitnessScript,
-        network: impl Into<NetworkKind>,
+        params: impl Into<AddressParams>,
     ) -> Result<Self, WitnessScriptSizeError> {
         let hash = witness_script.wscript_hash()?;
         let builder = ScriptPubKey::builder().push_opcode(OP_PUSHBYTES_0).push_slice(hash);
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
-        Ok(Self::p2sh_from_hash(script_hash, network))
+        Ok(Self::p2sh_from_hash(script_hash, params))
     }
 
     /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
@@ -1287,7 +1289,7 @@ mod tests {
     #[test]
     fn p2sh_parse_for_large_script() {
         let script = RedeemScriptBuf::from_hex_no_length_prefix("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
-        let res = Address::p2sh(&script, NetworkKind::Test);
+        let res = Address::p2sh(&script, AddressParams::TESTNET3);
         assert_eq!(res.unwrap_err().invalid_size(), script.len());
     }
 

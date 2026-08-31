@@ -77,7 +77,7 @@ mod tests {
     use alloc::string::ToString;
 
     use super::*;
-    use crate::address::Address;
+    use crate::address::{Address, AddressParams};
     use crate::network::NetworkKind;
 
     #[test]
@@ -92,7 +92,7 @@ mod tests {
         assert!(sk.private_key.compressed());
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
-        let pk = Address::p2pkh(sk.private_key.to_public_key(), sk.network_kind);
+        let pk = Address::p2pkh(sk.private_key.to_public_key(), AddressParams::TESTNET3);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // test string conversion
@@ -112,7 +112,7 @@ mod tests {
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
         assert_eq!(pk, "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133"
         .parse::<LegacyPublicKey>().unwrap());
-        let addr = Address::p2pkh(pk, sk.network_kind);
+        let addr = Address::p2pkh(pk, AddressParams::MAINNET);
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
         pk = pk.with_compressedness(true);
         assert_eq!(
