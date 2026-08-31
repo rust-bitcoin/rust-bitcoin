@@ -39,7 +39,7 @@ pub use self::error::{
     PrevoutsSizeError, TaprootError,
 };
 #[doc(inline)]
-pub use crypto::sighash::{EcdsaSighashType, TapSighashType};
+pub use crypto::sighash::{EcdsaSighashType, NonStandardSighashType, TapSighashType};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -309,6 +309,7 @@ impl SplitAnyoneCanPay for EcdsaSighashType {
             NonePlusAnyoneCanPay => (None, true),
             SinglePlusAnyoneCanPay => (Single, true),
             NonStandard(n) => {
+                let n = n.to_u32();
                 // Check sighash tyoe
                 let sighash_type = match n & 0x1f {
                     0x02 => None,
@@ -1937,7 +1938,7 @@ mod tests {
         let witness = &tx.inputs[0].witness;
         let sig = crate::ecdsa::Signature::from_slice(witness.get(0).unwrap())
             .expect("non-standard sighash types parse");
-        assert_eq!(sig.sighash_type, EcdsaSighashType::NonStandard(0x65));
+        assert_eq!(sig.sighash_type, EcdsaSighashType::from_consensus(0x65));
         let pk = PublicKey::from_slice(witness.get(1).unwrap()).unwrap();
 
         // redeemScript from the scriptSig: the v0 witness program.
