@@ -248,11 +248,9 @@ mod tests {
     use alloc::string::String;
     use alloc::string::ToString;
 
-    use super::*;
-
     #[test]
-    fn test_signed_msg_hash() {
-        let hash = signed_msg_hash("test");
+    fn signed_msg_hash() {
+        let hash = super::signed_msg_hash("test");
         assert_eq!(
             hash.to_string(),
             "a6f87fe6d58a032c320ff8d1541656f0282c2c7bfcc69d61af4c8e8ed528e49c"
@@ -273,7 +271,7 @@ mod tests {
         let privkey = PrivateKey::generate();
         let secp_key = secp256k1::SecretKey::from_secret_bytes(privkey.to_secret_bytes())
             .expect("to_secret_bytes yields underlying valid secp bytes");
-        let signature = MessageSignature::new(
+        let signature = super::MessageSignature::new(
             secp256k1::ecdsa::RecoverableSignature::sign_ecdsa_recoverable(msg, &secp_key),
             privkey.compressed(),
         );
@@ -292,12 +290,12 @@ mod tests {
         let p2wpkh = Address::p2wpkh(pubkey, Network::Bitcoin);
         assert_eq!(
             signature2.is_signed_by_address(&p2wpkh, msg_hash),
-            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
+            Err(super::MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
         );
         let p2shwpkh = Address::p2shwpkh(pubkey, NetworkKind::Main);
         assert_eq!(
             signature2.is_signed_by_address(&p2shwpkh, msg_hash),
-            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
+            Err(super::MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
         );
         let p2pkh = Address::p2pkh(pubkey, Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&p2pkh, msg_hash), Ok(true));

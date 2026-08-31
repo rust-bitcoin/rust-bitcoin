@@ -327,7 +327,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn test_merkle_root_batched() {
+    fn merkle_root_batched() {
         use alloc::vec::Vec;
 
         // copy of `MerkleNode::calculate_root` (stack-based) implementation to test against the new batched approach

@@ -527,10 +527,12 @@ fn to_string() {
 // May help identify a problem sooner
 #[test]
 #[cfg(feature = "alloc")]
-fn test_repeat_char() {
+fn repeat_char() {
     struct Repeat(char, usize);
     impl fmt::Display for Repeat {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { repeat_char(f, self.0, self.1) }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            super::repeat_char(f, self.0, self.1)
+        }
     }
 
     let buf = Repeat('0', 0).to_string();

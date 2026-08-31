@@ -1729,14 +1729,14 @@ mod tests {
     }
 
     #[test]
-    fn test_derivation_path_display() {
+    fn derivation_path_display() {
         let path = RelativeDerivationPath::from_str("84'/0'/0'/0/0").unwrap();
         assert_eq!(format!("{}", path), "84'/0'/0'/0/0");
         assert_eq!(format!("{:#}", path), "84h/0h/0h/0/0");
     }
 
     #[test]
-    fn test_lowerhex_formatting() {
+    fn lowerhex_formatting() {
         let normal = ChildNumber::from_normal_idx(42).unwrap();
         let hardened = ChildNumber::from_hardened_idx(42).unwrap();
 
@@ -1748,7 +1748,7 @@ mod tests {
     }
 
     #[test]
-    fn test_upperhex_formatting() {
+    fn upperhex_formatting() {
         let normal = ChildNumber::from_normal_idx(42).unwrap();
         let hardened = ChildNumber::from_hardened_idx(42).unwrap();
 
@@ -1760,7 +1760,7 @@ mod tests {
     }
 
     #[test]
-    fn test_octal_formatting() {
+    fn octal_formatting() {
         let normal = ChildNumber::from_normal_idx(42).unwrap();
         let hardened = ChildNumber::from_hardened_idx(42).unwrap();
 
@@ -1772,7 +1772,7 @@ mod tests {
     }
 
     #[test]
-    fn test_binary_formatting() {
+    fn binary_formatting() {
         let normal = ChildNumber::from_normal_idx(42).unwrap();
         let hardened = ChildNumber::from_hardened_idx(42).unwrap();
 
@@ -2121,7 +2121,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reject_xpriv_with_non_zero_byte_at_index_45() {
+    fn reject_xpriv_with_non_zero_byte_at_index_45() {
         let mut xpriv = base58::decode_check("xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9").unwrap();
 
         // Modify byte at index 45 to be non-zero (e.g., 1)
@@ -2137,7 +2137,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reject_xpriv_with_zero_depth_and_non_zero_index() {
+    fn reject_xpriv_with_zero_depth_and_non_zero_index() {
         let result = "xprv9s21ZrQH4r4TsiLvyLXqM9P7k1K3EYhA1kkD6xuquB5i39AU8KF42acDyL3qsDbU9NmZn6MsGSUYZEsuoePmjzsB3eFKSUEh3Gu1N3cqVUN".parse::<Xpriv>();
         assert!(result.is_err());
 
@@ -2150,7 +2150,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reject_xpriv_with_zero_depth_and_non_zero_parent_fingerprint() {
+    fn reject_xpriv_with_zero_depth_and_non_zero_parent_fingerprint() {
         let result = "xprv9s2SPatNQ9Vc6GTbVMFPFo7jsaZySyzk7L8n2uqKXJen3KUmvQNTuLh3fhZMBoG3G4ZW1N2kZuHEPY53qmbZzCHshoQnNf4GvELZfqTUrcv".parse::<Xpriv>();
         assert!(result.is_err());
 

@@ -915,7 +915,7 @@ mod tests {
     }
 
     #[test]
-    fn test_user_agent() {
+    fn user_agent() {
         let client_name = "Satoshi";
         let client_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
             major: 5,
@@ -951,7 +951,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "user agent configuration cannot contain: / ( ) :")]
-    fn test_incorrect_user_agent() {
+    fn incorrect_user_agent() {
         let client_name = "Satoshi/";
         let client_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
             major: 5,

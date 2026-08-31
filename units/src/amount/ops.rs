@@ -326,7 +326,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_sum_amounts() {
+    fn sum_amounts() {
         let amounts =
             [Amount::from_sat_u32(100), Amount::from_sat_u32(200), Amount::from_sat_u32(300)];
 
@@ -335,7 +335,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_amount_results() {
+    fn sum_amount_results() {
         let amounts = [
             NumOpResult::Valid(Amount::from_sat_u32(100)),
             NumOpResult::Valid(Amount::from_sat_u32(200)),
@@ -347,7 +347,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_amount_results_with_references() {
+    fn sum_amount_results_with_references() {
         let amounts = [
             NumOpResult::Valid(Amount::from_sat_u32(100)),
             NumOpResult::Valid(Amount::from_sat_u32(200)),
@@ -359,7 +359,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_amount_with_error_propagation() {
+    fn sum_amount_with_error_propagation() {
         let amounts = [
             NumOpResult::Valid(Amount::from_sat_u32(100)),
             NumOpResult::Error(NumOpError::while_doing(MathOp::Add)),
@@ -371,7 +371,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_signed_amounts() {
+    fn sum_signed_amounts() {
         let amounts = [
             SignedAmount::from_sat_i32(100),
             SignedAmount::from_sat_i32(-50),
@@ -383,7 +383,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_signed_amount_results() {
+    fn sum_signed_amount_results() {
         let amounts = [
             NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
             NumOpResult::Valid(SignedAmount::from_sat_i32(-50)),
@@ -395,7 +395,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_signed_amount_results_with_references() {
+    fn sum_signed_amount_results_with_references() {
         let amounts = [
             NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
             NumOpResult::Valid(SignedAmount::from_sat_i32(-50)),
@@ -407,7 +407,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_signed_amount_with_error_propagation() {
+    fn sum_signed_amount_with_error_propagation() {
         let amounts = [
             NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
             NumOpResult::Error(NumOpError::while_doing(MathOp::Add)),
@@ -419,7 +419,7 @@ mod tests {
     }
 
     #[test]
-    fn test_op_assign_amount() {
+    fn op_assign_amount() {
         let sat = Amount::from_sat_u32(50);
 
         let mut res = sat + sat;
@@ -440,7 +440,7 @@ mod tests {
     }
 
     #[test]
-    fn test_op_assign_signed_amount() {
+    fn op_assign_signed_amount() {
         let ssat = SignedAmount::from_sat_i32(50);
 
         let mut res = ssat + ssat;
@@ -461,7 +461,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rem_assign_amount() {
+    fn rem_assign_amount() {
         let sat = Amount::from_sat_u32(50);
         let mut res = sat + sat;
         res %= 30_u64;
@@ -478,7 +478,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rem_assign_nz_amount() {
+    fn rem_assign_nz_amount() {
         fn nz(x: u64) -> NonZeroU64 { NonZeroU64::new(x).unwrap() }
 
         let mut res = Amount::from_sat_u32(100);
@@ -493,7 +493,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rem_assign_signed_amount() {
+    fn rem_assign_signed_amount() {
         let ssat = SignedAmount::from_sat_i32(-50);
 
         let mut res = ssat + ssat;
@@ -511,7 +511,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rem_assign_nz_signed_amount() {
+    fn rem_assign_nz_signed_amount() {
         fn nz(x: i64) -> NonZeroI64 { NonZeroI64::new(x).unwrap() }
 
         let mut res = SignedAmount::from_sat_i32(-100);
@@ -526,7 +526,7 @@ mod tests {
     }
 
     #[test]
-    fn test_div_assign_amount_nonzero() {
+    fn div_assign_amount_nonzero() {
         let mut amount = Amount::from_sat_u32(100);
         amount /= NonZeroU64::new(12).unwrap();
         assert_eq!(amount, Amount::from_sat_u32(8));
@@ -546,7 +546,7 @@ mod tests {
     }
 
     #[test]
-    fn test_div_assign_signed_amount_nonzero() {
+    fn div_assign_signed_amount_nonzero() {
         let mut ssat = SignedAmount::from_sat_i32(-100);
         ssat /= NonZeroI64::new(4).unwrap();
         assert_eq!(ssat, SignedAmount::from_sat_i32(-25));
@@ -569,7 +569,7 @@ mod tests {
     }
 
     #[test]
-    fn test_op_assign_amount_error() {
+    fn op_assign_amount_error() {
         let mut res: NumOpResult<Amount> = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
 
         // Adding a valid amount to an error should make an Add error

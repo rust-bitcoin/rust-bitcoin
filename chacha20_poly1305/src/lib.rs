@@ -220,32 +220,32 @@ mod tests {
 
     #[cfg(not(chacha20_poly1305_fuzz))]
     #[test]
-    fn test_constant_time_eq() {
+    fn constant_time_eq() {
         let tag_a = [0x42u8; 16];
         let tag_b = [0x42u8; 16];
         let tag_c = [0x00u8; 16];
 
         // full equality
-        assert!(constant_time_eq(&tag_a, &tag_b));
+        assert!(super::constant_time_eq(&tag_a, &tag_b));
 
         // full difference
-        assert!(!constant_time_eq(&tag_a, &tag_c));
+        assert!(!super::constant_time_eq(&tag_a, &tag_c));
 
         // edge case  - single byte diff
         let mut tag_d = tag_a;
 
         // first byte diff
         tag_d[0] ^= 1;
-        assert!(!constant_time_eq(&tag_a, &tag_d));
+        assert!(!super::constant_time_eq(&tag_a, &tag_d));
 
         // last byte only diff
         tag_d = tag_a;
         tag_d[15] ^= 1;
-        assert!(!constant_time_eq(&tag_a, &tag_d));
+        assert!(!super::constant_time_eq(&tag_a, &tag_d));
 
         // mid byte diff
         tag_d = tag_a;
         tag_d[7] ^= 0xff;
-        assert!(!constant_time_eq(&tag_a, &tag_d));
+        assert!(!super::constant_time_eq(&tag_a, &tag_d));
     }
 }
