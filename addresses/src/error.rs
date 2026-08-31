@@ -5,13 +5,11 @@ use core::fmt;
 
 use internals::error::InputString;
 use internals::write_err;
-#[cfg(feature = "alloc")]
-use network::Network;
 use primitives::witness_version;
 
 use crate::witness_program;
 #[cfg(feature = "alloc")]
-use crate::{Address, NetworkUnchecked};
+use crate::{Address, AddressParams, NetworkUnchecked};
 
 /// Error while generating address from script.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -134,8 +132,8 @@ impl std::error::Error for UnknownHrpError {
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NetworkValidationError {
-    /// Network that was required.
-    pub(crate) required: Network,
+    /// Address parameters that were required.
+    pub(crate) required: AddressParams,
     /// The address itself.
     pub(crate) address: Address<NetworkUnchecked>,
 }

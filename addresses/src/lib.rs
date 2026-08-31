@@ -1040,11 +1040,12 @@ impl Address<NetworkUnchecked> {
     /// assert_eq!(address.is_valid_for_network(Network::Testnet(TestnetVersion::V4)), false);
     /// # }
     /// ```
-    pub fn is_valid_for_network(&self, n: Network) -> bool {
+    pub fn is_valid_for_network(&self, params: impl Into<AddressParams>) -> bool {
+        let params = params.into();
         match *self.inner() {
-            AddressInner::P2pkh { hash: _, ref network } => *network == NetworkKind::from(n),
-            AddressInner::P2sh { hash: _, ref network } => *network == NetworkKind::from(n),
-            AddressInner::Segwit { program: _, ref hrp } => *hrp == KnownHrp::from_network(n),
+            AddressInner::P2pkh { hash: _, ref network } => *network == params.network_kind,
+            AddressInner::P2sh { hash: _, ref network } => *network == params.network_kind,
+            AddressInner::Segwit { program: _, ref hrp } => *hrp == params.hrp,
         }
     }
 
@@ -1092,7 +1093,11 @@ impl Address<NetworkUnchecked> {
     /// ```
     #[inline]
     #[cfg(feature = "alloc")]
-    pub fn require_network(self, required: Network) -> Result<Address, ParseError> {
+    pub fn require_network(
+        self,
+        required: impl Into<AddressParams>,
+    ) -> Result<Address, ParseError> {
+        let required = required.into();
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
