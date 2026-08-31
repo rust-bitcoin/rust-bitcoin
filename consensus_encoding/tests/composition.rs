@@ -91,7 +91,6 @@ impl Decode for CompositeData {
 
 #[cfg(feature = "alloc")]
 #[test]
-#[cfg(feature = "alloc")]
 fn composition_chain() {
     let original = CompositeData { first: [0x01, 0x02, 0x03, 0x04], second: [0x05, 0x06] };
     let encoded_bytes = encode_to_vec(&original);
@@ -100,7 +99,6 @@ fn composition_chain() {
 
 #[cfg(feature = "alloc")]
 #[test]
-#[cfg(feature = "alloc")]
 fn composition_nested() {
     let data = b"abcdef";
     let mut encoder6 = Encoder6::new(
