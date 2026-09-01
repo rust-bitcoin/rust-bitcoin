@@ -12,7 +12,7 @@ use core::ops;
 use arbitrary::{Arbitrary, Unstructured};
 use NumOpResult as R;
 
-use crate::result::{MathOp, NumOpError as E, NumOpResult};
+use crate::result::{MathErrorKind, MathOp, NumOpError as E, NumOpResult};
 use crate::{Amount, Weight};
 
 mod encapsulate {
@@ -80,7 +80,10 @@ impl FeeRate {
         // No `map()` in const context.
         match rate.checked_mul(4_000) {
             Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
-            None => R::Error(E::while_doing(MathOp::Mul)),
+            None => R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Mul,
+                is_negative: false,
+            })),
         }
     }
 
@@ -97,7 +100,10 @@ impl FeeRate {
         // No `map()` in const context.
         match rate.checked_mul(1_000_000) {
             Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
-            None => R::Error(E::while_doing(MathOp::Mul)),
+            None => R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Mul,
+                is_negative: false,
+            })),
         }
     }
 
@@ -114,7 +120,10 @@ impl FeeRate {
         // No `map()` in const context.
         match rate.checked_mul(1_000) {
             Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
-            None => R::Error(E::while_doing(MathOp::Mul)),
+            None => R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Mul,
+                is_negative: false,
+            })),
         }
     }
 
@@ -218,7 +227,10 @@ impl FeeRate {
                 return NumOpResult::Valid(fee_amount);
             }
         }
-        NumOpResult::Error(E::while_doing(MathOp::Mul))
+        NumOpResult::Error(E::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Mul,
+            is_negative: false,
+        }))
     }
 }
 

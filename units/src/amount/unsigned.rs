@@ -19,7 +19,7 @@ use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
-use crate::result::{MathOp, NumOpError as E, NumOpResult};
+use crate::result::{MathErrorKind, MathOp, NumOpError as E, NumOpResult};
 use crate::{parse_int, FeeRate, Weight};
 
 mod encapsulate {
@@ -471,10 +471,10 @@ impl Amount {
                     if let Ok(amount) = Self::from_sat(fee_rate) {
                         return FeeRate::from_per_kwu(amount);
                     },
-                None => return R::Error(E::while_doing(MathOp::Div)),
+                None => return R::Error(E::while_doing(MathErrorKind::DivByZero)),
             }
         }
-        R::Error(E::while_doing(MathOp::Div))
+        R::Error(E::while_doing(MathErrorKind::Overflow { op: MathOp::Div, is_negative: false }))
     }
 
     /// Checked weight ceiling division.
@@ -497,7 +497,7 @@ impl Amount {
     pub const fn div_by_weight_ceil(self, weight: Weight) -> NumOpResult<FeeRate> {
         let wu = weight.to_wu();
         if wu == 0 {
-            return R::Error(E::while_doing(MathOp::Div));
+            return R::Error(E::while_doing(MathErrorKind::DivByZero));
         }
 
         // Mul by 1,000 because we use per/kwu.
@@ -508,7 +508,7 @@ impl Amount {
                 return FeeRate::from_per_kwu(amount);
             }
         }
-        R::Error(E::while_doing(MathOp::Div))
+        R::Error(E::while_doing(MathErrorKind::Overflow { op: MathOp::Div, is_negative: false }))
     }
 
     /// Checked fee rate floor division.
@@ -522,7 +522,7 @@ impl Amount {
         let msats = self.to_sat() * 1_000;
         match msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
             Some(wu) => R::Valid(Weight::from_wu(wu)),
-            None => R::Error(E::while_doing(MathOp::Div)),
+            None => R::Error(E::while_doing(MathErrorKind::DivByZero)),
         }
     }
 
@@ -536,7 +536,7 @@ impl Amount {
         let rate = fee_rate.to_sat_per_kwu_ceil();
         // Early return so we do not have to use checked arithmetic below.
         if rate == 0 {
-            return R::Error(E::while_doing(MathOp::Div));
+            return R::Error(E::while_doing(MathErrorKind::DivByZero));
         }
 
         debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());

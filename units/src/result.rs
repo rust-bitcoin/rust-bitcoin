@@ -248,7 +248,7 @@ crate::internal_macros::impl_op_for_references! {
         fn add(self, rhs: Self) -> Self::Output {
             match (self, rhs) {
                 (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
-                (_, _) => R::Error(NumOpError::while_doing(MathOp::Add)),
+                (_, _) => R::Error(NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Add, is_negative: false })),
             }
         }
     }
@@ -271,7 +271,7 @@ crate::internal_macros::impl_op_for_references! {
         fn sub(self, rhs: Self) -> Self::Output {
             match (self, rhs) {
                 (R::Valid(lhs), R::Valid(rhs)) => lhs - rhs,
-                (_, _) => R::Error(NumOpError::while_doing(MathOp::Sub)),
+                (_, _) => R::Error(NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Sub, is_negative: true })),
             }
         }
     }
@@ -306,7 +306,8 @@ impl<T: ops::AddAssign + Copy> ops::AddAssign<Self> for NumOpResult<T> {
     fn add_assign(&mut self, rhs: Self) {
         match (&self, rhs) {
             (Self::Valid(_), Self::Valid(rhs)) => *self += rhs,
-            (_, _) => *self = Self::Error(NumOpError::while_doing(MathOp::Add)),
+            (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
+            (Self::Error(_), _) => (), // If the lhs is an error, preserve it
         }
     }
 }
@@ -326,13 +327,14 @@ impl<T: ops::SubAssign + Copy> ops::SubAssign<Self> for NumOpResult<T> {
     fn sub_assign(&mut self, rhs: Self) {
         match (&self, rhs) {
             (Self::Valid(_), Self::Valid(rhs)) => *self -= rhs,
-            (_, _) => *self = Self::Error(NumOpError::while_doing(MathOp::Sub)),
+            (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
+            (Self::Error(_), _) => (), // If the lhs is an error, preserve it
         }
     }
 }
 
 pub(crate) trait OptionExt<T> {
-    fn valid_or_error(self, op: MathOp) -> NumOpResult<T>;
+    fn valid_or_error(self, kind: MathErrorKind) -> NumOpResult<T>;
 }
 
 macro_rules! impl_opt_ext {
@@ -340,10 +342,10 @@ macro_rules! impl_opt_ext {
         $(
             impl OptionExt<$ty> for Option<$ty> {
                 #[inline]
-                fn valid_or_error(self, op: MathOp) -> NumOpResult<$ty> {
+                fn valid_or_error(self, kind: MathErrorKind) -> NumOpResult<$ty> {
                     match self {
                         Some(amount) => R::Valid(amount),
-                        None => R::Error(NumOpError(op)),
+                        None => R::Error(NumOpError::while_doing(kind)),
                     }
                 }
             }
@@ -415,26 +417,46 @@ impl fmt::Display for MathOp {
     }
 }
 
+/// The kind of error that happened during a mathematical operation failure.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum MathErrorKind {
+    // The result overflowed.
+    Overflow {
+        op: MathOp,
+        is_negative: bool,
+    },
+    /// A division by zero was performed.
+    DivByZero,
+    /// A remainder by zero was performed.
+    RemByZero,
+}
+
 /// Error types for mathematical operations.
 pub mod error {
     use core::convert::Infallible;
     use core::fmt;
 
-    use super::MathOp;
+    use super::{MathErrorKind, MathOp};
 
     /// Error returned when a mathematical operation fails.
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    pub struct NumOpError(pub(super) MathOp);
+    pub struct NumOpError(pub(crate) MathErrorKind);
 
     impl NumOpError {
-        /// Constructs a [`NumOpError`] caused by `op`.
+        /// Constructs a [`NumOpError`] caused by `kind`.
         #[inline]
-        pub(crate) const fn while_doing(op: MathOp) -> Self { Self(op) }
+        pub(crate) const fn while_doing(kind: MathErrorKind) -> Self { Self(kind) }
 
         /// Returns the [`MathOp`] that caused this error.
         #[inline]
-        pub fn operation(self) -> MathOp { self.0 }
+        pub fn operation(self) -> MathOp {
+            match self.0 {
+                MathErrorKind::DivByZero => MathOp::Div,
+                MathErrorKind::RemByZero => MathOp::Rem,
+                MathErrorKind::Overflow { op, is_negative: _ } => op,
+            }
+        }
     }
 
     impl From<Infallible> for NumOpError {
@@ -445,7 +467,15 @@ pub mod error {
     impl fmt::Display for NumOpError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "math operation '{}' gave an invalid numeric result", self.operation())
+            match self.0 {
+                MathErrorKind::Overflow { op, is_negative: false } =>
+                    write!(f, "failed to {}: the result would be too large", op),
+                MathErrorKind::Overflow { op, is_negative: true } =>
+                    write!(f, "failed to {}: the result would be too small", op),
+                MathErrorKind::DivByZero => write!(f, "division by zero"),
+                MathErrorKind::RemByZero =>
+                    write!(f, "attempt to compute the remainder of division by zero"),
+            }
         }
     }
 
@@ -465,7 +495,7 @@ impl<'a, T: Arbitrary<'a>> Arbitrary<'a> for NumOpResult<T> {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match bool::arbitrary(u)? {
             true => Ok(Self::Valid(T::arbitrary(u)?)),
-            false => Ok(Self::Error(NumOpError(MathOp::arbitrary(u)?))),
+            false => Ok(Self::Error(NumOpError(MathErrorKind::arbitrary(u)?))),
         }
     }
 }
@@ -486,6 +516,19 @@ impl<'a> Arbitrary<'a> for MathOp {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for MathErrorKind {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=2)?;
+        match choice {
+            0 => Ok(Self::Overflow { op: MathOp::arbitrary(u)?, is_negative: bool::arbitrary(u)? }),
+            1 => Ok(Self::RemByZero),
+            _ => Ok(Self::DivByZero),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
@@ -493,7 +536,7 @@ mod tests {
     #[cfg(feature = "std")]
     use std::error::Error;
 
-    use crate::result::{MathOp, NumOpError, NumOpResult};
+    use crate::result::{MathErrorKind, MathOp, NumOpError, NumOpResult};
     use crate::{Amount, FeeRate, Weight};
 
     #[test]
@@ -525,7 +568,10 @@ mod tests {
         assert_eq!(new_value, NumOpResult::Valid(Weight::from_wu(10_000)));
 
         // op is not evaluated for error results
-        let res = NumOpResult::<Weight>::Error(NumOpError::while_doing(MathOp::Add));
+        let res = NumOpResult::<Weight>::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }));
         let res_err = res.map(|_| {
             panic!("map should not evaluate for wrapped error values");
         });
@@ -551,8 +597,11 @@ mod tests {
     #[test]
     #[should_panic(expected = "test error message")]
     fn mathop_expect_panics_on_error() {
-        NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add))
-            .expect("test error message");
+        NumOpResult::<Amount>::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }))
+        .expect("test error message");
     }
 
     #[test]
@@ -574,18 +623,31 @@ mod tests {
     #[test]
     #[should_panic(expected = "")]
     fn mathop_unwrap_panics_on_err() {
-        NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add)).unwrap();
+        NumOpResult::<Amount>::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }))
+        .unwrap();
     }
 
     #[test]
     fn mathop_unwrap_err() {
         let errs = [
-            NumOpError::while_doing(MathOp::Add),
-            NumOpError::while_doing(MathOp::Sub),
-            NumOpError::while_doing(MathOp::Mul),
-            NumOpError::while_doing(MathOp::Div),
-            NumOpError::while_doing(MathOp::Neg),
-            NumOpError::while_doing(MathOp::Rem),
+            NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false,
+            }),
+            NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Sub, is_negative: true }),
+            NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Mul,
+                is_negative: false,
+            }),
+            NumOpError::while_doing(MathErrorKind::DivByZero),
+            NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Neg,
+                is_negative: false,
+            }),
+            NumOpError::while_doing(MathErrorKind::RemByZero),
         ];
         for err in errs {
             assert_eq!(NumOpResult::<Amount>::Error(err).unwrap_err(), err);
@@ -604,7 +666,10 @@ mod tests {
         let base_amount = Amount::from_sat_u32(100);
 
         // default is returned for error results
-        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add));
+        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }));
         let res_default = res.unwrap_or(base_amount);
         assert_eq!(res_default, base_amount);
 
@@ -619,7 +684,10 @@ mod tests {
         let base_amount = Amount::from_sat_u32(100);
 
         // op is evaluated for error results
-        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add));
+        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }));
         let res_default = res.unwrap_or_else(|| base_amount);
         assert_eq!(res_default, base_amount);
 
@@ -636,7 +704,10 @@ mod tests {
         let amt = Amount::from_sat_u32(150);
         assert_eq!(NumOpResult::Valid(amt).ok(), Some(amt));
 
-        let err = NumOpError::while_doing(MathOp::Add);
+        let err = NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        });
         assert_eq!(NumOpResult::<Amount>::Error(err).ok(), None);
     }
 
@@ -648,7 +719,10 @@ mod tests {
         assert_eq!(new_value, NumOpResult::Valid(Amount::from_sat_u32(150)));
 
         // op is not evaluated for error results
-        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add));
+        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }));
         let res_err = res.and_then(|_| {
             panic!("and_then should not evaluate for wrapped error values");
         });

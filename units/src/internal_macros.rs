@@ -103,9 +103,8 @@ macro_rules! impl_add_assign_for_results {
         impl ops::AddAssign<$ty> for NumOpResult<$ty> {
             #[inline]
             fn add_assign(&mut self, rhs: $ty) {
-                match self {
-                    Self::Error(_) => *self = Self::Error(NumOpError::while_doing(MathOp::Add)),
-                    Self::Valid(ref lhs) => *self = lhs + rhs,
+                if let Self::Valid(ref lhs) = self {
+                    *self = lhs + rhs
                 }
             }
         }
@@ -115,7 +114,8 @@ macro_rules! impl_add_assign_for_results {
             fn add_assign(&mut self, rhs: Self) {
                 match (&self, rhs) {
                     (Self::Valid(_), Self::Valid(rhs)) => *self += rhs,
-                    (_, _) => *self = Self::Error(NumOpError::while_doing(MathOp::Add)),
+                    (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
+                    (Self::Error(_), _) => (), // If the lhs is an error, preserve it
                 }
             }
         }
@@ -137,9 +137,8 @@ macro_rules! impl_sub_assign_for_results {
         impl ops::SubAssign<$ty> for NumOpResult<$ty> {
             #[inline]
             fn sub_assign(&mut self, rhs: $ty) {
-                match self {
-                    Self::Error(_) => *self = Self::Error(NumOpError::while_doing(MathOp::Sub)),
-                    Self::Valid(ref lhs) => *self = lhs - rhs,
+                if let Self::Valid(ref lhs) = self {
+                    *self = lhs - rhs
                 }
             }
         }
@@ -149,7 +148,8 @@ macro_rules! impl_sub_assign_for_results {
             fn sub_assign(&mut self, rhs: Self) {
                 match (&self, rhs) {
                     (Self::Valid(_), Self::Valid(rhs)) => *self -= rhs,
-                    (_, _) => *self = Self::Error(NumOpError::while_doing(MathOp::Sub)),
+                    (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
+                    (Self::Error(_), _) => (), // If the lhs is an error, preserve it
                 }
             }
         }
