@@ -259,7 +259,7 @@ fn script_asm() {
 }
 
 #[test]
-fn test_index() {
+fn index() {
     let script = Script::from_bytes(&[1, 2, 3, 4, 5]);
 
     assert_eq!(script[1..3].as_bytes(), &[2, 3]);
@@ -271,7 +271,7 @@ fn test_index() {
 }
 
 #[test]
-fn test_index_bound_tuple() {
+fn index_bound_tuple() {
     let script = Script::from_bytes(&[1, 2, 3, 4, 5]);
 
     assert_eq!(script[(Bound::Included(1), Bound::Excluded(4))].as_bytes(), &[2, 3, 4]);

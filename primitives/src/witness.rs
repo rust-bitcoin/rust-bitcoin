@@ -1388,7 +1388,7 @@ mod test {
     }
 
     #[test]
-    fn test_witness_from_iterator() {
+    fn witness_from_iterator() {
         let bytes1 = [1u8, 2, 3];
         let bytes2 = [4u8, 5];
         let bytes3 = [6u8, 7, 8, 9];
@@ -1440,7 +1440,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "hex")]
-    fn test_from_hex() {
+    fn from_hex() {
         let hex_strings = [
             "30440220703350f1c8be5b41b4cb03b3b680c4f3337f987514a6b08e16d5d9f81e9b5f72022018fb269ba5b82864c0e1edeaf788829eb332fe34a859cc1f99c4a02edfb5d0df01",
             "0208689fe2cca52d8726cefaf274de8fa61d5faa5e1058ad35b49fb194c035f9a4",
@@ -1936,7 +1936,7 @@ mod test {
 
     #[cfg(feature = "alloc")]
     #[test]
-    fn test_dos_protection() {
+    fn dos_protection() {
         let mut encoded = Vec::new();
         encoded.extend_from_slice(&[0xFE, 0x00, 0x09, 0x3D, 0x00]); // 4_000_000 (witness count)
         encoded.extend_from_slice(&[0xFE, 0x00, 0x09, 0x3D, 0x00]); // 4_000_000 (1st element length)

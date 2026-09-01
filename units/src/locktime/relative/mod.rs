@@ -926,7 +926,7 @@ mod tests {
     }
 
     #[test]
-    fn test_locktime_chain_state() {
+    fn locktime_chain_state() {
         fn generate_timestamps(start: u32, step: u16) -> [BlockTime; 11] {
             let mut timestamps = [BlockTime::from_u32(0); 11];
             for (i, ts) in timestamps.iter_mut().enumerate() {
@@ -1085,7 +1085,7 @@ mod tests {
     }
 
     #[test]
-    fn test_time_chain_state() {
+    fn time_chain_state() {
         use crate::BlockMtp;
 
         let timestamps: [BlockTime; 11] = generate_timestamps(1_600_000_000, 200);
@@ -1123,7 +1123,7 @@ mod tests {
     }
 
     #[test]
-    fn test_height_chain_state() {
+    fn height_chain_state() {
         let height_lock = LockTime::Blocks(NumberOfBlocks(10));
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
@@ -1201,7 +1201,7 @@ mod tests {
     }
 
     #[test]
-    fn test_max_height_satisfaction() {
+    fn max_height_satisfaction() {
         // If the difference between these two is u32::MAX, we should get Ok(true)
         let mined_at = BlockHeight::from_u32(u32::MIN);
         let chain_tip = BlockHeight::from_u32(u32::MAX);
