@@ -99,7 +99,7 @@ impl TapSighashType {
 }
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum EcdsaSighashType {
     /// 0x1: Sign all outputs.
     All,
@@ -122,17 +122,23 @@ pub enum EcdsaSighashType {
     /// sighash type as 4 bytes, even though only the lowest byte is appended to the
     /// signature in a transaction. On bitcoin the higher bits are always zero, but on replay-protected forks they are
     /// sometimes set.
-    NonStandard(u32),
+    NonStandard(NonStandardSighashType),
+}
+
+/// A consensus-valid sighash type that is not one of the six standard values.
+///
+/// The inner `u32` is private so that [`EcdsaSighashType::NonStandard`] cannot represent a
+/// standard sighash type. Users who need a non-standard sighash type can use [`EcdsaSighashType::from_consensus`].
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct NonStandardSighashType(u32);
+
+impl NonStandardSighashType {
+    /// Converts [`NonStandardSighashType`] to a `u32` sighash flag.
+    #[inline]
+    pub fn to_u32(self) -> u32 { self.0 }
 }
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
-
-impl PartialEq for EcdsaSighashType {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool { self.to_u32() == other.to_u32() }
-}
-
-impl Eq for EcdsaSighashType {}
 
 impl PartialOrd for EcdsaSighashType {
     #[inline]
@@ -142,13 +148,6 @@ impl PartialOrd for EcdsaSighashType {
 impl Ord for EcdsaSighashType {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering { self.to_u32().cmp(&other.to_u32()) }
-}
-
-impl core::hash::Hash for EcdsaSighashType {
-    #[inline]
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        core::hash::Hash::hash(&self.to_u32(), state);
-    }
 }
 
 impl fmt::Display for EcdsaSighashType {
@@ -161,7 +160,7 @@ impl fmt::Display for EcdsaSighashType {
             Self::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
             Self::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
             Self::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
-            Self::NonStandard(n) => return write!(f, "0x{:02x}", n),
+            Self::NonStandard(n) => return write!(f, "0x{:02x}", n.to_u32()),
         };
         f.write_str(s)
     }
@@ -206,7 +205,7 @@ impl EcdsaSighashType {
         match *self {
             Self::Single => true,
             Self::SinglePlusAnyoneCanPay => true,
-            Self::NonStandard(n) => (n & 0x1f) == 0x03,
+            Self::NonStandard(n) => (n.to_u32() & 0x1f) == 0x03,
             _ => false,
         }
     }
@@ -227,7 +226,7 @@ impl EcdsaSighashType {
             0x81 => Self::AllPlusAnyoneCanPay,
             0x82 => Self::NonePlusAnyoneCanPay,
             0x83 => Self::SinglePlusAnyoneCanPay,
-            other => Self::NonStandard(other),
+            other => Self::NonStandard(NonStandardSighashType(other)),
         }
     }
 
@@ -260,7 +259,7 @@ impl EcdsaSighashType {
             Self::AllPlusAnyoneCanPay => 0x81,
             Self::NonePlusAnyoneCanPay => 0x82,
             Self::SinglePlusAnyoneCanPay => 0x83,
-            Self::NonStandard(n) => n,
+            Self::NonStandard(n) => n.to_u32(),
         }
     }
 
@@ -285,7 +284,7 @@ impl TryFrom<EcdsaSighashType> for TapSighashType {
             EcdsaSighashType::NonePlusAnyoneCanPay => Ok(Self::NonePlusAnyoneCanPay),
             EcdsaSighashType::SinglePlusAnyoneCanPay => Ok(Self::SinglePlusAnyoneCanPay),
             // Taproot doesnt accept non-standard sighash
-            EcdsaSighashType::NonStandard(n) => Err(InvalidSighashTypeError(n)),
+            EcdsaSighashType::NonStandard(n) => Err(InvalidSighashTypeError(n.to_u32())),
         }
     }
 }
@@ -470,13 +469,13 @@ mod tests {
             match n {
                 0x01 | 0x02 | 0x03 | 0x81 | 0x82 | 0x83 =>
                     assert!(!matches!(ty, EcdsaSighashType::NonStandard(_))),
-                _ => assert_eq!(ty, EcdsaSighashType::NonStandard(n)),
+                _ => assert!(matches!(ty, EcdsaSighashType::NonStandard(_))),
             }
         }
 
         // On replay-protected forks bits above the lowest byte are sometimes set.
         let ty = EcdsaSighashType::from_consensus(0x0100_0041);
-        assert_eq!(ty, EcdsaSighashType::NonStandard(0x0100_0041));
+        assert!(matches!(ty, EcdsaSighashType::NonStandard(_)));
         assert_eq!(ty.to_u32(), 0x0100_0041);
 
         assert_eq!(ty.to_consensus_u8(), 0x41);
@@ -486,10 +485,10 @@ mod tests {
     fn ecdsa_sighash_type_non_standard_is_single_uses_mask() {
         use super::EcdsaSighashType;
 
-        assert!(EcdsaSighashType::NonStandard(0x63).is_single());
-        assert!(EcdsaSighashType::NonStandard(0xe3).is_single());
-        assert!(!EcdsaSighashType::NonStandard(0x65).is_single());
-        assert!(!EcdsaSighashType::NonStandard(0x62).is_single());
+        assert!(EcdsaSighashType::from_consensus(0x63).is_single());
+        assert!(EcdsaSighashType::from_consensus(0xe3).is_single());
+        assert!(!EcdsaSighashType::from_consensus(0x65).is_single());
+        assert!(!EcdsaSighashType::from_consensus(0x62).is_single());
     }
 
     #[test]
