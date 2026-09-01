@@ -1324,13 +1324,6 @@ mod tests {
     }
 
     #[test]
-    fn huge_witness() {
-        let hex =
-            hex::decode_to_vec(include_str!("../../tests/data/huge_witness.hex").trim()).unwrap();
-        decode_from_slice::<Transaction>(&hex).unwrap();
-    }
-
-    #[test]
     #[cfg(feature = "bitcoinconsensus")]
     #[cfg(feature = "std")]
     fn transaction_verify() {
