@@ -164,7 +164,12 @@ jobs:
           persist-credentials: false
       - name: "Read workspace versions"
         id: read_toolchain
-        run: echo "nightly_version=$(cargo metadata --format-version 1 | jq -r '.metadata.rbmt.toolchains.nightly')" >> $GITHUB_OUTPUT
+        # Defining bash shell forces github actions pipefail behavior
+        shell: bash
+        run: |
+          nightly_version=$(cargo metadata --format-version 1 | jq -er '.metadata.rbmt.toolchains.nightly')
+          # To force pipefail on error, assign must be separate
+          echo "nightly_version=$nightly_version" >> "$GITHUB_OUTPUT"
 
   Arch32bit:
     name: Test 32-bit version
