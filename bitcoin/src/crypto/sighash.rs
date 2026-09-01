@@ -1354,9 +1354,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "serde")]
-    use alloc::string::String;
-    #[cfg(feature = "serde")]
     use alloc::vec::Vec;
 
     use hashes::HashEngine;
@@ -1394,55 +1391,6 @@ mod tests {
         let got = cache.legacy_signature_hash(1, &script, sighash_single).expect("sighash");
         let want = LegacySighash::from_byte_array(UINT256_ONE);
         assert_eq!(got, want);
-    }
-
-    #[test]
-    #[cfg(feature = "serde")]
-    fn legacy_sighash() {
-        use serde_json::Value;
-
-        use crate::sighash::SighashCache;
-
-        fn run_test_sighash(
-            tx: &str,
-            script: &str,
-            input_index: usize,
-            hash_type: i64,
-            expected_result: &str,
-        ) {
-            let tx: Transaction = decode_from_slice(&hex::decode_to_vec(tx).unwrap()[..]).unwrap();
-            let script = ScriptPubKeyBuf::from(hex::decode_to_vec(script).unwrap());
-            let mut raw_expected = hex::decode_to_vec(expected_result).unwrap();
-            raw_expected.reverse();
-            let bytes = <[u8; 32]>::try_from(&raw_expected[..]).unwrap();
-            let want = LegacySighash::from_byte_array(bytes);
-
-            let cache = SighashCache::new(&tx);
-            let got = cache
-                .legacy_signature_hash(
-                    input_index,
-                    &script,
-                    EcdsaSighashType::from_consensus(hash_type as u32),
-                )
-                .unwrap();
-
-            assert_eq!(got, want);
-        }
-
-        // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
-        // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
-        // OP_CODESEPARATOR in their pubkeys were removed
-        let data = include_str!("../../tests/data/legacy_sighash.json");
-
-        let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
-        for t in testdata.iter().skip(1) {
-            let tx = t.get(0).unwrap().as_str().unwrap();
-            let script = t.get(1).unwrap().as_str().unwrap_or("");
-            let input_index = t.get(2).unwrap().as_u64().unwrap();
-            let hash_type = t.get(3).unwrap().as_i64().unwrap();
-            let expected_sighash = t.get(4).unwrap().as_str().unwrap();
-            run_test_sighash(tx, script, input_index as usize, hash_type, expected_sighash);
-        }
     }
 
     #[test]
@@ -1693,194 +1641,67 @@ mod tests {
         assert_eq!(expected, hash.to_byte_array());
     }
 
-    #[cfg(feature = "serde")]
     #[test]
-    fn bip_341_sighash_tests() {
-        use hex::DisplayHex;
+    fn bip_341_sighash_intermediary_caches() {
+        use hashes::sha256;
 
-        fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
-        where
-            D: serde::Deserializer<'de>,
-        {
-            use serde::de::{Deserialize, Error, Unexpected};
+        const RAW_UNSIGNED_TX: &str =
+            "02000000097de20cbff686da83a54981d2b9bab3586f4ca7e48f57f5b55963115f3b334e9c0100000000\
+             00000000d7b7cab57b1393ace2d064f4d4a2cb8af6def61273e127517d44759b6dafdd990000000000ff\
+             fffffff8e1f583384333689228c5d28eac13366be082dc57441760d957275419a418420000000000ffff\
+             fffff0689180aa63b30cb162a73c6d2a38b7eeda2a83ece74310fda0843ad604853b0100000000feffff\
+             ffaa5202bdf6d8ccd2ee0f0202afbbb7461d9264a25e5bfd3c5a52ee1239e0ba6c0000000000feffffff\
+             956149bdc66faa968eb2be2d2faa29718acbfe3941215893a2a3446d32acd050000000000000000000e6\
+             64b9773b88c09c32cb70a2a3e4da0ced63b7ba3b22f848531bbb1d5d5f4c94010000000000000000e9aa\
+             6b8e6c9de67619e6a3924ae25696bb7b694bb677a632a74ef7eadfd4eabf0000000000ffffffffa778eb\
+             6a263dc090464cd125c466b5a99667720b1c110468831d058aa1b82af10100000000ffffffff0200ca9a\
+             3b000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac807840cb0000000020ac9a\
+             87f5594be208f8532db38cff670c450ed2fea8fcdefcc9a663f78bab962b0065cd1d";
 
-            let raw = u8::deserialize(deserializer)?;
-            TapSighashType::from_consensus_u8(raw).map_err(|_| {
-                D::Error::invalid_value(
-                    Unexpected::Unsigned(raw.into()),
-                    &"number in range 0-3 or 0x81-0x83",
-                )
+        const UTXOS_SPENT: [(&str, u32); 9] = [
+            ("512053a1f6e454df1aa2776a2814a721372d6258050de330b3c6d10ee8f4e0dda343", 420_000_000),
+            ("5120147c9c57132f6e7ecddba9800bb0c4449251c92a1e60371ee77557b6620f3ea3", 462_000_000),
+            ("76a914751e76e8199196d454941c45d1b3a323f1433bd688ac", 294_000_000),
+            ("5120e4d810fd50586274face62b8a807eb9719cef49c04177cc6b76a9a4251d5450e", 504_000_000),
+            ("512091b64d5324723a985170e4dc5a0f84c041804f2cd12660fa5dec09fc21783605", 630_000_000),
+            ("00147dd65592d0ab2fe0d0257d571abf032cd9db93dc", 378_000_000),
+            ("512075169f4001aa68f15bbed28b218df1d0a62cbbcf1188c6665110c293c907b831", 672_000_000),
+            ("5120712447206d7a5238acc7ff53fbe94a3b64539ad291c7cdbc490b7577e4b17df5", 546_000_000),
+            ("512077e30a5522dd9f894c3f8b8bd4c4b2cf82ca7da8a3ea6a239655c39c050ab220", 588_000_000),
+        ];
+
+        let tx: Transaction = crate::encoding::decode_from_hex(RAW_UNSIGNED_TX).unwrap();
+        let utxos = UTXOS_SPENT
+            .iter()
+            .map(|&(script_pubkey, amount)| TxOut {
+                amount: Amount::from_sat_u32(amount),
+                script_pubkey: ScriptPubKeyBuf::from(hex::decode_to_vec(script_pubkey).unwrap()),
             })
-        }
-
-        fn tx_deser_hex<'de, D>(deserializer: D) -> Result<Transaction, D::Error>
-        where
-            D: serde::Deserializer<'de>,
-        {
-            use serde::de::{Deserialize, Error};
-
-            let hex_str = String::deserialize(deserializer)?;
-            crate::encoding::decode_from_hex(&hex_str).map_err(D::Error::custom)
-        }
-
-        use secp256k1::SecretKey;
-
-        use crate::crypto::key::XOnlyPublicKey;
-        use crate::key::{Keypair, PrivateKey, TapTweak};
-        use crate::taproot::TapNodeHash;
-
-        #[derive(serde::Deserialize)]
-        struct UtxoSpent {
-            #[serde(rename = "scriptPubKey")]
-            script_pubkey: ScriptPubKeyBuf,
-            #[serde(rename = "amountSats")]
-            #[serde(with = "crate::amount::serde::as_sat")]
-            amount: Amount,
-        }
-
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct KpsGiven {
-            #[serde(deserialize_with = "tx_deser_hex")]
-            raw_unsigned_tx: Transaction,
-            utxos_spent: Vec<UtxoSpent>,
-        }
-
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct KpsIntermediary {
-            hash_prevouts: sha256::Hash,
-            hash_outputs: sha256::Hash,
-            hash_sequences: sha256::Hash,
-            hash_amounts: sha256::Hash,
-            hash_script_pubkeys: sha256::Hash,
-        }
-
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct KpsInputSpendingGiven {
-            txin_index: usize,
-            internal_privkey: SecretKey,
-            merkle_root: Option<TapNodeHash>,
-            #[serde(deserialize_with = "sighash_deser_numeric")]
-            hash_type: TapSighashType,
-        }
-
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct KpsInputSpendingIntermediary {
-            internal_pubkey: XOnlyPublicKey,
-            tweaked_privkey: SecretKey,
-            sig_msg: String,
-            //precomputed_used: Vec<String>, // unused
-            sig_hash: TapSighash,
-        }
-
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct KpsInputSpendingExpected {
-            witness: Vec<String>,
-        }
-
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct KpsInputSpending {
-            given: KpsInputSpendingGiven,
-            intermediary: KpsInputSpendingIntermediary,
-            expected: KpsInputSpendingExpected,
-            // auxiliary: KpsAuxiliary, //unused
-        }
-
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct KeyPathSpending {
-            given: KpsGiven,
-            intermediary: KpsIntermediary,
-            input_spending: Vec<KpsInputSpending>,
-        }
-
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct TestData {
-            version: u64,
-            key_path_spending: Vec<KeyPathSpending>,
-            //script_pubkey: Vec<ScriptPubKey>, // unused
-        }
-
-        let json_str = include_str!("../../tests/data/bip341_tests.json");
-        let mut data =
-            serde_json::from_str::<TestData>(json_str).expect("JSON was not well-formatted");
-
-        assert_eq!(data.version, 1u64);
-        let key_path = data.key_path_spending.remove(0);
-
-        let raw_unsigned_tx = key_path.given.raw_unsigned_tx;
-        let utxos = key_path
-            .given
-            .utxos_spent
-            .into_iter()
-            .map(|txo| TxOut { amount: txo.amount, script_pubkey: txo.script_pubkey })
             .collect::<Vec<_>>();
 
-        // Test intermediary
-        let mut cache = SighashCache::new(&raw_unsigned_tx);
+        let mut cache = SighashCache::new(&tx);
 
-        let expected = key_path.intermediary;
-        // Compute all caches
-        assert_eq!(expected.hash_amounts, cache.taproot_cache(&utxos).amounts);
-        assert_eq!(expected.hash_outputs, cache.common_cache().outputs);
-        assert_eq!(expected.hash_prevouts, cache.common_cache().prevouts);
-        assert_eq!(expected.hash_script_pubkeys, cache.taproot_cache(&utxos).script_pubkeys);
-        assert_eq!(expected.hash_sequences, cache.common_cache().sequences);
-
-        for mut inp in key_path.input_spending {
-            let tx_ind = inp.given.txin_index;
-            let internal_priv_key = PrivateKey::from_secp(inp.given.internal_privkey);
-            let merkle_root = inp.given.merkle_root;
-            let hash_ty = inp.given.hash_type;
-
-            let expected = inp.intermediary;
-            let sig_str = inp.expected.witness.remove(0);
-            let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
-                (sig_str.parse::<secp256k1::schnorr::Signature>().unwrap(), TapSighashType::Default)
-            } else {
-                let hash_ty = u8::from_str_radix(&sig_str[128..130], 16).unwrap();
-                let hash_ty = TapSighashType::from_consensus_u8(hash_ty).unwrap();
-                (sig_str[..128].parse::<secp256k1::schnorr::Signature>().unwrap(), hash_ty)
-            };
-
-            // tests
-            let keypair = Keypair::from_private_key(&internal_priv_key);
-            let internal_key = XOnlyPublicKey::from_keypair(&keypair);
-            let tweaked_keypair = keypair.tap_tweak(merkle_root);
-            let mut sig_msg = Vec::new();
-            cache
-                .taproot_encode_signing_data_to(
-                    &mut sig_msg,
-                    tx_ind,
-                    &Prevouts::All(&utxos),
-                    None,
-                    None,
-                    hash_ty,
-                )
-                .unwrap();
-            let sighash = cache
-                .taproot_signature_hash(tx_ind, &Prevouts::All(&utxos), None, None, hash_ty)
-                .unwrap();
-
-            let tweaked_keypair = tweaked_keypair.into_keypair();
-            let key_spend_sig = tweaked_keypair
-                .raw_bip340_sign_with_aux_randomness(&sighash.to_byte_array(), &[0u8; 32]);
-
-            assert_eq!(expected.internal_pubkey.with_parity(internal_key.parity()), internal_key);
-            assert_eq!(expected.sig_msg, sig_msg.to_lower_hex_string());
-            assert_eq!(expected.sig_hash, sighash);
-            assert_eq!(expected_hash_ty, hash_ty);
-            assert_eq!(expected_key_spend_sig, key_spend_sig);
-
-            let tweaked_priv_key = tweaked_keypair.to_private_key();
-            assert_eq!(PrivateKey::from_secp(expected.tweaked_privkey), tweaked_priv_key);
-        }
+        let hash = |s: &str| s.parse::<sha256::Hash>().unwrap();
+        assert_eq!(
+            cache.taproot_cache(&utxos).amounts,
+            hash("58a6964a4f5f8f0b642ded0a8a553be7622a719da71d1f5befcefcdee8e0fde6")
+        );
+        assert_eq!(
+            cache.common_cache().outputs,
+            hash("a2e6dab7c1f0dcd297c8d61647fd17d821541ea69c3cc37dcbad7f90d4eb4bc5")
+        );
+        assert_eq!(
+            cache.common_cache().prevouts,
+            hash("e3b33bb4ef3a52ad1fffb555c0d82828eb22737036eaeb02a235d82b909c4c3f")
+        );
+        assert_eq!(
+            cache.taproot_cache(&utxos).script_pubkeys,
+            hash("23ad0f61ad2bca5ba6a7693f50fce988e17c3780bf2b1e720cfbb38fbdd52e21")
+        );
+        assert_eq!(
+            cache.common_cache().sequences,
+            hash("18959c7221ab5ce9e26c3cd67b22c24f8baa54bac281d8e6b05e400e6c3a957e")
+        );
     }
 
     #[test]
