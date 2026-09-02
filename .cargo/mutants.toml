@@ -90,4 +90,5 @@ exclude_re = [
     "consensus_encoding/.* delete ! in drain_to_vec", # Causes an infinite loop.
     "consensus_encoding/.* delete ! in drain_to_writer", # Causes an infinite loop.
     "consensus_encoding/.* ExactSizeEncoder::is_empty", # Too trivial to test.
+    "consensus_encoding/.* <impl (encoding::)?Encoder for (PrefixedBytesEncoder|PrefixedSliceEncoder|SliceEncoder).*>::drain_with", # drain_with pass-through forwarders are performance-only
 ]

@@ -65,7 +65,7 @@ use encoding::FromHexError;
 use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{
-    Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6, EncoderStatus,
+    Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6, IterEncoder,
     PrefixedSliceEncoder, VecDecoder,
 };
 #[cfg(feature = "alloc")]
@@ -418,6 +418,7 @@ impl encoding::Encode for Transaction {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         let version = self.version.encoder();
         let inputs = PrefixedSliceEncoder::new(self.inputs.as_ref());
@@ -426,7 +427,7 @@ impl encoding::Encode for Transaction {
 
         if self.uses_segwit_serialization() {
             let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
-            let witnesses = WitnessesEncoder::new(self.inputs.as_slice());
+            let witnesses = WitnessesEncoder::from_inputs(self.inputs.as_slice());
             TransactionEncoder::new(Encoder6::new(
                 version,
                 Some(segwit),
@@ -736,56 +737,35 @@ enum IsSegwit {
     No,
 }
 
-/// Encodes the witnesses from a list of inputs.
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype! {
+    /// Encodes the witnesses from a list of transaction inputs.
+    #[derive(Debug, Clone)]
+    struct WitnessesEncoder<'e>(IterEncoder<WitnessEncoders<'e>>);
+}
+
+/// Iterator over the witness encoders of a list of transaction inputs.
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone)]
-struct WitnessesEncoder<'e> {
-    inputs: &'e [TxIn],
-    /// Encoder for the current witness being encoded.
-    cur_enc: Option<WitnessEncoder<'e>>,
+struct WitnessEncoders<'e> {
+    iter: core::slice::Iter<'e, TxIn>,
+}
+
+#[cfg(feature = "alloc")]
+impl<'e> Iterator for WitnessEncoders<'e> {
+    type Item = WitnessEncoder<'e>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|input| input.witness.encoder())
+    }
 }
 
 #[cfg(feature = "alloc")]
 impl<'e> WitnessesEncoder<'e> {
-    /// Constructs a new encoder for all witnesses in a list of transaction inputs.
-    pub fn new(inputs: &'e [TxIn]) -> Self {
-        Self { inputs, cur_enc: inputs.first().map(|input| input.witness.encoder()) }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl encoding::Encoder for WitnessesEncoder<'_> {
-    #[inline]
-    fn current_chunk(&self) -> &[u8] {
-        self.cur_enc.as_ref().map(WitnessEncoder::current_chunk).unwrap_or_default()
-    }
-
-    #[inline]
-    fn advance(&mut self) -> EncoderStatus {
-        let Some(cur) = self.cur_enc.as_mut() else {
-            return EncoderStatus::Finished;
-        };
-
-        loop {
-            // On subsequent calls, attempt to advance the current encoder and return
-            // success if this succeeds.
-            if cur.advance().has_more() {
-                return EncoderStatus::HasMore;
-            }
-            // self.inputs guaranteed to be non-empty if cur_enc is non-None.
-            self.inputs = &self.inputs[1..];
-
-            // If advancing the current encoder failed, attempt to move to the next encoder.
-            if let Some(input) = self.inputs.first() {
-                *cur = input.witness.encoder();
-                if !cur.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.cur_enc = None; // shortcut the next call to advance()
-                return EncoderStatus::Finished;
-            }
-        }
+    /// Constructs an encoder over all witnesses in a list of transaction inputs.
+    fn from_inputs(inputs: &'e [TxIn]) -> Self {
+        Self::new(IterEncoder::new(WitnessEncoders { iter: inputs.iter() }))
     }
 }
 
@@ -853,6 +833,7 @@ impl encoding::Encode for TxIn {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         TxInEncoder::new(Encoder3::new(
             self.previous_output.encoder(),
@@ -924,6 +905,7 @@ impl encoding::Encode for TxOut {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         TxOutEncoder::new(Encoder2::new(self.amount.encoder(), self.script_pubkey.encoder()))
     }
@@ -1041,6 +1023,7 @@ impl encoding::Encode for OutPoint {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         OutPointEncoder::new(Encoder2::new(
             BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
@@ -1271,6 +1254,7 @@ impl From<Version> for u32 {
 
 impl encoding::Encode for Version {
     type Encoder<'e> = VersionEncoder<'e>;
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_u32().to_le_bytes(),
@@ -2506,7 +2490,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn witnesses_encoder_empty_inputs() {
-        let mut encoder = WitnessesEncoder::new(&[]);
+        let mut encoder = WitnessesEncoder::from_inputs(&[]);
         encoding::check_encoder(&mut encoder, &[]);
     }
 

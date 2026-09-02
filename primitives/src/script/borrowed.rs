@@ -337,6 +337,7 @@ impl<T> Encode for Script<T> {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         ScriptEncoder::new(PrefixedBytesEncoder::new(self.as_bytes()))
     }
