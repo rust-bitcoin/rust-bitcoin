@@ -58,10 +58,12 @@ macro_rules! impl_bytelike_traits {
         }
 
         impl $crate::_export::_core::borrow::Borrow<[u8; { $len }]> for $ty {
+            #[inline]
             fn borrow(&self) -> &[u8; { $len }] { self.as_byte_array() }
         }
 
         impl $crate::_export::_core::borrow::Borrow<[u8]> for $ty {
+            #[inline]
             fn borrow(&self) -> &[u8] { self.as_byte_array() }
         }
     };

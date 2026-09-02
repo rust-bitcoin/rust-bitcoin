@@ -259,6 +259,7 @@ impl Transaction {
     /// transaction. It is impossible to check if the transaction is first in the block, so this
     /// function checks the structure of the transaction instead - the previous output must be
     /// all-zeros (creates satoshis "out of thin air").
+    #[inline]
     #[doc(alias = "is_coin_base")] // method previously had this name
     pub fn is_coinbase(&self) -> bool {
         self.inputs.len() == 1 && self.inputs[0].previous_output == OutPoint::COINBASE_PREVOUT
@@ -287,12 +288,14 @@ impl cmp::Ord for Transaction {
 impl core::str::FromStr for Transaction {
     type Err = FromHexError<TransactionDecoderError>;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> { encoding::decode_from_hex(s) }
 }
 
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 impl fmt::Display for Transaction {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&HexPrimitive(self), f)
     }
@@ -301,6 +304,7 @@ impl fmt::Display for Transaction {
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Transaction {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&HexPrimitive(self), f)
     }
@@ -309,6 +313,7 @@ impl fmt::LowerHex for Transaction {
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Transaction {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::UpperHex::fmt(&HexPrimitive(self), f)
     }
@@ -473,6 +478,7 @@ pub struct TransactionDecoder {
 #[cfg(feature = "alloc")]
 impl TransactionDecoder {
     /// Constructs a new [`TransactionDecoder`].
+    #[inline]
     pub const fn new() -> Self {
         Self { state: TransactionDecoderState::Version(VersionDecoder::new()) }
     }
@@ -480,6 +486,7 @@ impl TransactionDecoder {
 
 #[cfg(feature = "alloc")]
 impl Default for TransactionDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
@@ -748,6 +755,7 @@ struct WitnessesEncoder<'e> {
 #[cfg(feature = "alloc")]
 impl<'e> WitnessesEncoder<'e> {
     /// Constructs a new encoder for all witnesses in a list of transaction inputs.
+    #[inline]
     pub fn new(inputs: &'e [TxIn]) -> Self {
         Self { inputs, cur_enc: inputs.first().map(|input| input.witness.encoder()) }
     }
@@ -853,6 +861,7 @@ impl encoding::Encode for TxIn {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         TxInEncoder::new(Encoder3::new(
             self.previous_output.encoder(),
@@ -924,6 +933,7 @@ impl encoding::Encode for TxOut {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         TxOutEncoder::new(Encoder2::new(self.amount.encoder(), self.script_pubkey.encoder()))
     }
@@ -1041,6 +1051,7 @@ impl encoding::Encode for OutPoint {
     where
         Self: 'e;
 
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         OutPointEncoder::new(Encoder2::new(
             BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
@@ -1271,6 +1282,7 @@ impl From<Version> for u32 {
 
 impl encoding::Encode for Version {
     type Encoder<'e> = VersionEncoder<'e>;
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_u32().to_le_bytes(),
@@ -1363,6 +1375,7 @@ pub mod error {
 
     #[cfg(feature = "alloc")]
     impl From<Infallible> for TransactionDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
@@ -1400,6 +1413,7 @@ pub mod error {
     #[cfg(feature = "std")]
     #[cfg(feature = "alloc")]
     impl std::error::Error for TransactionDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             use TransactionDecoderErrorInner as E;
 
@@ -1431,11 +1445,13 @@ pub mod error {
 
     #[cfg(feature = "alloc")]
     impl From<Infallible> for TxInDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "alloc")]
     impl fmt::Display for TxInDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "txin decoder error"; self.0)
         }
@@ -1444,6 +1460,7 @@ pub mod error {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "std")]
     impl std::error::Error for TxInDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
@@ -1456,11 +1473,13 @@ pub mod error {
 
     #[cfg(feature = "alloc")]
     impl From<Infallible> for TxOutDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "alloc")]
     impl fmt::Display for TxOutDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "txout decoder error"; self.0)
         }
@@ -1468,6 +1487,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for TxOutDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
@@ -1476,10 +1496,12 @@ pub mod error {
     pub struct OutPointDecoderError(pub(super) encoding::UnexpectedEofError);
 
     impl From<Infallible> for OutPointDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl core::fmt::Display for OutPointDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
             write_err!(f, "out point decoder error"; self.0)
         }
@@ -1487,6 +1509,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for OutPointDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
@@ -1518,6 +1541,7 @@ pub mod error {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     impl fmt::Display for ParseOutPointError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 Self::Txid(ref e) => write_err!(f, "error parsing TXID"; e),
@@ -1532,6 +1556,7 @@ pub mod error {
     #[cfg(feature = "std")]
     #[cfg(feature = "hex")]
     impl std::error::Error for ParseOutPointError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::Txid(e) => Some(e),
@@ -1548,10 +1573,12 @@ pub mod error {
     pub struct VersionDecoderError(pub(super) encoding::UnexpectedEofError);
 
     impl From<Infallible> for VersionDecoderError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for VersionDecoderError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "version decoder error"; self.0)
         }
@@ -1559,6 +1586,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for VersionDecoderError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 }
@@ -1604,6 +1632,7 @@ impl<'a> Arbitrary<'a> for Transaction {
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxIn {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             previous_output: OutPoint::arbitrary(u)?,
@@ -1617,6 +1646,7 @@ impl<'a> Arbitrary<'a> for TxIn {
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxOut {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self { amount: Amount::arbitrary(u)?, script_pubkey: ScriptPubKeyBuf::arbitrary(u)? })
     }
@@ -1624,6 +1654,7 @@ impl<'a> Arbitrary<'a> for TxOut {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for OutPoint {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self { txid: Txid::arbitrary(u)?, vout: u32::arbitrary(u)? })
     }
@@ -1631,6 +1662,7 @@ impl<'a> Arbitrary<'a> for OutPoint {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Version {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // Equally weight the case of normal version numbers
         let choice = u.int_in_range(0..=3)?;
