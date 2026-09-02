@@ -397,6 +397,12 @@ mod tests {
     }
 
     #[test]
+    fn fee_rate_from_per_kvb() {
+        let fee_rate = FeeRate::from_per_kvb(Amount::from_sat_u32(11));
+        assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(11_000));
+    }
+
+    #[test]
     fn fee_rate_to_sat_per_x() {
         let fee_rate = FeeRate::from_sat_per_mvb(2_000_400);
 
