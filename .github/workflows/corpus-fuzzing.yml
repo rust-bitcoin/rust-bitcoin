@@ -105,13 +105,13 @@ jobs:
       - name: Report crashes
         if: failure()
         working-directory: rust-bitcoin
-        run: ./fuzz/report-crashes.sh "crash-$TARGET"
+        run: ./fuzz/report-crashes.sh "crash-$TARGET" fuzz
       - name: Upload crash artifacts
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: crash-${{ matrix.fuzz_target }}
-          path: rust-bitcoin/fuzz/artifacts/${{ matrix.fuzz_target }}
+          path: rust-bitcoin/fuzz/artifacts/
           if-no-files-found: ignore
 
   # Merges the corpus of each target back into the qa-assets repository.
@@ -136,12 +136,18 @@ jobs:
         with:
           pattern: corpus-*
           path: incoming
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        continue-on-error: true
+        with:
+          pattern: crash-*
+          merge-multiple: true
+          path: incoming-crashes
       - name: Refresh corpora
         env:
           TARGETS: ${{ needs.setup.outputs.targets }}
         run: |
           echo "$TARGETS" | jq -r '.[]' > "$RUNNER_TEMP/targets.txt"
-          rust-bitcoin/fuzz/corpora.sh refresh incoming "$RUNNER_TEMP/targets.txt"
+          rust-bitcoin/fuzz/corpora.sh refresh incoming incoming-crashes "$RUNNER_TEMP/targets.txt"
       - name: Commit and push
         env:
           QA_ASSETS_PUSH_TOKEN: ${{ secrets.QA_ASSETS_PUSH_TOKEN }}
@@ -149,3 +155,51 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           BRANCH: master
         run: rust-bitcoin/fuzz/corpora.sh push
+
+  # Replay the crash store to fail job if a bad fuzz input is in codebase.
+  # Separate job so that fuzzing can keep running despite other crashes.
+  replay-crash-store:
+    needs: [setup, merge]
+    if: ${{ always() && needs.merge.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ${{ github.repository_owner }}/qa-assets
+          persist-credentials: false
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.setup.outputs.source_sha }}
+          path: rust-bitcoin
+          persist-credentials: false
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
+            rust-bitcoin/fuzz/target
+            rust-bitcoin/target
+          key: fuzz-${{ hashFiles('rust-bitcoin/**/Cargo.toml', 'rust-bitcoin/rbmt-version') }}
+          restore-keys: fuzz-
+      - name: Install cargo-rbmt
+        working-directory: rust-bitcoin
+        run: |
+          cargo install \
+            --git https://git.rust-bitcoin.org/rust-bitcoin/rust-bitcoin-maintainer-tools \
+            --rev "$(cat rbmt-version)" \
+            cargo-rbmt \
+            --locked
+      - name: Install nightly toolchain
+        working-directory: rust-bitcoin
+        run: rustup toolchain install "$(cargo rbmt toolchains --nightly)" --profile minimal --no-self-update
+      - name: Install cargo-fuzz
+        run: cargo install --locked --version "$CARGO_FUZZ_VERSION" cargo-fuzz
+      - name: Replay crash store
+        run: rust-bitcoin/fuzz/corpora.sh replay .
+      - name: Report crashes
+        if: failure()
+        working-directory: rust-bitcoin
+        run: ./fuzz/report-crashes.sh "qa-assets fuzz_crashes store" crash-store

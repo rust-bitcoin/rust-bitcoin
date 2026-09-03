@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 # Report every crash input under fuzz/artifacts.
+#
+# SOURCE: either "fuzz" for inputs found by this
+# fuzz run, or "crash-store" for stored inputs replayed.
 
 set -euo pipefail
 
-artifact_name="${1:?Usage: $0 ARTIFACT_NAME}"
+# shellcheck source=fuzz/rustflags.sh
+. "$(dirname "$0")/rustflags.sh"
+
+artifact_name="${1:?Usage: $0 ARTIFACT_NAME SOURCE}"
+source="${2:?Usage: $0 ARTIFACT_NAME SOURCE}"
+case "$source" in
+  fuzz | crash-store) ;;
+  *) echo "SOURCE must be 'fuzz' or 'crash-store', got '$source'" >&2; exit 2 ;;
+esac
 summary="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
 
 cd "$(git rev-parse --show-toplevel)"
@@ -19,6 +30,8 @@ for tdir in fuzz/artifacts/*/; do
     size=$(wc -c < "$f")
     {
       echo "## Fuzz crash: $target"
+      echo ""
+      echo "Source: \`$source\`"
       echo ""
       echo "\`$name\` ($size bytes)"
       echo ""
@@ -43,8 +56,9 @@ for tdir in fuzz/artifacts/*/; do
         echo ""
       fi
       echo '```sh'
-      if [[ "$target" != hashes_* ]]; then
-        echo 'export RUSTFLAGS="--cfg=hashes_fuzz --cfg=secp256k1_fuzz"'
+      flags="$(fuzz_rustflags "$target")"
+      if [ -n "$flags" ]; then
+        echo "export RUSTFLAGS=\"$flags\""
       fi
       echo "base64 -d > crash <<'EOF' # paste the base64 line above in terminal"
       echo "EOF"
@@ -52,7 +66,7 @@ for tdir in fuzz/artifacts/*/; do
       echo '```'
       echo ""
     } >> "$summary"
-    echo "::error title=Fuzz crash in $target::$name ($size bytes), read the job summary github page for reproduction instructions"
+    echo "::error title=Fuzz crash in $target [$source]::$name ($size bytes), read the job summary github page for reproduction instructions"
   done
 done
 
