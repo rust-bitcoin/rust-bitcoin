@@ -40,14 +40,6 @@
 //! # }
 //! ```
 
-use addresses::witness_program::WitnessProgram;
-use crypto::key::PubkeyHash;
-use primitives::script::{ScriptHash, ScriptPubKey};
-use primitives::witness_version::WitnessVersion;
-
-use crate::network::Params;
-use crate::script::ScriptExt as _;
-
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
@@ -60,43 +52,6 @@ pub use addresses::{
     Address, AddressData, AddressType, KnownHrp, NetworkUnchecked, NetworkValidation,
     NetworkValidationUnchecked,
 };
-
-mod sealed {
-    pub trait Sealed {}
-    impl Sealed for super::Address {}
-}
-
-crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`Address`] type
-    pub trait AddressExt impl for Address {
-        /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
-        fn from_script(
-            script: &ScriptPubKey,
-            params: impl AsRef<Params>,
-        ) -> Result<Address, FromScriptError> {
-            let network = params.as_ref().network;
-            if script.is_p2pkh() {
-                let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
-                let hash = PubkeyHash::from_byte_array(bytes);
-                Ok(Self::p2pkh(hash, network))
-            } else if script.is_p2sh() {
-                let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
-                let hash = ScriptHash::from_byte_array(bytes);
-                Ok(Self::p2sh_from_hash(hash, network))
-            } else if script.is_witness_program() {
-                let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
-
-                let version = WitnessVersion::try_from(opcode)
-                    .map_err(FromScriptError::WitnessVersion)?;
-                let program = WitnessProgram::new(version, &script.as_bytes()[2..])
-                    .map_err(FromScriptError::WitnessProgram)?;
-                Ok(Self::from_witness_program(program, network))
-            } else {
-                Err(FromScriptError::UnrecognizedScript)
-            }
-        }
-    }
-}
 
 /// Error code for the address module.
 pub mod error {
@@ -114,12 +69,15 @@ mod tests {
     use alloc::borrow::ToOwned;
     use alloc::string::ToString;
 
+    use addresses::witness_program::WitnessProgram;
+    use crypto::key::PubkeyHash;
     use hex::hex;
+    use primitives::witness_version::WitnessVersion;
 
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
-    use crate::network::{params, NetworkKind, TestnetVersion};
-    use crate::script::{RedeemScriptBuf, ScriptPubKeyBuf, WitnessScriptBuf};
+    use crate::network::{NetworkKind, TestnetVersion};
+    use crate::script::{RedeemScriptBuf, ScriptHash, ScriptPubKeyBuf, WitnessScriptBuf};
     use crate::{FullPublicKey, LegacyPublicKey, Network, XOnlyPublicKey};
 
     fn roundtrips(addr: &Address, network: Network) {
@@ -390,7 +348,7 @@ mod tests {
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
         assert_eq!(
-            Address::from_script(&invalid_segwitv0_script, &params::MAINNET),
+            Address::from_script(&invalid_segwitv0_script, Network::Bitcoin),
             Err(FromScriptError::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
         );
     }
