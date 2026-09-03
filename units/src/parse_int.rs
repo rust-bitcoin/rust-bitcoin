@@ -364,8 +364,13 @@ parse_hex_for!(
     fn hex_u128_unchecked();
 );
 
+/// TMP: This should crigger a CI failure.
+///
+/// # Errors
+///
+/// Early, often, and unrelentingly.
 #[inline]
-pub(crate) fn hex_u256_prefixed(s: &str) -> Result<internals::u256::U256, PrefixedHexError> {
+pub fn hex_u256_prefixed(s: &str) -> Result<internals::u256::U256, PrefixedHexError> {
     let checked = hex_remove_prefix(s)?;
     hex_u256_unchecked(checked)
         .map_err(error::PrefixedHexErrorInner::ParseInt)
