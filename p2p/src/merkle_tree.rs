@@ -9,6 +9,7 @@
 //!
 //! Support proofs that transaction(s) belong to a block.
 
+use alloc::collections::VecDeque;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -367,6 +368,42 @@ impl PartialMerkleTree {
                 self.traverse_and_build(height - 1, pos * 2 + 1, txids, matches);
             }
         }
+    }
+
+    /// Constructs a new partial Merkle tree from an electrum style merkle proof (leaf + position + siblings).
+    ///
+    /// `num_transactions` is the total number of transactions in the block.
+    pub fn from_electrum_merkle_proof(
+        leaf: Txid,
+        pos: u32,
+        siblings: &[TxMerkleNode],
+        num_transactions: u32,
+    ) -> Self {
+        let leaf = TxMerkleNode::from_leaf(leaf);
+        let mut pmt = Self { num_transactions, bits: Vec::new(), hashes: Vec::new() };
+
+        let mut bits = VecDeque::new();
+        let mut hashes = VecDeque::new();
+        bits.push_back(true);
+        hashes.push_back(leaf);
+
+        for (level, sibling) in siblings.iter().enumerate() {
+            let position_at_level = pos >> level; // pos / (2^level)
+            let in_right_subtree = position_at_level & 1 == 1; // position_at_level is odd
+            if in_right_subtree {
+                bits.push_front(false);
+                hashes.push_front(*sibling);
+            } else if position_at_level + 1 < pmt.calc_tree_width(level as u32) {
+                // only add right sibling if within tree width
+                bits.push_back(false);
+                hashes.push_back(*sibling);
+            }
+            bits.push_front(true); // root of the subtree at this level
+        }
+
+        pmt.bits = bits.into_iter().collect();
+        pmt.hashes = hashes.into_iter().collect();
+        pmt
     }
 
     /// Recursive function that traverses tree nodes, consuming the bits and hashes produced by
@@ -1021,5 +1058,109 @@ mod tests {
             .parse::<Txid>()
             .expect("failed to parse txid");
         assert_eq!(matches[0], want);
+    }
+
+    #[test]
+    fn from_electrum_merkle_proof() {
+        // Data from block 951404, tx at position 19
+        // curl 'https://blockstream.info/api/tx/d3887ab7972fb890b995972399a14f4b68436ad8e18b8e49690ac16f1c714f07/merkle-proof'
+        let txid: Txid =
+            "d3887ab7972fb890b995972399a14f4b68436ad8e18b8e49690ac16f1c714f07".parse().unwrap();
+        let expected_root: TxMerkleNode =
+            "a7b4151d177c913b897c2d31f18707021cfeefbe61a46d016f7d66dee2752ee6".parse().unwrap();
+
+        let siblings: [TxMerkleNode; 12] = [
+            "9503de88d658c2b60206cf3e98a787088e5bcdc0d53616db50c5c71f3be58466".parse().unwrap(),
+            "641f3c169e308b90a5fe250a9243b529a6a833b09ffd225b10bc340d5a8eb2a0".parse().unwrap(),
+            "29c2ef1dea7e7218cd1cfc955d17f5ce09242e12e5dd6883eafe77fef33e48d8".parse().unwrap(),
+            "c91e6412281a7fc394511be31be7cff43a745bc885a9bb6acce9b7fb9f0c93ea".parse().unwrap(),
+            "54ee7685d3634682da1d35eea599514601416b5bf31ea3ac7c9dc1473427c2c5".parse().unwrap(),
+            "2cf35bb43956396015b69b94ff8937de359f320a4cb49a3fb24a79560bfd5a46".parse().unwrap(),
+            "b3f63ba740798f412167f96b479fb2b451e347a62abd7a40e307f385b3062b6a".parse().unwrap(),
+            "75f79362378d3cdf41b278c51cba2fbb048eb1495b8ceb884f67f8d6f7569199".parse().unwrap(),
+            "3e245b1795fb26513f818cd5ae9ab0144941cd0b1b005a2a7e8ba3e2e7ea0b4e".parse().unwrap(),
+            "baa02baaf437b99410919393f8d5c9ee73d620331a4a209c5ebe81b55b9185b9".parse().unwrap(),
+            "e00015e03c591e1da415ba7f081f238b20aac986df13fd7893a58e6664527744".parse().unwrap(),
+            "3545330459012524405f7eafd66af86940323c5badfd42ab2a858335e0f57a84".parse().unwrap(),
+        ];
+
+        let pmt = PartialMerkleTree::from_electrum_merkle_proof(txid, 19, &siblings, 3937);
+
+        let mut matches = vec![];
+        let mut indexes = vec![];
+        let root = pmt.extract_matches(&mut matches, &mut indexes).unwrap();
+
+        assert_eq!(root, expected_root);
+        assert_eq!(matches, vec![txid]);
+        assert_eq!(indexes, vec![19]);
+    }
+
+    #[test]
+    fn from_electrum_merkle_proof_truncated_tree() {
+        // Block 13b8a has 9 transactions. The last tx (pos 8) sits at the end of
+        // an odd-width tree, hence it's duplicated at tree construction.
+        //
+        // curl 'https://blockstream.info/api/tx/74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20/merkle-proof'
+        let txid: Txid =
+            "74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20".parse().unwrap();
+        let expected_root: TxMerkleNode =
+            "2fda58e5959b0ee53c5253da9b9f3c0c739422ae04946966991cf55895287552".parse().unwrap();
+
+        let siblings: [TxMerkleNode; 4] = [
+            "74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20".parse().unwrap(),
+            "bb8db5f1d687839cc15a875e321ffb910d1c62d9280c1e4089122544c3528a13".parse().unwrap(),
+            "e7413bdf2c1215c3983536a62b1e210d9006a789cdc1427ccb4bb347745e52fc".parse().unwrap(),
+            "660af9921e9e17eba1106409c93aeec1b390bff99b0c25499da1b9c0e9aa56bc".parse().unwrap(),
+        ];
+        // last txid gets duplicated in odd-width merkle trees
+        assert_eq!(siblings[0], TxMerkleNode::from_leaf(txid));
+
+        let pmt = PartialMerkleTree::from_electrum_merkle_proof(txid, 8, &siblings, 9);
+        let mut matches = vec![];
+        let mut indexes = vec![];
+        let root = pmt.extract_matches(&mut matches, &mut indexes).unwrap();
+        assert_eq!(root, expected_root);
+        assert_eq!(matches, vec![txid]);
+        assert_eq!(indexes, vec![8]);
+    }
+
+    #[test]
+    fn electrum_proof_validation() {
+        // Block 951404 header:
+        // curl 'https://blockstream.info/api/block/00000000000000000001a53ac26c662a3cb22109286cf7833adc1d27cd659334/header'
+        let header_bytes = hex!(
+            "000004200ca9ae49d6168a13688fe6dcb34b26797a9679ebe8d501000000000000000000\
+             e62e75e2de667d6f016da461beeffe1c020787f1312d7c893b917c171d15b4a7\
+             8922186a790f02177b4f4826"
+        );
+        let header: block::Header = encoding::decode_from_slice(&header_bytes).unwrap();
+
+        let txid: Txid =
+            "d3887ab7972fb890b995972399a14f4b68436ad8e18b8e49690ac16f1c714f07".parse().unwrap();
+        // curl 'https://blockstream.info/api/tx/d3887ab7972fb890b995972399a14f4b68436ad8e18b8e49690ac16f1c714f07/merkle-proof'
+        let siblings: [TxMerkleNode; 12] = [
+            "9503de88d658c2b60206cf3e98a787088e5bcdc0d53616db50c5c71f3be58466".parse().unwrap(),
+            "641f3c169e308b90a5fe250a9243b529a6a833b09ffd225b10bc340d5a8eb2a0".parse().unwrap(),
+            "29c2ef1dea7e7218cd1cfc955d17f5ce09242e12e5dd6883eafe77fef33e48d8".parse().unwrap(),
+            "c91e6412281a7fc394511be31be7cff43a745bc885a9bb6acce9b7fb9f0c93ea".parse().unwrap(),
+            "54ee7685d3634682da1d35eea599514601416b5bf31ea3ac7c9dc1473427c2c5".parse().unwrap(),
+            "2cf35bb43956396015b69b94ff8937de359f320a4cb49a3fb24a79560bfd5a46".parse().unwrap(),
+            "b3f63ba740798f412167f96b479fb2b451e347a62abd7a40e307f385b3062b6a".parse().unwrap(),
+            "75f79362378d3cdf41b278c51cba2fbb048eb1495b8ceb884f67f8d6f7569199".parse().unwrap(),
+            "3e245b1795fb26513f818cd5ae9ab0144941cd0b1b005a2a7e8ba3e2e7ea0b4e".parse().unwrap(),
+            "baa02baaf437b99410919393f8d5c9ee73d620331a4a209c5ebe81b55b9185b9".parse().unwrap(),
+            "e00015e03c591e1da415ba7f081f238b20aac986df13fd7893a58e6664527744".parse().unwrap(),
+            "3545330459012524405f7eafd66af86940323c5badfd42ab2a858335e0f57a84".parse().unwrap(),
+        ];
+
+        let txn = PartialMerkleTree::from_electrum_merkle_proof(txid, 19, &siblings, 3937);
+        let mb = MerkleBlock { header, txn };
+
+        let mut matches = vec![];
+        let mut indexes = vec![];
+        mb.extract_matches(&mut matches, &mut indexes).unwrap();
+
+        assert_eq!(matches, vec![txid]);
+        assert_eq!(indexes, vec![19]);
     }
 }
