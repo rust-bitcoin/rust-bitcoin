@@ -2,8 +2,47 @@
 
 //! Bitcoin amounts.
 //!
-//! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
-//! We refer to the documentation on the types for more information.
+//! This module mainly introduces the [`Amount`] and [`SignedAmount`] types to express the bitcoin
+//! amounts supporting arithmetic, conversions between denomintaions and other important
+//! opertaions.
+//!
+//! # The 21M limit
+//!
+//! Since Bitcoin itself is limited to 2 100 000 000 000 000 satoshis (a bit less in practice)
+//! this type also implements the same restriction. While this may be surprising it actually
+//! provides many benefits:
+//!
+//! * Conversions from unsigned to signed are infallible.
+//! * Negation is infallible.
+//! * Absolute value is infallible (though `unsigned_abs` is usually better anyway).
+//! * Conversion to float is lossless.
+//! * Division cannot overflow, so a division error has to be div-by-zero; thus division by
+//!   `NonZeroU64` is completely infallible.
+//! * Infallible conversion to `i64` allows directly storing in SQL databases.
+//! * It's possible to more efficiently sum amounts using SIMD (currently unimplemented in the
+//!   library).
+//! * Subtraction of unsigned amounts producing a signed amount is infallible.
+//! * Conversion to msat is infallible.
+//!
+//! Note that the signed type also restricts the minimum to -21M BTC.
+//!
+//! While it might seem that this comes at a cost of littering the code with range checks it is not
+//! actually that bad because if the limit was not 21M btc it would've still been `u64::MAX` and
+//! require effectively the same kind of handling. This library exposes range checks as if they were
+//! overflow checks, so the calling code looks the same.
+//!
+//! Additionally, whenever an amount enters the program from outside, it already needs to be parsed
+//! or decoded, so the only thing this changes about it is the error type.
+//!
+//! # Numeric operations
+//!
+//! The types implement several arithmetic operations from [`core::ops`].
+//! To prevent errors due to an overflow or division by zero when using these operations, they
+//! return the [`NumOpResult`] type which enforces checked arithmetic. The resulting type itself
+//! implements the traits so you can write code like `a + b + c` and only check the result at the
+//! end.
+//!
+//! [`NumOpResult`]: super::NumOpResult
 
 mod ops;
 mod signed;
@@ -583,8 +622,7 @@ fn fmt_satoshi_in(
 /// * Dynamically-selected denomination - show in sats if less than 1 BTC.
 ///
 /// However, this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
-/// padding, alignment... The formatting works like floats from `core` but note that precision will
-/// **never** be lossy - that means no rounding.
+/// padding, alignment... The formatting works like floats from `core`.
 ///
 /// Note: This implementation is currently **unstable**. The only thing that we can promise is that
 /// unless the precision is changed, this will display an accurate, human-readable number, and the
@@ -656,4 +694,48 @@ impl<'a> Arbitrary<'a> for Denomination {
             _ => Ok(Self::Satoshi),
         }
     }
+}
+
+/// Creates an amount literal.
+///
+/// This macro creates an amount literal without annoying unwraps or risk of runtime panic.
+/// However, it is (obviously) only usable in `const` context with a `const` expression.
+/// It currently supports integer BTC and satoshis. The unit is mandatory and has to be written at
+/// the end - see examples.
+///
+/// ```
+/// # use bitcoin_units::{amt, Amount};
+/// assert_eq!(amt!(1 btc), amt!(100_000_000 sat));
+/// assert_eq!(amt!(3 * 7_000_000 btc), Amount::MAX);
+/// ```
+#[macro_export]
+macro_rules! amt {
+    // Internal accumulator arm: we have consumed all tokens except the unit keyword.
+    (@($($amount:tt)+), (btc)) => {
+        {
+            const AMOUNT: $crate::Amount = match $crate::Amount::from_sat(($($amount)+) as u64 * 100_000_000) {
+                Ok(amount) => amount,
+                Err(_) => panic!("amount out of range"),
+            };
+            AMOUNT
+        }
+    };
+    (@($($amount:tt)+), (sat)) => {
+        {
+            const AMOUNT: $crate::Amount = match $crate::Amount::from_sat(($($amount)+) as u64) {
+                Ok(amount) => amount,
+                Err(_) => panic!("amount out of range"),
+            };
+            AMOUNT
+        }
+    };
+    // Internal accumulator arm: move the next token from the remaining list into the accumulator.
+    (@($($amount:tt)*), ($x:tt $($remaining:tt)+)) => {
+        $crate::amt!(@($($amount)* $x), ($($remaining)+))
+    };
+    // Public entry arm.
+    // The leading `@` guard ensures this arm does not match internal recursive calls.
+    ($first:tt $($rest:tt)*) => {
+        $crate::amt!(@($first), ($($rest)*))
+    };
 }

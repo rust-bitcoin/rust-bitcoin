@@ -33,7 +33,7 @@ pub mod as_sat_per_kwu_floor {
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use crate::{Amount, FeeRate};
+    use crate::FeeRate;
 
     #[inline]
     pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
@@ -42,12 +42,16 @@ pub mod as_sat_per_kwu_floor {
 
     #[inline]
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        let sat = u64::deserialize(d)?;
-        FeeRate::from_per_kwu(
-            Amount::from_sat(sat).map_err(|_| serde::de::Error::custom("amount out of range"))?,
-        )
-        .into_result()
-        .map_err(|_| serde::de::Error::custom("fee rate too big for sats/kwu"))
+        use crate::serde::de::Error;
+
+        let sat_per_kwu = u64::deserialize(d)?;
+        FeeRate::from_sat_per_kwu(sat_per_kwu)
+            .into_result()
+            .map_err(|_| {
+                let unexpected = serde::de::Unexpected::Unsigned(sat_per_kwu);
+                let expected = &"non-negative integer up to 4611686018427387";
+                D::Error::invalid_value(unexpected, expected)
+             })
     }
 
     pub mod opt {

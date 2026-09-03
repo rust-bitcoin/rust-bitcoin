@@ -286,19 +286,23 @@ fn positive_sub() {
     assert!(ssat(10).positive_sub(ssat(11)).is_none());
 }
 
+#[cfg(feature = "alloc")]
+const ONE_SAT_PER_KWU: FeeRate = FeeRate::from_sat_per_kwu_u32(1);
+
 #[test]
 #[cfg(feature = "alloc")]
 fn amount_checked_div_by_weight_ceil() {
     let weight = Weight::from_kwu(1).unwrap();
     let fee_rate = sat(1).div_by_weight_ceil(weight).unwrap();
     // 1 sats / 1,000 wu = 1 sats/kwu
-    assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1));
+    assert_eq!(fee_rate, ONE_SAT_PER_KWU);
 
     let weight = Weight::from_wu(381);
     let fee_rate = sat(329).div_by_weight_ceil(weight).unwrap();
-    // 329 sats / 381 wu = 863.5 sats/kwu
-    // round up to 864
-    assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(864));
+    // 329 sats / 381 wu = 863.517060367454 sats/kwu
+    // * 4M = 3454068.241469816
+    // round up to 3454069 because it's ceil
+    assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(3_454_069));
 
     let fee_rate = Amount::ONE_SAT.div_by_weight_ceil(Weight::ZERO);
     assert!(fee_rate.is_error());
@@ -310,13 +314,14 @@ fn amount_checked_div_by_weight_floor() {
     let weight = Weight::from_kwu(1).unwrap();
     let fee_rate = sat(1).div_by_weight_floor(weight).unwrap();
     // 1 sats / 1,000 wu = 1 sats/kwu
-    assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1));
+    assert_eq!(fee_rate, ONE_SAT_PER_KWU);
 
     let weight = Weight::from_wu(381);
     let fee_rate = sat(329).div_by_weight_floor(weight).unwrap();
-    // 329 sats / 381 wu = 863.5 sats/kwu
-    // round down to 863
-    assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
+    // 329 sats / 381 wu = 863.517060367454 sats/kwu
+    // * 4M = 3454068.241469816
+    // round down to 3454069 because it's floor
+    assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(3_454_068));
 
     let fee_rate = Amount::ONE_SAT.div_by_weight_floor(Weight::ZERO);
     assert!(fee_rate.is_error());
@@ -326,7 +331,7 @@ fn amount_checked_div_by_weight_floor() {
 #[cfg(feature = "alloc")]
 fn amount_checked_div_by_fee_rate() {
     let amount = sat(1000);
-    let fee_rate = FeeRate::from_sat_per_kwu(2);
+    let fee_rate = FeeRate::from_sat_per_kwu_u32(2);
 
     // Test floor division
     let weight = amount.div_by_fee_rate_floor(fee_rate).unwrap();
@@ -339,21 +344,19 @@ fn amount_checked_div_by_fee_rate() {
 
     // Test truncation behavior
     let amount = sat(1000);
-    let fee_rate = FeeRate::from_sat_per_kwu(3);
+    let fee_rate = FeeRate::from_sat_per_kwu_u32(3);
     let floor_weight = amount.div_by_fee_rate_floor(fee_rate).unwrap();
     let ceil_weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
     assert_eq!(floor_weight, Weight::from_wu(333_333));
     assert_eq!(ceil_weight, Weight::from_wu(333_334));
 
     // Test division by zero
-    let zero_fee_rate = FeeRate::from_sat_per_kwu(0);
-    assert!(amount.div_by_fee_rate_floor(zero_fee_rate).is_error());
-    assert!(amount.div_by_fee_rate_ceil(zero_fee_rate).is_error());
+    assert!(amount.div_by_fee_rate_floor(FeeRate::ZERO).is_error());
+    assert!(amount.div_by_fee_rate_ceil(FeeRate::ZERO).is_error());
 
     // Test with maximum amount
     let max_amount = Amount::MAX;
-    let small_fee_rate = FeeRate::from_sat_per_kwu(1);
-    let weight = max_amount.div_by_fee_rate_floor(small_fee_rate).unwrap();
+    let weight = max_amount.div_by_fee_rate_floor(ONE_SAT_PER_KWU).unwrap();
     // 21_000_000_0000_0000 sats / (1 sat/kwu) = 2_100_000_000_000_000_000 wu
     assert_eq!(weight, Weight::from_wu(2_100_000_000_000_000_000));
 }
