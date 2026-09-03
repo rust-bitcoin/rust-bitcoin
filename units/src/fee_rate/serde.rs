@@ -43,11 +43,8 @@ pub mod as_sat_per_kwu_floor {
     #[inline]
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
         let sat = u64::deserialize(d)?;
-        FeeRate::from_per_kwu(
-            Amount::from_sat(sat).map_err(|_| serde::de::Error::custom("amount out of range"))?,
-        )
-        .into_result()
-        .map_err(|_| serde::de::Error::custom("fee rate too big for sats/kwu"))
+        let amt = Amount::from_sat(sat).map_err(|_| serde::de::Error::custom("amount out of range"))?;
+        Ok(FeeRate::from_per_kwu(amt))
     }
 
     pub mod opt {

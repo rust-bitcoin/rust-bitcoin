@@ -2,8 +2,47 @@
 
 //! Bitcoin amounts.
 //!
-//! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
-//! We refer to the documentation on the types for more information.
+//! This module mainly introduces the [`Amount`] and [`SignedAmount`] types to express the bitcoin
+//! amounts supporting arithmetic, conversions between denomintaions and other important
+//! opertaions.
+//!
+//! # The 21M limit
+//!
+//! Since Bitcoin itself is limited to 2 100 000 000 000 000 satoshis (a bit less in practice)
+//! this type also implements the same restriction. While this may be surprising it actually
+//! provides many benefits:
+//!
+//! * Conversions from unsigned to signed are infallible.
+//! * Negation is infallible.
+//! * Absolute value is infallible (though `unsigned_abs` is usually better anyway).
+//! * Conversion to float is lossless.
+//! * Division cannot overflow, so a division error has to be div-by-zero; thus division by
+//!   `NonZeroU64` is completely infallible.
+//! * Infallible conversion to `i64` allows directly storing in SQL databases.
+//! * It's possible to more efficiently sum amounts using SIMD (currently unimplemented in the
+//!   library).
+//! * Subtraction of unsigned amounts producing a signed amount is infallible.
+//! * Conversion to msat is infallible.
+//!
+//! Note that the signed type also restricts the minimum to -21M BTC.
+//!
+//! While it might seem that this comes at a cost of littering the code with range checks it is not
+//! actually that bad because if the limit was not 21M btc it would've still been `u64::MAX` and
+//! require effectively the same kind of handling. This library exposes range checks as if they were
+//! overflow checks, so the calling code looks the same.
+//!
+//! Additionally, whenever an amount enters the program from outside, it already needs to be parsed
+//! or decoded, so the only thing this changes about it is the error type.
+//!
+//! # Numeric operations
+//!
+//! The types implement several arithmetic operations from [`core::ops`].
+//! To prevent errors due to an overflow or division by zero when using these operations, they
+//! return the [`NumOpResult`] type which enforces checked arithmetic. The resulting type itself
+//! implements the traits so you can write code like `a + b + c` and only check the result at the
+//! end.
+//!
+//! [`NumOpResult`]: super::NumOpResult
 
 mod ops;
 mod signed;
@@ -583,8 +622,7 @@ fn fmt_satoshi_in(
 /// * Dynamically-selected denomination - show in sats if less than 1 BTC.
 ///
 /// However, this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
-/// padding, alignment... The formatting works like floats from `core` but note that precision will
-/// **never** be lossy - that means no rounding.
+/// padding, alignment... The formatting works like floats from `core`.
 ///
 /// Note: This implementation is currently **unstable**. The only thing that we can promise is that
 /// unless the precision is changed, this will display an accurate, human-readable number, and the
