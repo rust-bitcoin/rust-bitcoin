@@ -5,12 +5,10 @@ use std::hint::black_box;
 
 use bitcoin::block::Header;
 use bitcoin::blockdata::block::Block;
-use bitcoin::consensus::{deserialize, serialize, Decodable, Encodable};
-use bitcoin::io::sink;
 use bitcoin::script::{ScriptPubKeyBuf, ScriptSigBuf};
 use bitcoin::transaction::{OutPoint, Transaction, TxIn, TxOut, Version};
 use bitcoin::{Amount, BlockTime, CompactTarget, Sequence, TxMerkleNode, Witness};
-use encoding::decode_from_slice;
+use encoding::{decode_from_read, decode_from_slice, encode_to_vec, encode_to_writer};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 
@@ -54,13 +52,13 @@ fn build_test_block(num_tx: usize) -> Vec<u8> {
         nonce: 0,
     };
 
-    serialize(&Block::new_unchecked(header, txs))
+    encode_to_vec(&Block::new_unchecked(header, txs))
 }
 
 fn bench_block(c: &mut Criterion) {
     let raw_block = include_bytes!("../../bitcoin/tests/data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
     assert_eq!(raw_block.len(), 1_381_836);
-    let block: Block = deserialize(&raw_block[..]).unwrap();
+    let block: Block = decode_from_slice(&raw_block[..]).unwrap();
 
     let mut g = c.benchmark_group("block");
     g.throughput(Throughput::Bytes(raw_block.len() as u64));
@@ -69,8 +67,7 @@ fn bench_block(c: &mut Criterion) {
     g.bench_function(BenchmarkId::new("stream_reader", "big"), |b| {
         let big_block = black_box(raw_block.as_ref());
         b.iter(|| {
-            let mut reader = big_block;
-            let blk = Block::consensus_decode(&mut reader).unwrap();
+            let blk: Block = decode_from_read(big_block).unwrap();
             black_box(blk);
         });
     });
@@ -78,22 +75,21 @@ fn bench_block(c: &mut Criterion) {
     g.bench_function(BenchmarkId::new("serialize", "big"), |b| {
         let mut data = Vec::with_capacity(raw_block.len());
         b.iter(|| {
-            let result = block.consensus_encode(&mut data);
-            black_box(&result);
+            encode_to_writer(&block, &mut data).unwrap();
+            black_box(&data);
             data.clear();
         });
     });
 
     g.bench_function(BenchmarkId::new("serialize_logic", "big"), |b| {
         b.iter(|| {
-            let size = block.consensus_encode(&mut sink());
-            let _ = black_box(size);
+            encode_to_writer(&block, std::io::sink()).unwrap();
         });
     });
 
     g.bench_function(BenchmarkId::new("deserialize", "big"), |b| {
         b.iter(|| {
-            let blk: Block = deserialize(&raw_block[..]).unwrap();
+            let blk: Block = decode_from_slice(&raw_block[..]).unwrap();
             black_box(blk);
         });
     });
