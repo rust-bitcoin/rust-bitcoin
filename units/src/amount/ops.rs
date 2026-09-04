@@ -12,7 +12,7 @@ use crate::internal_macros::{
     impl_add_assign_for_results, impl_div_assign, impl_mul_assign, impl_rem_assign,
     impl_sub_assign_for_results,
 };
-use crate::result::{MathOp, NumOpError, NumOpResult, OptionExt};
+use crate::result::{MathErrorKind, MathOp, NumOpError, NumOpResult, OptionExt};
 
 impl From<Amount> for NumOpResult<Amount> {
     #[inline]
@@ -36,7 +36,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<Amount> for Amount {
         type Output = NumOpResult<Amount>;
 
-        fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error(MathOp::Add) }
+        fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error(MathErrorKind::Overflow { op: MathOp::Add, is_negative: false }) }
     }
     impl ops::Add<NumOpResult<Amount>> for Amount {
         type Output = NumOpResult<Amount>;
@@ -47,7 +47,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<Amount> for Amount {
         type Output = NumOpResult<Amount>;
 
-        fn sub(self, rhs: Amount) -> Self::Output { self.checked_sub(rhs).valid_or_error(MathOp::Sub) }
+        fn sub(self, rhs: Amount) -> Self::Output { self.checked_sub(rhs).valid_or_error(MathErrorKind::Overflow { op: MathOp::Sub, is_negative: true }) }
     }
     impl ops::Sub<NumOpResult<Amount>> for Amount {
         type Output = NumOpResult<Amount>;
@@ -63,7 +63,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<u64> for Amount {
         type Output = NumOpResult<Amount>;
 
-        fn mul(self, rhs: u64) -> Self::Output { self.checked_mul(rhs).valid_or_error(MathOp::Mul) }
+        fn mul(self, rhs: u64) -> Self::Output { self.checked_mul(rhs).valid_or_error(MathErrorKind::Overflow { op: MathOp::Mul, is_negative: false }) }
     }
     impl ops::Mul<u64> for NumOpResult<Amount> {
         type Output = NumOpResult<Amount>;
@@ -73,7 +73,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<Amount> for u64 {
         type Output = NumOpResult<Amount>;
 
-        fn mul(self, rhs: Amount) -> Self::Output { rhs.checked_mul(self).valid_or_error(MathOp::Mul) }
+        fn mul(self, rhs: Amount) -> Self::Output { rhs.checked_mul(self).valid_or_error(MathErrorKind::Overflow { op: MathOp::Mul, is_negative: false }) }
     }
     impl ops::Mul<NumOpResult<Amount>> for u64 {
         type Output = NumOpResult<Amount>;
@@ -84,7 +84,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Div<u64> for Amount {
         type Output = NumOpResult<Amount>;
 
-        fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error(MathOp::Div) }
+        fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error(MathErrorKind::DivByZero) }
     }
     impl ops::Div<u64> for NumOpResult<Amount> {
         type Output = NumOpResult<Amount>;
@@ -95,7 +95,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<u64>;
 
         fn div(self, rhs: Amount) -> Self::Output {
-            self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathOp::Div)
+            self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathErrorKind::DivByZero)
         }
     }
     impl ops::Div<NonZeroU64> for Amount {
@@ -111,7 +111,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Rem<u64> for Amount {
         type Output = NumOpResult<Amount>;
 
-        fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathOp::Rem) }
+        fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathErrorKind::RemByZero) }
     }
     impl ops::Rem<NonZeroU64> for Amount {
         type Output = Amount;
@@ -132,7 +132,10 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<SignedAmount> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
-        fn add(self, rhs: SignedAmount) -> Self::Output { self.checked_add(rhs).valid_or_error(MathOp::Add) }
+        fn add(self, rhs: SignedAmount) -> Self::Output {
+            let kind = MathErrorKind::Overflow { op: MathOp::Add, is_negative: rhs.is_negative() };
+            self.checked_add(rhs).valid_or_error(kind)
+        }
     }
     impl ops::Add<NumOpResult<SignedAmount>> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
@@ -143,7 +146,10 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<SignedAmount> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
-        fn sub(self, rhs: SignedAmount) -> Self::Output { self.checked_sub(rhs).valid_or_error(MathOp::Sub) }
+        fn sub(self, rhs: SignedAmount) -> Self::Output {
+            let kind = MathErrorKind::Overflow { op: MathOp::Sub, is_negative: !rhs.is_negative() };
+            self.checked_sub(rhs).valid_or_error(kind)
+        }
     }
     impl ops::Sub<NumOpResult<SignedAmount>> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
@@ -159,7 +165,10 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<i64> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
-        fn mul(self, rhs: i64) -> Self::Output { self.checked_mul(rhs).valid_or_error(MathOp::Mul) }
+        fn mul(self, rhs: i64) -> Self::Output {
+            let is_negative = self.is_negative() != rhs.is_negative();
+            self.checked_mul(rhs).valid_or_error(MathErrorKind::Overflow { op: MathOp::Mul, is_negative })
+        }
     }
     impl ops::Mul<i64> for NumOpResult<SignedAmount> {
         type Output = NumOpResult<SignedAmount>;
@@ -169,7 +178,10 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<SignedAmount> for i64 {
         type Output = NumOpResult<SignedAmount>;
 
-        fn mul(self, rhs: SignedAmount) -> Self::Output { rhs.checked_mul(self).valid_or_error(MathOp::Mul) }
+        fn mul(self, rhs: SignedAmount) -> Self::Output {
+            let is_negative = self.is_negative() != rhs.is_negative();
+            rhs.checked_mul(self).valid_or_error(MathErrorKind::Overflow { op: MathOp::Mul, is_negative })
+        }
     }
     impl ops::Mul<NumOpResult<SignedAmount>> for i64 {
         type Output = NumOpResult<SignedAmount>;
@@ -180,7 +192,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Div<i64> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
-        fn div(self, rhs: i64) -> Self::Output { self.checked_div(rhs).valid_or_error(MathOp::Div) }
+        fn div(self, rhs: i64) -> Self::Output { self.checked_div(rhs).valid_or_error(MathErrorKind::DivByZero) }
     }
     impl ops::Div<i64> for NumOpResult<SignedAmount> {
         type Output = NumOpResult<SignedAmount>;
@@ -191,7 +203,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<i64>;
 
         fn div(self, rhs: SignedAmount) -> Self::Output {
-            self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathOp::Div)
+            self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathErrorKind::DivByZero)
         }
     }
     impl ops::Div<NonZeroI64> for SignedAmount {
@@ -207,7 +219,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Rem<i64> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
-        fn rem(self, modulus: i64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathOp::Rem) }
+        fn rem(self, modulus: i64) -> Self::Output { self.checked_rem(modulus).valid_or_error(MathErrorKind::RemByZero) }
     }
     impl ops::Rem<NonZeroI64> for SignedAmount {
         type Output = SignedAmount;
@@ -283,7 +295,10 @@ impl<T: Into<Self>> core::iter::Sum<T> for NumOpResult<Amount> {
     {
         iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, amount.into()) {
             (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (_, _) => Self::Error(NumOpError::while_doing(MathOp::Add)),
+            (_, _) => Self::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false,
+            })),
         })
     }
 }
@@ -294,7 +309,10 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<Amount> {
     {
         iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, amount) {
             (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (_, _) => Self::Error(NumOpError::while_doing(MathOp::Add)),
+            (_, _) => Self::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false,
+            })),
         })
     }
 }
@@ -306,7 +324,10 @@ impl<T: Into<Self>> core::iter::Sum<T> for NumOpResult<SignedAmount> {
     {
         iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount.into()) {
             (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (_, _) => Self::Error(NumOpError::while_doing(MathOp::Add)),
+            (_, _) => Self::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false,
+            })),
         })
     }
 }
@@ -317,7 +338,10 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<SignedAmount> {
     {
         iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount) {
             (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (_, _) => Self::Error(NumOpError::while_doing(MathOp::Add)),
+            (_, _) => Self::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false,
+            })),
         })
     }
 }
@@ -362,7 +386,10 @@ mod tests {
     fn sum_amount_with_error_propagation() {
         let amounts = [
             NumOpResult::Valid(Amount::from_sat_u32(100)),
-            NumOpResult::Error(NumOpError::while_doing(MathOp::Add)),
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false,
+            })),
             NumOpResult::Valid(Amount::from_sat_u32(200)),
         ];
 
@@ -410,7 +437,10 @@ mod tests {
     fn sum_signed_amount_with_error_propagation() {
         let amounts = [
             NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
-            NumOpResult::Error(NumOpError::while_doing(MathOp::Add)),
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false,
+            })),
             NumOpResult::Valid(SignedAmount::from_sat_i32(200)),
         ];
 
@@ -426,7 +456,10 @@ mod tests {
         res += Amount::from_sat_u32(50);
         assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(150)));
 
-        let add_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+        let add_err = NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }));
         res += add_err; // Add an error result
         assert_eq!(res, add_err);
 
@@ -434,7 +467,10 @@ mod tests {
         res -= Amount::from_sat_u32(20);
         assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(80)));
 
-        let sub_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
+        let sub_err = NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Sub,
+            is_negative: true,
+        }));
         res -= sub_err; // Subtract an error result
         assert_eq!(res, sub_err);
     }
@@ -447,7 +483,10 @@ mod tests {
         res += SignedAmount::from_sat_i32(-30);
         assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(70)));
 
-        let add_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+        let add_err = NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }));
         res += add_err; // Add an error result
         assert_eq!(res, add_err);
 
@@ -455,7 +494,10 @@ mod tests {
         res -= SignedAmount::from_sat_i32(25);
         assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(75)));
 
-        let sub_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
+        let sub_err = NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Sub,
+            is_negative: true,
+        }));
         res -= sub_err; // Subtract an error result
         assert_eq!(res, sub_err);
     }
@@ -471,10 +513,10 @@ mod tests {
         assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(2)));
 
         res %= 0_u64;
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
 
         res %= 5_u64;
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
     }
 
     #[test]
@@ -504,10 +546,10 @@ mod tests {
         assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-2)));
 
         res %= 0_i64;
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
 
         res %= 5_i64;
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Rem)));
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
     }
 
     #[test]
@@ -540,9 +582,19 @@ mod tests {
         assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(25)));
 
         // An error result stays an error, keeping the original operation.
-        let mut res: NumOpResult<Amount> = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+        let mut res: NumOpResult<Amount> =
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false,
+            }));
         res /= NonZeroU64::new(2).unwrap();
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Add)));
+        assert_eq!(
+            res,
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: false
+            }))
+        );
     }
 
     #[test]
@@ -563,29 +615,46 @@ mod tests {
         assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-25)));
 
         let mut res: NumOpResult<SignedAmount> =
-            NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Sub,
+                is_negative: true,
+            }));
         res /= NonZeroI64::new(2).unwrap();
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Sub)));
+        assert_eq!(
+            res,
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Sub,
+                is_negative: true
+            }))
+        );
     }
 
     #[test]
     fn op_assign_amount_error() {
-        let mut res: NumOpResult<Amount> = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+        let mut res: NumOpResult<Amount> =
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Mul,
+                is_negative: false,
+            }));
+        let orig_res = res;
 
-        // Adding a valid amount to an error should make an Add error
+        // All assign ops to an error should preserve the error
         res += Amount::from_sat_u32(10);
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Add)));
+        assert_eq!(res, orig_res);
 
-        // Adding an error to an error change to an Add error
-        res += NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Add)));
+        res += NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Sub,
+            is_negative: true,
+        }));
+        assert_eq!(res, orig_res);
 
-        // Subtracting a valid amount from an error should make a Sub error
         res -= Amount::from_sat_u32(10);
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Sub)));
+        assert_eq!(res, orig_res);
 
-        // Subtracting an error from an error change to a Sub error
-        res -= NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Sub)));
+        res -= NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        }));
+        assert_eq!(res, orig_res);
     }
 }

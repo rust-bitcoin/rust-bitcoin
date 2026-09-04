@@ -11,7 +11,7 @@ use core::num::{NonZeroI64, NonZeroU64};
 use std::panic;
 
 use super::*;
-use crate::result::{MathOp, NumOpError, NumOpResult};
+use crate::result::{MathErrorKind, MathOp, NumOpError, NumOpResult};
 #[cfg(feature = "alloc")]
 use crate::FeeRate;
 use crate::Weight;
@@ -1450,20 +1450,16 @@ fn amount_op_result_sum() {
 fn math_op_errors() {
     let overflow = Amount::MAX + Amount::from_sat(1).unwrap();
     if let NumOpResult::Error(err) = overflow {
-        assert!(err.operation().is_overflow());
-        assert!(err.is_overflow());
-        assert!(!err.operation().is_div_by_zero());
-        assert!(!err.is_div_by_zero());
+        assert!(matches!(err.operation(), MathOp::Add));
+        assert!(matches!(err.0, MathErrorKind::Overflow { .. }));
     } else {
         panic!("Expected an overflow error, but got a valid result");
     }
 
     let div_by_zero = Amount::from_sat(10).unwrap() / Amount::ZERO;
     if let NumOpResult::Error(err) = div_by_zero {
-        assert!(!err.operation().is_overflow());
-        assert!(!err.is_overflow());
-        assert!(err.operation().is_div_by_zero());
-        assert!(err.is_div_by_zero());
+        assert!(matches!(err.operation(), MathOp::Div));
+        assert!(matches!(err.0, MathErrorKind::DivByZero));
     } else {
         panic!("Expected a division by zero error, but got a valid result");
     }
@@ -1654,20 +1650,26 @@ fn checked_rem() {
 fn amount_div_by_weight_floor_error() {
     // Division by zero weight returns error
     let err = sat(100).div_by_weight_floor(Weight::ZERO).unwrap_err();
-    assert_eq!(err, NumOpError::while_doing(MathOp::Div));
+    assert_eq!(err, NumOpError::while_doing(MathErrorKind::DivByZero));
 
     // Overflow case: Amount::MAX * 1000 overflows
     let err = Amount::MAX.div_by_weight_floor(Weight::from_wu(1)).unwrap_err();
-    assert_eq!(err, NumOpError::while_doing(MathOp::Mul));
+    assert_eq!(
+        err,
+        NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Div, is_negative: false })
+    );
 }
 
 #[test]
 fn amount_div_by_weight_ceil_error() {
     // Division by zero weight returns error
     let err = sat(100).div_by_weight_ceil(Weight::ZERO).unwrap_err();
-    assert_eq!(err, NumOpError::while_doing(MathOp::Div));
+    assert_eq!(err, NumOpError::while_doing(MathErrorKind::DivByZero));
 
     // Overflow case: Amount::MAX * 1000 overflows
     let err = Amount::MAX.div_by_weight_ceil(Weight::from_wu(1)).unwrap_err();
-    assert_eq!(err, NumOpError::while_doing(MathOp::Mul));
+    assert_eq!(
+        err,
+        NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Div, is_negative: false })
+    );
 }
