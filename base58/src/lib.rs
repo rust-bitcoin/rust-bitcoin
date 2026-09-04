@@ -10,8 +10,8 @@
 //! enabled, [`Base58CkString::encode_unbounded`] encodes data of any length infallibly.
 //!
 //! Decoding can be done with [`decode_check_to_array`] or [`decode_check`], both of which verify
-//! the checksum. [`decode_check_to_array`] decodes into a fixed-size array, but only accepts
-//! inputs that decode to at most 128 bytes (including checksum). The expected decoded length must
+//! the checksum. [`decode_check_to_array`] decodes into a fixed-size array without allocating,
+//! using a stack buffer sized for the payload and its checksum. The expected decoded length must
 //! be specified by the generic `usize`. With the `alloc` feature enabled, [`decode_check`] decodes
 //! strings of any length into a `Vec<u8>`.
 //!
@@ -55,6 +55,7 @@ extern crate std;
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 pub mod error;
+mod ext_array_vec;
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
@@ -69,7 +70,8 @@ use internals::array_vec::ArrayVec;
 use internals::slice::SliceExt;
 
 use crate::error::{
-    Base256Error, DecodeCheckArrayErrorInner, IncorrectChecksumError, UnexpectedLengthError,
+    Base256Error, CapacityExceededError, DecodeCheckArrayErrorInner, IncorrectChecksumError,
+    UnexpectedLengthError,
 };
 #[cfg(feature = "alloc")]
 use crate::error::{DecodeCheckErrorInner, TooShortError};
@@ -194,18 +196,16 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 
 /// Decodes a base58check-encoded string into a fixed-size array, verifying the checksum.
 ///
-/// This does not require `alloc`, but it only works for inputs that decode to at most 128 bytes.
-/// `N` is the expected length of the decoded payload (excluding the 4 byte checksum). Decoding
-/// will fail if the payload is any other length.
+/// This does not require `alloc`. `N` is the expected length of the decoded payload (excluding
+/// the 4 byte checksum). Decoding will fail if the payload is any other length.
 ///
-/// `N` is compile-time checked to ensure that `N + 4` does not exceed the 128 byte limit, since
-/// such a call could never succeed. Use [`decode_check`] for payloads that large.
+/// Decoding is done on the stack, so a large `N` means a large stack frame. Use [`decode_check`]
+/// if that is a problem.
 ///
 /// # Errors
 ///
 /// * The input contains an invalid base58 character.
 /// * The input does not decode to exactly `N` bytes followed by a 4 byte checksum.
-/// * The input decodes to more than 128 bytes (including the checksum).
 /// * The checksum does not match the expected value.
 ///
 /// # Examples
@@ -223,9 +223,7 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// ```
 #[allow(clippy::missing_panics_doc)] // All lengths are checked before each expect.
 pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
-    let () = AssertPayloadFits::<N>::OK;
-
-    let mut scratch = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+    let mut scratch = ext_array_vec::ExtendedArrayVec::<N>::new();
     build_base256(data, &mut scratch)
         .map_err(|e| match e {
             // Too long to decode within the fixed buffer. Report an approximate decoded length.
@@ -247,14 +245,12 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
             .map_err(DecodeCheckArrayError);
     }
 
-    let mut decoded = [0u8; SHORT_OPT_BUFFER_LEN];
+    // The buffer has only the decoded data. Put the leading zeroes on the end.
+    for _ in 0..leading_zeros {
+        scratch.try_push(0).expect("decoded_len = N + 4 is exactly the buffer capacity");
+    }
     scratch.as_mut_slice().reverse();
-
-    decoded
-        .get_mut(leading_zeros..decoded_len)
-        .expect("decoded_len = N + 4 <= 128 per above and compile-time check")
-        .copy_from_slice(&scratch);
-    let decoded = &decoded[..decoded_len];
+    let decoded = scratch.as_slice();
 
     let (payload, &data_check) =
         decoded.split_last_chunk::<4>().expect("decoded length checked as >= 4 above");
@@ -270,17 +266,6 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     }
 
     Ok(payload.try_into().expect("payload length checked to equal N"))
-}
-
-/// Compile-time check that `decode_check_to_array` was asked for a payload that can fit in the
-/// fixed-size buffer, along with its 4 byte checksum.
-struct AssertPayloadFits<const N: usize>;
-
-impl<const N: usize> AssertPayloadFits<N> {
-    const OK: () = assert!(
-        N + 4 <= SHORT_OPT_BUFFER_LEN,
-        "decode_check_to_array cannot decode a payload this large, use decode_check instead"
-    );
 }
 
 const SHORT_OPT_BUFFER_LEN: usize = 128;
@@ -472,6 +457,16 @@ impl Buffer for Vec<u8> {
 
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
     type Err = internals::array_vec::error::Error;
+
+    fn try_push(&mut self, val: u8) -> Result<(), Self::Err> { self.try_push(val) }
+
+    fn slice(&self) -> &[u8] { self.as_slice() }
+
+    fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
+}
+
+impl<const N: usize> Buffer for ext_array_vec::ExtendedArrayVec<N> {
+    type Err = CapacityExceededError;
 
     fn try_push(&mut self, val: u8) -> Result<(), Self::Err> { self.try_push(val) }
 
