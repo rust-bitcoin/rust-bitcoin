@@ -20,7 +20,7 @@ alloc = ["base58/alloc", "bech32/alloc", "crypto/alloc", "hashes/alloc", "intern
 
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.5.0", default-features = false, features = [] }
-bech32 = { version = "0.11.0", default-features = false, features = [] }
+bech32 = { version = "0.12.0", default-features = false, features = [] }
 crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.3.0", default-features = false, features = ["hex"] }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.0.0", default-features = false, features = ["hex"] }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
