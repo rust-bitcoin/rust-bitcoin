@@ -10,8 +10,8 @@
 //! enabled, [`Base58CkString::encode_unbounded`] encodes data of any length infallibly.
 //!
 //! Decoding can be done with [`decode_check_to_array`] or [`decode_check`], both of which verify
-//! the checksum. [`decode_check_to_array`] decodes into a fixed-size array, but only accepts
-//! inputs that decode to at most 128 bytes (including checksum). The expected decoded length must
+//! the checksum. [`decode_check_to_array`] decodes into a fixed-size array without allocating,
+//! using a stack buffer sized for the payload and its checksum. The expected decoded length must
 //! be specified by the generic `usize`. With the `alloc` feature enabled, [`decode_check`] decodes
 //! strings of any length into a `Vec<u8>`.
 //!
@@ -75,7 +75,8 @@ use internals::array_vec::ArrayVec;
 use internals::slice::SliceExt;
 
 use crate::error::{
-    Base256Error, DecodeCheckArrayErrorInner, IncorrectChecksumError, UnexpectedLengthError,
+    Base256Error, CapacityExceededError, DecodeCheckArrayErrorInner, IncorrectChecksumError,
+    UnexpectedLengthError,
 };
 #[cfg(feature = "alloc")]
 use crate::error::{DecodeCheckErrorInner, TooShortError};
@@ -199,18 +200,16 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 
 /// Decodes a base58check-encoded string into a fixed-size array, verifying the checksum.
 ///
-/// This does not require `alloc`, but it only works for inputs that decode to at most 128 bytes.
-/// `N` is the expected length of the decoded payload (excluding the 4 byte checksum). Decoding
-/// will fail if the payload is any other length.
+/// This does not require `alloc`. `N` is the expected length of the decoded payload (excluding
+/// the 4 byte checksum). Decoding will fail if the payload is any other length.
 ///
-/// `N` is compile-time checked to ensure that `N + 4` does not exceed the 128 byte limit, since
-/// such a call could never succeed. Use [`decode_check`] for payloads that large.
+/// Decoding is done on the stack, so a large `N` means a large stack frame. Use [`decode_check`]
+/// if that is a problem.
 ///
 /// # Errors
 ///
 /// * The input contains an invalid base58 character.
 /// * The input does not decode to exactly `N` bytes followed by a 4 byte checksum.
-/// * The input decodes to more than 128 bytes (including the checksum).
 /// * The checksum does not match the expected value.
 ///
 /// # Examples
@@ -228,9 +227,7 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// ```
 #[allow(clippy::missing_panics_doc)] // All lengths are checked before each expect.
 pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
-    let () = AssertPayloadFits::<N>::OK;
-
-    let mut scratch = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+    let mut scratch = ext_array_vec::ExtendedArrayVec::<N>::new();
     build_base256(data, &mut scratch)
         .map_err(|e| match e {
             // Too long to decode within the fixed buffer. Report an approximate decoded length.
@@ -252,14 +249,12 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
             .map_err(DecodeCheckArrayError);
     }
 
-    let mut decoded = [0u8; SHORT_OPT_BUFFER_LEN];
+    // The buffer has only the decoded data. Put the leading zeroes on the end.
+    for _ in 0..leading_zeros {
+        scratch.try_push(0).expect("decoded_len = N + 4 is exactly the buffer capacity");
+    }
     scratch.as_mut_slice().reverse();
-
-    decoded
-        .get_mut(leading_zeros..decoded_len)
-        .expect("decoded_len = N + 4 <= 128 per above and compile-time check")
-        .copy_from_slice(&scratch);
-    let decoded = &decoded[..decoded_len];
+    let decoded = scratch.as_slice();
 
     let (payload, &data_check) =
         decoded.split_last_chunk::<4>().expect("decoded length checked as >= 4 above");
@@ -277,15 +272,94 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
     Ok(payload.try_into().expect("payload length checked to equal N"))
 }
 
-/// Compile-time check that `decode_check_to_array` was asked for a payload that can fit in the
-/// fixed-size buffer, along with its 4 byte checksum.
-struct AssertPayloadFits<const N: usize>;
+mod ext_array_vec {
+    use core::mem::MaybeUninit;
 
-impl<const N: usize> AssertPayloadFits<N> {
-    const OK: () = assert!(
-        N + 4 <= SHORT_OPT_BUFFER_LEN,
-        "decode_check_to_array cannot decode a payload this large, use decode_check instead"
-    );
+    /// Storage for `N` bytes of payload followed by the 4 checksum bytes.
+    #[repr(C)]
+    struct ArrayBuf<const N: usize> {
+        _buffer: [MaybeUninit<u8>; N],
+        _reserve_for_chksum: [MaybeUninit<u8>; 4],
+    }
+
+    impl<const N: usize> ArrayBuf<N> {
+        /// Constructs a new buffer.
+        const fn uninit() -> Self {
+            Self {
+                _buffer: [MaybeUninit::uninit(); N],
+                _reserve_for_chksum: [MaybeUninit::uninit(); 4],
+            }
+        }
+
+        /// Returns the whole buffer, both fields, as a single slice.
+        fn as_slice(&self) -> &[MaybeUninit<u8>] {
+            let ptr: *const Self = self;
+            // SAFETY: `Self` is `size_of::<Self>()` contiguous bytes of `MaybeUninit<u8>` and
+            // `MaybeUninit<u8>` has a size of u8/1 byte.
+            unsafe {
+                core::slice::from_raw_parts(
+                    ptr.cast::<MaybeUninit<u8>>(),
+                    core::mem::size_of::<Self>(),
+                )
+            }
+        }
+
+        /// Returns the whole buffer, both fields, as a single mutable slice.
+        fn as_mut_slice(&mut self) -> &mut [MaybeUninit<u8>] {
+            let ptr: *mut Self = self;
+            // SAFETY: As in `as_slice`.
+            unsafe {
+                core::slice::from_raw_parts_mut(
+                    ptr.cast::<MaybeUninit<u8>>(),
+                    core::mem::size_of::<Self>(),
+                )
+            }
+        }
+    }
+
+    /// A vector of bytes, backed by an array of `N + 4` bytes.
+    pub(crate) struct ExtendedArrayVec<const N: usize> {
+        len: usize,
+        buf: ArrayBuf<N>,
+    }
+
+    impl<const N: usize> ExtendedArrayVec<N> {
+        /// Constructs an empty `ExtendedArrayVec`.
+        pub(crate) const fn new() -> Self { Self { len: 0, buf: ArrayBuf::uninit() } }
+
+        /// Returns the number of bytes in `self`.
+        pub(crate) fn len(&self) -> usize { self.len }
+
+        /// Returns a reference to the initialized bytes.
+        pub(crate) fn as_slice(&self) -> &[u8] {
+            let ptr = self.buf.as_slice().as_ptr().cast::<u8>();
+            // SAFETY: `MaybeUninit<u8>` has the same layout as `u8` and the
+            // first `len` bytes of the buffer are initialized.
+            unsafe { core::slice::from_raw_parts(ptr, self.len) }
+        }
+
+        /// Returns a mutable reference to the initialized bytes.
+        pub(crate) fn as_mut_slice(&mut self) -> &mut [u8] {
+            let ptr = self.buf.as_mut_slice().as_mut_ptr().cast::<u8>();
+            // SAFETY: As in `as_slice`.
+            unsafe { core::slice::from_raw_parts_mut(ptr, self.len) }
+        }
+
+        /// Adds a byte to the end of `self`.
+        ///
+        /// # Errors
+        ///
+        /// Returns an error if `self` is already at capacity.
+        pub(crate) fn try_push(&mut self, val: u8) -> Result<(), super::CapacityExceededError> {
+            self.buf
+                .as_mut_slice()
+                .get_mut(self.len)
+                .ok_or(super::CapacityExceededError { capacity: N + 4 })?
+                .write(val);
+            self.len += 1;
+            Ok(())
+        }
+    }
 }
 
 const SHORT_OPT_BUFFER_LEN: usize = 128;
@@ -477,6 +551,16 @@ impl Buffer for Vec<u8> {
 
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
     type Err = internals::array_vec::error::Error;
+
+    fn try_push(&mut self, val: u8) -> Result<(), Self::Err> { self.try_push(val) }
+
+    fn slice(&self) -> &[u8] { self.as_slice() }
+
+    fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
+}
+
+impl<const N: usize> Buffer for ext_array_vec::ExtendedArrayVec<N> {
+    type Err = CapacityExceededError;
 
     fn try_push(&mut self, val: u8) -> Result<(), Self::Err> { self.try_push(val) }
 

@@ -336,3 +336,18 @@ pub(super) enum Base256Error<T> {
     Buffer(T),
     InvalidChar(InvalidCharacterError),
 }
+
+/// Attempted to push a byte into a full [`ExtendedArrayVec`].
+///
+/// [`ExtendedArrayVec`]: crate::ext_array_vec::ExtendedArrayVec
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct CapacityExceededError {
+    /// The capacity of the vector that was pushed into.
+    pub(crate) capacity: usize,
+}
+
+impl fmt::Display for CapacityExceededError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "capacity exceeded: {}", self.capacity)
+    }
+}
