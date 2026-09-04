@@ -17,12 +17,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(feature = "test-serde")]
-pub extern crate serde_json;
-
-#[cfg(feature = "test-serde")]
-pub extern crate bincode;
-
 // The pub module is a workaround for strange error:
 // "macro-expanded `macro_export` macros from the current crate cannot be referred to by absolute paths"
 #[doc(hidden)]
@@ -45,6 +39,7 @@ pub mod slice;
 #[macro_use]
 pub mod serde;
 pub mod const_casts;
+pub mod u256;
 
 /// Asserts a boolean expression at compile time.
 #[macro_export]

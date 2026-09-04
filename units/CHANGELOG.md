@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- `Target`/`Work`'s internal `U256` type is now sourced from `bitcoin-internals` instead of a
+  duplicated `include!` module.
+
 ## [0.5.0] - 2026-06-09
 
 * Remove `_unchecked` hex parsing function [#6292](https://github.com/rust-bitcoin/rust-bitcoin/pull/6292)

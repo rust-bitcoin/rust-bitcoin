@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add `U256` type, moved from the private `include!` module duplicated in `units` and `bitcoin`.
+
 ## [0.6.0] - 2026-07-07
 
 ### Deletions
