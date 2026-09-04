@@ -220,10 +220,14 @@ impl FeeRate {
     /// enough instead of falling short if rounded down.
     #[inline]
     pub const fn mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
-        let wu = weight.to_wu();
-        if let Some(fee_kwu) = self.to_sat_per_kwu_ceil().checked_mul(wu) {
-            let fee = fee_kwu.div_ceil(1_000);
-            if let Ok(fee_amount) = Amount::from_sat(fee) {
+        // Keep the fee rate's sat/MvB precision until the final rounding step.
+        let numerator = self.to_sat_per_mvb() as u128 * weight.to_wu() as u128;
+        // 1 MvB = 4,000,000 wu.
+        let denominator = 4_000_000_u128;
+        let quotient = numerator / denominator;
+        let fee_sat = if numerator % denominator == 0 { quotient } else { quotient + 1 };
+        if fee_sat <= Amount::MAX.to_sat() as u128 {
+            if let Ok(fee_amount) = Amount::from_sat(fee_sat as u64) {
                 return NumOpResult::Valid(fee_amount);
             }
         }
@@ -471,5 +475,12 @@ mod tests {
         let weight = Weight::from_wu(500);
         let fee = fee_rate.mul_by_weight(weight).expect("expected fee amount");
         assert_eq!(fee, Amount::from_sat(2).unwrap());
+    }
+
+    #[test]
+    fn mul_by_weight_preserves_mvb_precision() {
+        let fee_rate = FeeRate::from_sat_per_kvb(101);
+        let weight = Weight::from_wu(4_000);
+        assert_eq!(fee_rate.mul_by_weight(weight).unwrap(), Amount::from_sat(101).unwrap());
     }
 }
