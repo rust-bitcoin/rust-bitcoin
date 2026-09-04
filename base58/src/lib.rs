@@ -169,7 +169,7 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
     build_base256(data, &mut scratch)
         .map_err(|e| match e {
-            Base256Error::Buffer(_) => unreachable!("Vec cannot fail try_push"),
+            Base256Error::Buffer(never) => match never {},
             Base256Error::InvalidChar(err) => err,
         })
         .map_err(DecodeCheckErrorInner::Decode)
