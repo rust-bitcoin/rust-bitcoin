@@ -9,6 +9,7 @@ use internals::error::InputString;
 use internals::write_err;
 
 use super::INPUT_STRING_LEN_LIMIT;
+use super::SignedAmount;
 use crate::parse_int::{PrefixedHexError, UnprefixedHexError};
 
 /// Error returned when parsing an amount with denomination fails.
@@ -131,15 +132,20 @@ pub struct OutOfRangeError {
 }
 
 impl OutOfRangeError {
-    /// Returns the minimum and maximum allowed values for the type that was parsed.
-    ///
-    /// This can be used to give a hint to the user which values are allowed.
-    #[inline]
-    pub fn valid_range(self) -> (i64, u64) {
-        match self.is_signed {
-            true => (i64::MIN, i64::MAX as u64),
-            false => (0, u64::MAX),
+    /// Returns the minimum value of the type that was attempted to be parsed.
+    fn lower_bound(self) -> SignedAmount {
+        if self.is_signed() {
+            SignedAmount::MIN
+        } else {
+            SignedAmount::ZERO
         }
+    }
+
+    /// Returns true if the type that was attempted to be parsed is signed (`SignedAmount`).
+    ///
+    /// This can be used to hint to users to enter non-negative values specifically.
+    pub fn is_signed(self) -> bool {
+        self.is_signed
     }
 
     /// Returns true if the input value was larger than the maximum allowed value.
@@ -183,9 +189,9 @@ impl fmt::Display for OutOfRangeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.is_greater_than_max {
-            write!(f, "the amount is greater than {}", self.valid_range().1)
+            write!(f, "the amount is greater than {}", SignedAmount::MAX)
         } else {
-            write!(f, "the amount is less than {}", self.valid_range().0)
+            write!(f, "the amount is less than {}", self.lower_bound())
         }
     }
 }
