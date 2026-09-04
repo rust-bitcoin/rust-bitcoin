@@ -723,7 +723,7 @@ mod tests {
     }
 
     #[test]
-    fn decode_check_to_array_at_input_length_limit() {
+    fn decode_check_to_array_long_inputs() {
         let encoded = "22UzJUbV3TnAhvzqfW411nkMuSfpgxfYfuuCyNPtrA9EQTViEdsmiBAqEyGP4EGFHb1c7XKWFmjWj9uzBdg8kpCVXAaWVGQmovSTnFjSjEEa9sAZqKUYrvnvgVtPVTuj";
         let want = [0xFFu8; 89];
         assert_eq!(encoded.len(), SHORT_OPT_BUFFER_LEN);
@@ -734,6 +734,12 @@ mod tests {
         want[122] = 0x01;
         assert_eq!(encoded.len(), SHORT_OPT_BUFFER_LEN);
         assert_eq!(decode_check_to_array::<123>(encoded).unwrap(), want);
+
+        #[cfg(feature = "alloc")] {
+            let payload = [0x2au8; 200];
+            let encoded = Base58CkString::encode_unbounded(&payload);
+            assert_eq!(decode_check_to_array::<200>(encoded.as_str()).unwrap(), payload);
+        }
     }
 
     #[test]
