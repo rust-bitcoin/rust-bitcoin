@@ -17,11 +17,7 @@ pub type Error = DecodeCheckError;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DecodeCheckError(pub(super) DecodeCheckErrorInner);
 
-#[cfg(not(feature = "alloc"))]
-/// An error occurred during base58 decoding (with checksum).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct DecodeCheckError(pub(super) DecodeCheckErrorInner);
-
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) enum DecodeCheckErrorInner {
     /// Invalid character while decoding.
@@ -32,6 +28,7 @@ pub(super) enum DecodeCheckErrorInner {
     TooShort(TooShortError),
 }
 
+#[cfg(feature = "alloc")]
 impl DecodeCheckError {
     /// Returns the invalid base58 character, if encountered.
     pub fn invalid_character(&self) -> Option<u8> {
@@ -58,10 +55,12 @@ impl DecodeCheckError {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Infallible> for DecodeCheckError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for DecodeCheckError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use DecodeCheckErrorInner::{Decode, IncorrectChecksum, TooShort};
@@ -119,16 +118,19 @@ impl std::error::Error for IncorrectChecksumError {
 }
 
 /// The decoded base58 data was too short (require at least 4 bytes for checksum).
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct TooShortError {
     /// The length of the decoded data.
     pub(super) length: usize,
 }
 
+#[cfg(feature = "alloc")]
 impl From<Infallible> for TooShortError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for TooShortError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -192,8 +194,10 @@ pub struct DecodeCheckArrayError(pub(super) DecodeCheckArrayErrorInner);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) enum DecodeCheckArrayErrorInner {
-    /// Decoding the base58check string failed (invalid character, bad checksum or too short).
-    Decode(DecodeCheckError),
+    /// Invalid character while decoding.
+    InvalidCharacter(InvalidCharacterError),
+    /// Checksum was not correct.
+    IncorrectChecksum(IncorrectChecksumError),
     /// The decoded payload length did not match the requested array length.
     UnexpectedLength(UnexpectedLengthError),
 }
@@ -202,24 +206,24 @@ impl DecodeCheckArrayError {
     /// Returns the invalid base58 character, if encountered.
     pub fn invalid_character(&self) -> Option<u8> {
         match self.0 {
-            DecodeCheckArrayErrorInner::Decode(ref e) => e.invalid_character(),
-            DecodeCheckArrayErrorInner::UnexpectedLength(_) => None,
+            DecodeCheckArrayErrorInner::InvalidCharacter(ref e) => Some(e.invalid_character()),
+            _ => None,
         }
     }
 
     /// Returns the incorrect checksum along with the expected checksum, if encountered.
     pub fn incorrect_checksum(&self) -> Option<(u32, u32)> {
         match self.0 {
-            DecodeCheckArrayErrorInner::Decode(ref e) => e.incorrect_checksum(),
-            DecodeCheckArrayErrorInner::UnexpectedLength(_) => None,
+            DecodeCheckArrayErrorInner::IncorrectChecksum(ref e) => Some((e.incorrect, e.expected)),
+            _ => None,
         }
     }
 
-    /// Returns the invalid base58 string length (require at least 4 bytes for checksum), if encountered.
-    pub fn invalid_length(&self) -> Option<usize> {
+    /// Returns the decoded data length along with the expected length, if the two did not match.
+    pub fn invalid_length(&self) -> Option<(usize, usize)> {
         match self.0 {
-            DecodeCheckArrayErrorInner::Decode(ref e) => e.invalid_length(),
-            DecodeCheckArrayErrorInner::UnexpectedLength(_) => None,
+            DecodeCheckArrayErrorInner::UnexpectedLength(ref e) => Some((e.actual, e.expected)),
+            _ => None,
         }
     }
 }
@@ -230,10 +234,11 @@ impl From<Infallible> for DecodeCheckArrayError {
 
 impl fmt::Display for DecodeCheckArrayError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DecodeCheckArrayErrorInner::{Decode, UnexpectedLength};
+        use DecodeCheckArrayErrorInner::{IncorrectChecksum, InvalidCharacter, UnexpectedLength};
 
         match self.0 {
-            Decode(ref e) => write_err!(f, "decode"; e),
+            InvalidCharacter(ref e) => write_err!(f, "decode"; e),
+            IncorrectChecksum(ref e) => write_err!(f, "incorrect checksum"; e),
             UnexpectedLength(ref e) => write_err!(f, "unexpected length"; e),
         }
     }
@@ -242,10 +247,11 @@ impl fmt::Display for DecodeCheckArrayError {
 #[cfg(feature = "std")]
 impl std::error::Error for DecodeCheckArrayError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use DecodeCheckArrayErrorInner::{Decode, UnexpectedLength};
+        use DecodeCheckArrayErrorInner::{IncorrectChecksum, InvalidCharacter, UnexpectedLength};
 
         match self.0 {
-            Decode(ref e) => Some(e),
+            InvalidCharacter(ref e) => Some(e),
+            IncorrectChecksum(ref e) => Some(e),
             UnexpectedLength(ref e) => Some(e),
         }
     }
@@ -329,4 +335,19 @@ impl std::error::Error for InvalidCharacterError {
 pub(super) enum Base256Error<T> {
     Buffer(T),
     InvalidChar(InvalidCharacterError),
+}
+
+/// Attempted to push a byte into a full [`ExtendedArrayVec`].
+///
+/// [`ExtendedArrayVec`]: crate::ext_array_vec::ExtendedArrayVec
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct CapacityExceededError {
+    /// The capacity of the vector that was pushed into.
+    pub(crate) capacity: usize,
+}
+
+impl fmt::Display for CapacityExceededError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "capacity exceeded: {}", self.capacity)
+    }
 }

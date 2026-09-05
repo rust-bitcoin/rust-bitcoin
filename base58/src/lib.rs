@@ -10,10 +10,10 @@
 //! enabled, [`Base58CkString::encode_unbounded`] encodes data of any length infallibly.
 //!
 //! Decoding can be done with [`decode_check_to_array`] or [`decode_check`], both of which verify
-//! the checksum. [`decode_check_to_array`] decodes into a fixed-size array, but only accepts
-//! inputs of at most 128 characters. The expected decoded length must be specified by the generic
-//! `usize`. With the `alloc` feature enabled, [`decode_check`] decodes strings of any length into
-//! a `Vec<u8>`.
+//! the checksum. [`decode_check_to_array`] decodes into a fixed-size array without allocating,
+//! using a stack buffer sized for the payload and its checksum. The expected decoded length must
+//! be specified by the generic `usize`. With the `alloc` feature enabled, [`decode_check`] decodes
+//! strings of any length into a `Vec<u8>`.
 //!
 //! # Examples
 //!
@@ -69,11 +69,13 @@ use internals::array_vec::ArrayVec;
 use internals::slice::SliceExt;
 
 use crate::error::{
-    Base256Error, DecodeCheckArrayErrorInner, DecodeCheckErrorInner, IncorrectChecksumError,
-    TooShortError, UnexpectedLengthError,
+    Base256Error, CapacityExceededError, DecodeCheckArrayErrorInner, IncorrectChecksumError,
+    UnexpectedLengthError,
 };
+#[cfg(feature = "alloc")]
+use crate::error::{DecodeCheckErrorInner, TooShortError};
 #[cfg(not(feature = "alloc"))]
-use crate::error::{DecodeCheckError, InputTooLongErrorInner, InvalidCharacterError};
+use crate::error::{InputTooLongErrorInner, InvalidCharacterError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "alloc")]
@@ -109,27 +111,22 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 ///
 /// # Errors
 ///
-/// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet).
+/// Returns an error if the input contains an invalid base58 character (not in the base58 alphabet)
+/// or the scratch buffer is unable to be written to.
 fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Error<T::Err>> {
-    // Build in base 256
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
-        if usize::from(d58) >= BASE58_DIGITS.len() {
-            return Err(InvalidCharacterError::new(d58)).map_err(Base256Error::InvalidChar);
-        }
-        let mut carry = match BASE58_DIGITS[usize::from(d58)] {
-            Some(d58) => u32::from(d58),
-            None => {
-                return Err(InvalidCharacterError::new(d58)).map_err(Base256Error::InvalidChar);
-            }
-        };
+        let mut carry = BASE58_DIGITS.get(usize::from(d58))
+            .copied()
+            .flatten()
+            .ok_or(Base256Error::InvalidChar(InvalidCharacterError::new(d58)))
+            .map(u32::from)?;
         for d256 in scratch.slice_mut() {
             carry += u32::from(*d256) * 58;
             *d256 = carry as u8; // cast loses data intentionally
             carry /= 256;
         }
         while carry > 0 {
-            // This function (build_base256) is only ever called with a Vec (infallible) or an ArrayVec with a pre-checked size.
             scratch.try_push(carry as u8).map_err(Base256Error::Buffer)?; // cast loses data intentionally
             carry /= 256;
         }
@@ -163,7 +160,7 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
     let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
     build_base256(data, &mut scratch)
         .map_err(|e| match e {
-            Base256Error::Buffer(_) => unreachable!("Vec cannot fail try_push"),
+            Base256Error::Buffer(never) => match never {},
             Base256Error::InvalidChar(err) => err,
         })
         .map_err(DecodeCheckErrorInner::Decode)
@@ -197,17 +194,17 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 
 /// Decodes a base58check-encoded string into a fixed-size array, verifying the checksum.
 ///
-/// This does not require `alloc`, but it only works for inputs up to 128 characters long. `N` is
-/// the expected length of the decoded payload (excluding the 4 byte checksum). Decoding will fail if
-/// the payload is any other length.
+/// This does not require `alloc`. `N` is the expected length of the decoded payload (excluding
+/// the 4 byte checksum). Decoding will fail if the payload is any other length.
+///
+/// Decoding is done on the stack, so a large `N` means a large stack frame. Use [`decode_check`]
+/// if that is a problem.
 ///
 /// # Errors
 ///
 /// * The input contains an invalid base58 character.
-/// * The decoded data is less than 4 bytes (too short for checksum verification).
+/// * The input does not decode to exactly `N` bytes followed by a 4 byte checksum.
 /// * The checksum does not match the expected value.
-/// * The input is longer than 128 characters.
-/// * The decoded payload length is not exactly `N` bytes.
 ///
 /// # Examples
 ///
@@ -222,10 +219,9 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, DecodeCheckError> {
 /// assert!(decode_check_to_array::<20>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").is_err());
 /// # Ok::<_, base58ck::DecodeCheckArrayError>(())
 /// ```
-#[allow(clippy::missing_panics_doc)] // payload length is checked before cast unwrap
+#[allow(clippy::missing_panics_doc)] // All lengths are checked before each expect.
 pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], DecodeCheckArrayError> {
-    // 11/15 is just over log_256(58), so the decoded length never exceeds the input length.
-    let mut scratch = ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new();
+    let mut scratch = ext_array_vec::ExtendedArrayVec::<N>::new();
     build_base256(data, &mut scratch)
         .map_err(|e| match e {
             // Too long to decode within the fixed buffer. Report an approximate decoded length.
@@ -234,40 +230,28 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
                     expected: N,
                     actual: data.len() * 11 / 15,
                 }),
-            Base256Error::InvalidChar(err) => DecodeCheckArrayErrorInner::Decode(DecodeCheckError(
-                DecodeCheckErrorInner::Decode(err),
-            )),
+            Base256Error::InvalidChar(err) => DecodeCheckArrayErrorInner::InvalidCharacter(err),
         })
         .map_err(DecodeCheckArrayError)?;
 
     let leading_zeros = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).count();
     let decoded_len = leading_zeros + scratch.len();
 
-    let mut decoded = [0u8; SHORT_OPT_BUFFER_LEN];
-    scratch.as_mut_slice().reverse();
-
-    // Copy the scratch into a subslice, erroring if out of range.
-    let write_slice = decoded
-        .get_mut(leading_zeros..decoded_len)
-        .ok_or(UnexpectedLengthError { expected: N, actual: data.len() * 11 / 15 })
-        .map_err(DecodeCheckArrayErrorInner::UnexpectedLength)
-        .map_err(DecodeCheckArrayError)?;
-    write_slice.copy_from_slice(&scratch);
-    let decoded = &decoded[..decoded_len];
-
-    let (payload, &data_check) = decoded
-        .split_last_chunk::<4>()
-        .ok_or(TooShortError { length: decoded_len })
-        .map_err(DecodeCheckErrorInner::TooShort)
-        .map_err(DecodeCheckError)
-        .map_err(DecodeCheckArrayErrorInner::Decode)
-        .map_err(DecodeCheckArrayError)?;
-
-    if payload.len() != N {
-        return Err(UnexpectedLengthError { expected: N, actual: payload.len() })
+    if decoded_len != N + 4 {
+        return Err(UnexpectedLengthError { expected: N, actual: decoded_len.saturating_sub(4) })
             .map_err(DecodeCheckArrayErrorInner::UnexpectedLength)
             .map_err(DecodeCheckArrayError);
     }
+
+    // The buffer has only the decoded data. Put the leading zeroes on the end.
+    for _ in 0..leading_zeros {
+        scratch.try_push(0).expect("decoded_len = N + 4 is exactly the buffer capacity");
+    }
+    scratch.as_mut_slice().reverse();
+    let decoded = scratch.as_slice();
+
+    let (payload, &data_check) =
+        decoded.split_last_chunk::<4>().expect("decoded length checked as >= 4 above");
 
     let hash_check = *sha256d::Hash::hash(payload).as_byte_array().sub_array::<0, 4>();
     let expected = u32::from_le_bytes(hash_check);
@@ -275,13 +259,101 @@ pub fn decode_check_to_array<const N: usize>(data: &str) -> Result<[u8; N], Deco
 
     if actual != expected {
         return Err(IncorrectChecksumError { incorrect: actual, expected })
-            .map_err(DecodeCheckErrorInner::IncorrectChecksum)
-            .map_err(DecodeCheckError)
-            .map_err(DecodeCheckArrayErrorInner::Decode)
+            .map_err(DecodeCheckArrayErrorInner::IncorrectChecksum)
             .map_err(DecodeCheckArrayError);
     }
 
     Ok(payload.try_into().expect("payload length checked to equal N"))
+}
+
+mod ext_array_vec {
+    use core::mem::MaybeUninit;
+
+    /// Storage for `N` bytes of payload followed by the 4 checksum bytes.
+    #[repr(C)]
+    struct ArrayBuf<const N: usize> {
+        _buffer: [MaybeUninit<u8>; N],
+        _reserve_for_chksum: [MaybeUninit<u8>; 4],
+    }
+
+    impl<const N: usize> ArrayBuf<N> {
+        /// Constructs a new buffer.
+        const fn uninit() -> Self {
+            Self {
+                _buffer: [MaybeUninit::uninit(); N],
+                _reserve_for_chksum: [MaybeUninit::uninit(); 4],
+            }
+        }
+
+        /// Returns the whole buffer, both fields, as a single slice.
+        fn as_slice(&self) -> &[MaybeUninit<u8>] {
+            let ptr: *const Self = self;
+            // SAFETY: `Self` is `size_of::<Self>()` contiguous bytes of `MaybeUninit<u8>` and
+            // `MaybeUninit<u8>` has a size of u8/1 byte.
+            unsafe {
+                core::slice::from_raw_parts(
+                    ptr.cast::<MaybeUninit<u8>>(),
+                    core::mem::size_of::<Self>(),
+                )
+            }
+        }
+
+        /// Returns the whole buffer, both fields, as a single mutable slice.
+        fn as_mut_slice(&mut self) -> &mut [MaybeUninit<u8>] {
+            let ptr: *mut Self = self;
+            // SAFETY: As in `as_slice`.
+            unsafe {
+                core::slice::from_raw_parts_mut(
+                    ptr.cast::<MaybeUninit<u8>>(),
+                    core::mem::size_of::<Self>(),
+                )
+            }
+        }
+    }
+
+    /// A vector of bytes, backed by an array of `N + 4` bytes.
+    pub(crate) struct ExtendedArrayVec<const N: usize> {
+        len: usize,
+        buf: ArrayBuf<N>,
+    }
+
+    impl<const N: usize> ExtendedArrayVec<N> {
+        /// Constructs an empty `ExtendedArrayVec`.
+        pub(crate) const fn new() -> Self { Self { len: 0, buf: ArrayBuf::uninit() } }
+
+        /// Returns the number of bytes in `self`.
+        pub(crate) fn len(&self) -> usize { self.len }
+
+        /// Returns a reference to the initialized bytes.
+        pub(crate) fn as_slice(&self) -> &[u8] {
+            let ptr = self.buf.as_slice().as_ptr().cast::<u8>();
+            // SAFETY: `MaybeUninit<u8>` has the same layout as `u8` and the
+            // first `len` bytes of the buffer are initialized.
+            unsafe { core::slice::from_raw_parts(ptr, self.len) }
+        }
+
+        /// Returns a mutable reference to the initialized bytes.
+        pub(crate) fn as_mut_slice(&mut self) -> &mut [u8] {
+            let ptr = self.buf.as_mut_slice().as_mut_ptr().cast::<u8>();
+            // SAFETY: As in `as_slice`.
+            unsafe { core::slice::from_raw_parts_mut(ptr, self.len) }
+        }
+
+        /// Adds a byte to the end of `self`.
+        ///
+        /// # Errors
+        ///
+        /// Returns an error if `self` is already at capacity.
+        pub(crate) fn try_push(&mut self, val: u8) -> Result<(), super::CapacityExceededError> {
+            self.buf
+                .as_mut_slice()
+                .get_mut(self.len)
+                .ok_or(super::CapacityExceededError { capacity: N + 4 })?
+                .write(val);
+            self.len += 1;
+            Ok(())
+        }
+    }
 }
 
 const SHORT_OPT_BUFFER_LEN: usize = 128;
@@ -481,6 +553,16 @@ impl<const N: usize> Buffer for ArrayVec<u8, N> {
     fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
 }
 
+impl<const N: usize> Buffer for ext_array_vec::ExtendedArrayVec<N> {
+    type Err = CapacityExceededError;
+
+    fn try_push(&mut self, val: u8) -> Result<(), Self::Err> { self.try_push(val) }
+
+    fn slice(&self) -> &[u8] { self.as_slice() }
+
+    fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
+}
+
 // Base58 encode the data in the iterator `data` to the buffer buf as ASCII bytes
 fn encode_to_buffer<I: Iterator<Item = u8>, T: Buffer>(data: I, buf: &mut T) -> Result<(), T::Err> {
     let mut leading_zero_count = 0;
@@ -603,7 +685,7 @@ mod tests {
         use crate::error::DecodeCheckArrayErrorInner;
 
         const STRING_LEN: usize = SHORT_OPT_BUFFER_LEN + 1;
-        const APPROX_LEN: usize = STRING_LEN * 11 / 15;
+        const DECODE_LEN: usize = STRING_LEN - 4;
 
         let encoded = "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"; // 21 byte payload
 
@@ -617,25 +699,25 @@ mod tests {
 
         assert!(matches!(
             decode_check_to_array::<21>("¢").unwrap_err(),
-            DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(_))
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::InvalidCharacter(_))
         ));
 
         assert!(matches!(
             decode_check_to_array::<21>("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHG").unwrap_err(),
-            DecodeCheckArrayError(DecodeCheckArrayErrorInner::Decode(_))
+            DecodeCheckArrayError(DecodeCheckArrayErrorInner::IncorrectChecksum(_))
         ));
 
         let long = "1".repeat(STRING_LEN);
         assert!(matches!(
             decode_check_to_array::<21>(&long).unwrap_err(),
             DecodeCheckArrayError(DecodeCheckArrayErrorInner::UnexpectedLength(
-                crate::UnexpectedLengthError { expected: 21, actual: APPROX_LEN }
+                crate::UnexpectedLengthError { expected: 21, actual: DECODE_LEN }
             ))
         ));
     }
 
     #[test]
-    fn decode_check_to_array_at_input_length_limit() {
+    fn decode_check_to_array_long_inputs() {
         let encoded = "22UzJUbV3TnAhvzqfW411nkMuSfpgxfYfuuCyNPtrA9EQTViEdsmiBAqEyGP4EGFHb1c7XKWFmjWj9uzBdg8kpCVXAaWVGQmovSTnFjSjEEa9sAZqKUYrvnvgVtPVTuj";
         let want = [0xFFu8; 89];
         assert_eq!(encoded.len(), SHORT_OPT_BUFFER_LEN);
@@ -646,6 +728,12 @@ mod tests {
         want[122] = 0x01;
         assert_eq!(encoded.len(), SHORT_OPT_BUFFER_LEN);
         assert_eq!(decode_check_to_array::<123>(encoded).unwrap(), want);
+
+        #[cfg(feature = "alloc")] {
+            let payload = [0x2au8; 200];
+            let encoded = Base58CkString::encode_unbounded(&payload);
+            assert_eq!(decode_check_to_array::<200>(encoded.as_str()).unwrap(), payload);
+        }
     }
 
     #[test]
