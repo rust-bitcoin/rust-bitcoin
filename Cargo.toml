@@ -5,7 +5,7 @@ resolver = "2"
 
 [workspace.metadata]
 rbmt.version = "0.5.3"
-rbmt.toolchains.nightly = "nightly-2026-07-02"
+rbmt.toolchains.nightly = "nightly-2026-09-05"
 rbmt.toolchains.stable = "1.97.1"
 
 [workspace.lints.rust]
