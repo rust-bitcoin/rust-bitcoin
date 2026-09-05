@@ -40,9 +40,15 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bech32"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d"
+checksum = "32637268377fc7b10a8c6d51de3e7fba1ce5dd371a96e342b34e6078db558e7f"
+
+[[package]]
+name = "bech32"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efbd3e1070bbdf4cd88a75264e18e8a26f7cb5c6949eadf0ceb85fb159cf08f8"
 
 [[package]]
 name = "bincode"
@@ -60,7 +66,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb0ce8bd5baaa0d303a19915a6d93afed161f528654e42da2a7a97d05c59499a"
 dependencies = [
  "base58ck 0.1.101",
- "bech32",
+ "bech32 0.11.1",
  "bitcoin-consensus-encoding 1.0.0",
  "bitcoin-io 0.1.101",
  "bitcoin-units 0.1.101",
@@ -78,7 +84,7 @@ dependencies = [
  "arbitrary",
  "base58ck 0.5.0",
  "base64",
- "bech32",
+ "bech32 0.12.0",
  "bincode",
  "bitcoin-addresses",
  "bitcoin-consensus-encoding 1.2.0",
@@ -104,7 +110,7 @@ name = "bitcoin-addresses"
 version = "0.0.0"
 dependencies = [
  "base58ck 0.5.0",
- "bech32",
+ "bech32 0.12.0",
  "bitcoin-crypto",
  "bitcoin-internals 0.6.0",
  "bitcoin-network-kind",
