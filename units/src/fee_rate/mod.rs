@@ -221,12 +221,13 @@ impl FeeRate {
     #[inline]
     pub const fn mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
         // Keep the fee rate's sat/MvB precision until the final rounding step.
-        let numerator = self.to_sat_per_mvb() as u128 * weight.to_wu() as u128;
+        let numerator = const_casts::u64_to_u128(self.to_sat_per_mvb())
+            * const_casts::u64_to_u128(weight.to_wu());
         // 1 MvB = 4,000,000 wu.
         let denominator = 4_000_000_u128;
         let quotient = numerator / denominator;
         let fee_sat = if numerator % denominator == 0 { quotient } else { quotient + 1 };
-        if fee_sat <= Amount::MAX.to_sat() as u128 {
+        if fee_sat <= const_casts::u64_to_u128(Amount::MAX.to_sat()) {
             if let Ok(fee_amount) = Amount::from_sat(fee_sat as u64) {
                 return NumOpResult::Valid(fee_amount);
             }
