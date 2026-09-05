@@ -7,7 +7,7 @@ use bitcoin::key::WPubkeyHash;
 use bitcoin::locktime::absolute;
 use bitcoin::sighash::{EcdsaSighashType, SighashCache};
 use bitcoin::{
-    transaction, Address, Amount, Network, OutPoint, PrivateKey, ScriptPubKeyBuf, ScriptSigBuf,
+    transaction, Address, AddressParams, Amount, OutPoint, PrivateKey, ScriptPubKeyBuf, ScriptSigBuf,
     Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
@@ -99,7 +99,7 @@ fn receivers_address() -> Address {
     "bc1q7cyrfmck2ffu2ud3rn5l5a8yv6f0chkp0zpemf"
         .parse::<Address<_>>()
         .expect("a valid address")
-        .require_network(Network::Bitcoin)
+        .require_network(AddressParams::MAINNET)
         .expect("valid address for mainnet")
 }
 

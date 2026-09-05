@@ -11,7 +11,7 @@ use core::panic::PanicInfo;
 
 use alloc_cortex_m::CortexMHeap;
 // use panic_halt as _;
-use bitcoin::{Address, Network, WifKey};
+use bitcoin::{Address, AddressParams, WifKey};
 use cortex_m_rt::entry;
 use cortex_m_semihosting::{debug, hprintln};
 
@@ -34,7 +34,7 @@ fn main() -> ! {
 
     // Derive address
     let pubkey = wk.private_key.to_public_key().try_into().unwrap();
-    let address = Address::p2wpkh(pubkey, Network::Bitcoin);
+    let address = Address::p2wpkh(pubkey, AddressParams::MAINNET);
     hprintln!("Address: {}", address).unwrap();
 
     assert_eq!(address.to_string(), "bc1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549np9993");
