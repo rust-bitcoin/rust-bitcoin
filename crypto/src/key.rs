@@ -829,27 +829,18 @@ impl FromStr for LegacyPublicKey {
     type Err = ParsePublicKeyError;
     #[inline]
     fn from_str(s: &str) -> Result<Self, ParsePublicKeyError> {
-        match s.len() {
-            66 => {
-                let bytes = hex::decode_to_array::<33>(s).map_err(|e| match e {
-                    DecodeFixedLengthBytesError::InvalidChar(e) =>
-                        ParsePublicKeyError::InvalidChar(e),
-                    DecodeFixedLengthBytesError::InvalidLength(_) =>
-                        unreachable!("length checked already"),
-                })?;
-                Self::from_slice(&bytes).map_err(ParsePublicKeyError::Encoding)
+        fn try_decode<const N: usize>(s: &str) -> Result<LegacyPublicKey, ParsePublicKeyError> {
+            match hex::decode_to_array::<N>(s) {
+                Ok(bytes) => LegacyPublicKey::from_slice(&bytes).map_err(ParsePublicKeyError::Encoding),
+                Err(DecodeFixedLengthBytesError::InvalidChar(e)) => Err(ParsePublicKeyError::InvalidChar(e)),
+                Err(DecodeFixedLengthBytesError::InvalidLength(_)) => Err(ParsePublicKeyError::InvalidHexLength(s.len())),
             }
-            130 => {
-                let bytes = hex::decode_to_array::<65>(s).map_err(|e| match e {
-                    DecodeFixedLengthBytesError::InvalidChar(e) =>
-                        ParsePublicKeyError::InvalidChar(e),
-                    DecodeFixedLengthBytesError::InvalidLength(_) =>
-                        unreachable!("length checked already"),
-                })?;
-                Self::from_slice(&bytes).map_err(ParsePublicKeyError::Encoding)
-            }
-            len => Err(ParsePublicKeyError::InvalidHexLength(len)),
         }
+        try_decode::<33>(s).or_else(|e| match e {
+            ParsePublicKeyError::InvalidChar(e) => Err(ParsePublicKeyError::InvalidChar(e)),
+            ParsePublicKeyError::Encoding(e) => Err(ParsePublicKeyError::Encoding(e)),
+            ParsePublicKeyError::InvalidHexLength(_) => try_decode::<65>(s),
+        })
     }
 }
 
