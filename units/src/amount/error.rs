@@ -8,8 +8,7 @@ use core::fmt;
 use internals::error::InputString;
 use internals::write_err;
 
-use super::INPUT_STRING_LEN_LIMIT;
-use super::SignedAmount;
+use super::{SignedAmount, INPUT_STRING_LEN_LIMIT};
 use crate::parse_int::{PrefixedHexError, UnprefixedHexError};
 
 /// Error returned when parsing an amount with denomination fails.
@@ -144,9 +143,7 @@ impl OutOfRangeError {
     /// Returns true if the type that was attempted to be parsed is signed (`SignedAmount`).
     ///
     /// This can be used to hint to users to enter non-negative values specifically.
-    pub fn is_signed(self) -> bool {
-        self.is_signed
-    }
+    pub fn is_signed(self) -> bool { self.is_signed }
 
     /// Returns true if the input value was larger than the maximum allowed value.
     #[inline]
