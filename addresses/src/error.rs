@@ -7,6 +7,7 @@ use internals::error::InputString;
 use internals::write_err;
 #[cfg(feature = "alloc")]
 use network::Network;
+#[cfg(feature = "alloc")]
 use primitives::witness_version;
 
 use crate::witness_program;
@@ -21,8 +22,6 @@ pub enum FromScriptError {
     UnrecognizedScript,
     /// A witness program error.
     WitnessProgram(witness_program::Error),
-    /// A witness version construction error.
-    WitnessVersion(witness_version::InvalidWitnessVersionError),
 }
 
 impl From<Infallible> for FromScriptError {
@@ -32,7 +31,6 @@ impl From<Infallible> for FromScriptError {
 impl fmt::Display for FromScriptError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
             Self::WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
             Self::UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
         }
@@ -44,7 +42,6 @@ impl std::error::Error for FromScriptError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::UnrecognizedScript => None,
-            Self::WitnessVersion(ref e) => Some(e),
             Self::WitnessProgram(ref e) => Some(e),
         }
     }

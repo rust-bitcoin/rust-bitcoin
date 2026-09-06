@@ -43,10 +43,8 @@
 use addresses::witness_program::WitnessProgram;
 use crypto::key::PubkeyHash;
 use primitives::script::{ScriptHash, ScriptPubKey};
-use primitives::witness_version::WitnessVersion;
 
 use crate::network::Params;
-use crate::script::ScriptExt as _;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -83,11 +81,7 @@ crate::internal_macros::define_extension_trait! {
                 let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
                 let hash = ScriptHash::from_byte_array(bytes);
                 Ok(Self::p2sh_from_hash(hash, network))
-            } else if script.is_witness_program() {
-                let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
-
-                let version = WitnessVersion::try_from(opcode)
-                    .map_err(FromScriptError::WitnessVersion)?;
+            } else if let Some(version) = script.witness_version() {
                 let program = WitnessProgram::new(version, &script.as_bytes()[2..])
                     .map_err(FromScriptError::WitnessProgram)?;
                 Ok(Self::from_witness_program(program, network))
@@ -120,6 +114,7 @@ mod tests {
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::network::{params, NetworkKind, TestnetVersion};
     use crate::script::{RedeemScriptBuf, ScriptPubKeyBuf, WitnessScriptBuf};
+    use crate::witness_version::WitnessVersion;
     use crate::{FullPublicKey, LegacyPublicKey, Network, XOnlyPublicKey};
 
     fn roundtrips(addr: &Address, network: Network) {
