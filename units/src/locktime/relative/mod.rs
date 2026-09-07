@@ -251,12 +251,14 @@ impl LockTime {
         chain_tip: BlockHeight,
         utxo_mined_at: Option<BlockHeight>,
     ) -> Result<bool, IsSatisfiedByHeightError> {
+        use self::error::IsSatisfiedByHeightErrorInner as E;
+
         match self {
             Self::Blocks(blocks) => blocks
                 .is_satisfied_by(chain_tip, utxo_mined_at)
-                .map_err(IsSatisfiedByHeightError::Satisfaction),
+                .map_err(|e| IsSatisfiedByHeightError(E::Satisfaction(e))),
             Self::Time(time) =>
-                Err(IncompatibleHeightError(time)).map_err(IsSatisfiedByHeightError::Incompatible),
+                Err(IsSatisfiedByHeightError(E::Incompatible(IncompatibleHeightError(time)))),
         }
     }
 
@@ -878,7 +880,9 @@ mod tests {
         let expected_time = NumberOf512Seconds::from_512_second_intervals(70);
         assert_eq!(
             err,
-            IsSatisfiedByHeightError::Incompatible(IncompatibleHeightError(expected_time))
+            IsSatisfiedByHeightError(error::IsSatisfiedByHeightErrorInner::Incompatible(
+                IncompatibleHeightError(expected_time)
+            ))
         );
         assert!(!format!("{}", err).is_empty());
     }
