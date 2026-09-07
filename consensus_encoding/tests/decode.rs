@@ -302,7 +302,8 @@ fn decode_from_hex_test() {
 }
 
 #[test]
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 fn decode_from_hex_larger_than_internal_buffer() {
     const COUNT: usize = 1100;
 
