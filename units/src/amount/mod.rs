@@ -25,7 +25,9 @@ use core::str::FromStr;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use self::error::{MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner};
+use self::error::{
+    MissingDigitsKind, ParseAmountErrorInner, ParseDenominationErrorInner, ParseErrorInner,
+};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -172,19 +174,21 @@ impl FromStr for Denomination {
     ///
     /// # Errors
     ///
-    /// - [`ParseDenominationError::PossiblyConfusing`]: If the denomination begins with a capital
-    ///   letter that could be confused with centi, milli, or micro-bitcoin.
-    /// - [`ParseDenominationError::Unknown`]: If an unknown denomination is used.
+    /// - [`PossiblyConfusingDenominationError`]: If the denomination begins with a capital letter
+    ///   that could be confused with centi, milli, or micro-bitcoin.
+    /// - [`UnknownDenominationError`]: If an unknown denomination is used.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use self::ParseDenominationError as E;
+        use ParseDenominationErrorInner as E;
 
         if CONFUSING_FORMS.contains(&s) {
-            return Err(PossiblyConfusingDenominationError(s.into())).map_err(E::PossiblyConfusing);
+            return Err(ParseDenominationError(E::PossiblyConfusing(
+                PossiblyConfusingDenominationError(s.into()),
+            )));
         };
 
         let form = Self::forms(s);
 
-        form.ok_or_else(|| E::Unknown(UnknownDenominationError(s.into())))
+        form.ok_or_else(|| ParseDenominationError(E::Unknown(UnknownDenominationError(s.into()))))
     }
 }
 

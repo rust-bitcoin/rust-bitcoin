@@ -387,10 +387,12 @@ impl std::error::Error for BadPositionError {
     }
 }
 
-/// An error during amount parsing.
+/// An error during denomination parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum ParseDenominationError {
+pub struct ParseDenominationError(pub(crate) ParseDenominationErrorInner);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ParseDenominationErrorInner {
     /// The denomination was unknown.
     Unknown(UnknownDenominationError),
     /// The denomination has multiple possible interpretations.
@@ -405,9 +407,11 @@ impl From<Infallible> for ParseDenominationError {
 impl fmt::Display for ParseDenominationError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::Unknown(ref e) => write_err!(f, "denomination parse error"; e),
-            Self::PossiblyConfusing(ref e) => write_err!(f, "denomination parse error"; e),
+        match self.0 {
+            ParseDenominationErrorInner::Unknown(ref e) =>
+                write_err!(f, "denomination parse error"; e),
+            ParseDenominationErrorInner::PossiblyConfusing(ref e) =>
+                write_err!(f, "denomination parse error"; e),
         }
     }
 }
@@ -416,9 +420,9 @@ impl fmt::Display for ParseDenominationError {
 impl std::error::Error for ParseDenominationError {
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            Self::Unknown(ref e) => Some(e),
-            Self::PossiblyConfusing(ref e) => Some(e),
+        match self.0 {
+            ParseDenominationErrorInner::Unknown(ref e) => Some(e),
+            ParseDenominationErrorInner::PossiblyConfusing(ref e) => Some(e),
         }
     }
 }
@@ -580,7 +584,9 @@ mod tests {
     use encoding::{Decode as _, Decoder as _};
 
     #[cfg(feature = "alloc")]
-    use super::{ParseAmountError, ParseAmountErrorInner, ParseErrorInner};
+    use super::{
+        ParseAmountError, ParseAmountErrorInner, ParseDenominationErrorInner, ParseErrorInner,
+    };
     #[cfg(feature = "alloc")]
     use crate::amount::{Amount, Denomination, ParseDenominationError, ParseError};
 
@@ -669,7 +675,7 @@ mod tests {
         let e = Denomination::from_str("XYZ").unwrap_err();
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
-        let ParseDenominationError::Unknown(e) = e else {
+        let ParseDenominationError(ParseDenominationErrorInner::Unknown(e)) = e else {
             panic!("error should be UnknownDenominationError")
         };
         assert!(!e.to_string().is_empty());
@@ -680,7 +686,7 @@ mod tests {
         let e = Denomination::from_str("MBTC").unwrap_err();
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
-        let ParseDenominationError::PossiblyConfusing(e) = e else {
+        let ParseDenominationError(ParseDenominationErrorInner::PossiblyConfusing(e)) = e else {
             panic!("error should be PossiblyConfusingDenominationError")
         };
         assert!(!e.to_string().is_empty());

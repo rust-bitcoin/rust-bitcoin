@@ -716,7 +716,7 @@ fn unsigned_signed_conversion() {
 #[allow(clippy::items_after_statements)] // Define functions where we use them.
 #[allow(clippy::too_many_lines)]
 fn from_str() {
-    use super::ParseDenominationError;
+    use super::{ParseDenominationError, ParseDenominationErrorInner};
 
     assert_eq!(
         "x BTC".parse::<Amount>(),
@@ -729,14 +729,14 @@ fn from_str() {
     );
     assert_eq!(
         "xBTC".parse::<Amount>(),
-        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("xBTC".into())
+        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError(
+            ParseDenominationErrorInner::Unknown(UnknownDenominationError("xBTC".into()))
         )))),
     );
     assert_eq!(
         "5 BTC BTC".parse::<Amount>(),
-        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("BTC BTC".into())
+        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError(
+            ParseDenominationErrorInner::Unknown(UnknownDenominationError("BTC BTC".into()))
         )))),
     );
     assert_eq!(
@@ -750,8 +750,8 @@ fn from_str() {
     );
     assert_eq!(
         "5 5 BTC".parse::<Amount>(),
-        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("5 BTC".into())
+        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError(
+            ParseDenominationErrorInner::Unknown(UnknownDenominationError("5 BTC".into()))
         )))),
     );
 
@@ -781,7 +781,9 @@ fn from_str() {
 
     case(
         "5 BCH",
-        &Err(denom_err(ParseDenominationError::Unknown(UnknownDenominationError("BCH".into())))),
+        &Err(denom_err(ParseDenominationError(ParseDenominationErrorInner::Unknown(
+            UnknownDenominationError("BCH".into()),
+        )))),
     );
 
     case("-1 BTC", &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::negative()))));
@@ -945,7 +947,7 @@ fn to_from_string_in() {
 #[test]
 #[cfg(feature = "alloc")]
 fn to_string_with_denomination_from_str_roundtrip() {
-    use super::{Denomination as D, ParseDenominationError};
+    use super::{Denomination as D, ParseDenominationError, ParseDenominationErrorInner};
 
     let amt = sat(42);
     let denom = Amount::to_string_with_denomination;
@@ -958,14 +960,14 @@ fn to_string_with_denomination_from_str_roundtrip() {
 
     assert_eq!(
         "42 satoshi BTC".parse::<Amount>(),
-        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("satoshi BTC".into())
+        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError(
+            ParseDenominationErrorInner::Unknown(UnknownDenominationError("satoshi BTC".into()))
         ))))
     );
     assert_eq!(
         "-42 satoshi BTC".parse::<SignedAmount>(),
-        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("satoshi BTC".into())
+        Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError(
+            ParseDenominationErrorInner::Unknown(UnknownDenominationError("satoshi BTC".into()))
         )))),
     );
 }
@@ -1023,7 +1025,7 @@ fn disallow_confusing_forms() {
     for denom in confusing {
         match denom.parse::<Denomination>() {
             Ok(_) => panic!("from_str should error for {}", denom),
-            Err(ParseDenominationError::PossiblyConfusing(_)) => {}
+            Err(ParseDenominationError(ParseDenominationErrorInner::PossiblyConfusing(_))) => {}
             Err(e) => panic!("unexpected error: {}", e),
         }
     }
@@ -1036,7 +1038,7 @@ fn disallow_unknown_denomination() {
     for denom in unknown {
         match denom.parse::<Denomination>() {
             Ok(_) => panic!("from_str should error for {}", denom),
-            Err(ParseDenominationError::Unknown(_)) => (),
+            Err(ParseDenominationError(ParseDenominationErrorInner::Unknown(_))) => (),
             Err(e) => panic!("unexpected error: {}", e),
         }
     }
