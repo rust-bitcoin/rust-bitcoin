@@ -44,7 +44,10 @@ impl std::error::Error for DisabledLockTimeError {
 
 /// Error returned when attempting to satisfy lock fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum IsSatisfiedByError {
+pub struct IsSatisfiedByError(pub(super) IsSatisfiedByErrorInner);
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(super) enum IsSatisfiedByErrorInner {
     /// Error when attempting to satisfy lock by height.
     Blocks(InvalidHeightError),
     /// Error when attempting to satisfy lock by time.
@@ -59,9 +62,10 @@ impl From<Infallible> for IsSatisfiedByError {
 impl fmt::Display for IsSatisfiedByError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::Blocks(ref e) => write_err!(f, "blocks"; e),
-            Self::Time(ref e) => write_err!(f, "time"; e),
+        match self.0 {
+            IsSatisfiedByErrorInner::Blocks(ref e) =>
+                write_err!(f, "lock-by-blocks not satisfied"; e),
+            IsSatisfiedByErrorInner::Time(ref e) => write_err!(f, "lock-by-time not satisfied"; e),
         }
     }
 }
@@ -70,9 +74,9 @@ impl fmt::Display for IsSatisfiedByError {
 impl std::error::Error for IsSatisfiedByError {
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            Self::Blocks(ref e) => Some(e),
-            Self::Time(ref e) => Some(e),
+        match self.0 {
+            IsSatisfiedByErrorInner::Blocks(ref e) => Some(e),
+            IsSatisfiedByErrorInner::Time(ref e) => Some(e),
         }
     }
 }

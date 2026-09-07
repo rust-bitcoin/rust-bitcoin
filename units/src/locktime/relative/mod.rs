@@ -223,13 +223,15 @@ impl LockTime {
         utxo_mined_at_height: Option<BlockHeight>,
         utxo_mined_at_mtp: Option<BlockMtp>,
     ) -> Result<bool, IsSatisfiedByError> {
+        use self::error::IsSatisfiedByErrorInner as E;
+
         match self {
             Self::Blocks(blocks) => blocks
                 .is_satisfied_by(chain_tip_height, utxo_mined_at_height)
-                .map_err(IsSatisfiedByError::Blocks),
+                .map_err(|e| IsSatisfiedByError(E::Blocks(e))),
             Self::Time(time) => time
                 .is_satisfied_by(chain_tip_mtp, utxo_mined_at_mtp)
-                .map_err(IsSatisfiedByError::Time),
+                .map_err(|e| IsSatisfiedByError(E::Time(e))),
         }
     }
 
