@@ -154,7 +154,10 @@ impl std::error::Error for IncompatibleHeightError {
 ///
 /// [`is_satisfied_by_time`]: super::LockTime::is_satisfied_by_time
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum IsSatisfiedByTimeError {
+pub struct IsSatisfiedByTimeError(pub(super) IsSatisfiedByTimeErrorInner);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(super) enum IsSatisfiedByTimeErrorInner {
     /// Satisfaction of the lock time value failed.
     Satisfaction(InvalidTimeError),
     /// Tried to satisfy a lock-by-time locktime using number of blocks.
@@ -169,9 +172,11 @@ impl From<Infallible> for IsSatisfiedByTimeError {
 impl fmt::Display for IsSatisfiedByTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
-            Self::Incompatible(ref e) => write_err!(f, "incompatible"; e),
+        match self.0 {
+            IsSatisfiedByTimeErrorInner::Satisfaction(ref e) =>
+                write_err!(f, "lock-by-time not satisfied"; e),
+            IsSatisfiedByTimeErrorInner::Incompatible(ref e) =>
+                write_err!(f, "lock is not lock-by-time"; e),
         }
     }
 }
@@ -180,9 +185,9 @@ impl fmt::Display for IsSatisfiedByTimeError {
 impl std::error::Error for IsSatisfiedByTimeError {
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            Self::Satisfaction(ref e) => Some(e),
-            Self::Incompatible(ref e) => Some(e),
+        match self.0 {
+            IsSatisfiedByTimeErrorInner::Satisfaction(ref e) => Some(e),
+            IsSatisfiedByTimeErrorInner::Incompatible(ref e) => Some(e),
         }
     }
 }
