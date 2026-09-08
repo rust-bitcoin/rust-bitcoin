@@ -8,6 +8,7 @@
 
 #[cfg(feature = "alloc")]
 use alloc::{collections::BTreeSet, vec::Vec};
+use core::cmp;
 #[cfg(feature = "alloc")]
 use core::cmp::Ordering;
 
@@ -363,10 +364,17 @@ impl<'a> BitReader<'a> {
         Ok(bit)
     }
 
-    fn read_bits(&mut self, count: u8) -> Result<u64, DecodeError> {
-        let mut value = 0;
-        for _ in 0..count {
-            value = (value << 1) | u64::from(self.read_bit()?);
+    fn read_bits(&mut self, mut count: u8) -> Result<u64, DecodeError> {
+        let mut value = 0u64;
+        while count > 0 {
+            let byte = *self.bytes.get(self.bit_position / 8).ok_or(DecodeError::FilterTooShort)?;
+            let offset = self.bit_position % 8;
+            let avail = (8 - offset) as u8;
+            let take = cmp::min(avail, count);
+            let chunk = (byte >> (8 - offset - usize::from(take))) & (0xFFu8 >> (8 - take));
+            value = (value << usize::from(take)) | u64::from(chunk);
+            self.bit_position += usize::from(take);
+            count -= take;
         }
         Ok(value)
     }
@@ -374,7 +382,7 @@ impl<'a> BitReader<'a> {
     fn read_golomb_rice(&mut self) -> Result<u64, DecodeError> {
         let mut quotient: u64 = 0;
         while self.read_bit()? == 1 {
-            quotient = quotient.checked_add(1).ok_or(DecodeError::ValueOverflow)?;
+            quotient += 1;
         }
         if quotient > (u64::MAX >> BASIC_FILTER_P) {
             return Err(DecodeError::ValueOverflow);
@@ -388,39 +396,47 @@ impl<'a> BitReader<'a> {
 #[cfg(feature = "alloc")]
 struct BitWriter {
     bytes: Vec<u8>,
+    partial: u8,
     bit_offset: u8,
 }
 
 #[cfg(feature = "alloc")]
 impl BitWriter {
-    fn new(bytes: Vec<u8>) -> Self { Self { bytes, bit_offset: 0 } }
+    fn new(bytes: Vec<u8>) -> Self { Self { bytes, partial: 0, bit_offset: 0 } }
 
-    fn write_bit(&mut self, bit: bool) {
-        if self.bit_offset == 0 {
-            self.bytes.push(0);
-        }
-        if bit {
-            let last = self.bytes.last_mut().expect("byte was just pushed");
-            *last |= 1 << (7 - self.bit_offset);
-        }
-        self.bit_offset = (self.bit_offset + 1) % 8;
-    }
-
-    fn write_bits(&mut self, value: u64, count: u8) {
-        for shift in (0..count).rev() {
-            self.write_bit(((value >> shift) & 1) != 0);
+    fn write_bits(&mut self, value: u64, mut count: u8) {
+        while count > 0 {
+            if self.bit_offset == 8 {
+                self.bytes.push(self.partial);
+                self.partial = 0;
+                self.bit_offset = 0;
+            }
+            let take = cmp::min(8 - self.bit_offset, count);
+            let avail = 8 - self.bit_offset;
+            let chunk = ((value >> (count - take)) as u8) & (0xFFu8 >> (8 - take));
+            self.partial |= chunk << (avail - take);
+            self.bit_offset += take;
+            count -= take;
         }
     }
 
     fn write_golomb_rice(&mut self, value: u64) {
-        for _ in 0..(value >> BASIC_FILTER_P) {
-            self.write_bit(true);
+        let mut quotient = value >> BASIC_FILTER_P;
+        while quotient > 0 {
+            let nbits = cmp::min(quotient, 64) as u8;
+            self.write_bits(!0u64, nbits);
+            quotient -= u64::from(nbits);
         }
-        self.write_bit(false);
+        self.write_bits(0, 1);
         self.write_bits(value, BASIC_FILTER_P);
     }
 
-    fn finish(self) -> Vec<u8> { self.bytes }
+    fn finish(mut self) -> Vec<u8> {
+        if self.bit_offset > 0 {
+            self.bytes.push(self.partial);
+        }
+        self.bytes
+    }
 }
 
 pub mod error {
