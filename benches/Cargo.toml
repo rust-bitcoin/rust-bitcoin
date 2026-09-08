@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 base58ck = { path = "../base58" }
 bitcoin = { path = "../bitcoin", default-features = false, features = ["std"] }
+bitcoin_bip158 = { path = "../bip158", package = "bitcoin-bip158" }
 bitcoin_hashes = { path = "../hashes" }
 chacha20-poly1305 = { path = "../chacha20_poly1305" }
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding" }
@@ -49,6 +50,12 @@ harness = false
 [[bench]]
 name = "merkle_tree"
 path = "bitcoin/merkle_tree.rs"
+harness = false
+
+
+[[bench]]
+name = "bip158"
+path = "bip158/basic_filter.rs"
 harness = false
 
 
