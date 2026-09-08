@@ -8,6 +8,8 @@
 
 #[cfg(feature = "alloc")]
 use alloc::{collections::BTreeSet, vec::Vec};
+#[cfg(feature = "alloc")]
+use core::cmp::Ordering;
 
 use encoding::{decode_from_slice_unbounded_with_decoder, CompactSizeU64Decoder};
 #[cfg(feature = "alloc")]
@@ -156,6 +158,18 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
 
         let range = element_count * u64::from(BASIC_FILTER_M);
         let key = SipHashKey::from_block_hash(block_hash);
+
+        #[cfg(feature = "alloc")]
+        {
+            let mut mapped = query
+                .into_iter()
+                .map(|e| map_to_range(key.hash(e.as_ref()), range))
+                .collect::<Vec<_>>();
+            mapped.sort_unstable();
+            match_gcs(self.payload(), element_count, &mapped, false).unwrap_or(false)
+        }
+
+        #[cfg(not(feature = "alloc"))]
         query.into_iter().any(|element| {
             let value = map_to_range(key.hash(element.as_ref()), range);
             match_value(self.payload(), element_count, value).unwrap_or(false)
@@ -183,6 +197,16 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
         let range = element_count * u64::from(BASIC_FILTER_M);
         let key = SipHashKey::from_block_hash(blockhash);
 
+        #[cfg(feature = "alloc")]
+        {
+            let mut mapped =
+                iter.map(|e| map_to_range(key.hash(e.as_ref()), range)).collect::<Vec<_>>();
+            mapped.sort_unstable();
+            mapped.dedup();
+            match_gcs(self.payload(), element_count, &mapped, true).unwrap_or(false)
+        }
+
+        #[cfg(not(feature = "alloc"))]
         iter.all(|element| {
             let value = map_to_range(key.hash(element.as_ref()), range);
             match_value(self.payload(), element_count, value).unwrap_or(false)
@@ -250,6 +274,7 @@ fn validate(bytes: &[u8]) -> Result<(u32, u8), DecodeError> {
     Ok((count as u32, payload_offset as u8))
 }
 
+#[cfg(not(feature = "alloc"))]
 fn match_value(payload: &[u8], element_count: u64, query: u64) -> Result<bool, DecodeError> {
     let mut reader = BitReader::new(payload);
     let mut value = 0u64;
@@ -261,6 +286,47 @@ fn match_value(payload: &[u8], element_count: u64, query: u64) -> Result<bool, D
         }
     }
     Ok(false)
+}
+
+#[cfg(feature = "alloc")]
+fn match_gcs(
+    payload: &[u8],
+    element_count: u64,
+    mapped: &[u64],
+    match_all: bool,
+) -> Result<bool, DecodeError> {
+    if mapped.is_empty() {
+        return Ok(match_all);
+    }
+
+    let mut reader = BitReader::new(payload);
+    let mut value = reader.read_golomb_rice()?;
+    let mut remaining = element_count - 1;
+    for &query in mapped {
+        loop {
+            match value.cmp(&query) {
+                Ordering::Equal => {
+                    if match_all {
+                        break;
+                    }
+                    return Ok(true);
+                }
+                Ordering::Less if remaining > 0 => {
+                    value = value
+                        .checked_add(reader.read_golomb_rice()?)
+                        .ok_or(DecodeError::ValueOverflow)?;
+                    remaining -= 1;
+                }
+                Ordering::Less | Ordering::Greater => {
+                    if match_all {
+                        return Ok(false);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    Ok(match_all)
 }
 
 #[derive(Copy, Clone)]
