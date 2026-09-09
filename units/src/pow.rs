@@ -713,6 +713,15 @@ mod tests {
     }
 
     #[test]
+    fn from_compact_rejects_negative_nbits() {
+        // Exponents of 1 and 2 shift the mantissa right by 16 and 8, which is where
+        // a sign bit left in the mantissa may hide from the sign test.
+        for bits in [0x0180_0000_u32, 0x0280_0000] {
+            assert_eq!(Target::from_compact(CompactTarget::from_consensus(bits)), Target::ZERO);
+        }
+    }
+
+    #[test]
     fn max_target_from_compact() {
         // The highest possible target is defined as 0x1d00ffff
         let bits = 0x1d00_ffff_u32;
