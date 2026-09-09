@@ -187,18 +187,21 @@ impl Target {
         let unshifted_expt = bits >> 24;
         let (mant, expt) = {
             if unshifted_expt <= 3 {
-                ((bits & 0xFF_FFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
+                // Bit 23 is the sign bit. The shift below moves it out of place for an
+                // exponent of 1 or 2. For correctness, it must be masked out before.
+                ((bits & 0x7F_FFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
             } else {
-                (bits & 0xFF_FFFF, 8 * ((bits >> 24) - 3))
+                (bits & 0x7F_FFFF, 8 * ((bits >> 24) - 3))
             }
         };
+        let negative = mant != 0 && (bits & 0x80_0000) != 0;
         let overflow = mant != 0
             && (unshifted_expt > 34
                 || (mant > 0xFF && unshifted_expt > 33)
                 || (mant > 0xFFFF && unshifted_expt > 32));
 
         // The mantissa is signed but may not be negative or overflow.
-        if mant > 0x7F_FFFF || overflow {
+        if negative || overflow {
             Self::ZERO
         } else {
             Self(U256::from(mant) << expt)
