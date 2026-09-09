@@ -54,15 +54,14 @@ mod encapsulate {
     /// }
     /// # }
     /// ```
-    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct Amount(u64);
+    pub struct Amount(Repr);
 
     impl Amount {
         /// The maximum value of an amount.
-        pub const MAX: Self = Self(21_000_000 * 100_000_000);
+        pub const MAX: Self = unsafe { Self::from_sat_unchecked(21_000_000 * 100_000_000) };
 
         /// The minimum value of an amount.
-        pub const MIN: Self = Self(0);
+        pub const MIN: Self = unsafe { Self::from_sat_unchecked(0) };
 
         /// Gets the number of satoshis in this [`Amount`].
         ///
@@ -73,7 +72,7 @@ mod encapsulate {
         /// assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
         /// ```
         #[inline]
-        pub const fn to_sat(self) -> u64 { self.0 }
+        pub const fn to_sat(self) -> u64 { unsafe { core::mem::transmute::<Repr, u64>(self.0) } }
 
         /// Constructs a new [`Amount`] from the given number of satoshis.
         ///
@@ -95,9 +94,58 @@ mod encapsulate {
             if satoshi > Self::MAX_MONEY.to_sat() {
                 Err(OutOfRangeError { is_signed: false, is_greater_than_max: true })
             } else {
-                Ok(Self(satoshi))
+                Ok(unsafe { Self::from_sat_unchecked(satoshi) })
             }
         }
+
+        const unsafe fn from_sat_unchecked(satoshi: u64) -> Self {
+            Self(core::mem::transmute::<u64, Repr>(satoshi))
+        }
+    }
+
+    impl Copy for Amount {}
+
+    // Ensures the compiler doesn't call into .0.clone() which copies field-by-field but forces a dumb copy
+    // Explicit on purpose
+    #[allow(clippy::expl_impl_clone_on_copy)]
+    impl Clone for Amount {
+        fn clone(&self) -> Amount {
+            *self
+        }
+    }
+
+    #[repr(C)]
+    #[repr(align(8))]
+    #[derive(Copy, Clone)]
+    struct Repr {
+        #[cfg(target_endian = "big")]
+        _first: First,
+        #[cfg(target_endian = "big")]
+        _second: Second,
+        _remaining: [u8; 6],
+        #[cfg(target_endian = "little")]
+        _second: Second,
+        #[cfg(target_endian = "little")]
+        _first: First,
+    }
+
+    #[repr(u8)]
+    #[derive(Copy, Clone)]
+    enum First {
+        _Zero = 0,
+    }
+
+    #[repr(u8)]
+    #[derive(Copy, Clone)]
+    enum Second {
+        _0 = 0,
+        _1 = 1,
+        _2 = 2,
+        _3 = 3,
+        _4 = 4,
+        _5 = 5,
+        _6 = 6,
+        _7 = 7,
     }
 }
 #[doc(inline)]
@@ -545,6 +593,32 @@ impl Amount {
     }
 }
 
+impl Eq for Amount {}
+
+impl PartialEq for Amount {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_sat() == other.to_sat()
+    }
+}
+
+impl Ord for Amount {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        self.to_sat().cmp(&other.to_sat())
+    }
+}
+
+impl PartialOrd for Amount {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl core::hash::Hash for Amount {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.to_sat().hash(state);
+    }
+}
+
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Amount, to_sat);
 
 impl default::Default for Amount {
@@ -649,5 +723,16 @@ impl<'a> Arbitrary<'a> for Amount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let sats = u.int_in_range(Self::MIN.to_sat()..=Self::MAX.to_sat())?;
         Ok(Self::from_sat(sats).expect("range is valid"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Amount, NumOpResult};
+
+    #[test]
+    fn size_of_option() {
+        assert_eq!(core::mem::size_of::<Amount>(), core::mem::size_of::<Option<Amount>>());
+        assert_eq!(core::mem::size_of::<Amount>(), core::mem::size_of::<NumOpResult<Amount>>());
     }
 }
