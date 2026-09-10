@@ -15,7 +15,7 @@ rust-version = "1.74.0"
 exclude = ["api", "tests", "contrib"]
 
 [features]
-default = ["std"]
+default = ["std", "hex"]
 std = ["alloc", "internals/std", "hex?/std", "serde?/std"]
 alloc = ["internals/alloc", "hex?/alloc", "serde?/alloc"]
 serde = ["alloc", "hex", "dep:serde"]
