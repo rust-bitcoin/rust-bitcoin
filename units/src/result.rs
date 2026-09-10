@@ -740,4 +740,24 @@ mod tests {
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
     }
+
+    #[test]
+    fn add_preserves_division_by_zero_error() {
+        let division_by_zero = Amount::from_sat_u32(1) / 0_u64;
+        let valid = NumOpResult::Valid(Amount::ZERO);
+
+        let combined = division_by_zero + valid;
+
+        assert!(combined.unwrap_err().operation().is_division());
+    }
+
+    #[test]
+    fn sub_preserves_division_by_zero_error() {
+        let division_by_zero = Amount::from_sat_u32(1) / 0_u64;
+        let valid = NumOpResult::Valid(Amount::ZERO);
+
+        let combined = valid - division_by_zero;
+
+        assert!(combined.unwrap_err().operation().is_division());
+    }
 }
