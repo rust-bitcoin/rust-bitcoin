@@ -234,8 +234,15 @@ impl Target {
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
     /// block with this target (see `Self::difficulty`).
+    ///
+    /// Target is inverse to work. A zero target is a particular case defined to represent zero work.
     #[inline]
-    pub fn to_work(self) -> Work { Work(self.0.inverse()) }
+    pub fn to_work(self) -> Work {
+        if self.0 == U256::ZERO {
+            return Work(U256::ZERO);
+        }
+        Work(self.0.inverse())
+    }
 }
 do_impl!(Target, ParseTargetError);
 impl_fmt_traits_for_u32_wrapper!(Target);
@@ -541,9 +548,13 @@ mod tests {
         let max = U256::MAX;
 
         for min in &[U256::ZERO, U256::ONE] {
-            // lower target means more work required.
+            // lower target means more work required, the zero target that carries no work.
             assert_eq!(Target(max).to_work(), Work(U256::ONE));
-            assert_eq!(Target(*min).to_work(), Work(max));
+            if *min == U256::ZERO {
+                assert_eq!(Target(*min).to_work(), Work(U256::ZERO));
+            } else {
+                assert_eq!(Target(*min).to_work(), Work(max));
+            }
 
             assert_eq!(Work(max).to_target(), Target(U256::ONE));
             assert_eq!(Work(*min).to_target(), Target(max));
