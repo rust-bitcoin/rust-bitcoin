@@ -17,6 +17,8 @@ use bitcoin_units::{
     Sequence, SignedAmount, Weight,
 };
 
+include!("../../include/api_test_tooling.rs");
+
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
 struct Enums {
