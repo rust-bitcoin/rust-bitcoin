@@ -733,6 +733,13 @@ mod tests {
     }
 
     #[test]
+    fn zero_target_has_no_work() {
+        let target = Target::from_compact(Target::ZERO.to_compact_lossy());
+        assert_eq!(target, Target::ZERO);
+        assert_eq!(target.to_work(), Work(U256::ZERO));
+    }
+
+    #[test]
     fn max_target_from_compact() {
         // The highest possible target is defined as 0x1d00ffff
         let bits = 0x1d00_ffff_u32;
