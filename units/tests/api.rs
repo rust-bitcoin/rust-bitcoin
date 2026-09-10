@@ -17,6 +17,8 @@ use bitcoin_units::{
     Sequence, SignedAmount, Weight,
 };
 
+include!("../../include/api_test_tooling.rs");
+
 /// A struct that includes all public non-error enums.
 /// C-COMMON-TRAITS: `Copy`, `Clone`, `Debug`, `PartialEq`, `Eq`
 // None of these implement `PartialOrd` or `Ord`.
