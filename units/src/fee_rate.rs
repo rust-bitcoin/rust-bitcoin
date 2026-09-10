@@ -7,6 +7,8 @@ use core::ops::{Div, Mul};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -113,6 +115,25 @@ impl FeeRate {
     /// `Self::fee_wu(weight)`.
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
         Weight::from_vb(vb).and_then(|w| self.fee_wu(w))
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// Casts away anything greater than a `u32` and floors to the
+    /// nearest sat/kwu; precision is lost if the stable value is not
+    /// an exact multiple of 4,000 sat/MvB (1 sat/kwu).
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::FeeRate {
+        stable::FeeRate::from_sat_per_kwu(self.to_sat_per_kwu() as u32)
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    ///
+    /// Floors to the nearest sat/kwu; precision is lost if the stable value is not an exact
+    /// multiple of 4,000 sat/MvB (1 sat/kwu).
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::FeeRate) -> Self {
+        Self::from_sat_per_kwu(stable.to_sat_per_kwu_floor())
     }
 }
 
