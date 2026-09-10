@@ -4,10 +4,14 @@
 //!
 //! See [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/about.html) and the [rust-bitcoin policies](../../docs/policy.md).
 
+// Intentionally put all features so that gates don't kill readability.
+#![cfg(feature = "encoding")]
+#![cfg(feature = "serde")]
+#![cfg(feature = "arbitrary")]
+#![cfg(feature = "std")]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-#[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
@@ -146,7 +150,6 @@ struct Errors {
     j: amount::error::TooPreciseError,
     k: amount::error::UnknownDenominationError,
     l: block::TooBigForRelativeHeightError,
-    #[cfg(feature = "serde")]
     m: fee_rate::serde::OverflowError,
     n: locktime::absolute::ConversionError,
     o: locktime::absolute::ParseHeightError,
@@ -157,14 +160,12 @@ struct Errors {
     t: parse_int::ParseIntError,
     u: parse_int::PrefixedHexError,
     v: parse_int::UnprefixedHexError,
-    #[cfg(feature = "encoding")]
     w: pow::CompactTargetDecoderError,
     x: result::NumOpError,
 }
 
 /// A struct that includes all public decoder types.
 #[derive(Default)] // All decoders implement `Default` (P-DECODERS).
-#[cfg(feature = "encoding")]
 struct Decoders {
     a: amount::AmountDecoder,
     b: block::BlockHeightDecoder,
@@ -177,7 +178,6 @@ struct Decoders {
 /// A struct that includes all public decoder error types.
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
-#[cfg(feature = "encoding")]
 struct DecoderErrors {
     a: amount::error::AmountDecoderError,
     b: block::BlockHeightDecoderError,
@@ -269,7 +269,6 @@ fn c_good_err_display() {
     assert_display::<amount::error::TooPreciseError>();
     assert_display::<amount::error::UnknownDenominationError>();
     assert_display::<block::TooBigForRelativeHeightError>();
-    #[cfg(feature = "serde")]
     assert_display::<fee_rate::serde::OverflowError>();
     assert_display::<locktime::absolute::ConversionError>();
     assert_display::<locktime::absolute::ParseHeightError>();
@@ -280,7 +279,6 @@ fn c_good_err_display() {
     assert_display::<parse_int::ParseIntError>();
     assert_display::<parse_int::PrefixedHexError>();
     assert_display::<parse_int::UnprefixedHexError>();
-    #[cfg(feature = "encoding")]
     assert_display::<pow::CompactTargetDecoderError>();
     assert_display::<result::NumOpError>();
 }
@@ -299,7 +297,6 @@ fn c_object() {
 
 /// C-SERDE: Tests that serde traits are implemented where expected.
 #[test]
-#[cfg(feature = "serde")]
 fn c_serde() {
     fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
 
@@ -390,11 +387,9 @@ fn p_consistent_exports_crate_types() {
 #[test]
 fn p_consistent_exports_amount() {
     use bitcoin_units::amount::{
-        Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
-        ParseError, SignedAmount,
+        Amount, AmountDecoder, AmountDecoderError, AmountEncoder, Denomination, Display,
+        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError, SignedAmount,
     };
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::amount::{AmountDecoder, AmountDecoderError, AmountEncoder};
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `amount::error` module.
@@ -411,24 +406,22 @@ fn p_consistent_exports_amount_error() {
 #[test]
 fn p_consistent_exports_block() {
     use bitcoin_units::block::{
-        BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, TooBigForRelativeHeightError,
+        BlockHeight, BlockHeightDecoder, BlockHeightDecoderError, BlockHeightEncoder,
+        BlockHeightInterval, BlockMtp, BlockMtpInterval, TooBigForRelativeHeightError,
     };
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::block::{BlockHeightDecoder, BlockHeightDecoderError, BlockHeightEncoder};
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `sequence` module.
 #[test]
 fn p_consistent_exports_sequence() {
-    use bitcoin_units::sequence::Sequence;
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::sequence::{SequenceDecoder, SequenceDecoderError, SequenceEncoder};
+    use bitcoin_units::sequence::{
+        Sequence, SequenceDecoder, SequenceDecoderError, SequenceEncoder,
+    };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `fee_rate` module.
 #[test]
 fn p_consistent_exports_fee_rate() {
-    #[cfg(feature = "serde")]
     use bitcoin_units::fee_rate::serde::OverflowError;
     use bitcoin_units::fee_rate::FeeRate;
 }
@@ -436,19 +429,13 @@ fn p_consistent_exports_fee_rate() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `locktime::absolute` module.
 #[test]
 fn p_consistent_exports_locktime_absolute() {
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::locktime::absolute::error::LockTimeDecoderError as _;
     use bitcoin_units::locktime::absolute::error::{
         ConversionError as _, IncompatibleHeightError as _, IncompatibleTimeError as _,
-        ParseHeightError as _, ParseTimeError as _,
+        LockTimeDecoderError as _, ParseHeightError as _, ParseTimeError as _,
     };
     use bitcoin_units::locktime::absolute::{
-        ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError,
-        ParseTimeError,
-    };
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::locktime::absolute::{
-        LockTimeDecoder, LockTimeDecoderError, LockTimeEncoder,
+        ConversionError, IncompatibleHeightError, IncompatibleTimeError, LockTimeDecoder,
+        LockTimeDecoderError, LockTimeEncoder, ParseHeightError, ParseTimeError,
     };
 }
 
@@ -480,19 +467,17 @@ fn p_consistent_exports_result() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `pow` module.
 #[test]
 fn p_consistent_exports_pow() {
-    use bitcoin_units::pow::CompactTarget;
-    #[cfg(feature = "encoding")]
     use bitcoin_units::pow::{
-        CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder,
+        CompactTarget, CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder,
     };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `time` module.
 #[test]
 fn p_consistent_exports_time() {
-    use bitcoin_units::time::BlockTime;
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::time::{BlockTimeDecoder, BlockTimeDecoderError, BlockTimeEncoder};
+    use bitcoin_units::time::{
+        BlockTime, BlockTimeDecoder, BlockTimeDecoderError, BlockTimeEncoder,
+    };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `weight` module.
@@ -518,7 +503,6 @@ fn p_default_change() {
 
 /// P-DECODERS: Tests that decoders implement a constructor method.
 #[test]
-#[cfg(feature = "encoding")]
 fn p_decoders_implement_new() {
     let _ = amount::AmountDecoder::new();
     let _ = block::BlockHeightDecoder::new();
@@ -528,7 +512,6 @@ fn p_decoders_implement_new() {
     let _ = time::BlockTimeDecoder::new();
 }
 
-#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Types {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = Self { a: Enums::arbitrary(u)?, b: Structs::arbitrary(u)? };
@@ -536,7 +519,6 @@ impl<'a> Arbitrary<'a> for Types {
     }
 }
 
-#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Structs {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = Self {
@@ -562,7 +544,6 @@ impl<'a> Arbitrary<'a> for Structs {
     }
 }
 
-#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Enums {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = Self {
