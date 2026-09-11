@@ -1071,8 +1071,9 @@ impl Address<NetworkUnchecked> {
     #[allow(clippy::missing_panics_doc)]
     #[cfg(feature = "alloc")]
     pub fn from_bech32_str(s: &str) -> Result<Self, Bech32Error> {
-        let (hrp, witness_version, data) =
-            bech32::segwit::decode(s).map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
+        let (hrp, witness_version, data) = bech32::segwit::decode(s)
+            .map_err(ParseBech32Error)
+            .map_err(Bech32Error::ParseBech32)?;
         let version = WitnessVersion::try_from(witness_version.to_u8())
             .map_err(Bech32Error::WitnessVersion)?;
         let program = WitnessProgram::new(version, &data)
