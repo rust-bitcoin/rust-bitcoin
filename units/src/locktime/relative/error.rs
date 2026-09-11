@@ -42,7 +42,9 @@ impl std::error::Error for DisabledLockTimeError {
     }
 }
 
-/// Error returned when attempting to satisfy lock fails.
+/// Error returned when [`is_satisfied_by`] fails.
+///
+/// [`is_satisfied_by`]: super::LockTime::is_satisfied_by
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum IsSatisfiedByError {
     /// Error when attempting to satisfy lock by height.
@@ -84,7 +86,7 @@ impl std::error::Error for IsSatisfiedByError {
 pub enum IsSatisfiedByHeightError {
     /// Satisfaction of the lock height value failed.
     Satisfaction(InvalidHeightError),
-    /// Tried to satisfy a lock-by-height locktime using seconds.
+    /// Tried to satisfy a lock-by-time locktime using a block height.
     Incompatible(IncompatibleHeightError),
 }
 
@@ -148,7 +150,7 @@ impl std::error::Error for IncompatibleHeightError {
 pub enum IsSatisfiedByTimeError {
     /// Satisfaction of the lock time value failed.
     Satisfaction(InvalidTimeError),
-    /// Tried to satisfy a lock-by-time locktime using number of blocks.
+    /// Tried to satisfy a lock-by-height locktime using an MTP.
     Incompatible(IncompatibleTimeError),
 }
 
@@ -238,7 +240,9 @@ impl std::error::Error for TimeOverflowError {
     }
 }
 
-/// Error returned when [`NumberOfBlocks::is_satisfied_by`] is incorrectly called.
+/// Error returned when [`is_satisfied_by`] is incorrectly called.
+///
+/// [`is_satisfied_by`]: super::NumberOfBlocks::is_satisfied_by
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidHeightError {
     /// The `chain_tip` argument.
@@ -269,7 +273,9 @@ impl std::error::Error for InvalidHeightError {
     }
 }
 
-/// Error returned when [`NumberOf512Seconds::is_satisfied_by`] is incorrectly called.
+/// Error returned when [`is_satisfied_by`] is incorrectly called.
+///
+/// [`is_satisfied_by`]: super::NumberOf512Seconds::is_satisfied_by
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidTimeError {
     /// The `chain_tip` argument.
