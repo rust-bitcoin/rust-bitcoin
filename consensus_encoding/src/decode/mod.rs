@@ -272,7 +272,7 @@ fn decode_from_slice_internal<D: Decoder>(
     if remaining.is_empty() {
         Ok(data)
     } else {
-        Err(DecodeError::Unconsumed(UnconsumedError()))
+        Err(UnconsumedError()).map_err(DecodeError::Unconsumed)
     }
 }
 
