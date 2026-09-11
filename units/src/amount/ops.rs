@@ -295,10 +295,7 @@ impl<T: Into<Self>> core::iter::Sum<T> for NumOpResult<Amount> {
     {
         iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, amount.into()) {
             (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (_, _) => Self::Error(NumOpError::while_doing(MathErrorKind::Overflow {
-                op: MathOp::Add,
-                is_negative: false,
-            })),
+            (Self::Error(e), _) | (_, Self::Error(e)) => Self::Error(e),
         })
     }
 }
@@ -307,12 +304,9 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<Amount> {
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, amount) {
+        iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, *amount) {
             (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (_, _) => Self::Error(NumOpError::while_doing(MathErrorKind::Overflow {
-                op: MathOp::Add,
-                is_negative: false,
-            })),
+            (Self::Error(e), _) | (_, Self::Error(e)) => Self::Error(e),
         })
     }
 }
@@ -324,10 +318,7 @@ impl<T: Into<Self>> core::iter::Sum<T> for NumOpResult<SignedAmount> {
     {
         iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount.into()) {
             (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (_, _) => Self::Error(NumOpError::while_doing(MathErrorKind::Overflow {
-                op: MathOp::Add,
-                is_negative: false,
-            })),
+            (Self::Error(e), _) | (_, Self::Error(e)) => Self::Error(e),
         })
     }
 }
@@ -336,12 +327,9 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<SignedAmount> {
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount) {
+        iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, *amount) {
             (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (_, _) => Self::Error(NumOpError::while_doing(MathErrorKind::Overflow {
-                op: MathOp::Add,
-                is_negative: false,
-            })),
+            (Self::Error(e), _) | (_, Self::Error(e)) => Self::Error(e),
         })
     }
 }
