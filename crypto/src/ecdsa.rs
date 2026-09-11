@@ -70,7 +70,8 @@ impl Signature {
         let (sighash_type, sig) = sl.split_last().ok_or(DecodeError::EmptySignature)?;
         let sighash_type = EcdsaSighashType::from_consensus(u32::from(*sighash_type));
         let signature = secp256k1::ecdsa::Signature::from_der(sig)
-            .map_err(|_| DecodeError::InvalidDer(InvalidDerError))?;
+            .map_err(|_| InvalidDerError)
+            .map_err(DecodeError::InvalidDer)?;
         Ok(Self { signature, sighash_type })
     }
 

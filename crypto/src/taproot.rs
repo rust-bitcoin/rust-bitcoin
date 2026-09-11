@@ -63,7 +63,7 @@ impl Signature {
             // per BIP-341: if the sig is 65 bytes long, return Fail if sig[64] = 0x00
             // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#taproot-key-path-spending-signature-validation
             if sighash_type == TapSighashType::Default {
-                return Err(SigFromSliceError::SighashType(InvalidSighashTypeError(0)));
+                return Err(InvalidSighashTypeError(0)).map_err(SigFromSliceError::SighashType);
             }
             let signature = secp256k1::schnorr::Signature::from_byte_array(*signature);
             Ok(Self { signature, sighash_type })
