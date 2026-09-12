@@ -1172,7 +1172,7 @@ impl WifKey {
         let mut ret = [0; 34];
         ret[0] = if self.network_kind.is_mainnet() { 128 } else { 239 };
 
-        ret[1..33].copy_from_slice(&self.private_key.as_inner()[..]);
+        ret[1..33].copy_from_slice(&self.private_key.to_secret_bytes()[..]);
         let privkey = if self.private_key.compressed() {
             ret[33] = 1;
             base58::Base58CkString::encode(&ret[..])

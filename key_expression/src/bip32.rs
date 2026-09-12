@@ -784,7 +784,7 @@ impl Xpriv {
         } else {
             // Hardened key: use only secret data to prevent public derivation.
             engine.input(&[0u8]);
-            engine.input(&self.private_key[..]);
+            engine.input(self.private_key.as_secret_bytes());
         }
 
         engine.input(&u32::from(child_number).to_be_bytes());
@@ -867,7 +867,7 @@ impl Xpriv {
         ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
         ret[13..45].copy_from_slice(&self.chain_code[..]);
         ret[45] = 0;
-        ret[46..78].copy_from_slice(&self.private_key[..]);
+        ret[46..78].copy_from_slice(self.private_key.as_secret_bytes());
         ret
     }
 
