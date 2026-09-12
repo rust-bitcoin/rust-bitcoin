@@ -292,11 +292,11 @@ impl ops::BitOrAssign for ServiceFlags {
 impl ops::BitXor for ServiceFlags {
     type Output = Self;
 
-    fn bitxor(mut self, rhs: Self) -> Self { self.remove(rhs) }
+    fn bitxor(self, rhs: Self) -> Self { Self(self.0 ^ rhs.0) }
 }
 
 impl ops::BitXorAssign for ServiceFlags {
-    fn bitxor_assign(&mut self, rhs: Self) { let _ = self.remove(rhs); }
+    fn bitxor_assign(&mut self, rhs: Self) { self.0 ^= rhs.0; }
 }
 
 encoding::encoder_newtype_exact! {
@@ -574,6 +574,11 @@ mod tests {
 
         flags |= ServiceFlags::WITNESS;
         assert_eq!(flags, ServiceFlags::WITNESS);
+        assert_eq!(ServiceFlags::NONE ^ ServiceFlags::WITNESS, ServiceFlags::WITNESS);
+
+        let mut xor_flags = ServiceFlags::NETWORK;
+        xor_flags ^= ServiceFlags::WITNESS;
+        assert_eq!(xor_flags, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
 
         let mut flags2 = flags | ServiceFlags::GETUTXO;
         for f in &all {
