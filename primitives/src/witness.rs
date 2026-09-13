@@ -1193,6 +1193,14 @@ mod test {
     }
 
     #[test]
+    fn get_rejects_index_arithmetic_overflow() {
+        let witness = Witness::from([[0x42u8]]);
+        let wrapping_index = usize::MAX / 4 + 1;
+
+        assert_eq!(witness.get(wrapping_index), None);
+    }
+
+    #[test]
     fn exact_sized_iterator() {
         let arbitrary_element = [1_u8, 2, 3];
         let num_pushes = 5; // Somewhat arbitrary.
