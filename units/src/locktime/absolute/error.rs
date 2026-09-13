@@ -204,7 +204,13 @@ impl ParseError {
         s: S,
     ) -> impl FnOnce(core::num::ParseIntError) -> Self {
         move |source| {
-            Self::ParseInt(ParseIntError { input: s.into(), bits: 32, is_signed: true, source })
+            Self::ParseInt(ParseIntError {
+                input: s.into(),
+                bits: 32,
+                is_signed: true,
+                truncated: false,
+                source,
+            })
         }
     }
 
@@ -220,9 +226,13 @@ impl ParseError {
         match self {
             Self::PrefixedHex(ref err) => fmt::Display::fmt(err, f),
             Self::UnprefixedHex(ref err) => fmt::Display::fmt(err, f),
-            Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
-                if *source.kind() == IntErrorKind::PosOverflow =>
-            {
+            Self::ParseInt(ParseIntError {
+                input,
+                bits: _,
+                is_signed: _,
+                truncated: _,
+                source,
+            }) if *source.kind() == IntErrorKind::PosOverflow => {
                 // Outputs "failed to parse <input_string> as absolute Height/MedianTimePast (<subject> is above limit <upper_bound>)"
                 write!(
                     f,
@@ -232,9 +242,13 @@ impl ParseError {
                     upper_bound
                 )
             }
-            Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
-                if *source.kind() == IntErrorKind::NegOverflow =>
-            {
+            Self::ParseInt(ParseIntError {
+                input,
+                bits: _,
+                is_signed: _,
+                truncated: _,
+                source,
+            }) if *source.kind() == IntErrorKind::NegOverflow => {
                 // Outputs "failed to parse <input_string> as absolute Height/MedianTimePast (<subject> is below limit <lower_bound>)"
                 write!(
                     f,
@@ -244,7 +258,13 @@ impl ParseError {
                     lower_bound
                 )
             }
-            Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
+            Self::ParseInt(ParseIntError {
+                input,
+                bits: _,
+                is_signed: _,
+                truncated: _,
+                source: _,
+            }) => {
                 write!(
                     f,
                     "{} ({})",
