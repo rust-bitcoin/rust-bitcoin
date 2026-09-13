@@ -381,9 +381,19 @@ See [Errors](#errors) section.
 - `#[track_caller]`: Used on functions that panic on invalid arguments
   (see https://rustc-dev-guide.rust-lang.org/backend/implicit-caller-location.html)
 
-- `#[cfg(rust_v_1_60)]`: Used to guard code that should only be built in if the toolchain is
-  compatible. These configuration conditionals are set at build time in `bitcoin/build.rs`. New
-  version attributes may be added as needed.
+- `rust_version!`: Used to guard code that should only be built in if the toolchain is
+  compatible. The macro is generated at build time by `internals/build.rs` and covers every
+  version from the crate MSRV up to the toolchain doing the compiling.
+
+    ```rust
+    bitcoin_internals::rust_version! {
+        if >= 1.78 {
+            // Code that needs Rust 1.78 or later.
+        } else {
+            // Fallback for older toolchains.
+        }
+    }
+    ```
 
 - Use stacked attributes over `#[cfg(all(...))]` when a simple conjunction applies to the same item.
 
