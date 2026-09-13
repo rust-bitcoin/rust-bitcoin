@@ -692,6 +692,8 @@ pub mod error {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
+    use alloc::format;
+    #[cfg(feature = "alloc")]
     use alloc::string::ToString;
     #[cfg(feature = "std")]
     use std::{error::Error, panic};
@@ -703,6 +705,33 @@ mod tests {
         assert!(int_from_str::<u8>("1").is_ok());
         let _ = int_from_str::<i8>("not a number").map_err(|e| assert!(e.is_signed));
         let _ = int_from_str::<u8>("not a number").map_err(|e| assert!(!e.is_signed));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn parse_int_error_bounds_borrowed_input() {
+        let long = "f".repeat(error::ERROR_STRING_LEN_LIMIT + 100);
+
+        // Borrowed input over the limit is truncated and the marker is shown in `Display`.
+        let err = int_from_str::<u32>(&long).unwrap_err();
+        assert!(err.truncated);
+        assert!(format!("{err}").contains("..."));
+        assert!(!format!("{err:?}").contains(&long));
+
+        // Short borrowed input is retained as-is with no marker.
+        let err = int_from_str::<u32>("nope").unwrap_err();
+        assert!(!err.truncated);
+        assert!(!format!("{err}").contains("..."));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn parse_int_error_retains_owned_input_in_full() {
+        // Owned input is moved into the error without truncation, even when over the limit.
+        let long = "f".repeat(error::ERROR_STRING_LEN_LIMIT + 100);
+        let err = int_from_string::<u32>(long.clone()).unwrap_err();
+        assert!(!err.truncated);
+        assert!(format!("{err:?}").contains(&long));
     }
 
     #[test]
