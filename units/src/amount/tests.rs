@@ -413,8 +413,6 @@ fn floating_point() {
 #[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn parsing() {
-    use super::ParseAmountError as E;
-
     let den_btc = Denomination::Bitcoin;
     let den_sat = Denomination::Satoshi;
     let p = Amount::from_str_in;
@@ -497,15 +495,10 @@ fn parsing() {
     assert_eq!(p("2100000000000000.", den_sat), Ok(sat(21_000_000__000_000_00)));
     assert_eq!(p("21000000", den_btc), Ok(sat(21_000_000__000_000_00)));
 
-    // exactly 50 chars.
+    // Contrived example to show that there is no limit on string length.
     assert_eq!(
-        p("100000000000000.0000000000000000000000000000000000", Denomination::Bitcoin),
-        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(false))))
-    );
-    // more than 50 chars.
-    assert_eq!(
-        p("100000000000000.00000000000000000000000000000000000", Denomination::Bitcoin),
-        Err(E(ParseAmountErrorInner::InputTooLarge(InputTooLargeError { len: 51 })))
+        p("0000000000000000000000000000000000000000000000000000000000000000000001", Denomination::Bitcoin),
+        Ok(Amount::ONE_BTC),
     );
 }
 

@@ -8,7 +8,7 @@ use core::fmt;
 use internals::error::InputString;
 use internals::write_err;
 
-use super::{SignedAmount, INPUT_STRING_LEN_LIMIT};
+use super::SignedAmount;
 use crate::parse_int::{PrefixedHexError, UnprefixedHexError};
 
 /// Error returned when parsing an amount with denomination fails.
@@ -67,8 +67,6 @@ pub(crate) enum ParseAmountErrorInner {
     TooPrecise(TooPreciseError),
     /// A digit was expected but not found.
     MissingDigits(MissingDigitsError),
-    /// Input string was too large.
-    InputTooLarge(InputTooLargeError),
     /// Invalid character in input.
     InvalidCharacter(InvalidCharacterError),
     /// A valid character is in an invalid position.
@@ -93,7 +91,6 @@ impl fmt::Display for ParseAmountError {
             E::OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
             E::TooPrecise(ref error) => write_err!(f, "amount has a too high precision"; error),
             E::MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
-            E::InputTooLarge(ref error) => write_err!(f, "the input is too large"; error),
             E::InvalidCharacter(ref error) => {
                 write_err!(f, "invalid character in the input"; error)
             }
@@ -112,7 +109,6 @@ impl std::error::Error for ParseAmountError {
 
         match self.0 {
             E::TooPrecise(ref error) => Some(error),
-            E::InputTooLarge(ref error) => Some(error),
             E::OutOfRange(ref error) => Some(error),
             E::MissingDigits(ref error) => Some(error),
             E::InvalidCharacter(ref error) => Some(error),
@@ -232,44 +228,6 @@ impl std::error::Error for TooPreciseError {
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         let Self { position: _ } = self;
-        None
-    }
-}
-
-/// Error returned when the input string is too large.
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct InputTooLargeError {
-    pub(super) len: usize,
-}
-
-impl From<Infallible> for InputTooLargeError {
-    #[inline]
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for InputTooLargeError {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.len - INPUT_STRING_LEN_LIMIT {
-            1 => write!(
-                f,
-                "the input is one character longer than the maximum allowed length ({})",
-                INPUT_STRING_LEN_LIMIT
-            ),
-            n => write!(
-                f,
-                "the input is {} characters longer than the maximum allowed length ({})",
-                n, INPUT_STRING_LEN_LIMIT
-            ),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for InputTooLargeError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { len: _ } = self;
         None
     }
 }
@@ -607,16 +565,6 @@ mod tests {
                 assert!(err.source().is_none());
             };
         }
-
-        // InputTooLargeError
-        // one char too long
-        let long_input = alloc::format!("{} BTC", "1".repeat(51));
-        let e = Amount::from_str(&long_input).unwrap_err();
-        assert_amount_err!(e, InputTooLarge, "error should be InputTooLargeError");
-        // n chars too long
-        let long_input = alloc::format!("{} BTC", "1".repeat(52));
-        let e = Amount::from_str(&long_input).unwrap_err();
-        assert_amount_err!(e, InputTooLarge, "error should be InputTooLargeError");
 
         // InvalidCharacterError
         // invalid character in amount string

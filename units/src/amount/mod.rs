@@ -77,7 +77,7 @@ pub use self::{
 pub use self::error::AmountDecoderError;
 #[doc(no_inline)]
 pub use self::error::{
-    BadPositionError, InputTooLargeError, InvalidCharacterError, MissingDenominationError,
+    BadPositionError, InvalidCharacterError, MissingDenominationError,
     MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
     PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
 };
@@ -249,8 +249,6 @@ fn is_too_precise(s: &str, precision: usize) -> Option<usize> {
     }
 }
 
-const INPUT_STRING_LEN_LIMIT: usize = 50;
-
 /// Parses a decimal string in the given denomination into a satoshi value and a
 /// [`bool`] indicator for a negative amount.
 ///
@@ -263,9 +261,6 @@ fn parse_signed_to_satoshi(
     if s.is_empty() {
         return Err(MissingDigitsError { kind: MissingDigitsKind::Empty })
             .map_err(InnerParseError::MissingDigits);
-    }
-    if s.len() > INPUT_STRING_LEN_LIMIT {
-        return Err(InnerParseError::InputTooLarge(s.len()));
     }
 
     let is_negative = s.starts_with('-');
@@ -388,7 +383,6 @@ enum InnerParseError {
     Overflow { is_negative: bool },
     TooPrecise(TooPreciseError),
     MissingDigits(MissingDigitsError),
-    InputTooLarge(usize),
     InvalidCharacter(InvalidCharacterError),
     BadPosition(BadPositionError),
 }
@@ -409,8 +403,6 @@ impl InnerParseError {
                 })),
             Self::TooPrecise(e) => ParseAmountError(ParseAmountErrorInner::TooPrecise(e)),
             Self::MissingDigits(e) => ParseAmountError(ParseAmountErrorInner::MissingDigits(e)),
-            Self::InputTooLarge(len) =>
-                ParseAmountError(ParseAmountErrorInner::InputTooLarge(InputTooLargeError { len })),
             Self::InvalidCharacter(e) =>
                 ParseAmountError(ParseAmountErrorInner::InvalidCharacter(e)),
             Self::BadPosition(e) => ParseAmountError(ParseAmountErrorInner::BadPosition(e)),

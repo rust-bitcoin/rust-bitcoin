@@ -133,7 +133,6 @@ struct Default {
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
-    a: amount::error::InputTooLargeError,
     b: amount::error::InvalidCharacterError,
     c: amount::error::MissingDenominationError,
     d: amount::error::MissingDigitsError,
@@ -257,7 +256,6 @@ fn c_good_err_display() {
 
     fn assert_display<T: fmt::Display>() {}
 
-    assert_display::<amount::error::InputTooLargeError>();
     assert_display::<amount::error::InvalidCharacterError>();
     assert_display::<amount::error::MissingDenominationError>();
     assert_display::<amount::error::MissingDigitsError>();
@@ -401,7 +399,7 @@ fn p_consistent_exports_amount() {
 #[test]
 fn p_consistent_exports_amount_error() {
     use bitcoin_units::amount::error::{
-        BadPositionError, InputTooLargeError, InvalidCharacterError, MissingDenominationError,
+        BadPositionError, InvalidCharacterError, MissingDenominationError,
         MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
         PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     };
