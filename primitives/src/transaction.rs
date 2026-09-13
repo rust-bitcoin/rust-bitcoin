@@ -2096,6 +2096,22 @@ mod tests {
         assert_eq!(got, out_point);
     }
 
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_big_endian_roundtrip() {
+        use bincode::Options as _;
+
+        let out_point = tc_out_point();
+        let encoded =
+            bincode::DefaultOptions::new().with_big_endian().serialize(&out_point).unwrap();
+        let decoded = bincode::DefaultOptions::new()
+            .with_big_endian()
+            .deserialize::<OutPoint>(&encoded)
+            .unwrap();
+
+        assert_eq!(decoded, out_point);
+    }
+
     #[cfg(feature = "alloc")]
     fn tx_out() -> TxOut { TxOut { amount: Amount::ONE_SAT, script_pubkey: tc_script_pubkey() } }
 
