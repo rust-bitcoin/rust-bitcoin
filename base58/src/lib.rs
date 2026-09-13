@@ -115,7 +115,8 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Error<T::Err>> {
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
-        let mut carry = BASE58_DIGITS.get(usize::from(d58))
+        let mut carry = BASE58_DIGITS
+            .get(usize::from(d58))
             .copied()
             .flatten()
             .ok_or(Base256Error::InvalidChar(InvalidCharacterError::new(d58)))

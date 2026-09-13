@@ -485,10 +485,12 @@ impl Amount {
 
         let sats = self.to_sat() as u128;
         match (sats * 4_000_000).checked_div(wu) {
-            Some(fee_rate) if fee_rate <= const_casts::u64_to_u128(u64::MAX) => {
-                R::Valid(FeeRate::from_sat_per_mvb(fee_rate as u64))
-            },
-            Some(_) => R::Error(E::while_doing(MathErrorKind::Overflow { op: MathOp::Div, is_negative: false })),
+            Some(fee_rate) if fee_rate <= const_casts::u64_to_u128(u64::MAX) =>
+                R::Valid(FeeRate::from_sat_per_mvb(fee_rate as u64)),
+            Some(_) => R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Div,
+                is_negative: false,
+            })),
             None => R::Error(E::while_doing(MathErrorKind::DivByZero)),
         }
     }
@@ -522,7 +524,10 @@ impl Amount {
         if fee_rate <= const_casts::u64_to_u128(u64::MAX) {
             R::Valid(FeeRate::from_sat_per_mvb(fee_rate as u64))
         } else {
-            R::Error(E::while_doing(MathErrorKind::Overflow { op: MathOp::Div, is_negative: false }))
+            R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Div,
+                is_negative: false,
+            }))
         }
     }
 
