@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
-- Add `U256` type, moved from the private `include!` module duplicated in `units` and `bitcoin`.
+## [0.7.0] - 2026-09-07
+
+- Add `U256` type, moved from the private `include!` module duplicated in `units` and `bitcoin` [#6715](https://github.com/rust-bitcoin/rust-bitcoin/pull/6715)
+- Add const-compatible `u64` to `u128` cast [#6835](https://github.com/rust-bitcoin/rust-bitcoin/pull/6835)
 
 ## [0.6.0] - 2026-07-07
 

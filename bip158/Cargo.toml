@@ -23,7 +23,7 @@ hex = ["hashes/hex", "primitives/hex"]
 [dependencies]
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.2.0", default-features = false }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.2.0", default-features = false }
-internals = { package = "bitcoin-internals", path = "../internals", version = "0.6.0" }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.7.0" }
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.103.0", default-features = false }
 
 [dev-dependencies]

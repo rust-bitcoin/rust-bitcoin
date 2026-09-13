@@ -36,7 +36,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-internals"
-version = "0.6.0"
+version = "0.7.0"
 
 [[package]]
 name = "bitcoin-io"
