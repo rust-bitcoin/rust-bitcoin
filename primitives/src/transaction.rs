@@ -1160,8 +1160,9 @@ impl<'de> Deserialize<'de> for OutPoint {
                 {
                     let txid =
                         seq.next_element()?.ok_or_else(|| de::Error::invalid_length(0, &self))?;
-                    let vout =
+                    let bytes: [u8; 4] =
                         seq.next_element()?.ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                    let vout = u32::from_le_bytes(bytes);
                     Ok(OutPoint { txid, vout })
                 }
 
