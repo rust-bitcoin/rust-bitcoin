@@ -359,7 +359,7 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 
 #[inline]
 fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<usize> {
-    let start = start_of_indices + index * 4;
+    let start = start_of_indices.checked_add(index.checked_mul(4)?)?;
     let pos = bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes))?;
     usize::try_from(pos).ok()
 }
