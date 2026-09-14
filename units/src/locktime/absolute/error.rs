@@ -84,7 +84,7 @@ impl std::error::Error for IncompatibleHeightError {
     }
 }
 
-/// Tried to satisfy a lock-by-height lock using a height value.
+/// Tried to satisfy a lock-by-height lock using an MTP value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompatibleTimeError {
     /// The inner value of the lock-by-height lock.
