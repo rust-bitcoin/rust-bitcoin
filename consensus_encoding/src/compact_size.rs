@@ -175,10 +175,9 @@ impl Decoder for CompactSizeDecoder {
 
         match usize::try_from(dec_value) {
             Ok(nsize) if nsize <= self.limit => Ok(nsize),
-            _ => Err(CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
-                limit: self.limit,
-                value: dec_value,
-            }))),
+            _ => Err(LengthPrefixExceedsMaxError { limit: self.limit, value: dec_value })
+                .map_err(E::ValueExceedsLimit)
+                .map_err(CompactSizeDecoderError),
         }
     }
 
@@ -293,7 +292,7 @@ fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDeco
         PREFIX_U64 => {
             let x = u64::from_le_bytes(arr(payload)?);
             if x < 0x100_000_000 {
-                Err(CompactSizeDecoderError(E::NonMinimal { value: x }))
+                Err(E::NonMinimal { value: x }).map_err(CompactSizeDecoderError)
             } else {
                 Ok(x)
             }
@@ -301,7 +300,7 @@ fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDeco
         PREFIX_U32 => {
             let x = u32::from_le_bytes(arr(payload)?);
             if x < 0x10000 {
-                Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
+                Err(E::NonMinimal { value: x.into() }).map_err(CompactSizeDecoderError)
             } else {
                 Ok(x.into())
             }
@@ -309,7 +308,7 @@ fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDeco
         PREFIX_U16 => {
             let x = u16::from_le_bytes(arr(payload)?);
             if x < 0xFD {
-                Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
+                Err(E::NonMinimal { value: x.into() }).map_err(CompactSizeDecoderError)
             } else {
                 Ok(x.into())
             }

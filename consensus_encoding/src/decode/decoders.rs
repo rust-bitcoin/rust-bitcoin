@@ -91,12 +91,12 @@ impl Decoder for ByteVecDecoder {
         use ByteVecDecoderErrorInner as Inner;
 
         if let Some(mut decoder) = self.prefix_decoder.take() {
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))?.needs_more()
+            if decoder.push_bytes(bytes).map_err(Inner::LengthPrefixDecode).map_err(E)?.needs_more()
             {
                 self.prefix_decoder = Some(decoder);
                 return Ok(DecoderStatus::NeedsMore);
             }
-            self.bytes_expected = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
+            self.bytes_expected = decoder.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
             self.prefix_decoder = None;
 
             // For DoS prevention, let's not allocate all memory upfront.
@@ -131,7 +131,7 @@ impl Decoder for ByteVecDecoder {
             return Ok(self.buffer);
         };
 
-        Err(E(Inner::UnexpectedEof(UnexpectedEofError { missing })))
+        Err(UnexpectedEofError { missing }).map_err(Inner::UnexpectedEof).map_err(E)
     }
 
     fn read_limit(&self) -> usize {
@@ -222,11 +222,11 @@ impl<D: Decoder + Default> Decoder for ExactVecDecoderWith<D> {
             self.reserve();
             let mut decoder = self.decoder.take().unwrap_or_default();
 
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::Item(e)))?.needs_more() {
+            if decoder.push_bytes(bytes).map_err(Inner::Item).map_err(E)?.needs_more() {
                 self.decoder = Some(decoder);
                 return Ok(DecoderStatus::NeedsMore);
             }
-            let item = decoder.end().map_err(|e| E(Inner::Item(e)))?;
+            let item = decoder.end().map_err(Inner::Item).map_err(E)?;
             self.buffer.push(item);
 
             if self.buffer.len() == self.length {
@@ -250,7 +250,7 @@ impl<D: Decoder + Default> Decoder for ExactVecDecoderWith<D> {
         }
         let missing = self.length - len;
 
-        Err(VecDecoderError(E::UnexpectedEof(UnexpectedEofError { missing })))
+        Err(UnexpectedEofError { missing }).map_err(E::UnexpectedEof).map_err(VecDecoderError)
     }
 
     fn read_limit(&self) -> usize {
@@ -327,11 +327,11 @@ impl<D: Decoder + Default> Decoder for VecDecoderWith<D> {
         use VecDecoderErrorInner as Inner;
 
         if let Some(mut pd) = self.prefix_decoder.take() {
-            if pd.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))?.needs_more() {
+            if pd.push_bytes(bytes).map_err(Inner::LengthPrefixDecode).map_err(E)?.needs_more() {
                 self.prefix_decoder = Some(pd);
                 return Ok(DecoderStatus::NeedsMore);
             }
-            let count = pd.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
+            let count = pd.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
             self.items = ExactVecDecoderWith::new(count);
         }
 
@@ -342,9 +342,9 @@ impl<D: Decoder + Default> Decoder for VecDecoderWith<D> {
         use VecDecoderErrorInner as Inner;
 
         if let Some(pd) = self.prefix_decoder {
-            return Err(VecDecoderError(Inner::UnexpectedEof(UnexpectedEofError {
-                missing: pd.read_limit(),
-            })));
+            return Err(UnexpectedEofError { missing: pd.read_limit() })
+                .map_err(Inner::UnexpectedEof)
+                .map_err(VecDecoderError);
         }
 
         self.items.end()
