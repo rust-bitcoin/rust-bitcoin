@@ -91,11 +91,8 @@ where
             let t = engine.finalize();
             let start_index = (counter - 1) * T::Hash::LEN;
             // Last block might not take full hash length.
-            let end_index = if counter == total_blocks {
-                okm.len()
-            } else {
-                counter * T::Hash::LEN
-            };
+            let end_index =
+                if counter == total_blocks { okm.len() } else { counter * T::Hash::LEN };
 
             okm[start_index..end_index].copy_from_slice(&t.as_ref()[0..(end_index - start_index)]);
         }
