@@ -86,7 +86,8 @@ impl encoding::Decoder for FeatureIdDecoder {
     fn end(self) -> Result<FeatureId, FeatureIdDecoderError> {
         let feature_id = self.0.end().map_err(FeatureIdDecoderError::Decoder)?;
         let feature_string = String::from_utf8(feature_id)
-            .map_err(|_| FeatureIdDecoderError::Malformed(FeatureIdError::NotAscii))?;
+            .map_err(|_| FeatureIdError::NotAscii)
+            .map_err(FeatureIdDecoderError::Malformed)?;
         Ok(feature_string.parse().map_err(FeatureIdDecoderError::Malformed)?)
     }
 }

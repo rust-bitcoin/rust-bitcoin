@@ -1352,15 +1352,17 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         match &mut self.state {
             DecoderState::ReadingHeader { header_decoder } => {
-                let status = header_decoder.push_bytes(bytes).map_err(|e| {
-                    V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Header(e))
-                })?;
+                let status = header_decoder
+                    .push_bytes(bytes)
+                    .map_err(V1NetworkMessageDecoderErrorInner::Header)
+                    .map_err(V1NetworkMessageDecoderError)?;
 
                 if status.is_ready() {
                     let decoder = core::mem::take(header_decoder);
-                    let header = decoder.end().map_err(|e| {
-                        V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Header(e))
-                    })?;
+                    let header = decoder
+                        .end()
+                        .map_err(V1NetworkMessageDecoderErrorInner::Header)
+                        .map_err(V1NetworkMessageDecoderError)?;
                     let payload_len = usize::try_from(header.length)
                         .expect("u32 -> usize cast ok for >= 32-bit platforms");
                     if payload_len > MAX_MSG_SIZE {
