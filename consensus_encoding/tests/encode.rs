@@ -92,7 +92,8 @@ fn encode_vec_empty_data() {
 }
 
 #[test]
-#[cfg(all(feature = "alloc", feature = "hex"))]
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 fn encode_hex() {
     let data = TestData(0xDEAD_BEEF);
     let hex = bitcoin_consensus_encoding::encode_to_hex(&data, hex::Case::Lower);
@@ -102,7 +103,8 @@ fn encode_hex() {
 }
 
 #[test]
-#[cfg(all(feature = "alloc", feature = "hex"))]
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 fn encode_hex_empty_data() {
     let data = EmptyData;
     let hex = bitcoin_consensus_encoding::encode_to_hex(&data, hex::Case::Lower);
@@ -558,7 +560,8 @@ fn check_encoder_detects_error_byte_offset() {
 }
 
 #[test]
-#[cfg(all(feature = "alloc", feature = "hex"))]
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 fn drain_hex_multi_chunk() {
     let enc1 = ArrayEncoder::without_length_prefix([0xDE_u8, 0xAD]);
     let enc2 = ArrayEncoder::without_length_prefix([0xBE_u8, 0xEF]);

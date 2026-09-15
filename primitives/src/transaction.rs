@@ -13,9 +13,11 @@
 //! # Examples
 //!
 //! ```rust
-//! # #[cfg(all(feature = "alloc", feature = "hex"))]
+//! # #[cfg(feature = "alloc")]
+//! # #[cfg(feature = "hex")]
 //! # type Error = encoding::FromHexError<bitcoin_primitives::transaction::TransactionDecoderError>;
-//! # #[cfg(all(feature = "alloc", feature = "hex"))]
+//! # #[cfg(feature = "alloc")]
+//! # #[cfg(feature = "hex")]
 //! # fn example() -> Result<(), Error> {
 //! use bitcoin_primitives::transaction::Version;
 //! use bitcoin_primitives::Transaction;
@@ -49,7 +51,8 @@
 //! );
 //! # Ok(())
 //! # }
-//! # #[cfg(all(feature = "alloc", feature = "hex"))]
+//! # #[cfg(feature = "alloc")]
+//! # #[cfg(feature = "hex")]
 //! # example().unwrap();
 //! ```
 
