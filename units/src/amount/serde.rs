@@ -281,7 +281,9 @@ pub mod as_sat {
                     #[serde(transparent)]
                     struct Wrapper<T: TryFrom<SignedAmount>>(#[serde(with = "super")] T) where T::Error: core::fmt::Display;
 
-                    let mut out = Vec::with_capacity(seq.size_hint().unwrap_or(0));
+                    let mut out = Vec::with_capacity(internals::serde::cautious_size_hint::<X>(
+                        seq.size_hint(),
+                    ));
                     while let Some(wrapped) = seq.next_element::<Wrapper<X>>()? {
                         out.push(wrapped.0);
                     }
@@ -449,7 +451,9 @@ pub mod as_btc {
                     #[serde(transparent)]
                     struct Wrapper(#[serde(with = "super")] SignedAmount);
 
-                    let mut out = Vec::with_capacity(seq.size_hint().unwrap_or(0));
+                    let mut out = Vec::with_capacity(internals::serde::cautious_size_hint::<X>(
+                        seq.size_hint(),
+                    ));
                     while let Some(wrapped) = seq.next_element::<Wrapper>()? {
                         out.push(X::try_from(wrapped.0).map_err(de::Error::custom)?);
                     }
@@ -619,7 +623,9 @@ pub mod as_str {
                     #[serde(transparent)]
                     struct Wrapper(#[serde(with = "super")] SignedAmount);
 
-                    let mut out = Vec::with_capacity(seq.size_hint().unwrap_or(0));
+                    let mut out = Vec::with_capacity(internals::serde::cautious_size_hint::<X>(
+                        seq.size_hint(),
+                    ));
                     while let Some(wrapped) = seq.next_element::<Wrapper>()? {
                         out.push(X::try_from(wrapped.0).map_err(de::Error::custom)?);
                     }
