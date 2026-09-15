@@ -1163,8 +1163,9 @@ impl<'de> Deserialize<'de> for OutPoint {
                 {
                     let txid =
                         seq.next_element()?.ok_or_else(|| de::Error::invalid_length(0, &self))?;
-                    let vout =
+                    let bytes: [u8; 4] =
                         seq.next_element()?.ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                    let vout = u32::from_le_bytes(bytes);
                     Ok(OutPoint { txid, vout })
                 }
 
@@ -2096,6 +2097,22 @@ mod tests {
         let got = bincode::deserialize::<OutPoint>(&ser).unwrap();
 
         assert_eq!(got, out_point);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_big_endian_roundtrip() {
+        use bincode::Options as _;
+
+        let out_point = tc_out_point();
+        let encoded =
+            bincode::DefaultOptions::new().with_big_endian().serialize(&out_point).unwrap();
+        let decoded = bincode::DefaultOptions::new()
+            .with_big_endian()
+            .deserialize::<OutPoint>(&encoded)
+            .unwrap();
+
+        assert_eq!(decoded, out_point);
     }
 
     #[cfg(feature = "alloc")]
