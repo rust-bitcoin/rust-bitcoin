@@ -819,10 +819,9 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                let mut ret = match a.size_hint() {
-                    Some(len) => Vec::with_capacity(len),
-                    None => Vec::new(),
-                };
+                let mut ret: Vec<Vec<u8>> = Vec::with_capacity(
+                    internals::serde::cautious_size_hint::<Vec<u8>>(a.size_hint()),
+                );
 
                 while let Some(elem) = a.next_element::<String>()? {
                     let vec = hex::decode_to_vec(&elem).map_err(serde::de::Error::custom)?;
