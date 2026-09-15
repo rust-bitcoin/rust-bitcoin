@@ -9,6 +9,8 @@ use core::fmt;
 #[cfg(feature = "std")]
 use std::boxed::Box;
 
+use internals::write_err;
+
 /// The `io` crate error type.
 #[derive(Debug)]
 pub struct Error {
@@ -215,8 +217,8 @@ pub enum ReadError<D> {
 impl<D: fmt::Display> fmt::Display for ReadError<D> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Io(e) => write!(f, "I/O error: {}", e),
-            Self::Decode(e) => write!(f, "decode error: {}", e),
+            Self::Io(e) => write_err!(f, "I/O error"; e),
+            Self::Decode(e) => write_err!(f, "decode error"; e),
         }
     }
 }
