@@ -362,6 +362,18 @@ fn amount_checked_div_by_fee_rate() {
 
 #[test]
 #[cfg(feature = "alloc")]
+fn div_by_fee_rate_floor_preserves_mvb_precision() {
+    // 1001 sat/kvb is 1001 sat per 4,000,000 wu, so a 1000 sat budget funds at most
+    // floor(1000 * 4,000,000 / 1,001,000) = 3996 wu.
+    let weight = sat(1000).div_by_fee_rate_floor(FeeRate::from_sat_per_kvb(1001)).unwrap();
+    assert_eq!(weight, Weight::from_wu(3996));
+
+    // A tiny fee rate over the maximum amount overflows Weight and must error.
+    assert!(Amount::MAX.div_by_fee_rate_floor(FeeRate::from_sat_per_mvb(1)).is_error());
+}
+
+#[test]
+#[cfg(feature = "alloc")]
 fn floating_point() {
     use super::Denomination as D;
     let f = Amount::from_float_in;
