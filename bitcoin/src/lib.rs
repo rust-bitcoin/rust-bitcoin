@@ -182,7 +182,7 @@ pub use key_expression::bip32;
 
 #[doc(inline)]
 pub use crate::{
-    address::{Address, AddressType, KnownHrp},
+    address::{Address, AddressParams, AddressType, KnownHrp},
     bip32::XKeyIdentifier,
     crypto::ecdsa,
     crypto::key::{
