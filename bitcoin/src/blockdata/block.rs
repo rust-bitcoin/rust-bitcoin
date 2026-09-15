@@ -679,11 +679,7 @@ impl Block {
         }
 
         // Witness commitment is optional if there are no transactions using SegWit in the block.
-        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
-            return true;
-        }
-
-        false
+        self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty()))
     }
 
     /// Computes the transaction merkle root.
