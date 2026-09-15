@@ -359,7 +359,7 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 
 #[inline]
 fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<usize> {
-    let start = start_of_indices + index * 4;
+    let start = start_of_indices.checked_add(index.checked_mul(4)?)?;
     let pos = bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes))?;
     usize::try_from(pos).ok()
 }
@@ -1190,6 +1190,14 @@ mod test {
         assert_eq!(witness.get_back(2), Some(element_0));
         assert_eq!(witness.get_back(1), Some(element_1));
         assert_eq!(witness.last(), Some(element_2));
+    }
+
+    #[test]
+    fn get_rejects_index_arithmetic_overflow() {
+        let witness = Witness::from([[0x42u8]]);
+        let wrapping_index = usize::MAX / 4 + 1;
+
+        assert_eq!(witness.get(wrapping_index), None);
     }
 
     #[test]
