@@ -447,6 +447,23 @@ mod tests {
 
     #[cfg(not(chacha20_poly1305_fuzz))]
     #[test]
+    fn rfc_appendix_a2() {
+        let key = Key(hex!("0000000000000000000000000000000000000000000000000000000000000001"));
+        let nonce = Nonce(hex!("000000000000000000000002"));
+        let count = 64;
+        let mut chacha = ChaCha20::new(key, nonce, count);
+        let mut binding = *b"Any submission to the IETF intended by the Contributor for publication as all or part of an IETF Internet-Draft or RFC and any statement made within the context of an IETF activity is considered an \"IETF Contribution\". Such statements include oral statements in IETF sessions, as well as written and electronic communications made at any time or place, which are addressed to";
+        let to = binding;
+        chacha.apply_keystream(&mut binding[..]);
+        assert_eq!(binding[..], hex!("a3fbf07df3fa2fde4f376ca23e82737041605d9f4f4f57bd8cff2c1d4b7955ec2a97948bd3722915c8f3d337f7d370050e9e96d647b7c39f56e031ca5eb6250d4042e02785ececfa4b4bb5e8ead0440e20b6e8db09d881a7c6132f420e52795042bdfa7773d8a9051447b3291ce1411c680465552aa6c405b7764d5e87bea85ad00f8449ed8f72d0d662ab052691ca66424bc86d2df80ea41f43abf937d3259dc4b2d0dfb48a6c9139ddd7f76966e928e635553ba76c5c879d7b35d49eb2e62b0871cdac638939e25e8a1e0ef9d5280fa8ca328b351c3c765989cbcf3daa8b6ccc3aaf9f3979c92b3720fc88dc95ed84a1be059c6499b9fda236e7e818b04b0bc39c1e876b193bfe5569753f88128cc08aaa9b63d1a16f80ef2554d7189c411f5869ca52c5b83fa36ff216b9c1d30062bebcfd2dc5bce0911934fda79a86f6e698ced759c3ff9b6477338f3da4f9cd8514ea9982ccafb341b2384dd902f3d1ab7ac61dd29c6f21ba5b862f3730e37cfdc4fd806c22f221"));
+        let mut chacha = ChaCha20::new(key, nonce, count);
+        chacha.apply_keystream(&mut binding[..]);
+        let binding = *b"Any submission to the IETF intended by the Contributor for publication as all or part of an IETF Internet-Draft or RFC and any statement made within the context of an IETF activity is considered an \"IETF Contribution\". Such statements include oral statements in IETF sessions, as well as written and electronic communications made at any time or place, which are addressed to";
+        assert_eq!(binding, to);
+    }
+
+    #[cfg(not(chacha20_poly1305_fuzz))]
+    #[test]
     fn new_from_block() {
         let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
         let nonce = Nonce(hex!("000000000000004a00000000"));
