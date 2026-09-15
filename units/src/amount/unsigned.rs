@@ -539,13 +539,19 @@ impl Amount {
     ///
     /// # Errors
     ///
-    /// This can fail only if `fee_rate` is zero, therefore an error returned from this method can
-    /// be treated as infinity.
+    /// Returns an error if `fee_rate` is zero, or if the resulting weight would exceed
+    /// [`Weight::MAX`].
     #[inline]
     pub const fn div_by_fee_rate_floor(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
-        let msats = self.to_msat();
-        match msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
-            Some(wu) => R::Valid(Weight::from_wu(wu)),
+        let rate = fee_rate.to_sat_per_mvb() as u128;
+        let sats = self.to_sat() as u128;
+        match (sats * 4_000_000).checked_div(rate) {
+            Some(wu) if wu <= const_casts::u64_to_u128(u64::MAX) =>
+                R::Valid(Weight::from_wu(wu as u64)),
+            Some(_) => R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Div,
+                is_negative: false,
+            })),
             None => R::Error(E::while_doing(MathErrorKind::DivByZero)),
         }
     }
