@@ -792,7 +792,8 @@ impl LegacyPublicKey {
         }
 
         let secp_key = secp256k1::PublicKey::from_slice(data)
-            .map_err(|_| FromSliceError::InvalidPublicKey(InvalidPublicKeyError))?;
+            .map_err(|_| InvalidPublicKeyError)
+            .map_err(FromSliceError::InvalidPublicKey)?;
         Ok(match compressed {
             true => Self::from_secp(secp_key),
             false => Self::from_secp_uncompressed(secp_key),
@@ -1093,7 +1094,8 @@ impl PrivateKey {
     pub fn from_secret_bytes(data: &[u8; 32]) -> Result<Self, FromSecretBytesError> {
         secp256k1::SecretKey::from_secret_bytes(*data)
             .map(Self::from_secp)
-            .map_err(|_| FromSecretBytesError(FromSecretBytesErrorInner::InvalidSecretKey))
+            .map_err(|_| FromSecretBytesErrorInner::InvalidSecretKey)
+            .map_err(FromSecretBytesError)
     }
 
     /// Deserializes a private key from a slice.
@@ -1213,9 +1215,8 @@ impl WifKey {
                     base58::decode_check_to_array::<34>(wif).map_err(FromWifError::Base58)?;
                 let (compressed_flag, data) = data.split_last::<33>();
                 if *compressed_flag != 1 {
-                    return Err(FromWifError::InvalidWifCompressionFlag(
-                        InvalidWifCompressionFlagError { invalid: *compressed_flag },
-                    ));
+                    return Err(InvalidWifCompressionFlagError { invalid: *compressed_flag })
+                        .map_err(FromWifError::InvalidWifCompressionFlag);
                 }
 
                 Ok((true, *data))
@@ -1226,17 +1227,15 @@ impl WifKey {
             128 => NetworkKind::Main,
             239 => NetworkKind::Test,
             invalid => {
-                return Err(FromWifError::InvalidAddressVersion(InvalidAddressVersionError {
-                    invalid,
-                }));
+                return Err(InvalidAddressVersionError { invalid })
+                    .map_err(FromWifError::InvalidAddressVersion);
             }
         };
 
-        let sec_key = secp256k1::SecretKey::from_secret_bytes(*key).map_err(|_| {
-            FromWifError::FromSecretBytes(FromSecretBytesError(
-                FromSecretBytesErrorInner::InvalidSecretKey,
-            ))
-        })?;
+        let sec_key = secp256k1::SecretKey::from_secret_bytes(*key)
+            .map_err(|_| FromSecretBytesErrorInner::InvalidSecretKey)
+            .map_err(FromSecretBytesError)
+            .map_err(FromWifError::FromSecretBytes)?;
         let priv_key = match compressed {
             true => PrivateKey::from_secp(sec_key),
             false => PrivateKey::from_secp_uncompressed(sec_key),
