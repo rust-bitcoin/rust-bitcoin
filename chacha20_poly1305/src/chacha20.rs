@@ -4,6 +4,9 @@
 
 use core::ops::BitXor;
 
+#[cfg(all(target_arch = "aarch64", target_endian = "little", target_feature = "neon"))]
+mod neon;
+
 /// The first four words (32-bit) of the `ChaCha` stream cipher state are constants.
 const WORD_1: u32 = 0x6170_7865;
 const WORD_2: u32 = 0x3320_646e;
@@ -315,6 +318,39 @@ impl ChaCha20 {
             &mut buffer[bytes_to_process..]
         } else {
             buffer
+        };
+
+        // On aarch64, consume as many 4 or 8 block groups before falling
+        // back to single block processing.
+        #[cfg(all(target_arch = "aarch64", target_endian = "little", target_feature = "neon"))]
+        let remaining_buffer = {
+            let mut chunks = remaining_buffer.chunks_exact_mut(8 * CHACHA_BLOCKSIZE);
+            for chunk in &mut chunks {
+                let (lo, hi) = chunk.split_at_mut(4 * CHACHA_BLOCKSIZE);
+                if let (Ok(chunk_lo), Ok(chunk_hi)) = (
+                    <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(lo),
+                    <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(hi),
+                ) {
+                    neon::apply_8_blocks(
+                        chunk_lo,
+                        chunk_hi,
+                        &self.key,
+                        &self.nonce,
+                        self.block_count,
+                    );
+                    self.block_count += 8;
+                }
+            }
+            let remaining_buffer = chunks.into_remainder();
+
+            let mut chunks = remaining_buffer.chunks_exact_mut(4 * CHACHA_BLOCKSIZE);
+            for chunk in &mut chunks {
+                if let Ok(chunk) = <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
+                    neon::apply_4_blocks(chunk, &self.key, &self.nonce, self.block_count);
+                    self.block_count += 4;
+                }
+            }
+            chunks.into_remainder()
         };
 
         // Process full blocks.
