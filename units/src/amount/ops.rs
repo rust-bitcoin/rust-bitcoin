@@ -12,7 +12,7 @@ use crate::internal_macros::{
     impl_add_assign_for_results, impl_div_assign, impl_mul_assign, impl_rem_assign,
     impl_sub_assign_for_results,
 };
-use crate::result::{MathErrorKind, MathOp, NumOpError, NumOpResult, OptionExt};
+use crate::result::{MathErrorKind, MathOp, NumOpResult, OptionExt};
 
 impl From<Amount> for NumOpResult<Amount> {
     #[inline]
@@ -336,6 +336,7 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<SignedAmount> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::result::NumOpError;
 
     #[test]
     fn sum_amounts() {
@@ -344,6 +345,21 @@ mod tests {
 
         let sum: NumOpResult<Amount> = amounts.into_iter().sum();
         assert_eq!(sum, NumOpResult::Valid(Amount::from_sat_u32(600)));
+    }
+
+    #[test]
+    fn sum_preserves_division_by_zero_error() {
+        let err = [Amount::ONE_SAT / 0_u64];
+        let sum: NumOpResult<Amount> = err.into_iter().sum();
+        assert!(sum.unwrap_err().operation().is_division());
+        let sum: NumOpResult<Amount> = err.iter().sum();
+        assert!(sum.unwrap_err().operation().is_division());
+
+        let err = [SignedAmount::ONE_SAT / 0_i64];
+        let sum: NumOpResult<SignedAmount> = err.into_iter().sum();
+        assert!(sum.unwrap_err().operation().is_division());
+        let sum: NumOpResult<SignedAmount> = err.iter().sum();
+        assert!(sum.unwrap_err().operation().is_division());
     }
 
     #[test]
