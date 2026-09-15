@@ -1870,7 +1870,7 @@ pub mod error {
     impl fmt::Display for CommandStringDecoderError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::UnexpectedEof(e) => write!(f, "unexpected end of data: {}", e),
+                Self::UnexpectedEof(e) => write_err!(f, "unexpected end of data"; e),
                 Self::NotAscii => write!(f, "command string must be ASCII"),
             }
         }
