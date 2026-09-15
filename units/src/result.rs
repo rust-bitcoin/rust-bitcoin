@@ -85,11 +85,11 @@ pub use self::error::NumOpError;
 /// # Ok::<_, NumOpError>(())
 /// ```
 ///
+/// If both operands of a binary op are already [`Error`], only the left-hand error is returned.
+///
 /// [`Valid`]: NumOpResult::Valid
 /// [`Error`]: NumOpResult::Error
 /// [`unwrap`]: NumOpResult::unwrap
-/// [`Div`]: core::ops::Div
-/// [`Rem`]: core::ops::Rem
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[must_use]
 pub enum NumOpResult<T> {
@@ -248,7 +248,8 @@ crate::internal_macros::impl_op_for_references! {
         fn add(self, rhs: Self) -> Self::Output {
             match (self, rhs) {
                 (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
-                (_, _) => R::Error(NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Add, is_negative: false })),
+                (R::Error(e), _) => R::Error(e),
+                (_, R::Error(e)) => R::Error(e),
             }
         }
     }
@@ -271,7 +272,8 @@ crate::internal_macros::impl_op_for_references! {
         fn sub(self, rhs: Self) -> Self::Output {
             match (self, rhs) {
                 (R::Valid(lhs), R::Valid(rhs)) => lhs - rhs,
-                (_, _) => R::Error(NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Sub, is_negative: true })),
+                (R::Error(e), _) => R::Error(e),
+                (_, R::Error(e)) => R::Error(e),
             }
         }
     }
@@ -737,5 +739,25 @@ mod tests {
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
+    }
+
+    #[test]
+    fn add_preserves_division_by_zero_error() {
+        let division_by_zero = Amount::from_sat_u32(1) / 0_u64;
+        let valid = NumOpResult::Valid(Amount::ZERO);
+
+        let combined = division_by_zero + valid;
+
+        assert!(combined.unwrap_err().operation().is_division());
+    }
+
+    #[test]
+    fn sub_preserves_division_by_zero_error() {
+        let division_by_zero = Amount::from_sat_u32(1) / 0_u64;
+        let valid = NumOpResult::Valid(Amount::ZERO);
+
+        let combined = valid - division_by_zero;
+
+        assert!(combined.unwrap_err().operation().is_division());
     }
 }
