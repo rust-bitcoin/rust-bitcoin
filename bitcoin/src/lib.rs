@@ -101,6 +101,27 @@ pub mod ext {
     //! // If, for some reason, you want the name to be in scope access it via the module. E.g.
     //! use bitcoin::script::ScriptSigExt;
     //! ```
+    //!
+    //! Deprecated extension methods produce the same migration warnings as inherent methods.
+    //! For example, denying deprecations rejects the old script hex constructor:
+    //!
+    //! ```compile_fail
+    //! #![deny(deprecated, deprecated_in_future)]
+    //! use bitcoin::ext::*;
+    //! use bitcoin::ScriptPubKeyBuf;
+    //!
+    //! let script = ScriptPubKeyBuf::from_hex("51").unwrap();
+    //! ```
+    //!
+    //! Use its replacement instead:
+    //!
+    //! ```
+    //! #![deny(deprecated, deprecated_in_future)]
+    //! use bitcoin::ScriptPubKeyBuf;
+    //!
+    //! let script = ScriptPubKeyBuf::from_hex_no_length_prefix("51").unwrap();
+    //! assert_eq!(script.as_bytes(), &[0x51]);
+    //! ```
     #[rustfmt::skip] // Use terse custom grouping.
     pub use crate::{
         address::AddressExt as _,
