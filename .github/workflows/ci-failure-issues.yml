@@ -7,6 +7,7 @@ on:
       - Fuzz (corpus)
       - Kani CI
       - Miri
+      - Audit
     types:
       - completed
     branches:
@@ -36,6 +37,7 @@ jobs:
               "Fuzz (corpus)": "corpus-fuzzing.yml",
               "Kani CI": "cron-daily-kani.yml",
               "Miri": "cron-daily-miri.yml",
+              "Audit": "cron-daily-audit.yml",
             };
 
             const formatTs = iso => {
