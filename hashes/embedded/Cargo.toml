@@ -13,14 +13,15 @@ members = ["."]
 nightly = "nightly-2026-07-02"
 
 [features]
-alloc = ["alloc-cortex-m", "bitcoin_hashes/alloc"]
+alloc = ["cortex-m", "embedded-alloc", "bitcoin_hashes/alloc"]
 hex = ["bitcoin_hashes/hex"]
 
 [dependencies]
 cortex-m-rt = "0.6.10"
 cortex-m-semihosting = "0.3.3"
 panic-halt = "0.2.0"
-alloc-cortex-m = { version = "0.4.1", optional = true }
+cortex-m = { version = "0.7.6", features = ["critical-section-single-core"], optional = true }
+embedded-alloc = { version = "0.7.0", default-features = false, features = ["llff"], optional = true }
 bitcoin_hashes = { path="../", default-features = false, features = [] }
 bitcoin-io = { path = "../../io", default_features = false, features = ["hashes"] }
 

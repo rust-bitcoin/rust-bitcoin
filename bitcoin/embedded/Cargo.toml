@@ -15,7 +15,8 @@ nightly = "nightly-2026-07-02"
 [dependencies]
 cortex-m-rt = "0.6.10"
 cortex-m-semihosting = "0.3.3"
-alloc-cortex-m = "0.4.1"
+cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
+embedded-alloc = { version = "0.7.0", default-features = false, features = ["llff"] }
 bitcoin = { path="../", default-features = false, features = ["secp-lowmemory"] }
 
 [lints.clippy]
