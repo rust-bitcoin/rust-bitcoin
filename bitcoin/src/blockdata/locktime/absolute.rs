@@ -14,6 +14,8 @@ use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 use io::{Read, Write};
 use units::parse::{self, ParseIntError};
 
@@ -287,6 +289,18 @@ impl LockTime {
             LockTime::Blocks(ref h) => h.to_consensus_u32(),
             LockTime::Seconds(ref t) => t.to_consensus_u32(),
         }
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::absolute::LockTime {
+        stable::absolute::LockTime::from_consensus(self.to_consensus_u32())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::absolute::LockTime) -> Self {
+        Self::from_consensus(stable.to_consensus_u32())
     }
 }
 
