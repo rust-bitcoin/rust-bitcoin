@@ -1551,7 +1551,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "std")]
+    #[cfg(any(feature = "std", feature = "secp-global-context"))]
     fn private_key_debug_is_obfuscated() {
         let sk =
             PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
@@ -1562,7 +1562,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "std"))]
+    #[cfg(not(any(feature = "std", feature = "secp-global-context")))]
     fn private_key_debug_is_obfuscated() {
         let sk =
             PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
