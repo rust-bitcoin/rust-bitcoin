@@ -1384,6 +1384,29 @@ mod test {
 
     #[test]
     #[cfg(feature = "serde")]
+    fn serde_does_not_trust_size_hint() {
+        use serde::de::value::{Error, SeqAccessDeserializer};
+        use serde::de::{DeserializeSeed, SeqAccess};
+
+        struct FakeHugeHint;
+        impl<'de> SeqAccess<'de> for FakeHugeHint {
+            type Error = Error;
+            fn next_element_seed<T: DeserializeSeed<'de>>(
+                &mut self,
+                _: T,
+            ) -> Result<Option<T::Value>, Error> {
+                Ok(None)
+            }
+            fn size_hint(&self) -> Option<usize> { Some(usize::MAX) }
+        }
+
+        let witness: Witness =
+            serde::Deserialize::deserialize(SeqAccessDeserializer::new(FakeHugeHint)).unwrap();
+        assert!(witness.is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
     fn serde_bincode_roundtrips() {
         let original = arbitrary_witness();
         let ser = bincode::serialize(&original).unwrap();
