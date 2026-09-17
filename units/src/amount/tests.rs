@@ -869,7 +869,7 @@ fn from_str() {
     ok_scase("-21000000 BTC", SignedAmount::MIN);
     ok_case("1_000 sat", sat(1000));
     ok_case("1_0_0_0_0_0_0 satoshi", sat(1_000_000));
-    ok_scase("-0_._0_10_00 BTC", ssat(-1_000_000));
+    ok_scase("-0.0_10_00 BTC", ssat(-1_000_000));
 }
 
 #[test]

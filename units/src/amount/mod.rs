@@ -300,8 +300,12 @@ fn parse_signed_to_satoshi(
     };
 
     let mut decimals = None;
-    // The number of consecutive underscores
-    let mut underscores = None;
+    // Whether the previous character was a digit.
+    let mut prev_was_digit = false;
+    // Whether the previous character was an underscore.
+    let mut prev_was_underscore = false;
+    // Whether any digit has been seen.
+    let mut digits_seen = false;
     let mut value: i64 = 0; // as satoshis
     for (i, c) in s.char_indices() {
         match c {
@@ -322,27 +326,32 @@ fn parse_signed_to_satoshi(
                         return Err(TooPreciseError { position: i + usize::from(is_negative) })
                             .map_err(InnerParseError::TooPrecise),
                 };
-                underscores = None;
+                prev_was_digit = true;
+                prev_was_underscore = false;
+                digits_seen = true;
             }
-            '_' if i == 0 =>
-            // Leading underscore
+            // Underscores are only allowed between two digits, so they must
+            // follow a digit (this also rejects leading and consecutive underscores).
+            '_' if !prev_was_digit =>
                 return Err(BadPositionError { char: '_', position: i + usize::from(is_negative) })
                     .map_err(InnerParseError::BadPosition),
-            '_' => match underscores {
-                None => underscores = Some(1),
-                // Consecutive underscores
-                _ =>
-                    return Err(BadPositionError {
-                        char: '_',
-                        position: i + usize::from(is_negative),
-                    })
-                    .map_err(InnerParseError::BadPosition),
-            },
+            '_' => {
+                prev_was_digit = false;
+                prev_was_underscore = true;
+            }
             '.' => match decimals {
                 None if max_decimals <= 0 => break,
+                // Underscore immediately before the decimal separator.
+                None if prev_was_underscore =>
+                    return Err(BadPositionError {
+                        char: '_',
+                        position: (i - 1) + usize::from(is_negative),
+                    })
+                    .map_err(InnerParseError::BadPosition),
                 None => {
                     decimals = Some(0);
-                    underscores = None;
+                    prev_was_digit = false;
+                    prev_was_underscore = false;
                 }
                 // Double decimal dot.
                 _ =>
@@ -359,6 +368,21 @@ fn parse_signed_to_satoshi(
                 })
                 .map_err(InnerParseError::InvalidCharacter),
         }
+    }
+
+    // A trailing underscore is not between two digits.
+    if prev_was_underscore {
+        return Err(BadPositionError {
+            char: '_',
+            position: (s.len() - 1) + usize::from(is_negative),
+        })
+        .map_err(InnerParseError::BadPosition);
+    }
+
+    // The input must contain at least one digit.
+    if !digits_seen {
+        return Err(MissingDigitsError { kind: MissingDigitsKind::NoDigits })
+            .map_err(InnerParseError::MissingDigits);
     }
 
     // Decimally shift left by `max_decimals - decimals`.
