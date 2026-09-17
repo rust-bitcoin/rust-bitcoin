@@ -169,7 +169,7 @@ pub mod error {
     use core::fmt;
 
     /// Errors encrypting and decrypting messages with `ChaCha20` and `Poly1305` authentication tags.
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum Error {
         /// Additional data showing up when it is not expected.
         UnauthenticatedAdditionalData,
