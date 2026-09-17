@@ -515,6 +515,16 @@ fn parsing() {
 }
 
 #[test]
+fn parsing_rejects_malformed_numeric_separators() {
+    use super::Denomination as D;
+
+    for input in [".", "._", "0_", "1_", "1_.0", "1._0"] {
+        assert!(Amount::from_str_in(input, D::Bitcoin).is_err(), "accepted {input:?}");
+        assert!(SignedAmount::from_str_in(input, D::Bitcoin).is_err(), "accepted {input:?}");
+    }
+}
+
+#[test]
 #[cfg(feature = "alloc")]
 fn to_string() {
     use super::Denomination as D;
