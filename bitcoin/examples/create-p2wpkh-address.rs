@@ -1,5 +1,5 @@
 use bitcoin::secp256k1::rand;
-use bitcoin::{Address, FullPublicKey, Network};
+use bitcoin::{Address, AddressParams, FullPublicKey};
 
 /// Generate a P2WPKH (pay-to-witness-public-key-hash) address and print it.
 fn main() {
@@ -10,7 +10,7 @@ fn main() {
     let public_key = FullPublicKey::from_secp(public_key);
 
     // Create a Bitcoin P2WPKH address.
-    let address = Address::p2wpkh(public_key, Network::Bitcoin);
+    let address = Address::p2wpkh(public_key, AddressParams::MAINNET);
 
     println!("Address: {address}");
 }

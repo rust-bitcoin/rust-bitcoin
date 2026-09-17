@@ -1,6 +1,6 @@
 use std::env;
 
-use bitcoin::address::{Address, KnownHrp};
+use bitcoin::address::{Address, AddressParams};
 use bitcoin::bip32::{ChildNumber, RelativeDerivationPath, Xpriv, Xpub};
 use bitcoin::{hex, FullPublicKey, NetworkKind};
 
@@ -39,6 +39,6 @@ fn main() {
     // manually creating indexes this time
     let zero = ChildNumber::ZERO_NORMAL;
     let public_key = xpub.derive_from_path([zero, zero]).unwrap().public_key;
-    let address = Address::p2wpkh(FullPublicKey::from_secp(public_key), KnownHrp::Mainnet);
+    let address = Address::p2wpkh(FullPublicKey::from_secp(public_key), AddressParams::MAINNET);
     println!("First receiving address: {address}");
 }

@@ -5,7 +5,7 @@ use bitcoin::key::TapTweak as _;
 use bitcoin::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTweakHash, TaprootBuilder,
 };
-use bitcoin::{Address, KnownHrp, ScriptPubKeyBuf, TapScriptBuf, XOnlyPublicKey};
+use bitcoin::{Address, AddressParams, ScriptPubKeyBuf, TapScriptBuf, XOnlyPublicKey};
 
 #[test]
 fn bip_341_tests() {
@@ -85,7 +85,7 @@ fn bip_341_tests() {
 
         let tweak = TapTweakHash::from_key_and_merkle_root(internal_key, merkle_root);
         let output_key = internal_key.tap_tweak(merkle_root);
-        let addr = Address::p2tr(internal_key, merkle_root, KnownHrp::Mainnet);
+        let addr = Address::p2tr(internal_key, merkle_root, AddressParams::MAINNET);
         let spk = addr.script_pubkey();
 
         // Compare just the key bytes, not the parity
