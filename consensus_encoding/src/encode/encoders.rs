@@ -244,7 +244,9 @@ macro_rules! define_encoder_n {
         {
             #[inline]
             fn len(&self) -> usize {
-                0 $(+ self.$enc_field.len())*
+                let mut total = 0;
+                $(if self.cur_idx <= $enc_idx { total += self.$enc_field.len(); })*
+                total
             }
         }
     };
