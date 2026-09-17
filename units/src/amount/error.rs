@@ -234,7 +234,8 @@ impl std::error::Error for TooPreciseError {
 
 /// Error returned when digits were expected in the input but there were none.
 ///
-/// In particular, this is currently returned when the string is empty or only contains the minus sign.
+/// In particular, this is currently returned when the string is empty, only contains the minus
+/// sign, or only contains a dot (for example `"."` or `"-."`).
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MissingDigitsError {
     pub(super) kind: MissingDigitsKind,
@@ -252,6 +253,10 @@ impl fmt::Display for MissingDigitsError {
             MissingDigitsKind::Empty => f.write_str("the input is empty"),
             MissingDigitsKind::OnlyMinusSign =>
                 f.write_str("there are no digits following the minus (-) sign"),
+            MissingDigitsKind::OnlyDot { with_minus_sign: false } =>
+                f.write_str("the input only contains the dot character"),
+            MissingDigitsKind::OnlyDot { with_minus_sign: true } =>
+                f.write_str("the input only contains the minus sign and the dot character"),
         }
     }
 }
@@ -269,6 +274,7 @@ impl std::error::Error for MissingDigitsError {
 pub(super) enum MissingDigitsKind {
     Empty,
     OnlyMinusSign,
+    OnlyDot { with_minus_sign: bool },
 }
 
 /// Error returned when the input contains an invalid character.

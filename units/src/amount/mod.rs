@@ -258,6 +258,14 @@ fn parse_signed_to_satoshi(
     mut s: &str,
     denom: Denomination,
 ) -> Result<(bool, SignedAmount), InnerParseError> {
+    /// The previously parsed character, used to validate the position of underscores.
+    #[derive(Clone, Copy)]
+    enum PrevChar {
+        Digit,
+        Underscore,
+        Dot,
+    }
+
     if s.is_empty() {
         return Err(MissingDigitsError { kind: MissingDigitsKind::Empty })
             .map_err(InnerParseError::MissingDigits);
@@ -270,6 +278,15 @@ fn parse_signed_to_satoshi(
                 .map_err(InnerParseError::MissingDigits);
         }
         s = &s[1..];
+    }
+
+    // Inputs of `.` and `-.` are invalid.
+    // `-.` is reassigned above to `.` with `is_negative = true`.
+    if s == "." {
+        return Err(MissingDigitsError {
+            kind: MissingDigitsKind::OnlyDot { with_minus_sign: is_negative },
+        })
+        .map_err(InnerParseError::MissingDigits);
     }
 
     let max_decimals = {
@@ -300,12 +317,26 @@ fn parse_signed_to_satoshi(
     };
 
     let mut decimals = None;
-    // The number of consecutive underscores
-    let mut underscores = None;
+    let mut prev_char: Option<PrevChar> = None;
     let mut value: i64 = 0; // as satoshis
     for (i, c) in s.char_indices() {
-        match c {
-            '0'..='9' => {
+        match (c, prev_char) {
+            // More than one decimal dot is invalid.
+            ('.', _) if decimals.is_some() =>
+                return Err(InvalidCharacterError {
+                    invalid_char: '.',
+                    position: i + usize::from(is_negative),
+                })
+                .map_err(InnerParseError::InvalidCharacter),
+            // Underscores immediately before the decimal separator are invalid.
+            ('.', Some(PrevChar::Underscore)) =>
+                return Err(BadPositionError {
+                    char: '_',
+                    position: (i - 1) + usize::from(is_negative),
+                })
+                .map_err(InnerParseError::BadPosition),
+            // A valid digit.
+            ('0'..='9', _) => {
                 // Do `value = 10 * value + digit`, catching overflows.
                 match 10_i64.checked_mul(value) {
                     None => return Err(InnerParseError::Overflow { is_negative }),
@@ -322,43 +353,38 @@ fn parse_signed_to_satoshi(
                         return Err(TooPreciseError { position: i + usize::from(is_negative) })
                             .map_err(InnerParseError::TooPrecise),
                 };
-                underscores = None;
+                prev_char = Some(PrevChar::Digit);
             }
-            '_' if i == 0 =>
-            // Leading underscore
+            // A valid underscore must follow a digit.
+            ('_', Some(PrevChar::Digit)) => prev_char = Some(PrevChar::Underscore),
+            // Underscores not after a digit, i.e. '._', '__' and leading '_', are invalid.
+            ('_', _) =>
                 return Err(BadPositionError { char: '_', position: i + usize::from(is_negative) })
                     .map_err(InnerParseError::BadPosition),
-            '_' => match underscores {
-                None => underscores = Some(1),
-                // Consecutive underscores
-                _ =>
-                    return Err(BadPositionError {
-                        char: '_',
-                        position: i + usize::from(is_negative),
-                    })
-                    .map_err(InnerParseError::BadPosition),
-            },
-            '.' => match decimals {
-                None if max_decimals <= 0 => break,
-                None => {
-                    decimals = Some(0);
-                    underscores = None;
-                }
-                // Double decimal dot.
-                _ =>
-                    return Err(InvalidCharacterError {
-                        invalid_char: '.',
-                        position: i + usize::from(is_negative),
-                    })
-                    .map_err(InnerParseError::InvalidCharacter),
-            },
-            c =>
+            // A decimal dot with a denomination that does not allow decimals is invalid.
+            ('.', _) if decimals.is_none() && max_decimals <= 0 => break,
+            // A valid decimal dot.
+            ('.', _) if decimals.is_none() => {
+                decimals = Some(0);
+                prev_char = Some(PrevChar::Dot);
+            }
+            // Any character that does not match an above digit, dot or underscore arm is invalid.
+            (c, _) =>
                 return Err(InvalidCharacterError {
                     invalid_char: c,
                     position: i + usize::from(is_negative),
                 })
                 .map_err(InnerParseError::InvalidCharacter),
         }
+    }
+
+    // The last character must not be an underscore.
+    if matches!(prev_char, Some(PrevChar::Underscore)) {
+        return Err(BadPositionError {
+            char: '_',
+            position: (s.len() - 1) + usize::from(is_negative),
+        })
+        .map_err(InnerParseError::BadPosition);
     }
 
     // Decimally shift left by `max_decimals - decimals`.
