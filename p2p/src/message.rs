@@ -49,6 +49,11 @@ pub const MAX_INV_SIZE: usize = 50_000;
 /// This by necessity should be larger than `MAX_VEC_SIZE`
 pub const MAX_MSG_SIZE: usize = 5_000_000;
 
+/// Largest batch reserved for an unknown message payload as its bytes arrive.
+///
+/// Mirrors `MAX_VECTOR_ALLOCATE` in `bitcoin-consensus-encoding`.
+const MAX_UNKNOWN_ALLOCATE: usize = 1_000_000;
+
 /// Contains the message command.
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct CommandString([u8; 12]);
@@ -1103,11 +1108,7 @@ impl NetworkMessageDecoderInner {
             "sendtxrcncl" => Self::SendTxRcnCl(SendTxRcnCl::decoder()),
             "addrv2" => Self::AddrV2(AddrV2Payload::decoder()),
             "feature" => Self::Feature(Feature::decoder()),
-            _ => Self::Unknown {
-                command,
-                remaining: payload_len,
-                buffer: Vec::with_capacity(payload_len),
-            },
+            _ => Self::Unknown { command, remaining: payload_len, buffer: Vec::new() },
         }
     }
 }
@@ -1154,6 +1155,9 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::Unknown { remaining, buffer, .. } => {
                 let copy_len = bytes.len().min(*remaining);
                 let (to_copy, rest) = bytes.split_at(copy_len);
+                if !to_copy.is_empty() && buffer.len() == buffer.capacity() {
+                    buffer.reserve_exact((*remaining).min(MAX_UNKNOWN_ALLOCATE));
+                }
                 buffer.extend_from_slice(to_copy);
                 *bytes = rest;
                 *remaining -= copy_len;
