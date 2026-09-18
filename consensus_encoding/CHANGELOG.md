@@ -2,14 +2,17 @@
 
 ## [Unreleased]
 
-- Fix `ExactSizeEncoder::len()` overcounting in composite encoders (`Encoder2`/`3`/`4`/`6`) after
-  sub-encoders are exhausted. The `len()` method now correctly reports only the remaining bytes
-  rather than unconditionally summing all sub-encoder lengths.
+## [1.3.0] - 2026-09-21
+
 - Add `ExactSizeEncoder` implementations for `IterEncoder`, `SliceEncoder`, and
   `PrefixedSliceEncoder`. When the inner encoder types implement `ExactSizeEncoder`, these
   encoder combinators now provide exact size information, cascading automatically through the
   encoder composition tree. Enables higher level protocols like PSBT and BIP324 to obtain the
-  encoded size of variable-length collections (e.g. `Transaction` inputs/outputs).
+  encoded size of variable-length collections (e.g. `Transaction` inputs/outputs). Note that
+  these are *not* constant time as all previous `ExactSizeEncoder::len` implementations [#6906](https://github.com/rust-bitcoin/rust-bitcoin/pull/6906).
+- Fix `ExactSizeEncoder::len()` overcounting in composite encoders (`Encoder2`/`3`/`4`/`6`) after
+  sub-encoders are exhausted. The `len()` method now correctly reports only the remaining bytes
+  rather than unconditionally summing all sub-encoder lengths [#6897](https://github.com/rust-bitcoin/rust-bitcoin/pull/6897).
 
 ## [1.2.0] - 2026-08-11
 
@@ -113,7 +116,8 @@ around but the work got done. Props to him for many of the ideas.
 
 Empty crate to reserve the name on crates.io
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.2.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.3.0...HEAD
+[1.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.2.0...bitcoin-consensus-encoding-1.3.0
 [1.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.1.0...bitcoin-consensus-encoding-1.2.0
 [1.1.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.0.0...bitcoin-consensus-encoding-1.1.0
 [1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.2.0...bitcoin-consensus-encoding-1.0.0
