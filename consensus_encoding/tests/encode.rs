@@ -569,3 +569,15 @@ fn drain_hex_multi_chunk() {
     let hex = bitcoin_consensus_encoding::drain_to_hex(encoder, hex::Case::Lower);
     assert_eq!(hex, "deadbeef");
 }
+
+#[test]
+fn check_encoder_composite_exact_size_len_contract() {
+    // After advancing past the first sub-encoder, len() should reflect
+    // only the remaining bytes from the second sub-encoder.
+    let mut e = Encoder2::new(
+        ArrayEncoder::without_length_prefix([0xAA]),
+        ArrayEncoder::without_length_prefix([0xBB, 0xCC]),
+    );
+    let _ = e.advance();
+    assert_eq!(e.len(), 2, "len() should be 2 after first encoder exhausted");
+}

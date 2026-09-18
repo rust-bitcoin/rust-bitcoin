@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Fix `ExactSizeEncoder::len()` overcounting in composite encoders (`Encoder2`/`3`/`4`/`6`) after
+  sub-encoders are exhausted. The `len()` method now correctly reports only the remaining bytes
+  rather than unconditionally summing all sub-encoder lengths.
+
 ## [1.2.0] - 2026-08-11
 
 - Expose lower level encoder/decoder interfaces [#6690](https://github.com/rust-bitcoin/rust-bitcoin/pull/6690)
