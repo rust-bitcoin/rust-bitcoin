@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use super::{Encode, Encoder, EncoderStatus};
+use super::{Encode, Encoder, EncoderStatus, ExactSizeEncoder};
 
 /// An iterator bridge which maps consensus encodable items to its encoder.
 ///
@@ -140,6 +140,26 @@ where
                 self.state = EncoderState::Done;
                 return EncoderStatus::Finished;
             }
+        }
+    }
+}
+
+impl<I: Iterator> ExactSizeEncoder for IterEncoder<I>
+where
+    I: Clone,
+    I::Item: Encoder + ExactSizeEncoder,
+{
+    fn len(&self) -> usize {
+        match &self.state {
+            EncoderState::Encoding { current, remaining } => {
+                let mut total = current.len();
+                let remaining = remaining.clone();
+                for item in remaining {
+                    total += item.len();
+                }
+                total
+            }
+            EncoderState::Done => 0,
         }
     }
 }

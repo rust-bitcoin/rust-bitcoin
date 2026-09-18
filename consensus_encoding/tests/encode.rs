@@ -314,6 +314,7 @@ fn encode_slice_with_elements() {
     let slice = &[TestArray([0x34, 0x12, 0x00, 0x00]), TestArray([0x78, 0x56, 0x00, 0x00])];
     let mut encoder = SliceEncoder::without_length_prefix(slice);
 
+    assert_eq!(encoder.len(), 8);
     check_encoder(&mut encoder, &[0x34, 0x12, 0x00, 0x00, 0x78, 0x56, 0x00, 0x00]);
 }
 
@@ -341,6 +342,7 @@ fn encode_slice_with_prefix() {
     let slice = &[TestArray([0x34, 0x12, 0x00, 0x00]), TestArray([0x78, 0x56, 0x00, 0x00])];
     let mut encoder = PrefixedSliceEncoder::new(slice);
 
+    assert_eq!(encoder.len(), 9);
     check_encoder(&mut encoder, &[0x02, 0x34, 0x12, 0x00, 0x00, 0x78, 0x56, 0x00, 0x00]);
 }
 
@@ -359,6 +361,7 @@ fn encode_slice_with_prefix_and_zero_sized_arrays() {
     let slice = &[TestArray([]), TestArray([])];
     let mut encoder = PrefixedSliceEncoder::new(slice);
 
+    assert_eq!(encoder.len(), 1);
     check_encoder(&mut encoder, &[0x02]);
 }
 
