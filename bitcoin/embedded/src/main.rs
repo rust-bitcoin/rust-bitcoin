@@ -9,15 +9,15 @@ extern crate bitcoin;
 use alloc::string::ToString;
 use core::panic::PanicInfo;
 
-use alloc_cortex_m::CortexMHeap;
 // use panic_halt as _;
 use bitcoin::{Address, AddressParams, WifKey};
 use cortex_m_rt::entry;
 use cortex_m_semihosting::{debug, hprintln};
+use embedded_alloc::LlffHeap;
 
 // this is the allocator the application will use
 #[global_allocator]
-static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
+static ALLOCATOR: LlffHeap = LlffHeap::empty();
 
 const HEAP_SIZE: usize = 1024 * 256; // 256 KB
 
