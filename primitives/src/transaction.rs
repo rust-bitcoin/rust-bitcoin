@@ -465,7 +465,7 @@ type TransactionEncoderInner<'e> = Encoder6<
 >;
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Transaction`] type.
     #[derive(Debug, Clone)]
     pub struct TransactionEncoder<'e>(TransactionEncoderInner<'e>);

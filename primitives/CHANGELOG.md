@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- `TransactionEncoder` and `BlockEncoder` now implement `ExactSizeEncoder`, enabling callers to
+  obtain the exact encoded size of transactions and blocks before serialization.
+
 # [0.103.1] - 2026-08-06
 
 - Explicitly depend on `consensus-encoding 1.1.0`
