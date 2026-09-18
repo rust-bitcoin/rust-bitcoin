@@ -24,6 +24,7 @@ rand = ["secp256k1/rand"]
 serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "units/serde"]
 # Raises the MSRV to 1.74.0.
 encoding = ["dep:encoding", "units/encoding"]
+secp-global-context = ["secp256k1/global-context"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
