@@ -81,7 +81,7 @@ dependencies = [
  "bech32",
  "bincode",
  "bitcoin-addresses",
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-crypto",
  "bitcoin-internals 0.7.0",
  "bitcoin-io 0.6.0",
@@ -119,7 +119,7 @@ dependencies = [
 name = "bitcoin-bip158"
 version = "0.0.0"
 dependencies = [
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-internals 0.7.0",
  "bitcoin-primitives",
  "bitcoin_hashes 1.2.0",
@@ -138,7 +138,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-consensus-encoding"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "bitcoin-internals 0.7.0",
  "hex-conservative 1.1.0",
@@ -170,7 +170,7 @@ dependencies = [
  "bitcoin 0.32.102",
  "bitcoin 0.33.0-beta",
  "bitcoin-bip158",
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-p2p-messages",
  "libfuzzer-sys",
  "serde",
@@ -209,7 +209,7 @@ dependencies = [
 name = "bitcoin-io"
 version = "0.6.0"
 dependencies = [
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-internals 0.7.0",
  "bitcoin_hashes 1.2.0",
 ]
@@ -247,7 +247,7 @@ name = "bitcoin-p2p-messages"
 version = "0.1.0"
 dependencies = [
  "arbitrary",
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-internals 0.7.0",
  "bitcoin-network-kind",
  "bitcoin-primitives",
@@ -263,7 +263,7 @@ version = "0.103.1"
 dependencies = [
  "arbitrary",
  "bincode",
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-internals 0.7.0",
  "bitcoin-units 0.5.0",
  "bitcoin_hashes 1.2.0",
@@ -277,7 +277,7 @@ name = "bitcoin-taproot-primitives"
 version = "0.1.0"
 dependencies = [
  "arbitrary",
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-crypto",
  "bitcoin-internals 0.7.0",
  "bitcoin_hashes 1.2.0",
@@ -301,7 +301,7 @@ version = "0.5.0"
 dependencies = [
  "arbitrary",
  "bincode",
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-internals 0.7.0",
  "serde",
  "serde_json",
@@ -324,7 +324,7 @@ name = "bitcoin_hashes"
 version = "1.2.0"
 dependencies = [
  "arbitrary",
- "bitcoin-consensus-encoding 1.2.0",
+ "bitcoin-consensus-encoding 1.2.1",
  "bitcoin-internals 0.7.0",
  "cpufeatures",
  "hex-conservative 1.1.0",
