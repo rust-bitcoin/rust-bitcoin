@@ -2,7 +2,7 @@
 #![cfg_attr(not(fuzzing), allow(unused))]
 
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::address::{Address, AddressExt as _, AddressParams};
+use bitcoin::address::{Address, AddressParams};
 use bitcoin::encoding::encode_to_vec;
 use bitcoin::script::{self, ScriptBuf, ScriptExt as _, ScriptPubKeyExt as _};
 use bitcoin::Network;
