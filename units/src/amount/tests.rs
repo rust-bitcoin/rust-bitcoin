@@ -136,6 +136,26 @@ fn from_int_btc() {
 
 #[test]
 #[cfg(feature = "alloc")]
+fn hex_parse_errors_do_not_retain_unbounded_input() {
+    // The 4-byte `🦀` starts at byte 79 so the 80-byte truncation limit falls
+    // mid-character, forcing the end of the retained string back to a UTF-8 boundary.
+    let unprefixed = format!("{}🦀{}", "f".repeat(79), "f".repeat(64 * 1024));
+    let prefixed = format!("0x{unprefixed}");
+
+    for error in [
+        Amount::from_sat_hex(&prefixed).unwrap_err(),
+        Amount::from_sat_unprefixed_hex(&unprefixed).unwrap_err(),
+        SignedAmount::from_sat_hex(&prefixed).unwrap_err(),
+        SignedAmount::from_sat_unprefixed_hex(&unprefixed).unwrap_err(),
+    ] {
+        let debug = format!("{error:?}");
+        assert!(debug.len() <= 1024);
+        assert!(!debug.contains('🦀'));
+    }
+}
+
+#[test]
+#[cfg(feature = "alloc")]
 fn display_display_struct() {
     let display_fixed_btc = Display {
         sats_abs: 100_000_000,
