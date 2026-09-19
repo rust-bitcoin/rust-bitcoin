@@ -248,6 +248,19 @@ In order to backport changes to these branches the process we use is as follows:
 
 Any other changes to the release branches should follow the normal 2-ACK merge policy.
 
+#### Renaming a crate directory
+
+The `C-*` PR labels are generated from crate directory names (see
+`.github/gen_label_config.sh`), not from the crate's `Cargo.toml` package name.
+When a crate directory is renamed, the labeler bot starts applying the new
+`C-<new-name>` label to PRs going forward, but it cannot retroactively remove
+the old `C-<old-name>` label from PRs that already had it applied, since that
+label no longer appears in its generated config. Maintainers should delete (or
+rename) the stale `C-<old-name>` label in the repository settings as part of
+the same change, so it doesn't linger on old PRs indefinitely. See
+[#6706](https://github.com/rust-bitcoin/rust-bitcoin/issues/6706) for an
+example.
+
 ## Coding conventions
 
 Library reflects Bitcoin Core approach whenever possible.
