@@ -515,6 +515,16 @@ fn parsing() {
 }
 
 #[test]
+fn parsing_rejects_malformed_numeric_separators() {
+    use super::Denomination as D;
+
+    for input in [".", "._", "0_", "1_", "1_.0", "1._0"] {
+        assert!(Amount::from_str_in(input, D::Bitcoin).is_err(), "accepted {input:?}");
+        assert!(SignedAmount::from_str_in(input, D::Bitcoin).is_err(), "accepted {input:?}");
+    }
+}
+
+#[test]
 #[cfg(feature = "alloc")]
 fn to_string() {
     use super::Denomination as D;
@@ -869,7 +879,7 @@ fn from_str() {
     ok_scase("-21000000 BTC", SignedAmount::MIN);
     ok_case("1_000 sat", sat(1000));
     ok_case("1_0_0_0_0_0_0 satoshi", sat(1_000_000));
-    ok_scase("-0_._0_10_00 BTC", ssat(-1_000_000));
+    ok_scase("-0.0_10_00 BTC", ssat(-1_000_000));
 }
 
 #[test]
