@@ -776,7 +776,7 @@ pub mod error {
     ///
     /// Addresses like Tor, I2P, and CJDNS use different routing mechanisms
     /// and cannot be represented as standard IP addresses or socket addresses.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
     #[non_exhaustive]
     pub enum UnroutableAddressError {
         /// Tor V2 onion address.

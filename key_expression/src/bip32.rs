@@ -1362,7 +1362,7 @@ pub mod error {
     /// Attempted to derive a child of depth 256 or higher.
     ///
     /// There is no way to encode such xkeys.
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct MaximumDepthExceededError {}
 
@@ -1382,7 +1382,7 @@ pub mod error {
     /// Attempted to derive a hardened child from an xpub.
     ///
     /// You can only derive hardened children from xprivs.
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct CannotDeriveHardenedChildError {}
 
@@ -1400,7 +1400,7 @@ pub mod error {
     }
 
     /// Error deriving an extended public key.
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum DeriveXpubError {
         /// Attempted to derive a hardened child from an xpub.
@@ -1602,7 +1602,7 @@ pub mod error {
     }
 
     /// Master seed had an invalid length.
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct InvalidSeedLengthError {
         pub(crate) length: usize,
     }

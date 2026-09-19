@@ -236,7 +236,7 @@ pub mod error {
     use super::{Feature, FeatureData, FeatureId};
 
     /// Errors related to a [`FeatureId`].
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum FeatureIdError {
         /// Invalid length for [`FeatureId`].
         InvalidLength(usize),
@@ -270,7 +270,7 @@ pub mod error {
     }
 
     /// Errors related to a [`FeatureData`].
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct FeatureDataError {
         /// Data too long.
         pub too_long: usize,
