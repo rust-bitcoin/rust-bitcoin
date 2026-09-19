@@ -54,14 +54,38 @@ use network::{Network, TestnetVersion};
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::{
-    message_filter::{FilterHash, FilterHeader},
+    bip152::{
+        BlockTransactions, BlockTransactionsRequest, HeaderAndShortIds, PrefilledTransaction,
+        ShortId,
+    },
+    bip434::{Feature, FeatureData, FeatureId},
+    merkle_tree::{MerkleBlock, PartialMerkleTree},
+    message_blockdata::{BlockLocator, GetBlocksMessage, GetHeadersMessage, Inventory},
+    message_bloom::{BloomFlags, FilterAdd, FilterLoad},
+    message_compact_blocks::SendCmpct,
+    message_erlay::SendTxRcnCl,
+    message_filter::{
+        CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders,
+        GetCFilters,
+    },
     network_ext::NetworkExt,
 };
 
 #[cfg(feature = "std")]
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::address::Address;
+pub use self::{
+    address::{AddrV1Message, AddrV2, AddrV2Message, Address},
+    message::{
+        AddrPayload, AddrV2Payload, CommandString, FeeFilter, HeadersMessage, InventoryPayload,
+        NetworkHeader, NetworkMessage, Ping, Pong, V1MessageHeader, V1NetworkMessage,
+        V2NetworkMessage,
+    },
+    message_network::{
+        Alert, ClientSoftwareVersion, Reject, RejectReason, UserAgent, UserAgentVersion,
+        VersionMessage,
+    },
+};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
