@@ -26,3 +26,11 @@ fn filter_types_are_re_exported_at_crate_root() {
 fn bloom_and_merkle_types_are_re_exported_at_crate_root() {
     use bitcoin_p2p_messages::{BloomFlags, FilterAdd, FilterLoad, MerkleBlock, PartialMerkleTree};
 }
+
+#[test]
+fn blockdata_and_feature_types_are_re_exported_at_crate_root() {
+    use bitcoin_p2p_messages::{
+        BlockLocator, Feature, FeatureData, FeatureId, GetBlocksMessage, GetHeadersMessage,
+        Inventory, SendTxRcnCl,
+    };
+}

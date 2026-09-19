@@ -58,9 +58,12 @@ pub use self::{
         BlockTransactions, BlockTransactionsRequest, HeaderAndShortIds, PrefilledTransaction,
         ShortId,
     },
+    bip434::{Feature, FeatureData, FeatureId},
     merkle_tree::{MerkleBlock, PartialMerkleTree},
+    message_blockdata::{BlockLocator, GetBlocksMessage, GetHeadersMessage, Inventory},
     message_bloom::{BloomFlags, FilterAdd, FilterLoad},
     message_compact_blocks::SendCmpct,
+    message_erlay::SendTxRcnCl,
     message_filter::{
         CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders,
         GetCFilters,
