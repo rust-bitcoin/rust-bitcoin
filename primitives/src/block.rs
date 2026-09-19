@@ -567,7 +567,7 @@ impl encoding::Decode for Block<Unchecked> {
 }
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Block`] type.
     #[derive(Debug, Clone)]
     pub struct BlockEncoder<'e>(

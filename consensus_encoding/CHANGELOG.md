@@ -5,6 +5,11 @@
 - Fix `ExactSizeEncoder::len()` overcounting in composite encoders (`Encoder2`/`3`/`4`/`6`) after
   sub-encoders are exhausted. The `len()` method now correctly reports only the remaining bytes
   rather than unconditionally summing all sub-encoder lengths.
+- Add `ExactSizeEncoder` implementations for `IterEncoder`, `SliceEncoder`, and
+  `PrefixedSliceEncoder`. When the inner encoder types implement `ExactSizeEncoder`, these
+  encoder combinators now provide exact size information, cascading automatically through the
+  encoder composition tree. Enables higher level protocols like PSBT and BIP324 to obtain the
+  encoded size of variable-length collections (e.g. `Transaction` inputs/outputs).
 
 ## [1.2.0] - 2026-08-11
 

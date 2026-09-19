@@ -149,6 +149,14 @@ impl<T: Encode> Encoder for SliceEncoder<'_, T> {
     fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
+impl<'e, T: Encode> ExactSizeEncoder for SliceEncoder<'e, T>
+where
+    T::Encoder<'e>: ExactSizeEncoder,
+{
+    #[inline]
+    fn len(&self) -> usize { self.0.len() }
+}
+
 /// An encoder for a list of consensus encodable types, including a length prefix.
 pub struct PrefixedSliceEncoder<'e, T: Encode>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, T>>);
 
@@ -185,6 +193,14 @@ impl<T: Encode> Encoder for PrefixedSliceEncoder<'_, T> {
 
     #[inline]
     fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+}
+
+impl<'e, T: Encode> ExactSizeEncoder for PrefixedSliceEncoder<'e, T>
+where
+    T::Encoder<'e>: ExactSizeEncoder,
+{
+    #[inline]
+    fn len(&self) -> usize { self.0.len() }
 }
 
 /// Helper macro to define an unrolled `EncoderN` composite encoder.
