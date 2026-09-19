@@ -74,7 +74,9 @@ pub use self::{
 #[cfg(feature = "std")]
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::address::Address;
+pub use self::{
+    address::{AddrV1Message, AddrV2, AddrV2Message, Address},
+};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
