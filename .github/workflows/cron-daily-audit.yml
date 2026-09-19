@@ -1,0 +1,37 @@
+name: Audit
+on: # yamllint disable-line rule:truthy
+  schedule:
+    - cron: "00 11 * * *" # 4am PDT
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  Audit:
+    name: Audit
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: "Install Rustup"
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        with:
+          toolchain: stable
+      - name: "Install cargo-binstall"
+        uses: cargo-bins/cargo-binstall@ead08b90bd7b2e6d81963fb9cf0b7239f66d5db4 # v1.21.0
+      - name: "Binstall cargo-audit"
+        run: cargo binstall cargo-audit --no-confirm
+      - name: "Audit every lockfile"
+        # Audit every lockfile and propagate failure
+        run: |
+          status=0
+          for lockfile in $(git ls-files -- '*.lock'); do
+            echo "::group::${lockfile}"
+            cargo audit --deny warnings --file "${lockfile}" || status=1
+            echo "::endgroup::"
+          done
+          exit "${status}"
