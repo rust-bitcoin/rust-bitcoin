@@ -54,6 +54,11 @@ use network::{Network, TestnetVersion};
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::{
+    bip152::{
+        BlockTransactions, BlockTransactionsRequest, HeaderAndShortIds, PrefilledTransaction,
+        ShortId,
+    },
+    message_compact_blocks::SendCmpct,
     message_filter::{FilterHash, FilterHeader},
     network_ext::NetworkExt,
 };
