@@ -50,3 +50,12 @@ fn message_types_are_re_exported_at_crate_root() {
         V2NetworkMessage,
     };
 }
+
+#[test]
+#[cfg(feature = "std")]
+fn network_types_are_re_exported_at_crate_root() {
+    use bitcoin_p2p_messages::{
+        Alert, ClientSoftwareVersion, Reject, RejectReason, UserAgent, UserAgentVersion,
+        VersionMessage,
+    };
+}

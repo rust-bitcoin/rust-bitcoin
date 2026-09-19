@@ -81,6 +81,10 @@ pub use self::{
         NetworkHeader, NetworkMessage, Ping, Pong, V1MessageHeader, V1NetworkMessage,
         V2NetworkMessage,
     },
+    message_network::{
+        Alert, ClientSoftwareVersion, Reject, RejectReason, UserAgent, UserAgentVersion,
+        VersionMessage,
+    },
 };
 
 #[rustfmt::skip]                // Keep public re-exports separate.
