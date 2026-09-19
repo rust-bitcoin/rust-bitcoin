@@ -13,3 +13,11 @@ fn compact_block_types_are_re_exported_at_crate_root() {
         SendCmpct, ShortId,
     };
 }
+
+#[test]
+fn filter_types_are_re_exported_at_crate_root() {
+    use bitcoin_p2p_messages::{
+        CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders,
+        GetCFilters,
+    };
+}

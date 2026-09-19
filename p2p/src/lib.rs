@@ -59,7 +59,10 @@ pub use self::{
         ShortId,
     },
     message_compact_blocks::SendCmpct,
-    message_filter::{FilterHash, FilterHeader},
+    message_filter::{
+        CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders,
+        GetCFilters,
+    },
     network_ext::NetworkExt,
 };
 
