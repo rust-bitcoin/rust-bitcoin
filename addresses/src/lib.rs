@@ -879,6 +879,38 @@ impl Address {
     ///
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
+    /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
+    ///
+    /// # Errors
+    ///
+    /// - [`FromScriptError::UnrecognizedScript`] if the given script is not p2pkh, p2sh, or
+    ///   SegWit program.
+    /// - [`FromScriptError::WitnessProgram`] if the given script has a valid SegWit version, but
+    ///   is not a valid witness program. See [`WitnessProgram::new`] for more details.
+    #[cfg(feature = "alloc")]
+    #[allow(clippy::missing_panics_doc)] // Slices have known lengths before array casts
+    pub fn from_script(
+        script: &ScriptPubKey,
+        params: impl Into<AddressParams>,
+    ) -> Result<Self, FromScriptError> {
+        let params = params.into();
+        if script.is_p2pkh() {
+            let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
+            let hash = PubkeyHash::from_byte_array(bytes);
+            Ok(Self::p2pkh(hash, params))
+        } else if script.is_p2sh() {
+            let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
+            let hash = ScriptHash::from_byte_array(bytes);
+            Ok(Self::p2sh_from_hash(hash, params))
+        } else if let Some(version) = script.witness_version() {
+            let program = WitnessProgram::new(version, &script.as_bytes()[2..])
+                .map_err(FromScriptError::WitnessProgram)?;
+            Ok(Self::from_witness_program(program, params))
+        } else {
+            Err(FromScriptError::UnrecognizedScript)
+        }
+    }
+
     /// Generates a script pubkey spending to this address.
     #[cfg(feature = "alloc")]
     pub fn script_pubkey(&self) -> ScriptPubKeyBuf {

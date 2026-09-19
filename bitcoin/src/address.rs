@@ -40,10 +40,7 @@
 //! # }
 //! ```
 
-use addresses::witness_program::WitnessProgram;
-use crypto::key::PubkeyHash;
 use network::Network;
-use primitives::script::{ScriptHash, ScriptPubKey};
 
 use crate::network::Params;
 
@@ -77,39 +74,6 @@ impl From<Params> for AddressParams {
     fn from(params: Params) -> Self { Self::from(&params) }
 }
 
-mod sealed {
-    pub trait Sealed {}
-    impl Sealed for super::Address {}
-}
-
-crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`Address`] type
-    pub trait AddressExt impl for Address {
-        /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
-        fn from_script(
-            script: &ScriptPubKey,
-            params: impl Into<AddressParams>,
-        ) -> Result<Address, FromScriptError> {
-            let params = params.into();
-            if script.is_p2pkh() {
-                let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
-                let hash = PubkeyHash::from_byte_array(bytes);
-                Ok(Self::p2pkh(hash, params))
-            } else if script.is_p2sh() {
-                let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
-                let hash = ScriptHash::from_byte_array(bytes);
-                Ok(Self::p2sh_from_hash(hash, params))
-            } else if let Some(version) = script.witness_version() {
-                let program = WitnessProgram::new(version, &script.as_bytes()[2..])
-                    .map_err(FromScriptError::WitnessProgram)?;
-                Ok(Self::from_witness_program(program, params))
-            } else {
-                Err(FromScriptError::UnrecognizedScript)
-            }
-        }
-    }
-}
-
 /// Error code for the address module.
 pub mod error {
     #[doc(inline)]
@@ -126,13 +90,15 @@ mod tests {
     use alloc::borrow::ToOwned;
     use alloc::string::ToString;
 
+    use addresses::witness_program::WitnessProgram;
+    use crypto::key::{FullPublicKey, LegacyPublicKey, PubkeyHash, XOnlyPublicKey};
     use hex::hex;
+    use primitives::witness_version::WitnessVersion;
 
     use super::*;
     use crate::network::params;
-    use crate::script::{RedeemScriptBuf, ScriptPubKeyBuf, WitnessScriptBuf};
-    use crate::witness_version::WitnessVersion;
-    use crate::{FullPublicKey, LegacyPublicKey, XOnlyPublicKey};
+    use crate::script::ScriptHash;
+    use crate::{RedeemScriptBuf, ScriptPubKeyBuf, WitnessScriptBuf};
 
     fn roundtrips(addr: &Address, params: AddressParams) {
         assert_eq!(
