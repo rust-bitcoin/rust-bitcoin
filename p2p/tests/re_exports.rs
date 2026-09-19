@@ -40,3 +40,13 @@ fn blockdata_and_feature_types_are_re_exported_at_crate_root() {
 fn address_types_are_re_exported_at_crate_root() {
     use bitcoin_p2p_messages::{AddrV1Message, AddrV2, AddrV2Message, Address};
 }
+
+#[test]
+#[cfg(feature = "std")]
+fn message_types_are_re_exported_at_crate_root() {
+    use bitcoin_p2p_messages::{
+        AddrPayload, AddrV2Payload, CommandString, FeeFilter, HeadersMessage, InventoryPayload,
+        NetworkHeader, NetworkMessage, Ping, Pong, V1MessageHeader, V1NetworkMessage,
+        V2NetworkMessage,
+    };
+}

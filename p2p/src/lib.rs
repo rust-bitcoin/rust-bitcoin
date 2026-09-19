@@ -76,6 +76,11 @@ pub use self::{
 #[doc(inline)]
 pub use self::{
     address::{AddrV1Message, AddrV2, AddrV2Message, Address},
+    message::{
+        AddrPayload, AddrV2Payload, CommandString, FeeFilter, HeadersMessage, InventoryPayload,
+        NetworkHeader, NetworkMessage, Ping, Pong, V1MessageHeader, V1NetworkMessage,
+        V2NetworkMessage,
+    },
 };
 
 #[rustfmt::skip]                // Keep public re-exports separate.
