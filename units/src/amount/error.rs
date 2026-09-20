@@ -120,7 +120,7 @@ impl std::error::Error for ParseAmountError {
 }
 
 /// Error returned when a parsed amount is too big or too small.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OutOfRangeError {
     pub(super) is_signed: bool,
     pub(super) is_greater_than_max: bool,
@@ -128,7 +128,7 @@ pub struct OutOfRangeError {
 
 impl OutOfRangeError {
     /// Returns the minimum value of the type that was attempted to be parsed.
-    fn lower_bound(self) -> SignedAmount {
+    fn lower_bound(&self) -> SignedAmount {
         if self.is_signed() {
             SignedAmount::MIN
         } else {
@@ -139,15 +139,15 @@ impl OutOfRangeError {
     /// Returns true if the type that was attempted to be parsed is signed (`SignedAmount`).
     ///
     /// This can be used to hint to users to enter non-negative values specifically.
-    pub fn is_signed(self) -> bool { self.is_signed }
+    pub fn is_signed(&self) -> bool { self.is_signed }
 
     /// Returns true if the input value was larger than the maximum allowed value.
     #[inline]
-    pub fn is_above_max(self) -> bool { self.is_greater_than_max }
+    pub fn is_above_max(&self) -> bool { self.is_greater_than_max }
 
     /// Returns true if the input value was smaller than the minimum allowed value.
     #[inline]
-    pub fn is_below_min(self) -> bool { !self.is_greater_than_max }
+    pub fn is_below_min(&self) -> bool { !self.is_greater_than_max }
 
     #[cfg(test)]
     #[inline]
