@@ -13,7 +13,7 @@ use bitcoin_primitives::{
     absolute, Amount, Block, BlockHash, BlockHeader, BlockTime, BlockVersion, CompactTarget,
     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Witness,
 };
-use encoding::{check_encode, Decode as _, Decoder as _};
+use encoding::{check_encode, Decode as _, Decoder as _, Encode as _, ExactSizeEncoder as _};
 use hex::hex;
 
 const TC_TXID_BYTES: [u8; 32] = [
@@ -120,26 +120,25 @@ fn encode_segwit_transaction() {
         outputs: vec![tx_out()],
     };
 
-    check_encode(
-        &tx,
-        &concat_slices!(
-            &[2u8, 0, 0, 0],
-            &TC_SEGWIT_MARKER_AND_FLAG,
-            &[1u8],
-            &TC_TXID_BYTES,
-            &TC_VOUT_BYTES,
-            &[3u8],
-            &TC_SCRIPT_BYTES,
-            &TC_SEQ_MAX_BYTES,
-            &[1u8],
-            &TC_ONE_SAT_BYTES,
-            &[3u8],
-            &TC_SCRIPT_BYTES,
-            &[1u8],
-            &TC_WITNESS_ELEM_LEN_AND_DATA,
-            &TC_LOCK_TIME_ZERO_BYTES
-        ),
+    let expected = concat_slices!(
+        &[2u8, 0, 0, 0],
+        &TC_SEGWIT_MARKER_AND_FLAG,
+        &[1u8],
+        &TC_TXID_BYTES,
+        &TC_VOUT_BYTES,
+        &[3u8],
+        &TC_SCRIPT_BYTES,
+        &TC_SEQ_MAX_BYTES,
+        &[1u8],
+        &TC_ONE_SAT_BYTES,
+        &[3u8],
+        &TC_SCRIPT_BYTES,
+        &[1u8],
+        &TC_WITNESS_ELEM_LEN_AND_DATA,
+        &TC_LOCK_TIME_ZERO_BYTES
     );
+    assert_eq!(tx.encoder().len(), expected.len());
+    check_encode(&tx, &expected);
 }
 
 #[test]
@@ -194,46 +193,45 @@ fn encode_block() {
     };
 
     let block = Block::new_unchecked(header, vec![tx]);
-    check_encode(
-        &block,
-        &concat_slices!(
-            // The block version.
-            &[2u8, 0, 0, 0],
-            // The previous block's blockhash.
-            &[
-                171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171,
-                171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171
-            ],
-            &[
-                205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205,
-                205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205
-            ],
-            // The block time.
-            &[80, 195, 137, 98],
-            // The target (bits).
-            &[239, 190, 0, 0],
-            // The nonce.
-            &[254, 202, 0, 0],
-            // The transaction list length prefix.
-            &[1u8],
-            // The transaction (same as tested above).
-            &[2u8, 0, 0, 0],
-            &TC_SEGWIT_MARKER_AND_FLAG,
-            &[1u8],
-            &TC_TXID_BYTES,
-            &TC_VOUT_BYTES,
-            &[3u8],
-            &TC_SCRIPT_BYTES,
-            &TC_SEQ_MAX_BYTES,
-            &[1u8],
-            &TC_ONE_SAT_BYTES,
-            &[3u8],
-            &TC_SCRIPT_BYTES,
-            &[1u8],
-            &TC_WITNESS_ELEM_LEN_AND_DATA,
-            &TC_LOCK_TIME_ZERO_BYTES
-        ),
+    let expected = concat_slices!(
+        // The block version.
+        &[2u8, 0, 0, 0],
+        // The previous block's blockhash.
+        &[
+            171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171,
+            171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171
+        ],
+        &[
+            205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205,
+            205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205
+        ],
+        // The block time.
+        &[80, 195, 137, 98],
+        // The target (bits).
+        &[239, 190, 0, 0],
+        // The nonce.
+        &[254, 202, 0, 0],
+        // The transaction list length prefix.
+        &[1u8],
+        // The transaction (same as tested above).
+        &[2u8, 0, 0, 0],
+        &TC_SEGWIT_MARKER_AND_FLAG,
+        &[1u8],
+        &TC_TXID_BYTES,
+        &TC_VOUT_BYTES,
+        &[3u8],
+        &TC_SCRIPT_BYTES,
+        &TC_SEQ_MAX_BYTES,
+        &[1u8],
+        &TC_ONE_SAT_BYTES,
+        &[3u8],
+        &TC_SCRIPT_BYTES,
+        &[1u8],
+        &TC_WITNESS_ELEM_LEN_AND_DATA,
+        &TC_LOCK_TIME_ZERO_BYTES
     );
+    assert_eq!(block.encoder().len(), expected.len());
+    check_encode(&block, &expected);
 }
 
 #[test]

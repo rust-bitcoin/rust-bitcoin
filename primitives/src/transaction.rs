@@ -68,8 +68,8 @@ use encoding::FromHexError;
 use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{
-    Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6, EncoderStatus,
-    PrefixedSliceEncoder, VecDecoder,
+    Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6,
+    IterEncoder, PrefixedSliceEncoder, VecDecoder,
 };
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
@@ -434,7 +434,7 @@ impl encoding::Encode for Transaction {
 
         if self.uses_segwit_serialization() {
             let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
-            let witnesses = WitnessesEncoder::new(self.inputs.as_slice());
+            let witnesses = WitnessesEncoder::from_inputs(self.inputs.as_slice());
             TransactionEncoder::new(Encoder6::new(
                 version,
                 Some(segwit),
@@ -465,7 +465,7 @@ type TransactionEncoderInner<'e> = Encoder6<
 >;
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Transaction`] type.
     #[derive(Debug, Clone)]
     pub struct TransactionEncoder<'e>(TransactionEncoderInner<'e>);
@@ -746,57 +746,35 @@ enum IsSegwit {
     No,
 }
 
-/// Encodes the witnesses from a list of inputs.
+/// An iterator that yields [`WitnessEncoder`]s for each transaction input.
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone)]
-struct WitnessesEncoder<'e> {
-    inputs: &'e [TxIn],
-    /// Encoder for the current witness being encoded.
-    cur_enc: Option<WitnessEncoder<'e>>,
+struct WitnessIter<'e> {
+    inputs: core::slice::Iter<'e, TxIn>,
+}
+
+#[cfg(feature = "alloc")]
+impl<'e> Iterator for WitnessIter<'e> {
+    type Item = WitnessEncoder<'e>;
+
+    fn next(&mut self) -> Option<WitnessEncoder<'e>> {
+        self.inputs.next().map(|input| input.witness.encoder())
+    }
+}
+
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype_exact! {
+    /// Encodes the witnesses from a list of inputs.
+    #[derive(Debug, Clone)]
+    struct WitnessesEncoder<'e>(IterEncoder<WitnessIter<'e>>);
 }
 
 #[cfg(feature = "alloc")]
 impl<'e> WitnessesEncoder<'e> {
     /// Constructs a new encoder for all witnesses in a list of transaction inputs.
     #[inline]
-    pub fn new(inputs: &'e [TxIn]) -> Self {
-        Self { inputs, cur_enc: inputs.first().map(|input| input.witness.encoder()) }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl encoding::Encoder for WitnessesEncoder<'_> {
-    #[inline]
-    fn current_chunk(&self) -> &[u8] {
-        self.cur_enc.as_ref().map(WitnessEncoder::current_chunk).unwrap_or_default()
-    }
-
-    #[inline]
-    fn advance(&mut self) -> EncoderStatus {
-        let Some(cur) = self.cur_enc.as_mut() else {
-            return EncoderStatus::Finished;
-        };
-
-        loop {
-            // On subsequent calls, attempt to advance the current encoder and return
-            // success if this succeeds.
-            if cur.advance().has_more() {
-                return EncoderStatus::HasMore;
-            }
-            // self.inputs guaranteed to be non-empty if cur_enc is non-None.
-            self.inputs = &self.inputs[1..];
-
-            // If advancing the current encoder failed, attempt to move to the next encoder.
-            if let Some(input) = self.inputs.first() {
-                *cur = input.witness.encoder();
-                if !cur.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.cur_enc = None; // shortcut the next call to advance()
-                return EncoderStatus::Finished;
-            }
-        }
+    pub fn from_inputs(inputs: &'e [TxIn]) -> Self {
+        Self::new(IterEncoder::new(WitnessIter { inputs: inputs.iter() }))
     }
 }
 
@@ -2558,7 +2536,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn witnesses_encoder_empty_inputs() {
-        let mut encoder = WitnessesEncoder::new(&[]);
+        let mut encoder = WitnessesEncoder::from_inputs(&[]);
         encoding::check_encoder(&mut encoder, &[]);
     }
 
