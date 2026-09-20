@@ -609,9 +609,9 @@ fn p_consistent_exports_units_amount() {
 #[test]
 fn p_consistent_exports_units_amount_error() {
     use bitcoin_primitives::amount::error::{
-        InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
+        InvalidCharacterError, MissingDenominationError, MissingDigitsError, OutOfRangeError,
+        ParseAmountError, ParseDenominationError, ParseError, PossiblyConfusingDenominationError,
+        TooPreciseError, UnknownDenominationError,
     };
 }
 

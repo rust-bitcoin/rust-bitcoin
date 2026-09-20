@@ -77,8 +77,8 @@ pub use self::{
 pub use self::error::AmountDecoderError;
 #[doc(no_inline)]
 pub use self::error::{
-    BadPositionError, InvalidCharacterError, MissingDenominationError,
-    MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+    BadPositionError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
+    OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
     PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
 };
 #[doc(inline)]

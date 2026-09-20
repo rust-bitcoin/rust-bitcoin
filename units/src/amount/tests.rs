@@ -510,7 +510,10 @@ fn parsing() {
 
     // Contrived example to show that there is no limit on string length.
     assert_eq!(
-        p("0000000000000000000000000000000000000000000000000000000000000000000001", Denomination::Bitcoin),
+        p(
+            "0000000000000000000000000000000000000000000000000000000000000000000001",
+            Denomination::Bitcoin
+        ),
         Ok(Amount::ONE_BTC),
     );
 }
