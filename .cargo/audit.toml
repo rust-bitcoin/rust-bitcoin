@@ -1,0 +1,13 @@
+# cargo audit config for cron-daily-audit.yml
+
+[advisories]
+ignore = [
+    # bincode is unmaintained but only used in tests to check serde round trips.
+    "RUSTSEC-2025-0141",
+    # bare-metal is deprecated but it is a dependency of cortex-m 0.7, of embedded
+    # crates. Can be removed if cortex-m release without bare-metal.
+    "RUSTSEC-2026-0110",
+    # rand before 0.9.3 is unsound but Cargo-minimal.lock resolves to it, via
+    # secp256k1 (0.9.0) and cc -> jobserver (0.7.0).
+    "RUSTSEC-2026-0097",
+]
