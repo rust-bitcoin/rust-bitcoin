@@ -399,8 +399,8 @@ fn p_consistent_exports_amount() {
 #[test]
 fn p_consistent_exports_amount_error() {
     use bitcoin_units::amount::error::{
-        BadPositionError, InvalidCharacterError, MissingDenominationError,
-        MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+        BadPositionError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
+        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
         PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     };
 }

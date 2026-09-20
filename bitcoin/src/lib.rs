@@ -247,19 +247,18 @@ pub mod amount {
 
     #[doc(no_inline)]
     pub use self::error::{
-        AmountDecoderError, BadPositionError, InvalidCharacterError,
-        MissingDenominationError, MissingDigitsError, OutOfRangeError, ParseAmountError,
-        ParseDenominationError, ParseError, PossiblyConfusingDenominationError, TooPreciseError,
-        UnknownDenominationError,
+        AmountDecoderError, BadPositionError, InvalidCharacterError, MissingDenominationError,
+        MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     };
 
     /// Error types for bitcoin amounts.
     pub mod error {
         pub use units::amount::error::{
-            AmountDecoderError, BadPositionError, InvalidCharacterError,
-            MissingDenominationError, MissingDigitsError, OutOfRangeError, ParseAmountError,
-            ParseDenominationError, ParseError, PossiblyConfusingDenominationError,
-            TooPreciseError, UnknownDenominationError,
+            AmountDecoderError, BadPositionError, InvalidCharacterError, MissingDenominationError,
+            MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError,
+            ParseError, PossiblyConfusingDenominationError, TooPreciseError,
+            UnknownDenominationError,
         };
     }
 }
