@@ -991,7 +991,8 @@ impl Address {
                 &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
             P2sh { ref hash, network: _ } if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-            Segwit { ref program, hrp: _ } if script.is_witness_program() =>
+            Segwit { ref program, hrp: _ }
+                if script.witness_version() == Some(program.version()) =>
                 &script.as_bytes()[2..] == program.program().as_bytes(),
             P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
         }
