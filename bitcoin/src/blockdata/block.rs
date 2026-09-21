@@ -667,12 +667,18 @@ impl Block {
                 &coinbase.output[pos].script_pubkey.as_bytes()[6..38],
             )
             .unwrap();
-            // Witness reserved value is in coinbase input witness.
-            let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
-            if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
-                if let Some(witness_root) = self.witness_root() {
-                    return commitment
-                        == Self::compute_witness_commitment(&witness_root, witness_vec[0]);
+            // The commitment-bearing coinbase witness must be exactly one 32-byte item.
+            // Check the count first so an invalid multi-item witness is rejected in O(1)
+            // without collecting the items.
+            let witness = &coinbase.input[0].witness;
+            if witness.len() == 1 {
+                if let Some(reserved) = witness.nth(0) {
+                    if reserved.len() == 32 {
+                        if let Some(witness_root) = self.witness_root() {
+                            return commitment
+                                == Self::compute_witness_commitment(&witness_root, reserved);
+                        }
+                    }
                 }
             }
             return false;
