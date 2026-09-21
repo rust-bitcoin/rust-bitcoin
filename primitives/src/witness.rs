@@ -593,7 +593,7 @@ impl<T: core::borrow::Borrow<[u8]>> PartialEq<[T]> for Witness {
         if self.len() != rhs.len() {
             return false;
         }
-        self.iter().zip(rhs).all(|(left, right)| left == right.borrow())
+        self.iter().eq(rhs.iter().map(<T as core::borrow::Borrow<[u8]>>::borrow))
     }
 }
 
