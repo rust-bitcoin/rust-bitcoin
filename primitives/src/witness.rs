@@ -2022,4 +2022,30 @@ mod test {
         let mut dec = WitnessDecoder::new();
         assert!(dec.push_bytes(&mut encoded.as_slice()).is_err());
     }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_rejects_aggregate_witness_over_limit() {
+        let element_len = MAX_WITNESS_ITEM_SIZE / 2 + 1;
+
+        let mut first = Vec::new();
+        first.extend_from_slice(crate::compact_size_encode(2usize).as_slice());
+        first.extend_from_slice(crate::compact_size_encode(element_len).as_slice());
+        first.resize(first.len() + element_len, 0);
+
+        let mut decoder = WitnessDecoder::new();
+        let mut first_slice = first.as_slice();
+        assert!(decoder.push_bytes(&mut first_slice).unwrap().needs_more());
+        assert!(first_slice.is_empty());
+
+        let mut second = Vec::new();
+        second.extend_from_slice(crate::compact_size_encode(element_len).as_slice());
+        second.resize(second.len() + element_len, 0);
+
+        let mut second_slice = second.as_slice();
+        assert!(
+            decoder.push_bytes(&mut second_slice).is_err(),
+            "a witness whose aggregate data exceeds the 4 MB consensus bound must be rejected"
+        );
+    }
 }
