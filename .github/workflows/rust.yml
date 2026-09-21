@@ -181,7 +181,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
           toolchain: stable
       - name: "Add architecture i386 and install dependencies"
@@ -216,7 +216,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install rust-src"
@@ -254,7 +254,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
           toolchain: stable
       - name: "Run policy script"
@@ -292,7 +292,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
           toolchain: stable
       - name: "Check Encode coverage"
@@ -308,7 +308,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0 # required for full diff context
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
           toolchain: stable
       - name: "Fetch base branch for diff"
