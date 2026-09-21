@@ -2920,4 +2920,27 @@ mod test {
         encoding::decode_from_slice::<V1NetworkMessage>(&malformed_v1_message)
             .expect_err("Message with invalid payload checksum should be rejected");
     }
+
+    #[test]
+    fn unknown_message_payload_not_preallocated() {
+        use encoding::Decoder as _;
+
+        fn capacity(d: &NetworkMessageDecoderInner) -> usize {
+            let NetworkMessageDecoderInner::Unknown { buffer, .. } = d else { unreachable!() };
+            buffer.capacity()
+        }
+
+        // A peer claims a max size payload for an unknown command and sends nothing.
+        let command = CommandString::try_from("notacommand").unwrap();
+        let mut decoder = NetworkMessageDecoderInner::new(command, MAX_MSG_SIZE);
+        assert_eq!(capacity(&decoder), 0);
+
+        // Push nothing and ensure capacity is still zero.
+        decoder.push_bytes(&mut [].as_slice()).unwrap();
+        assert_eq!(capacity(&decoder), 0);
+
+        // Push a single byte and ensure the decoder allocates the first batch.
+        decoder.push_bytes(&mut [0xAB].as_slice()).unwrap();
+        assert_eq!(capacity(&decoder), 1_000_000);
+    }
 }
