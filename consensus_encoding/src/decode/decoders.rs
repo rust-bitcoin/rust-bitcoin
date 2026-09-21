@@ -1009,6 +1009,25 @@ mod tests {
         assert_eq!(result[total_len - 1], 0xDD);
     }
 
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn byte_vec_decoder_prefix_alone_not_preallocated() {
+        let mut decoder = ByteVecDecoder::new();
+
+        // A peer claims 2 MB of space but sends nothing. 0xFE marks a four byte compact
+        // size, the rest is 2_000_000 (0x001E8480) little endian.
+        decoder.push_bytes(&mut [0xFE, 0x80, 0x84, 0x1E, 0x00].as_slice()).unwrap();
+        assert_eq!(decoder.buffer.capacity(), 0);
+
+        // Push nothing and ensure capacity is still zero.
+        decoder.push_bytes(&mut [].as_slice()).unwrap();
+        assert_eq!(decoder.buffer.capacity(), 0);
+
+        // Push a single byte and ensure the decoder allocates the first batch.
+        decoder.push_bytes(&mut [0xAA].as_slice()).unwrap();
+        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE);
+    }
+
     #[cfg(feature = "alloc")]
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Inner(u32);
