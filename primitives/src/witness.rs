@@ -83,6 +83,12 @@ const MAX_WITNESS_STACK_ITEMS: usize = 4_000_000;
 /// single witness item cannot exceed what fits in a block.
 const MAX_WITNESS_ITEM_SIZE: usize = 4_000_000;
 
+/// Maximum total serialized byte size of a witness stack, including its count and length prefixes.
+///
+/// This is an anti-DoS limit based on Bitcoin's 4MB block weight limit.
+/// The serialized witness stack is part of a block, so its size cannot exceed what fits in a block.
+const MAX_WITNESS_SIZE: usize = 4_000_000;
+
 /// The Witness is the data used to unlock bitcoin since the [SegWit upgrade].
 ///
 /// Can be logically seen as an array of bytestrings, i.e. [`Vec<Vec<u8>>`], and it is serialized on the wire
@@ -409,6 +415,8 @@ pub struct WitnessDecoder {
     /// - `None` means we're currently reading the length.
     /// - `Some(n)` means we're reading element data with `n` bytes remaining.
     element_bytes_remaining: Option<usize>,
+    /// Running total of serialized witness bytes decoded so far.
+    serialized_size: usize,
 }
 
 impl WitnessDecoder {
@@ -422,6 +430,7 @@ impl WitnessDecoder {
             element_idx: 0,
             element_length_decoder: CompactSizeDecoder::new_with_limit(MAX_WITNESS_ITEM_SIZE),
             element_bytes_remaining: None,
+            serialized_size: 0,
         }
     }
 }
@@ -454,6 +463,7 @@ impl encoding::Decoder for WitnessDecoder {
             let decoder = core::mem::take(&mut self.witness_count_decoder);
             let witness_elements = decoder.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
             self.witness_elements = Some(witness_elements);
+            self.serialized_size = crate::compact_size_encode(witness_elements).as_slice().len();
 
             // Short circuit for zero witness elements.
             if witness_elements == 0 {
@@ -523,6 +533,13 @@ impl encoding::Decoder for WitnessDecoder {
 
                 // keep the element length prefix in the content area.
                 let encoded_compact_size = crate::compact_size_encode(element_length);
+                self.serialized_size = self
+                    .serialized_size
+                    .saturating_add(encoded_compact_size.as_slice().len())
+                    .saturating_add(element_length);
+                if self.serialized_size > MAX_WITNESS_SIZE {
+                    return Err(E(Inner::WitnessTooLarge(self.serialized_size)));
+                }
                 self.content.extend_from_slice(encoded_compact_size.as_slice());
 
                 if element_length == 0 {
@@ -1038,6 +1055,8 @@ pub mod error {
         LengthPrefixDecode(CompactSizeDecoderError),
         /// Not enough bytes given to decoder.
         UnexpectedEof(UnexpectedEofError),
+        /// The combined serialized witness elements exceed the maximum size.
+        WitnessTooLarge(usize),
     }
 
     impl From<Infallible> for WitnessDecoderError {
@@ -1053,6 +1072,12 @@ pub mod error {
             match self.0 {
                 E::LengthPrefixDecode(ref e) => write_err!(f, "vec decoder error"; e),
                 E::UnexpectedEof(ref e) => write_err!(f, "decoder error"; e),
+                E::WitnessTooLarge(size) => write!(
+                    f,
+                    "serialized witness size of {} bytes exceeds the maximum of {}",
+                    size,
+                    super::MAX_WITNESS_SIZE
+                ),
             }
         }
     }
@@ -1066,6 +1091,7 @@ pub mod error {
             match self.0 {
                 E::LengthPrefixDecode(ref e) => Some(e),
                 E::UnexpectedEof(ref e) => Some(e),
+                E::WitnessTooLarge(_) => None,
             }
         }
     }
@@ -1598,17 +1624,20 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn decode_max_length() {
+    fn decode_max_serialized_size() {
+        let element_len = MAX_WITNESS_SIZE
+            - crate::compact_size_encode(1usize).as_slice().len()
+            - crate::compact_size_encode(MAX_WITNESS_ITEM_SIZE).as_slice().len();
         let mut encoded = Vec::new();
         encoded.extend_from_slice(crate::compact_size_encode(1usize).as_slice());
-        encoded.extend_from_slice(crate::compact_size_encode(4_000_000usize).as_slice());
-        encoded.resize(encoded.len() + 4_000_000, 0u8);
+        encoded.extend_from_slice(crate::compact_size_encode(element_len).as_slice());
+        encoded.resize(encoded.len() + element_len, 0u8);
 
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
         decoder.push_bytes(&mut slice).unwrap();
         let witness = decoder.end().unwrap();
-        assert_eq!(witness[0].len(), 4_000_000);
+        assert_eq!(witness[0].len(), element_len);
     }
 
     #[test]
@@ -1960,9 +1989,12 @@ mod test {
     #[cfg(feature = "alloc")]
     #[test]
     fn dos_protection() {
+        let element_len = MAX_WITNESS_SIZE
+            - crate::compact_size_encode(MAX_WITNESS_STACK_ITEMS).as_slice().len()
+            - crate::compact_size_encode(MAX_WITNESS_ITEM_SIZE).as_slice().len();
         let mut encoded = Vec::new();
         encoded.extend_from_slice(&[0xFE, 0x00, 0x09, 0x3D, 0x00]); // 4_000_000 (witness count)
-        encoded.extend_from_slice(&[0xFE, 0x00, 0x09, 0x3D, 0x00]); // 4_000_000 (1st element length)
+        encoded.extend_from_slice(crate::compact_size_encode(element_len).as_slice());
 
         let mut slice = encoded.as_slice();
         let mut dec = WitnessDecoder::new();
