@@ -384,14 +384,20 @@ impl Block<Unchecked> {
         if self.transactions[0].is_coinbase() {
             let coinbase = &self.transactions[0];
             if let Some(commitment) = witness_commitment_from_coinbase(coinbase) {
-                // Witness reserved value is in coinbase input witness.
-                let witness_vec: Vec<_> = coinbase.inputs[0].witness.iter().collect();
-                if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
-                    if let Some((witness_root, witness_commitment)) =
-                        self.compute_witness_commitment(witness_vec[0])
-                    {
-                        if commitment == witness_commitment {
-                            return (true, Some(witness_root));
+                // The commitment-bearing coinbase witness must be exactly one 32-byte item.
+                // Check the count first so an invalid multi-item witness is rejected in O(1)
+                // without collecting the items or being truncated by the witness iterator.
+                let witness = &coinbase.inputs[0].witness;
+                if witness.len() == 1 {
+                    if let Some(reserved) = witness.get(0) {
+                        if reserved.len() == 32 {
+                            if let Some((witness_root, witness_commitment)) =
+                                self.compute_witness_commitment(reserved)
+                            {
+                                if commitment == witness_commitment {
+                                    return (true, Some(witness_root));
+                                }
+                            }
                         }
                     }
                 }
