@@ -2263,6 +2263,69 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn block_decoder_rejects_aggregate_weight_over_limit() {
+        fn large_transaction(tag: u8) -> Transaction {
+            Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: crate::absolute::LockTime::ZERO,
+                inputs: vec![crate::TxIn {
+                    previous_output: crate::OutPoint {
+                        txid: crate::Txid::from_byte_array([tag; 32]),
+                        vout: 0,
+                    },
+                    script_sig: crate::ScriptSigBuf::from_bytes(vec![tag; 550_000]),
+                    sequence: crate::Sequence::MAX,
+                    witness: crate::Witness::new(),
+                }],
+                outputs: vec![crate::TxOut {
+                    amount: units::Amount::ZERO,
+                    script_pubkey: crate::ScriptPubKeyBuf::new(),
+                }],
+            }
+        }
+
+        // Each transaction is individually valid but together they exceed a block's weight.
+        let transactions = vec![large_transaction(1), large_transaction(2)];
+        let block = Block::new_unchecked(dummy_header(), transactions);
+        let encoded = encoding::encode_to_vec(&block);
+
+        let err = encoding::decode_from_slice::<Block>(&encoded).unwrap_err();
+        assert!(matches!(
+            err,
+            encoding::DecodeError::Parse(BlockDecoderError(
+                error::BlockDecoderErrorInner::BlockTooHeavy(_)
+            ))
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_weight_wu_matches_expected() {
+        let tx = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn {
+                previous_output: crate::OutPoint {
+                    txid: crate::Txid::from_byte_array([1u8; 32]),
+                    vout: 0,
+                },
+                script_sig: crate::ScriptSigBuf::new(),
+                sequence: crate::Sequence::MAX,
+                witness: crate::Witness::new(),
+            }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::ZERO,
+                script_pubkey: crate::ScriptPubKeyBuf::new(),
+            }],
+        };
+
+        // header_and_count = 80 + 1 (compact size of a single transaction) = 81
+        // weight = 81 * 4 + transaction_weight(tx) = 324 + 240 = 564
+        assert_eq!(block_weight_wu(&[tx]), 564);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn header_decoder_error() {
         let header_bytes = encoding::encode_to_vec(&dummy_header());
         // Number of bytes in the encoding up to the start of each field.
