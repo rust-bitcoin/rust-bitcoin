@@ -404,12 +404,9 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     if uses_segwit_serialization {
         // BIP-0141 (SegWit) transaction serialization also includes the witness data.
         for input in &tx.inputs {
-            // Same as `Encode for Witness`.
-            enc.input(crate::compact_size_encode(input.witness.len()).as_slice());
-            for element in &input.witness {
-                enc.input(crate::compact_size_encode(element.len()).as_slice());
-                enc.input(element);
-            }
+            // Hash the full witness encoding. Iterating elements by hand drops any item larger
+            // than `Witness::iter` will yield, which would let differing witnesses share a wtxid.
+            hashes::encode_to_engine(&input.witness, &mut enc);
         }
     }
 
