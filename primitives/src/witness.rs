@@ -198,18 +198,10 @@ impl Witness {
     /// assert_eq!(Witness::new().size(), 1); // 1 byte for the '0' encoded as compact size.
     /// ```
     pub fn size(&self) -> usize {
-        let mut size: usize = 0;
-
-        size += CompactSizeEncoder::encoded_size(self.witness_elements);
-        size += self
-            .iter()
-            .map(|witness_element| {
-                let len = witness_element.len();
-                CompactSizeEncoder::encoded_size(len) + len
-            })
-            .sum::<usize>();
-
-        size
+        // `indices_start` is the length of every serialized element, each with its own compact
+        // size length prefix. Using it keeps the count in sync with the encoding even for a
+        // witness holding an item larger than the witness iterator will yield.
+        CompactSizeEncoder::encoded_size(self.witness_elements) + self.indices_start
     }
 
     /// Clears the witness.
