@@ -98,11 +98,12 @@ impl Decoder for ByteVecDecoder {
             }
             self.bytes_expected = decoder.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
             self.prefix_decoder = None;
-
-            // For DoS prevention, let's not allocate all memory upfront.
         }
 
-        self.reserve();
+        // For DoS prevention, let's not allocate all memory upfront.
+        if !bytes.is_empty() {
+            self.reserve();
+        }
 
         let remaining = self.bytes_expected - self.bytes_written;
         let available_capacity = self.buffer.capacity() - self.buffer.len();
