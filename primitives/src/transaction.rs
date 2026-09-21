@@ -2355,6 +2355,89 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn reject_transaction_exceeding_maximum_block_weight() {
+        let script_len = 600_000usize;
+        let mut tx_bytes = Vec::new();
+
+        tx_bytes.extend_from_slice(&Version::ONE.to_u32().to_le_bytes());
+        tx_bytes.push(1); // input count
+        tx_bytes.extend_from_slice(&[0x01; 32]); // non-null prevout txid
+        tx_bytes.extend_from_slice(&0u32.to_le_bytes()); // prevout vout
+        tx_bytes.push(0); // empty script_sig
+        tx_bytes.extend_from_slice(&Sequence::MAX.to_consensus_u32().to_le_bytes());
+        tx_bytes.push(2); // output count
+
+        for _ in 0..2 {
+            tx_bytes.extend_from_slice(&0u64.to_le_bytes()); // amount
+            tx_bytes.extend_from_slice(crate::compact_size_encode(script_len).as_slice());
+            tx_bytes.resize(tx_bytes.len() + script_len, 0);
+        }
+        tx_bytes.extend_from_slice(&0u32.to_le_bytes()); // lock_time
+
+        // With no witness discount this transaction weighs more than 4,000,000 WU,
+        // so it cannot fit in a consensus-valid block.
+        let err = encoding::decode_from_slice::<Transaction>(&tx_bytes).unwrap_err();
+        assert!(matches!(
+            err,
+            encoding::DecodeError::Parse(TransactionDecoderError(
+                TransactionDecoderErrorInner::TransactionTooHeavy(_)
+            ))
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_weight_matches_expected() {
+        // A segwit transaction with a non-empty script_sig, a non-empty script_pubkey and
+        // witness data, so that every term in `transaction_weight` contributes to the result.
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![TxIn {
+                previous_output: OutPoint { txid: Txid::from_byte_array([1u8; 32]), vout: 0 },
+                script_sig: ScriptSigBuf::from_bytes(vec![0u8; 5]),
+                sequence: Sequence::MAX,
+                witness: Witness::from_slice(&[[0xab; 72].as_slice(), [0xcd; 33].as_slice()]),
+            }],
+            outputs: vec![TxOut {
+                amount: Amount::ONE_SAT,
+                script_pubkey: ScriptPubKeyBuf::from_bytes(vec![0u8; 7]),
+            }],
+        };
+
+        // base    = 4 (version) + 1 (input count) + (36 + 1 + 5 + 4) (input)
+        //           + 1 (output count) + (8 + 1 + 7) (output) + 4 (locktime) = 72
+        // witness = 2 (segwit marker and flag) + 108 (witness.size()) = 110
+        // weight  = 72 * 4 + 110 = 398
+        assert_eq!(transaction_weight(&tx).to_wu(), 398);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn accept_transaction_at_maximum_block_weight() {
+        // A base size of 1,000,000 bytes gives a weight of exactly MAX_BLOCK_WEIGHT, which the
+        // `weight > MAX_BLOCK_WEIGHT` boundary in `end` must accept rather than reject.
+        let script_len = 999_936usize;
+        let mut tx_bytes = Vec::new();
+
+        tx_bytes.extend_from_slice(&Version::ONE.to_u32().to_le_bytes());
+        tx_bytes.push(1); // input count
+        tx_bytes.extend_from_slice(&[0x01; 32]); // non-null prevout txid
+        tx_bytes.extend_from_slice(&0u32.to_le_bytes()); // prevout vout
+        tx_bytes.push(0); // empty script_sig
+        tx_bytes.extend_from_slice(&Sequence::MAX.to_consensus_u32().to_le_bytes());
+        tx_bytes.push(1); // output count
+        tx_bytes.extend_from_slice(&0u64.to_le_bytes()); // amount
+        tx_bytes.extend_from_slice(crate::compact_size_encode(script_len).as_slice());
+        tx_bytes.resize(tx_bytes.len() + script_len, 0);
+        tx_bytes.extend_from_slice(&0u32.to_le_bytes()); // lock_time
+
+        let tx = encoding::decode_from_slice::<Transaction>(&tx_bytes).unwrap();
+        assert_eq!(transaction_weight(&tx).to_wu(), MAX_BLOCK_WEIGHT.to_wu());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn compute_ntxid_ignores_script_sig_and_witness() {
         let mut tx_in = TxIn::EMPTY_COINBASE;
         tx_in.script_sig = ScriptSigBuf::from_bytes(vec![1, 2, 3]);
