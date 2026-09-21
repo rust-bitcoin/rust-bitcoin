@@ -15,7 +15,7 @@ use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 #[cfg(feature = "encoding")]
 use encoding::{
     BytesEncoder, CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder, DecoderStatus,
-    Encoder, Encoder2, EncoderStatus,
+    Encoder, Encoder2,
 };
 use io::{Read, Write};
 
@@ -272,7 +272,7 @@ impl encoding::Encode for Witness {
         let witness_elements =
             BytesEncoder::without_length_prefix(&self.content[..self.indices_start]);
 
-        WitnessEncoder(Encoder2::new(num_elements, witness_elements))
+        WitnessEncoder::new(Encoder2::new(num_elements, witness_elements))
     }
 }
 
@@ -281,18 +281,11 @@ impl encoding::Decode for Witness {
     type Decoder = WitnessDecoder;
 }
 
-/// The encoder for the [`Witness`] type.
 #[cfg(feature = "encoding")]
-#[derive(Debug, Clone)]
-pub struct WitnessEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
-
-#[cfg(feature = "encoding")]
-impl encoding::Encoder for WitnessEncoder<'_> {
-    #[inline]
-    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
-
-    #[inline]
-    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Witness`] type.
+    #[derive(Debug, Clone)]
+    pub struct WitnessEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }
 
 /// The decoder for the [`Witness`] type.
