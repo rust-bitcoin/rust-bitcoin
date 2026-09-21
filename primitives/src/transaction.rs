@@ -360,6 +360,44 @@ const SEGWIT_MARKER: u8 = 0x00;
 #[cfg(feature = "alloc")]
 const SEGWIT_FLAG: u8 = 0x01;
 
+/// Maximum block weight, and therefore the maximum weight of any single transaction. (BIP-0141)
+#[cfg(feature = "alloc")]
+pub(crate) const MAX_BLOCK_WEIGHT: Weight = Weight::from_wu(4_000_000);
+
+/// Computes the consensus weight of a transaction.
+///
+/// Weight is `4 * base_size + witness_overhead`, where the base size excludes the segwit marker,
+/// flag and witness data, all of which contribute a weight of one.
+#[cfg(feature = "alloc")]
+pub(crate) fn transaction_weight(tx: &Transaction) -> Weight {
+    let compact = |n: usize| crate::compact_size_encode(n).as_slice().len();
+
+    let mut base = 4; // version
+    base += compact(tx.inputs.len());
+    for input in &tx.inputs {
+        let script = input.script_sig.len();
+        base += 36 + compact(script) + script + 4; // outpoint + script + sequence
+    }
+    base += compact(tx.outputs.len());
+    for output in &tx.outputs {
+        let script = output.script_pubkey.len();
+        base += 8 + compact(script) + script; // amount + script
+    }
+    base += 4; // lock_time
+
+    let witness = if tx.uses_segwit_serialization() {
+        let mut w = 2; // segwit marker and flag
+        for input in &tx.inputs {
+            w += input.witness.size();
+        }
+        w
+    } else {
+        0
+    };
+
+    Weight::from_wu((base as u64) * 4 + witness as u64)
+}
+
 // This is equivalent to consensus encoding but hashes the fields manually.
 #[cfg(feature = "alloc")]
 fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256d::Hash {
@@ -641,6 +679,12 @@ impl encoding::Decoder for TransactionDecoder {
                 // Reject transactions with no outputs
                 if tx.outputs.is_empty() {
                     return Err(E(Inner::NoOutputs));
+                }
+                // A transaction heavier than a whole block can never be valid; reject it before
+                // the more expensive checks below.
+                let weight = transaction_weight(&tx);
+                if weight > MAX_BLOCK_WEIGHT {
+                    return Err(E(Inner::TransactionTooHeavy(weight.to_wu())));
                 }
                 // check for null prevout in non-coinbase txs
                 if tx.inputs.len() > 1 {
@@ -1353,6 +1397,8 @@ pub mod error {
         OutputValueSumTooLarge(u64),
         /// Transaction has no outputs.
         NoOutputs,
+        /// Transaction weight exceeds the maximum block weight.
+        TransactionTooHeavy(u64),
     }
 
     #[cfg(feature = "alloc")]
@@ -1388,6 +1434,12 @@ pub mod error {
                 E::OutputValueSumTooLarge(val) =>
                     write!(f, "sum of output values {} satoshis exceeds MAX_MONEY", val),
                 E::NoOutputs => write!(f, "transaction has no outputs"),
+                E::TransactionTooHeavy(wu) => write!(
+                    f,
+                    "transaction weight {} exceeds the maximum block weight of {}",
+                    wu,
+                    super::MAX_BLOCK_WEIGHT.to_wu()
+                ),
             }
         }
     }
@@ -1414,6 +1466,7 @@ pub mod error {
                 E::DuplicateInput(_) => None,
                 E::OutputValueSumTooLarge(_) => None,
                 E::NoOutputs => None,
+                E::TransactionTooHeavy(_) => None,
             }
         }
     }
