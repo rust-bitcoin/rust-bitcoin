@@ -83,6 +83,13 @@ const MAX_WITNESS_STACK_ITEMS: usize = 4_000_000;
 /// single witness item cannot exceed what fits in a block.
 const MAX_WITNESS_ITEM_SIZE: usize = 4_000_000;
 
+/// Maximum total serialized byte size of all witness stack items.
+///
+/// This is an anti-DoS limit based on Bitcoin's 4MB block weight limit.
+/// The serialized witness elements are part of a block, so their combined
+/// size cannot exceed what fits in a block.
+const MAX_WITNESS_SIZE: usize = 4_000_000;
+
 /// The Witness is the data used to unlock bitcoin since the [SegWit upgrade].
 ///
 /// Can be logically seen as an array of bytestrings, i.e. [`Vec<Vec<u8>>`], and it is serialized on the wire
@@ -409,6 +416,8 @@ pub struct WitnessDecoder {
     /// - `None` means we're currently reading the length.
     /// - `Some(n)` means we're reading element data with `n` bytes remaining.
     element_bytes_remaining: Option<usize>,
+    /// Running total of element data bytes decoded so far (excluding length prefixes).
+    data_size: usize,
 }
 
 impl WitnessDecoder {
@@ -422,6 +431,7 @@ impl WitnessDecoder {
             element_idx: 0,
             element_length_decoder: CompactSizeDecoder::new_with_limit(MAX_WITNESS_ITEM_SIZE),
             element_bytes_remaining: None,
+            data_size: 0,
         }
     }
 }
@@ -520,6 +530,13 @@ impl encoding::Decoder for WitnessDecoder {
                     CompactSizeDecoder::new_with_limit(MAX_WITNESS_ITEM_SIZE),
                 );
                 let element_length = decoder.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
+
+                // Bound the cumulative witness data. Each element and its length are limited
+                // individually, but without this the running total is unbounded.
+                self.data_size = self.data_size.saturating_add(element_length);
+                if self.data_size > MAX_WITNESS_SIZE {
+                    return Err(E(Inner::WitnessTooLarge(self.data_size)));
+                }
 
                 // keep the element length prefix in the content area.
                 let encoded_compact_size = crate::compact_size_encode(element_length);
@@ -1038,6 +1055,8 @@ pub mod error {
         LengthPrefixDecode(CompactSizeDecoderError),
         /// Not enough bytes given to decoder.
         UnexpectedEof(UnexpectedEofError),
+        /// The combined serialized witness elements exceed the maximum size.
+        WitnessTooLarge(usize),
     }
 
     impl From<Infallible> for WitnessDecoderError {
@@ -1053,6 +1072,12 @@ pub mod error {
             match self.0 {
                 E::LengthPrefixDecode(ref e) => write_err!(f, "vec decoder error"; e),
                 E::UnexpectedEof(ref e) => write_err!(f, "decoder error"; e),
+                E::WitnessTooLarge(size) => write!(
+                    f,
+                    "witness data of {} bytes exceeds the maximum of {}",
+                    size,
+                    super::MAX_WITNESS_SIZE
+                ),
             }
         }
     }
@@ -1066,6 +1091,7 @@ pub mod error {
             match self.0 {
                 E::LengthPrefixDecode(ref e) => Some(e),
                 E::UnexpectedEof(ref e) => Some(e),
+                E::WitnessTooLarge(_) => None,
             }
         }
     }
