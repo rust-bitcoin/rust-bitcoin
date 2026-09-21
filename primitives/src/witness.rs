@@ -1353,6 +1353,15 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
+    fn oversized_element_does_not_compare_equal_to_different_stack() {
+        let oversized = vec![0u8; MAX_WITNESS_ITEM_SIZE + 1];
+        let witness = Witness::from_slice(&[oversized]);
+
+        assert_ne!(witness, [&[0xAAu8][..]]);
+    }
+
+    #[test]
     #[cfg(feature = "serde")]
     fn serde_bincode_backward_compatibility() {
         let old_witness_format = vec![vec![0u8], vec![2]];
