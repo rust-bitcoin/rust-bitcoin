@@ -1296,6 +1296,20 @@ mod tests {
     }
 
     #[test]
+    fn matches_script_pubkey_checks_witness_version() {
+        let program = [0xab; 20];
+        let v0 = WitnessProgram::new(WitnessVersion::V0, &program).unwrap();
+        let v1 = WitnessProgram::new(WitnessVersion::V1, &program).unwrap();
+        let a0 = Address::from_witness_program(v0, AddressParams::MAINNET);
+        let a1 = Address::from_witness_program(v1, AddressParams::MAINNET);
+
+        assert!(a0.matches_script_pubkey(&a0.script_pubkey()));
+        assert!(a1.matches_script_pubkey(&a1.script_pubkey()));
+        assert!(!a0.matches_script_pubkey(&a1.script_pubkey()));
+        assert!(!a1.matches_script_pubkey(&a0.script_pubkey()));
+}
+
+    #[test]
     fn address_debug() {
         // This is not really testing output of Debug but the ability and proper functioning
         // of Debug derivation on structs generic in NetworkValidation.
