@@ -1850,6 +1850,17 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn oversized_public_witness_size_matches_encoding_length() {
+        // Public constructors can hold an oversized item even though Iter::next() rejects it.
+        // size() must not silently omit bytes that Encode will still serialize.
+        let oversized = vec![0u8; MAX_WITNESS_ITEM_SIZE + 1];
+        let witness = Witness::from_slice(&[oversized]);
+
+        assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn witness_encoder_len_matches_encoding_length() {
         use encoding::{Encode as _, ExactSizeEncoder as _};
 
