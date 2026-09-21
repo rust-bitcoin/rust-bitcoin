@@ -2105,6 +2105,41 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn block_rejects_oversized_trailing_coinbase_witness_item() {
+        let reserved = [11u8; 32];
+        let mut txin = crate::TxIn::EMPTY_COINBASE;
+        txin.witness.push(reserved);
+        // `Witness::iter` stops before an item larger than the decoder cap, hiding this element.
+        txin.witness.push(vec![0u8; 4_000_001]);
+
+        let mut coinbase = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![txin],
+            outputs: vec![],
+        };
+
+        let (_, commitment) = Block::new_unchecked(dummy_header(), vec![coinbase.clone()])
+            .compute_witness_commitment(&reserved)
+            .unwrap();
+        let mut script = Vec::from(WITNESS_COMMITMENT_MAGIC);
+        script.extend_from_slice(commitment.as_byte_array());
+        coinbase.outputs.push(crate::TxOut {
+            amount: units::Amount::MIN,
+            script_pubkey: crate::script::ScriptBuf::from_bytes(script),
+        });
+
+        let transactions = vec![coinbase];
+        let mut header = dummy_header();
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+        let block = Block::new_unchecked(header, transactions);
+
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn block_check_witness_commitment_invalid_commitment() {
         let mut txin = crate::TxIn::EMPTY_COINBASE;
