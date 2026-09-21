@@ -2532,6 +2532,35 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn compute_wtxid_commits_to_oversized_witness_elements() {
+        fn transaction_with_witness_byte(byte: u8) -> Transaction {
+            let witness = Witness::from_slice(&[vec![byte; 4_000_001]]);
+            let input = TxIn {
+                previous_output: OutPoint { txid: Txid::from_byte_array([0x42; 32]), vout: 0 },
+                script_sig: ScriptSigBuf::new(),
+                sequence: Sequence::MAX,
+                witness,
+            };
+
+            Transaction {
+                version: Version::TWO,
+                lock_time: absolute::LockTime::ZERO,
+                inputs: vec![input],
+                outputs: vec![TxOut {
+                    amount: Amount::ONE_SAT,
+                    script_pubkey: ScriptPubKeyBuf::new(),
+                }],
+            }
+        }
+
+        let first = transaction_with_witness_byte(0x11);
+        let second = transaction_with_witness_byte(0x22);
+
+        assert_ne!(first.compute_wtxid(), second.compute_wtxid());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn witnesses_encoder_empty_inputs() {
         let mut encoder = WitnessesEncoder::from_inputs(&[]);
         encoding::check_encoder(&mut encoder, &[]);
