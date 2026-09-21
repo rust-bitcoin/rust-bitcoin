@@ -48,6 +48,3 @@ private = ["bitcoin_internals"]
 
 [package.metadata.rbmt.test]
 examples = ["encoder:alloc"]
-
-[package.metadata.rbmt.prerelease]
-enabled = true
