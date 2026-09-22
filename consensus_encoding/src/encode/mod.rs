@@ -302,7 +302,9 @@ where
 
 /// An encoder with a known size.
 pub trait ExactSizeEncoder: Encoder {
-    /// The number of bytes remaining that the encoder will yield.
+    /// The number of bytes *remaining* that the encoder will yield.
+    ///
+    /// There is no requirement for this function to be constant time.
     ///
     /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned
     /// `EncoderStatus::Finished`.
