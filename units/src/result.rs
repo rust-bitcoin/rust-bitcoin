@@ -191,6 +191,15 @@ impl<T> NumOpResult<T> {
         }
     }
 
+    /// Converts a [`Result<T, NumOpError>`] to a [`NumOpResult`].
+    #[inline]
+    pub fn from_result(result: Result<T, NumOpError>) -> Self {
+        match result {
+            Ok(x) => Self::Valid(x),
+            Err(e) => Self::Error(e),
+        }
+    }
+
     /// Calls `op` if the numeric result is [`Valid`], otherwise returns the [`Error`] value of
     /// `self`.
     ///

@@ -288,95 +288,90 @@ impl ops::Neg for NumOpResult<SignedAmount> {
     fn neg(self) -> Self::Output { self.map(ops::Neg::neg) }
 }
 
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
 impl core::iter::Sum<Amount> for NumOpResult<Amount> {
-    fn sum<I>(iter: I) -> Self
+    fn sum<I>(mut iter: I) -> Self
     where
         I: Iterator<Item = Amount>,
     {
-        iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match acc {
-            Self::Valid(lhs) => lhs + amount,
-            Self::Error(e) => Self::Error(e),
-        })
+        let result = iter.try_fold(Amount::ZERO, |acc, amount| (acc + amount).into_result());
+        Self::from_result(result)
     }
 }
+
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
 impl<'a> core::iter::Sum<&'a Amount> for NumOpResult<Amount> {
-    fn sum<I>(iter: I) -> Self
+    fn sum<I>(mut iter: I) -> Self
     where
         I: Iterator<Item = &'a Amount>,
     {
-        iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match acc {
-            Self::Valid(lhs) => lhs + amount,
-            Self::Error(e) => Self::Error(e),
-        })
+        let result = iter.try_fold(Amount::ZERO, |acc, amount| (acc + amount).into_result());
+        Self::from_result(result)
     }
 }
 
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
 impl core::iter::Sum<Self> for NumOpResult<Amount> {
-    fn sum<I>(iter: I) -> Self
+    fn sum<I>(mut iter: I) -> Self
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, amount) {
-            (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (Self::Error(e), _) | (_, Self::Error(e)) => Self::Error(e),
-        })
+        let result = iter.try_fold(Amount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
+        Self::from_result(result)
     }
 }
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
 impl<'a> core::iter::Sum<&'a Self> for NumOpResult<Amount> {
-    fn sum<I>(iter: I) -> Self
+    fn sum<I>(mut iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, *amount) {
-            (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (Self::Error(e), _) | (_, Self::Error(e)) => Self::Error(e),
-        })
+        let result = iter.try_fold(Amount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
+        Self::from_result(result)
     }
 }
 
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
 impl core::iter::Sum<SignedAmount> for NumOpResult<SignedAmount> {
-    fn sum<I>(iter: I) -> Self
+    fn sum<I>(mut iter: I) -> Self
     where
         I: Iterator<Item = SignedAmount>,
     {
-        iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match acc {
-            Self::Valid(lhs) => lhs + amount,
-            Self::Error(e) => Self::Error(e),
-        })
-    }
-}
-impl<'a> core::iter::Sum<&'a SignedAmount> for NumOpResult<SignedAmount> {
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a SignedAmount>,
-    {
-        iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match acc {
-            Self::Valid(lhs) => lhs + amount,
-            Self::Error(e) => Self::Error(e),
-        })
+        let result = iter.try_fold(SignedAmount::ZERO, |acc, amount| (acc + amount).into_result());
+        Self::from_result(result)
     }
 }
 
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+impl<'a> core::iter::Sum<&'a SignedAmount> for NumOpResult<SignedAmount> {
+    fn sum<I>(mut iter: I) -> Self
+    where
+        I: Iterator<Item = &'a SignedAmount>,
+    {
+        let result = iter.try_fold(SignedAmount::ZERO, |acc, amount| (acc + amount).into_result());
+        Self::from_result(result)
+    }
+}
+
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
 impl core::iter::Sum<Self> for NumOpResult<SignedAmount> {
-    fn sum<I>(iter: I) -> Self
+    fn sum<I>(mut iter: I) -> Self
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount) {
-            (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (Self::Error(e), _) | (_, Self::Error(e)) => Self::Error(e),
-        })
+        let result = iter.try_fold(SignedAmount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
+        Self::from_result(result)
     }
 }
+
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
 impl<'a> core::iter::Sum<&'a Self> for NumOpResult<SignedAmount> {
-    fn sum<I>(iter: I) -> Self
+    fn sum<I>(mut iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, *amount) {
-            (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
-            (Self::Error(e), _) | (_, Self::Error(e)) => Self::Error(e),
-        })
+        let result = iter.try_fold(SignedAmount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
+        Self::from_result(result)
     }
 }
 #[cfg(test)]
