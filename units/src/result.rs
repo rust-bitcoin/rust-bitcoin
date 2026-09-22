@@ -109,9 +109,7 @@ impl<T> NumOpResult<T> {
             Self::Error(e) => NumOpResult::Error(e),
         }
     }
-}
 
-impl<T: fmt::Debug> NumOpResult<T> {
     /// Returns the contained valid numeric type, consuming `self`.
     ///
     /// # Panics
@@ -141,20 +139,6 @@ impl<T: fmt::Debug> NumOpResult<T> {
         match self {
             Self::Valid(x) => x,
             Self::Error(e) => panic!("tried to unwrap an invalid numeric result: {:?}", e),
-        }
-    }
-
-    /// Returns the contained error, consuming `self`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the numeric result is valid.
-    #[inline]
-    #[track_caller]
-    pub fn unwrap_err(self) -> NumOpError {
-        match self {
-            Self::Error(e) => e,
-            Self::Valid(a) => panic!("tried to unwrap a valid numeric result: {:?}", a),
         }
     }
 
@@ -235,6 +219,22 @@ impl<T: fmt::Debug> NumOpResult<T> {
     /// Returns `true` if the numeric result is invalid.
     #[inline]
     pub fn is_error(&self) -> bool { !self.is_valid() }
+}
+
+impl<T: fmt::Debug> NumOpResult<T> {
+    /// Returns the contained error, consuming `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the numeric result is valid.
+    #[inline]
+    #[track_caller]
+    pub fn unwrap_err(self) -> NumOpError {
+        match self {
+            Self::Error(e) => e,
+            Self::Valid(a) => panic!("tried to unwrap a valid numeric result: {:?}", a),
+        }
+    }
 }
 
 // Implement Add/Sub on NumOpResults for all wrapped types that already implement Add/Sub on themselves
