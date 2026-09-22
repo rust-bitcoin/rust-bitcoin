@@ -4,8 +4,6 @@
 
 use core::str::FromStr;
 
-use internals::error::InputString;
-
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{ParseIntError, PrefixedHexError, UnprefixedHexError};
@@ -53,7 +51,8 @@ mod sealed {
 ///
 /// # Errors
 ///
-/// On error this function allocates to copy the input string into the error return.
+/// On error this function allocates to copy the input string into the error return. Only a bounded
+/// prefix of an over-long input is retained.
 #[inline]
 pub fn int_from_str<T: Integer>(s: &str) -> Result<T, ParseIntError> { int(s) }
 
@@ -61,7 +60,8 @@ pub fn int_from_str<T: Integer>(s: &str) -> Result<T, ParseIntError> { int(s) }
 ///
 /// # Errors
 ///
-/// On error the input string is moved into the error return without allocating.
+/// On error the input string is moved into the error return without allocating, retaining it in
+/// full.
 #[inline]
 #[cfg(feature = "alloc")]
 pub fn int_from_string<T: Integer>(s: alloc::string::String) -> Result<T, ParseIntError> { int(s) }
@@ -70,22 +70,25 @@ pub fn int_from_string<T: Integer>(s: alloc::string::String) -> Result<T, ParseI
 ///
 /// # Errors
 ///
-/// On error the input string is converted into the error return without allocating.
+/// On error the input string is converted into the error return without allocating, retaining it
+/// in full.
 #[inline]
 #[cfg(feature = "alloc")]
 pub fn int_from_box<T: Integer>(s: alloc::boxed::Box<str>) -> Result<T, ParseIntError> { int(s) }
 
 // This must be private because we do not want `InputString` to appear in the public API.
 #[inline]
-fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIntError> {
+fn int<T: Integer, S: AsRef<str> + error::BoundedInput>(s: S) -> Result<T, ParseIntError> {
     s.as_ref().parse().map_err(|error| {
+        let (input, truncated) = s.into_bounded_input();
         ParseIntError {
-            input: s.into(),
+            input,
             bits: u16::try_from(core::mem::size_of::<T>() * 8).expect("max is 128 bits for u128"),
             // We detect if the type is signed by checking if -1 can be represented by it
             // this way we don't have to implement special traits and optimizer will get rid of the
             // computation.
             is_signed: T::try_from(-1i8).is_ok(),
+            truncated,
             source: error,
         }
     })
@@ -325,11 +328,9 @@ macro_rules! parse_hex_for {
         #[doc = "`."]
         #[inline]
         fn $uncheck_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
-            <$int_type>::from_str_radix(s, 16).map_err(|error| ParseIntError {
-                input: s.into(),
-                bits: $bits,
-                is_signed: false,
-                source: error,
+            <$int_type>::from_str_radix(s, 16).map_err(|error| {
+                let (input, truncated) = error::BoundedInput::into_bounded_input(s);
+                ParseIntError { input, bits: $bits, is_signed: false, truncated, source: error }
             })
         }
     };
@@ -385,11 +386,9 @@ pub(crate) fn hex_u256_unchecked(s: &str) -> Result<internals::u256::U256, Parse
     if !s.is_ascii() {
         // We want the `ParseIntError`; use u128 to get it since we know the string is not ASCII.
         return u128::from_str_radix(s, 16)
-            .map_err(|error| ParseIntError {
-                input: s.into(),
-                bits: 256,
-                is_signed: false,
-                source: error,
+            .map_err(|error| {
+                let (input, truncated) = error::BoundedInput::into_bounded_input(s);
+                ParseIntError { input, bits: 256, is_signed: false, truncated, source: error }
             })
             .map(internals::u256::U256::from);
     }
@@ -432,6 +431,50 @@ pub mod error {
     use internals::error::InputString;
     use internals::write_err;
 
+    /// Maximum number of bytes of borrowed input retained by a parse error. Longer than any valid
+    /// input.
+    pub(super) const ERROR_STRING_LEN_LIMIT: usize = 80;
+
+    /// Converts the input of a parse function into an [`InputString`] for error context.
+    ///
+    /// Borrowed input is copied into the error, so an over-long input would otherwise force an
+    /// allocation proportional to its length; such input is truncated on a UTF-8 boundary to
+    /// [`ERROR_STRING_LEN_LIMIT`] bytes. Owned input is moved into the error without allocating, so
+    /// there is nothing to bound and it is retained in full.
+    pub(crate) trait BoundedInput: Into<InputString> {
+        /// Converts `self` into an [`InputString`], returning whether the retained input was
+        /// truncated.
+        fn into_bounded_input(self) -> (InputString, bool);
+    }
+
+    impl BoundedInput for &str {
+        fn into_bounded_input(self) -> (InputString, bool) {
+            if self.len() <= ERROR_STRING_LEN_LIMIT {
+                (self.into(), false)
+            } else {
+                let mut end = ERROR_STRING_LEN_LIMIT;
+                loop {
+                    if let Some(truncated) = self.get(..end) {
+                        break (truncated.into(), true);
+                    }
+                    end -= 1;
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    impl BoundedInput for alloc::string::String {
+        #[inline]
+        fn into_bounded_input(self) -> (InputString, bool) { (self.into(), false) }
+    }
+
+    #[cfg(feature = "alloc")]
+    impl BoundedInput for alloc::boxed::Box<str> {
+        #[inline]
+        fn into_bounded_input(self) -> (InputString, bool) { (self.into(), false) }
+    }
+
     /// Error with rich context returned when a string can't be parsed as an integer.
     ///
     /// This is an extension of [`core::num::ParseIntError`], which carries the input that failed to
@@ -451,6 +494,8 @@ pub mod error {
         // the struct because String contains pointers so there will be padding of bits at least
         // pointer_size - 1 bytes: min 1B in practice.
         pub(crate) is_signed: bool,
+        // Set when `input` was truncated because the borrowed input exceeded `ERROR_STRING_LEN_LIMIT`.
+        pub(crate) truncated: bool,
         pub(crate) source: core::num::ParseIntError,
     }
 
@@ -463,7 +508,8 @@ pub mod error {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             let signed = if self.is_signed { "signed" } else { "unsigned" };
-            write_err!(f, "{} ({}, {}-bit)", self.input.display_cannot_parse("integer"), signed, self.bits; self.source)
+            let truncated = if self.truncated { "..." } else { "" };
+            write_err!(f, "{}{} ({}, {}-bit)", self.input.display_cannot_parse("integer"), truncated, signed, self.bits; self.source)
         }
     }
 
@@ -572,21 +618,27 @@ pub mod error {
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub(super) struct MissingPrefixError {
         hex: InputString,
+        truncated: bool,
     }
 
     impl MissingPrefixError {
         /// Constructs a new error from the string with the missing prefix.
         #[inline]
-        pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
+        pub(crate) fn new(hex: &str) -> Self {
+            let (hex, truncated) = hex.into_bounded_input();
+            Self { hex, truncated }
+        }
     }
 
     impl fmt::Display for MissingPrefixError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            let truncated = if self.truncated { "..." } else { "" };
             write!(
                 f,
-                "{} because it is missing the '0x' prefix",
-                self.hex.display_cannot_parse("hex")
+                "{}{} because it is missing the '0x' prefix",
+                self.hex.display_cannot_parse("hex"),
+                truncated
             )
         }
     }
@@ -595,7 +647,7 @@ pub mod error {
     impl std::error::Error for MissingPrefixError {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { hex: _ } = self;
+            let Self { hex: _, truncated: _ } = self;
             None
         }
     }
@@ -604,21 +656,27 @@ pub mod error {
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub(super) struct ContainsPrefixError {
         hex: InputString,
+        truncated: bool,
     }
 
     impl ContainsPrefixError {
         /// Constructs a new error from the string that contains the prefix.
         #[inline]
-        pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
+        pub(crate) fn new(hex: &str) -> Self {
+            let (hex, truncated) = hex.into_bounded_input();
+            Self { hex, truncated }
+        }
     }
 
     impl fmt::Display for ContainsPrefixError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            let truncated = if self.truncated { "..." } else { "" };
             write!(
                 f,
-                "{} because it contains the '0x' prefix",
-                self.hex.display_cannot_parse("hex")
+                "{}{} because it contains the '0x' prefix",
+                self.hex.display_cannot_parse("hex"),
+                truncated
             )
         }
     }
@@ -627,7 +685,7 @@ pub mod error {
     impl std::error::Error for ContainsPrefixError {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { hex: _ } = self;
+            let Self { hex: _, truncated: _ } = self;
             None
         }
     }
@@ -635,6 +693,8 @@ pub mod error {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::format;
     #[cfg(feature = "alloc")]
     use alloc::string::ToString;
     #[cfg(feature = "std")]
@@ -647,6 +707,33 @@ mod tests {
         assert!(int_from_str::<u8>("1").is_ok());
         let _ = int_from_str::<i8>("not a number").map_err(|e| assert!(e.is_signed));
         let _ = int_from_str::<u8>("not a number").map_err(|e| assert!(!e.is_signed));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn parse_int_error_bounds_borrowed_input() {
+        let long = "f".repeat(error::ERROR_STRING_LEN_LIMIT + 100);
+
+        // Borrowed input over the limit is truncated and the marker is shown in `Display`.
+        let err = int_from_str::<u32>(&long).unwrap_err();
+        assert!(err.truncated);
+        assert!(format!("{err}").contains("..."));
+        assert!(!format!("{err:?}").contains(&long));
+
+        // Short borrowed input is retained as-is with no marker.
+        let err = int_from_str::<u32>("nope").unwrap_err();
+        assert!(!err.truncated);
+        assert!(!format!("{err}").contains("..."));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn parse_int_error_retains_owned_input_in_full() {
+        // Owned input is moved into the error without truncation, even when over the limit.
+        let long = "f".repeat(error::ERROR_STRING_LEN_LIMIT + 100);
+        let err = int_from_string::<u32>(long.clone()).unwrap_err();
+        assert!(!err.truncated);
+        assert!(format!("{err:?}").contains(&long));
     }
 
     #[test]
