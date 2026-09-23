@@ -6,6 +6,8 @@ use core::ops::BitXor;
 
 #[cfg(all(target_arch = "aarch64", target_endian = "little", target_feature = "neon"))]
 mod neon;
+#[cfg(any(target_arch = "x86_64", all(target_arch = "x86", target_feature = "sse2")))]
+mod sse2;
 
 /// The first four words (32-bit) of the `ChaCha` stream cipher state are constants.
 const WORD_1: u32 = 0x6170_7865;
@@ -347,6 +349,20 @@ impl ChaCha20 {
             for chunk in &mut chunks {
                 if let Ok(chunk) = <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
                     neon::apply_4_blocks(chunk, &self.key, &self.nonce, self.block_count);
+                    self.block_count += 4;
+                }
+            }
+            chunks.into_remainder()
+        };
+
+        // Consume as many 4-block groups as possible, then fall back to
+        // single-block processing.
+        #[cfg(any(target_arch = "x86_64", all(target_arch = "x86", target_feature = "sse2")))]
+        let remaining_buffer = {
+            let mut chunks = remaining_buffer.chunks_exact_mut(4 * CHACHA_BLOCKSIZE);
+            for chunk in &mut chunks {
+                if let Ok(chunk) = <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
+                    sse2::apply_4_blocks(chunk, &self.key, &self.nonce, self.block_count);
                     self.block_count += 4;
                 }
             }
