@@ -137,7 +137,7 @@ impl Weight {
 
     /// Converts to vB rounding up.
     #[inline]
-    #[deprecated(since = "TBD", note = "use `to_vbytes_ceil()` instead")]
+    #[deprecated(since = "TBD", note = "use `to_vb_ceil()` instead")]
     pub const fn to_vbytes_ceil(self) -> u64 { self.to_wu().div_ceil(Self::WITNESS_SCALE_FACTOR) }
 
     /// Checked addition.
