@@ -459,7 +459,7 @@ impl Buffer for Vec<u8> {
 }
 
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
-    type Err = internals::array_vec::error::Error;
+    type Err = internals::array_vec::error::CapacityExceededError;
 
     fn try_push(&mut self, val: u8) -> Result<(), Self::Err> { self.try_push(val) }
 
