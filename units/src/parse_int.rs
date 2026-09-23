@@ -382,9 +382,11 @@ pub(crate) fn hex_u256_unprefixed(s: &str) -> Result<internals::u256::U256, Unpr
 }
 
 pub(crate) fn hex_u256_unchecked(s: &str) -> Result<internals::u256::U256, ParseIntError> {
-    // We cannot use byte offsets into `s` if it is not ASCII.
-    if !s.is_ascii() {
-        // We want the `ParseIntError`; use u128 to get it since we know the string is not ASCII.
+    let digits = s.strip_prefix('+').unwrap_or(s);
+    // We cannot use byte offsets into `s` if it is not ASCII, and the halves must not start with
+    // a sign.
+    if !s.is_ascii() || digits.contains('+') {
+        // We want the `ParseIntError`; use u128 to get it since we know the string is invalid.
         return u128::from_str_radix(s, 16)
             .map_err(|error| {
                 let (input, truncated) = error::BoundedInput::into_bounded_input(s);
@@ -392,13 +394,13 @@ pub(crate) fn hex_u256_unchecked(s: &str) -> Result<internals::u256::U256, Parse
             })
             .map(internals::u256::U256::from);
     }
-    let (high, low) = if s.len() <= 32 {
+    let (high, low) = if digits.len() <= 32 {
         let low = hex_u128_unchecked(s)?;
         (0, low)
     } else {
-        let high_len = s.len() - 32;
-        let high_s = &s[..high_len];
-        let low_s = &s[high_len..];
+        let high_len = digits.len() - 32;
+        let high_s = &digits[..high_len];
+        let low_s = &digits[high_len..];
 
         let high = hex_u128_unchecked(high_s)?;
         let low = hex_u128_unchecked(low_s)?;
