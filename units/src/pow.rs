@@ -102,9 +102,23 @@ macro_rules! do_impl {
 pub struct Work(U256);
 
 impl Work {
-    /// Converts this [`Work`] to [`Target`].
+    /// Converts this [`Work`] to [`Target`], `target = 2^256 / work - 1`.
     #[inline]
-    pub fn to_target(self) -> Target { Target(Target(self.0).to_work().0) }
+    pub fn to_target(self) -> Target {
+        // prevents division by zero.
+        if self.0 == U256::ZERO {
+            return Target(U256::MAX);
+        }
+        // From consensus formula, we know that:
+        //  work   = 2^256 / (target + 1) =>
+        //  target = 2^256 / work - 1
+        //         = (2^256 - work) / work
+        //         = (!work + 1) / work.
+        // where 2^256 - work = -work (mod 2^256)
+        // and   work + !work = 2^256 - 1 => (a bitmask with all 1 bits)
+        //       -work = !work + 1 (mod 2^256).
+        Target((!self.0).wrapping_inc() / self.0)
+    }
 }
 
 do_impl!(Work, ParseWorkError);
@@ -562,8 +576,8 @@ mod tests {
         assert_eq!(Target(U256::ONE).to_work(), Work(half));
         assert_eq!(Target(U256::ZERO).to_work(), Work(max));
 
-        assert_eq!(Work(max).to_target(), Target(U256::ONE));
-        assert_eq!(Work(U256::ONE).to_target(), Target(half));
+        assert_eq!(Work(max).to_target(), Target(U256::ZERO));
+        assert_eq!(Work(U256::ONE).to_target(), Target(max));
         assert_eq!(Work(U256::ZERO).to_target(), Target(max));
     }
 
