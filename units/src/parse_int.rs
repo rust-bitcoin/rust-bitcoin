@@ -328,7 +328,9 @@ macro_rules! parse_hex_for {
         #[doc = "`."]
         #[inline]
         fn $uncheck_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
-            <$int_type>::from_str_radix(s, 16).map_err(|error| {
+            // `from_str_radix` accepts a leading sign, which is not part of a hex encoding.
+            let digits = if s.starts_with('+') { "+" } else { s };
+            <$int_type>::from_str_radix(digits, 16).map_err(|error| {
                 let (input, truncated) = error::BoundedInput::into_bounded_input(s);
                 ParseIntError { input, bits: $bits, is_signed: false, truncated, source: error }
             })
