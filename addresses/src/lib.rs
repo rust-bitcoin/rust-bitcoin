@@ -991,7 +991,8 @@ impl Address {
                 &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
             P2sh { ref hash, network: _ } if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-            Segwit { ref program, hrp: _ } if script.is_witness_program() =>
+            Segwit { ref program, hrp: _ }
+                if script.witness_version() == Some(program.version()) =>
                 &script.as_bytes()[2..] == program.program().as_bytes(),
             P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
         }
@@ -1293,6 +1294,20 @@ mod tests {
         let res = Address::p2sh(&script, AddressParams::TESTNET3);
         assert_eq!(res.unwrap_err().invalid_size(), script.len());
     }
+
+    #[test]
+    fn matches_script_pubkey_checks_witness_version() {
+        let program = [0xab; 20];
+        let v0 = WitnessProgram::new(WitnessVersion::V0, &program).unwrap();
+        let v1 = WitnessProgram::new(WitnessVersion::V1, &program).unwrap();
+        let a0 = Address::from_witness_program(v0, AddressParams::MAINNET);
+        let a1 = Address::from_witness_program(v1, AddressParams::MAINNET);
+
+        assert!(a0.matches_script_pubkey(&a0.script_pubkey()));
+        assert!(a1.matches_script_pubkey(&a1.script_pubkey()));
+        assert!(!a0.matches_script_pubkey(&a1.script_pubkey()));
+        assert!(!a1.matches_script_pubkey(&a0.script_pubkey()));
+}
 
     #[test]
     fn address_debug() {
