@@ -236,7 +236,7 @@ impl Target {
     /// block with this target (see `Self::difficulty`).
     #[inline]
     pub fn to_work(self) -> Work {
-        if self.0 == U256::ZERO || self.0 == U256::ONE {
+        if self.0 == U256::ZERO {
             return Work(U256::MAX);
         }
         // target + 1 wraps to zero for the max target.
@@ -552,17 +552,19 @@ mod tests {
     }
 
     #[test]
-    fn u256_max_min_inverse_roundtrip() {
+    fn work_target_edge_values() {
         let max = U256::MAX;
 
-        for min in &[U256::ZERO, U256::ONE] {
-            // lower target means more work required.
-            assert_eq!(Target(max).to_work(), Work(U256::ONE));
-            assert_eq!(Target(*min).to_work(), Work(max));
+        let half = U256::new(1 << 127, 0);
 
-            assert_eq!(Work(max).to_target(), Target(U256::ONE));
-            assert_eq!(Work(*min).to_target(), Target(max));
-        }
+        // lower target means more work required.
+        assert_eq!(Target(max).to_work(), Work(U256::ONE));
+        assert_eq!(Target(U256::ONE).to_work(), Work(half));
+        assert_eq!(Target(U256::ZERO).to_work(), Work(max));
+
+        assert_eq!(Work(max).to_target(), Target(U256::ONE));
+        assert_eq!(Work(U256::ONE).to_target(), Target(half));
+        assert_eq!(Work(U256::ZERO).to_target(), Target(max));
     }
 
     #[test]
