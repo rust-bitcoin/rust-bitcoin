@@ -636,6 +636,8 @@ impl core::str::FromStr for U256 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut result = Self::ZERO;
 
+        let s = s.strip_prefix('+').unwrap_or(s);
+
         if s.is_empty() {
             return Err(ParseU256Error::Empty);
         }
@@ -643,7 +645,10 @@ impl core::str::FromStr for U256 {
         for chunk in s.as_bytes().rchunks(38).rev() {
             let chunk_str = core::str::from_utf8(chunk).map_err(ParseU256Error::InvalidEncoding)?;
 
-            let val: u128 = chunk_str.parse().map_err(ParseU256Error::InvalidDigit)?;
+            // Per std, u128::from_str can accept a leading + sign,
+            // but that is not valid u256 syntax.
+            let digits = if chunk_str.starts_with('+') { "+" } else { chunk_str };
+            let val: u128 = digits.parse().map_err(ParseU256Error::InvalidDigit)?;
 
             // Shift decimals and add chunk
             let (res, carry1) = result.overflowing_mul(POW10_38.into());
