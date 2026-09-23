@@ -882,6 +882,12 @@ mod tests {
     }
 
     #[test]
+    fn parse_u32_from_hex_unchecked_errors_on_sign() {
+        assert!(hex_u32_unchecked("+ab").is_err());
+        assert!(hex_u32("0x+ab").is_err());
+    }
+
+    #[test]
     fn parse_u128_from_hex_unchecked_errors_on_prefix() {
         assert!(hex_u128_unchecked("0xdeadbeef").is_err());
         assert!(hex_u128_unchecked("0Xdeadbeef").is_err());
