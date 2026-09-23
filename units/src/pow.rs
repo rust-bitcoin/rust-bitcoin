@@ -578,6 +578,14 @@ mod tests {
     fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
 
     #[test]
+    fn target_one_carries_half_max_work() {
+        // nBits 0x0101_0000 is the compact encoding of target = 1.
+        let target = Target::from_compact(CompactTarget::from_consensus(0x0101_0000));
+        assert_eq!(target, Target(U256::ONE));
+        assert_eq!(target.to_work(), Work(U256::new(1 << 127, 0)));
+    }
+
+    #[test]
     fn compact_to_target() {
         // (nBits, target)
         let tests = [
