@@ -600,6 +600,23 @@ mod tests {
     }
 
     #[test]
+    fn work_and_target_convert_both_ways() {
+        let half = U256::new(1 << 127, 0);
+
+        assert_eq!(Work(U256::new(0, 2)).to_target(), Target(U256::new(u128::MAX >> 1, u128::MAX)));
+        assert_eq!(Work(half).to_target(), Target(U256::ONE));
+
+        // Up to u128::MAX the target is smaller than its work, so to_work drops a
+        // remainder too small to change the target on the way back.
+        for target in
+            [Target(U256::ONE), Target(U256::new(0, 0xdead_beef)), Target(U256::new(0, u128::MAX))]
+        {
+            assert_eq!(target.to_work().to_target(), target);
+        }
+        assert_eq!(Target(U256::MAX).to_work().to_target(), Target(U256::MAX));
+    }
+
+    #[test]
     fn compact_to_target() {
         // (nBits, target)
         let tests = [
