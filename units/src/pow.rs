@@ -104,7 +104,7 @@ pub struct Work(U256);
 impl Work {
     /// Converts this [`Work`] to [`Target`].
     #[inline]
-    pub fn to_target(self) -> Target { Target(self.0.inverse()) }
+    pub fn to_target(self) -> Target { Target(Target(self.0).to_work().0) }
 }
 
 do_impl!(Work, ParseWorkError);
@@ -229,13 +229,28 @@ impl Target {
         CompactTarget::from_consensus(compact | (size << 24))
     }
 
-    /// Converts this [`Target`] to [`Work`].
+    /// Converts this [`Target`] to [`Work`], `work = 2^256 / (target + 1)`.
     ///
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
     /// block with this target (see `Self::difficulty`).
     #[inline]
-    pub fn to_work(self) -> Work { Work(self.0.inverse()) }
+    pub fn to_work(self) -> Work {
+        if self.0 == U256::ZERO || self.0 == U256::ONE {
+            return Work(U256::MAX);
+        }
+        // target + 1 wraps to zero for the max target.
+        if self.0 == U256::MAX {
+            return Work(U256::ONE);
+        }
+
+        // Calculates 2^256 / (x + 1) where x is a 256 bit unsigned integer.
+        // But 2^256 does not fit in `U256`, so we compute as Core does:
+        // 2**256 / (x + 1) == ~x / (x + 1) + 1
+        //
+        // ref: <https://github.com/bitcoin/bitcoin/blob/5fe753b56f450b054c42227c5df8346c72447490/src/chain.cpp#L133>
+        Work((!self.0 / self.0.wrapping_inc()).wrapping_inc())
+    }
 }
 do_impl!(Target, ParseTargetError);
 impl_fmt_traits_for_u32_wrapper!(Target);
