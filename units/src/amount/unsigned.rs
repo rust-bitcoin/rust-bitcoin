@@ -563,19 +563,27 @@ impl Amount {
     ///
     /// # Errors
     ///
-    /// This can fail only if `fee_rate` is zero, therefore an error returned from this method can
-    /// be treated as infinity.
+    /// Returns an error if `fee_rate` is zero, or if the resulting weight would exceed
+    /// [`Weight::MAX`].
     #[inline]
     pub const fn div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
-        // Use ceil because result is used as the divisor.
-        let rate = fee_rate.to_sat_per_kwu_ceil();
-        // Early return so we do not have to use checked arithmetic below.
+        // Operate on u128 to gracefully handle potential intermediate overflow
+        // case below, e.g. Amount::MAX * 4_000_000 > u64::MAX.
+        let rate = const_casts::u64_to_u128(fee_rate.to_sat_per_mvb());
+        let sats = const_casts::u64_to_u128(self.to_sat());
         if rate == 0 {
             return R::Error(E::while_doing(MathErrorKind::DivByZero));
         }
-
-        let msats = self.to_msat();
-        NumOpResult::Valid(Weight::from_wu(msats.div_ceil(rate)))
+        // Save division until the end to keep precision (no intermediate integer rounding).
+        let wu = (sats * 4_000_000).div_ceil(rate);
+        if wu <= const_casts::u64_to_u128(u64::MAX) {
+            R::Valid(Weight::from_wu(wu as u64))
+        } else {
+            R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Div,
+                is_negative: false,
+            }))
+        }
     }
 }
 
