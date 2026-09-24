@@ -109,7 +109,7 @@ macro_rules! impl_u32_wrapper {
         impl<'a> Arbitrary<'a> for $newtype {
             #[inline]
             fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-                let choice = u.int_in_range(0..=2)?;
+                let choice = u.int_in_range(0..=3)?;
                 match choice {
                     0 => Ok(Self::ZERO),
                     1 => Ok(Self::MIN),
