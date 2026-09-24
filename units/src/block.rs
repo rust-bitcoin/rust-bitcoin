@@ -111,9 +111,8 @@ macro_rules! impl_u32_wrapper {
             fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
                 let choice = u.int_in_range(0..=2)?;
                 match choice {
-                    0 => Ok(Self::ZERO),
-                    1 => Ok(Self::MIN),
-                    2 => Ok(Self::MAX),
+                    0 => Ok(Self::MIN),
+                    1 => Ok(Self::MAX),
                     _ => Ok(Self::from_u32(u32::arbitrary(u)?)),
                 }
             }
@@ -708,6 +707,29 @@ mod tests {
 
     use super::*;
     use crate::relative::{NumberOf512Seconds, TimeOverflowError};
+
+    #[test]
+    #[cfg(feature = "arbitrary")]
+    fn arbitrary_block_wrappers_generate_non_boundary_values() {
+        let data = [2, 1, 2, 3, 4];
+
+        let height = BlockHeight::arbitrary(&mut Unstructured::new(&data)).unwrap();
+        assert_ne!(height, BlockHeight::MIN);
+        assert_ne!(height, BlockHeight::MAX);
+
+        let height_interval =
+            BlockHeightInterval::arbitrary(&mut Unstructured::new(&data)).unwrap();
+        assert_ne!(height_interval, BlockHeightInterval::MIN);
+        assert_ne!(height_interval, BlockHeightInterval::MAX);
+
+        let mtp = BlockMtp::arbitrary(&mut Unstructured::new(&data)).unwrap();
+        assert_ne!(mtp, BlockMtp::MIN);
+        assert_ne!(mtp, BlockMtp::MAX);
+
+        let mtp_interval = BlockMtpInterval::arbitrary(&mut Unstructured::new(&data)).unwrap();
+        assert_ne!(mtp_interval, BlockMtpInterval::MIN);
+        assert_ne!(mtp_interval, BlockMtpInterval::MAX);
+    }
 
     #[test]
     fn sanity_check() {
