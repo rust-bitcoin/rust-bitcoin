@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
-- Fix `ExactSizeEncoder::len()` overcounting in composite encoders (`Encoder2`/`3`/`4`/`6`) after
+- Expose an `ExactByteVecDecoder`, a decoder for an exact number of raw bytes where the count is
+  known from context rather than a length prefix. Matches the `VecDecoderWith`/`ExactVecDecoderWith`
+  pattern.
+- Fix `ExactSizeEncoder::len()` overcounting" in composite encoders (`Encoder2`/`3`/`4`/`6`) after
   sub-encoders are exhausted. The `len()` method now correctly reports only the remaining bytes
   rather than unconditionally summing all sub-encoder lengths.
 - Add `ExactSizeEncoder` implementations for `IterEncoder`, `SliceEncoder`, and

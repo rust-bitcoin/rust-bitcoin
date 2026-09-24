@@ -114,7 +114,9 @@ pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSize
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
 #[doc(inline)]
-pub use self::decode::decoders::{ByteVecDecoder, ExactVecDecoderWith, VecDecoder, VecDecoderWith};
+pub use self::decode::decoders::{
+    ByteVecDecoder, ExactByteVecDecoder, ExactVecDecoderWith, VecDecoder, VecDecoderWith,
+};
 #[doc(inline)]
 pub use self::decode::{
     check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded,
