@@ -21,8 +21,8 @@ use encoding::error::{DecodeError, UnconsumedError};
 use encoding::ReadError;
 #[cfg(feature = "alloc")]
 use encoding::{
-    ByteVecDecoder, ByteVecDecoderError, ExactVecDecoderWith, LengthPrefixExceedsMaxError,
-    VecDecoder, VecDecoderError, VecDecoderWith,
+    ByteVecDecoder, ByteVecDecoderError, ExactByteVecDecoder, ExactVecDecoderWith,
+    LengthPrefixExceedsMaxError, VecDecoder, VecDecoderError, VecDecoderWith,
 };
 
 static BYTES: &[u8] = &[];
@@ -52,6 +52,8 @@ struct Structs {
     q: VecDecoderWith<FooDecoder>,
     #[cfg(feature = "alloc")]
     r: ExactVecDecoderWith<FooDecoder>,
+    #[cfg(feature = "alloc")]
+    s: ExactByteVecDecoder,
 }
 
 // Dummy decoder to use in place of generic.
@@ -125,6 +127,8 @@ struct Clone {
     q: VecDecoderWith<FooDecoder>,
     #[cfg(feature = "alloc")]
     r: ExactVecDecoderWith<FooDecoder>,
+    #[cfg(feature = "alloc")]
+    s: ExactByteVecDecoder,
 }
 
 /// A struct that includes all types that implement `Default` (implies decoders).
@@ -227,6 +231,8 @@ fn c_debug_nonempty() {
         let debug = format!("{:?}", VecDecoderWith::<FooDecoder>::default());
         assert!(!debug.is_empty());
         let debug = format!("{:?}", ExactVecDecoderWith::<FooDecoder>::new(0));
+        assert!(!debug.is_empty());
+        let debug = format!("{:?}", ExactByteVecDecoder::new(0));
         assert!(!debug.is_empty());
     }
 }

@@ -29,31 +29,24 @@ const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
 #[cfg(feature = "alloc")]
 const MAX_VEC_SIZE: usize = 4_000_000;
 
-/// A decoder that decodes a byte vector.
+/// A decoder for an exact number of raw bytes, where the count is known at construction.
 ///
-/// The encoding is expected to start with the number of encoded bytes (length prefix).
+/// Use this when the byte count is determined by context (e.g. from a previously decoded
+/// transaction field) rather than from a length prefix in the byte stream. For the
+/// length-prefixed case, use [`ByteVecDecoder`].
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone)]
-pub struct ByteVecDecoder {
-    prefix_decoder: Option<CompactSizeDecoder>,
+pub struct ExactByteVecDecoder {
     buffer: Vec<u8>,
     bytes_expected: usize,
     bytes_written: usize,
 }
 
 #[cfg(feature = "alloc")]
-impl ByteVecDecoder {
-    /// Constructs a new byte decoder with the default limit of 4,000,000 bytes.
-    pub const fn new() -> Self { Self::new_with_limit(MAX_VEC_SIZE) }
-
-    /// Constructs a new byte decoder with a custom limit of bytes.
-    pub const fn new_with_limit(limit: usize) -> Self {
-        Self {
-            prefix_decoder: Some(CompactSizeDecoder::new_with_limit(limit)),
-            buffer: Vec::new(),
-            bytes_expected: 0,
-            bytes_written: 0,
-        }
+impl ExactByteVecDecoder {
+    /// Constructs a decoder that will decode exactly `count` bytes.
+    pub const fn new(count: usize) -> Self {
+        Self { buffer: Vec::new(), bytes_expected: count, bytes_written: 0 }
     }
 
     /// Reserves capacity for byte vectors in batches.
@@ -77,31 +70,11 @@ impl ByteVecDecoder {
 }
 
 #[cfg(feature = "alloc")]
-impl Default for ByteVecDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-#[cfg(feature = "alloc")]
-impl Decoder for ByteVecDecoder {
+impl Decoder for ExactByteVecDecoder {
     type Output = Vec<u8>;
     type Error = ByteVecDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
-        use ByteVecDecoderError as E;
-        use ByteVecDecoderErrorInner as Inner;
-
-        if let Some(mut decoder) = self.prefix_decoder.take() {
-            if decoder.push_bytes(bytes).map_err(Inner::LengthPrefixDecode).map_err(E)?.needs_more()
-            {
-                self.prefix_decoder = Some(decoder);
-                return Ok(DecoderStatus::NeedsMore);
-            }
-            self.bytes_expected = decoder.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
-            self.prefix_decoder = None;
-
-            // For DoS prevention, let's not allocate all memory upfront.
-        }
-
         self.reserve();
 
         let remaining = self.bytes_expected - self.bytes_written;
@@ -123,21 +96,85 @@ impl Decoder for ByteVecDecoder {
         use ByteVecDecoderError as E;
         use ByteVecDecoderErrorInner as Inner;
 
-        let missing = if let Some(ref prefix_decoder) = self.prefix_decoder {
-            prefix_decoder.read_limit()
-        } else if self.bytes_written != self.bytes_expected {
-            self.bytes_expected - self.bytes_written
-        } else {
-            return Ok(self.buffer);
-        };
+        if self.bytes_written != self.bytes_expected {
+            let missing = self.bytes_expected - self.bytes_written;
+            return Err(UnexpectedEofError { missing }).map_err(Inner::UnexpectedEof).map_err(E);
+        }
 
-        Err(UnexpectedEofError { missing }).map_err(Inner::UnexpectedEof).map_err(E)
+        Ok(self.buffer)
+    }
+
+    fn read_limit(&self) -> usize { self.bytes_expected - self.bytes_written }
+}
+
+/// A decoder that decodes a byte vector.
+///
+/// The encoding is expected to start with the number of encoded bytes (length prefix).
+/// When the byte count is known from context rather than a length prefix, use
+/// [`ExactByteVecDecoder`] instead.
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone)]
+pub struct ByteVecDecoder {
+    prefix_decoder: Option<CompactSizeDecoder>,
+    bytes: ExactByteVecDecoder,
+}
+
+#[cfg(feature = "alloc")]
+impl ByteVecDecoder {
+    /// Constructs a new byte decoder with the default limit of 4,000,000 bytes.
+    pub const fn new() -> Self { Self::new_with_limit(MAX_VEC_SIZE) }
+
+    /// Constructs a new byte decoder with a custom limit of bytes.
+    pub const fn new_with_limit(limit: usize) -> Self {
+        Self {
+            prefix_decoder: Some(CompactSizeDecoder::new_with_limit(limit)),
+            bytes: ExactByteVecDecoder::new(0),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Default for ByteVecDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "alloc")]
+impl Decoder for ByteVecDecoder {
+    type Output = Vec<u8>;
+    type Error = ByteVecDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
+        use ByteVecDecoderError as E;
+        use ByteVecDecoderErrorInner as Inner;
+
+        if let Some(mut pd) = self.prefix_decoder.take() {
+            if pd.push_bytes(bytes).map_err(Inner::LengthPrefixDecode).map_err(E)?.needs_more() {
+                self.prefix_decoder = Some(pd);
+                return Ok(DecoderStatus::NeedsMore);
+            }
+            let count = pd.end().map_err(Inner::LengthPrefixDecode).map_err(E)?;
+            self.bytes = ExactByteVecDecoder::new(count);
+        }
+
+        self.bytes.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        use ByteVecDecoderErrorInner as Inner;
+
+        if let Some(pd) = self.prefix_decoder {
+            return Err(UnexpectedEofError { missing: pd.read_limit() })
+                .map_err(Inner::UnexpectedEof)
+                .map_err(ByteVecDecoderError);
+        }
+
+        self.bytes.end()
     }
 
     fn read_limit(&self) -> usize {
         self.prefix_decoder
             .as_ref()
-            .map_or(self.bytes_expected - self.bytes_written, CompactSizeDecoder::read_limit)
+            .map_or_else(|| self.bytes.read_limit(), CompactSizeDecoder::read_limit)
     }
 }
 
@@ -980,18 +1017,18 @@ mod tests {
         decoder.push_bytes(&mut prefix_slice).expect("length plus first element");
         assert!(prefix_slice.is_empty());
 
-        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE);
-        assert_eq!(decoder.buffer.len(), 1);
-        assert_eq!(decoder.buffer[0], 0xAA);
+        assert_eq!(decoder.bytes.buffer.capacity(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.bytes.buffer.len(), 1);
+        assert_eq!(decoder.bytes.buffer[0], 0xAA);
 
         let fill = vec![0xBB; MAX_VECTOR_ALLOCATE - 1];
         let mut fill_slice = fill.as_slice();
         decoder.push_bytes(&mut fill_slice).expect("fills to batch boundary, full capacity");
         assert!(fill_slice.is_empty());
 
-        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE);
-        assert_eq!(decoder.buffer.len(), MAX_VECTOR_ALLOCATE);
-        assert_eq!(decoder.buffer[MAX_VECTOR_ALLOCATE - 1], 0xBB);
+        assert_eq!(decoder.bytes.buffer.capacity(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.bytes.buffer.len(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.bytes.buffer[MAX_VECTOR_ALLOCATE - 1], 0xBB);
 
         let mut tail = vec![0xCC];
         tail.extend([0xDD].repeat(tail_length - 1));
@@ -999,9 +1036,9 @@ mod tests {
         decoder.push_bytes(&mut tail_slice).expect("fills the remaining bytes");
         assert!(tail_slice.is_empty());
 
-        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE + tail_length);
-        assert_eq!(decoder.buffer.len(), total_len);
-        assert_eq!(decoder.buffer[MAX_VECTOR_ALLOCATE], 0xCC);
+        assert_eq!(decoder.bytes.buffer.capacity(), MAX_VECTOR_ALLOCATE + tail_length);
+        assert_eq!(decoder.bytes.buffer.len(), total_len);
+        assert_eq!(decoder.bytes.buffer[MAX_VECTOR_ALLOCATE], 0xCC);
 
         let result = decoder.end().unwrap();
         assert_eq!(result.len(), total_len);
