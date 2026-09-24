@@ -5,7 +5,7 @@
 use core::fmt;
 use core::mem::MaybeUninit;
 
-use error::Error;
+pub use error::CapacityExceededError;
 pub use safety_boundary::ArrayVec;
 
 /// Limits the scope of `unsafe` auditing.
@@ -95,9 +95,9 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
     ///
     /// # Errors
     ///
-    /// Returns `CapacityExceeded` if the `ArrayVec` is full.
-    pub fn try_push(&mut self, element: T) -> Result<(), Error> {
-        let first = self.spare_capacity_mut().first_mut().ok_or(Error::CapacityExceeded(CAP))?;
+    /// Returns error if the `ArrayVec` is full.
+    pub fn try_push(&mut self, element: T) -> Result<(), CapacityExceededError> {
+        let first = self.spare_capacity_mut().first_mut().ok_or(CapacityExceededError { capacity: CAP })?;
         *first = MaybeUninit::new(element);
         let old_len = self.len();
         // SOUNDNESS:
@@ -223,25 +223,22 @@ pub mod error {
 
     /// Errors encountered when inserting or removing elements from an `ArrayVec`.
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-    pub enum Error {
-        /// Attempting to push additional element beyond the `ArrayVec`'s capacity.
-        CapacityExceeded(usize),
+    pub struct CapacityExceededError {
+        /// The capacity that was exceeded.
+        pub(super) capacity: usize,
     }
 
-    impl fmt::Display for Error {
+    impl fmt::Display for CapacityExceededError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Self::CapacityExceeded(cap) => write!(f, "Capacity exceeded: {}", cap),
-            }
+            write!(f, "Capacity exceeded: {}", self.capacity)
         }
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for Error {
+    impl std::error::Error for CapacityExceededError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            match self {
-                Self::CapacityExceeded(_) => None,
-            }
+            let Self { capacity: _ } = self;
+            None
         }
     }
 }
