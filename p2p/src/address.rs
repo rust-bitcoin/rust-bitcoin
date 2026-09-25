@@ -40,6 +40,8 @@ pub struct Address {
 
 const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 const IPV4_EMBEDDED_IPV6: [u16; 6] = [0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFF];
+// BIP155 internal-in-IPv6 prefix (0xFD + sha256("bitcoin")[0:5]).
+const INTERNAL_IN_IPV6: [u16; 3] = [0xFD6B, 0x88C0, 0x8724];
 
 impl Address {
     /// Constructs a new address message for a socket
@@ -492,6 +494,9 @@ crate::decoder_newtype! {
                 if octets[0..6] == IPV4_EMBEDDED_IPV6 {
                     return Err(AddrV2DecoderError::WrappedIpv4);
                 }
+                if octets[0..3] == INTERNAL_IN_IPV6 {
+                    return Err(AddrV2DecoderError::InternalInIpv6);
+                }
                 Ok(AddrV2::Ipv6(Self::ipv6_from_segments(octets)))
             }
             4 => {
@@ -717,6 +722,8 @@ pub mod error {
         WrappedOnionCat,
         /// Wrapped IPV4 sent as IPV6 is invalid.
         WrappedIpv4,
+        /// Internal-in-IPv6 address is invalid.
+        InternalInIpv6,
     }
 
     impl From<Infallible> for AddrV2DecoderError {
@@ -732,6 +739,8 @@ pub mod error {
                 Self::NotCjdns => write!(f, "CJDNS address must start with a reserved byte."),
                 Self::WrappedOnionCat => write!(f, "OnionCat address sent as IPv6 is invalid."),
                 Self::WrappedIpv4 => write!(f, "wrapped IPv4 sent as IPv6 is invalid."),
+                Self::InternalInIpv6 =>
+                    write!(f, "internal-in-IPv6 address sent as IPv6 is invalid."),
             }
         }
     }
@@ -745,6 +754,7 @@ pub mod error {
                 Self::NotCjdns => None,
                 Self::WrappedOnionCat => None,
                 Self::WrappedIpv4 => None,
+                Self::InternalInIpv6 => None,
             }
         }
     }
@@ -1033,7 +1043,10 @@ impl<'a> Arbitrary<'a> for AddrV2 {
             ))),
             1 => {
                 let mut segments: [u16; 8] = u.arbitrary()?;
-                if segments[0..3] == ONION || segments[0..6] == IPV4_EMBEDDED_IPV6 {
+                if segments[0..3] == ONION
+                    || segments[0..6] == IPV4_EMBEDDED_IPV6
+                    || segments[0..3] == INTERNAL_IN_IPV6
+                {
                     segments[0] ^= 1;
                 }
                 Ok(Self::Ipv6(Ipv6Addr::from(segments)))
@@ -1251,6 +1264,16 @@ mod test {
         // Invalid IPv6, contains embedded TORv2.
         let torish = hex!("0210fd87d87eeb430102030405060708090a");
         assert!(encoding::decode_from_slice::<AddrV2>(&torish).is_err());
+
+        // Invalid IPv6, internal-in-IPv6 prefix (BIP155 NET_INTERNAL, see #6924).
+        let internal = hex!("0210fd6b88c0872400040005000600070008");
+        assert!(encoding::decode_from_slice::<AddrV2>(&internal).is_err());
+
+        // Valid IPv6, unique-local address outside the internal-in-IPv6 prefix.
+        let ula_bytes = hex!("0210fc000001000200030004000500060007");
+        let want = AddrV2::Ipv6("fc00:1:2:3:4:5:6:7".parse::<Ipv6Addr>().unwrap());
+        let ip: AddrV2 = encoding::decode_from_slice(&ula_bytes).unwrap();
+        assert_eq!(ip, want);
 
         // Valid TORv3.
         let tor_bytes =
