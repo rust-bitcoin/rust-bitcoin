@@ -300,6 +300,25 @@ fn partial_ord_trait() {
     units!(codecs, assert_does_not_implement, PartialOrd);
 }
 
+#[test]
+fn ord_trait() {
+    // C-COMMON-TRAITS: Every value type implements `Ord`.
+    // POLICY: Value types use the standard derive set.
+    units!(structs, assert_implements, Ord);
+
+    // FORBIDDEN BY DEPENDENCY: PartialOrd
+    units!(enums, assert_does_not_implement, Ord);
+
+    // FORBIDDEN BY DEPENDENCY: Eq, PartialOrd
+    units!(adapters, assert_does_not_implement, Ord);
+
+    // FORBIDDEN BY DEPENDENCY: PartialOrd
+    units!(errors, assert_does_not_implement, Ord);
+
+    // FORBIDDEN BY DEPENDENCY: Eq, PartialOrd
+    units!(codecs, assert_does_not_implement, Ord);
+}
+
 /// A struct that includes all public non-error enums.
 struct Enums {
     a: amount::Denomination,
@@ -339,7 +358,7 @@ struct Types {
 
 /// A struct that includes all public non-error non-helper structs.
 // C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Hash)]
 struct CommonTraits {
     // Full path to show alphabetic sort order.
     a: amount::Amount,
