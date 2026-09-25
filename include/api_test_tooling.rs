@@ -45,6 +45,7 @@ mod trait_probe {
         Debug => (::core::fmt::Debug),
         Default => (::core::default::Default),
         Display => (::core::fmt::Display),
+        Eq => (::core::cmp::Eq),
         PartialEq => (::core::cmp::PartialEq),
     }
 }
