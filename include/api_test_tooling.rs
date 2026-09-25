@@ -50,6 +50,8 @@ mod trait_probe {
         Ord => (::core::cmp::Ord),
         PartialEq => (::core::cmp::PartialEq),
         PartialOrd => (::core::cmp::PartialOrd),
+        Send => (::core::marker::Send),
+        Sync => (::core::marker::Sync),
     }
 }
 

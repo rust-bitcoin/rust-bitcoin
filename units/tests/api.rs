@@ -347,6 +347,18 @@ fn hash_trait() {
     units!(codecs, assert_does_not_implement, Hash);
 }
 
+#[test]
+fn send_trait() {
+    // C-SEND-SYNC: Every public type implements `Send`.
+    units!(all, assert_implements, Send);
+}
+
+#[test]
+fn sync_trait() {
+    // C-SEND-SYNC: Every public type implements `Sync`.
+    units!(all, assert_implements, Sync);
+}
+
 /// A struct that includes all public non-error enums.
 struct Enums {
     a: amount::Denomination,
@@ -384,33 +396,6 @@ struct Types {
     b: Structs,
 }
 
-/// A struct that includes all public error types (excl. decode errors).
-struct Errors {
-    b: amount::error::InvalidCharacterError,
-    c: amount::error::MissingDenominationError,
-    d: amount::error::MissingDigitsError,
-    e: amount::error::OutOfRangeError,
-    f: amount::error::ParseAmountError,
-    g: amount::error::ParseDenominationError,
-    h: amount::error::ParseError,
-    i: amount::error::PossiblyConfusingDenominationError,
-    j: amount::error::TooPreciseError,
-    k: amount::error::UnknownDenominationError,
-    l: block::TooBigForRelativeHeightError,
-    m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
-}
-
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
@@ -442,21 +427,6 @@ fn c_debug_nonempty() {
     for s in debug {
         assert!(!s.is_empty());
     }
-}
-
-/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
-#[test]
-fn c_send_sync() {
-    fn assert_send<T: Send>() {}
-    fn assert_sync<T: Sync>() {}
-
-    //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
-    assert_send::<Types>();
-    assert_sync::<Types>();
-
-    // Error types should implement the Send and Sync traits (C-GOOD-ERR).
-    assert_send::<Errors>();
-    assert_sync::<Errors>();
 }
 
 /// C-OBJECT: Tests that traits are object-safe where appropriate.
