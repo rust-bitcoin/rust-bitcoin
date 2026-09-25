@@ -12,7 +12,6 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
@@ -431,41 +430,24 @@ fn deserialize_trait() {
     units!(codecs, assert_does_not_implement, Deserialize);
 }
 
-/// A struct that includes all public non-error enums.
-struct Enums {
-    a: amount::Denomination,
-    b: absolute::LockTime,
-    c: relative::LockTime,
-    d: result::MathOp,
-    e: result::NumOpResult<Amount>,
-}
+#[test]
+fn arbitrary_trait() {
+    // P-ARBITRARY: Public types implement `Arbitrary`.
+    units!(
+        public_types,
+        assert_implements,
+        Arbitrary,
+        except [
+            // TODO: IMPLEMENT, not satisfied yet
+            amount::Display,
+        ]
+    );
 
-/// A struct that includes all public non-error structs.
-// Does not include encoders and decoders.
-struct Structs {
-    // Full path to show alphabetic sort order.
-    a: amount::Amount,
-    b: amount::Display,
-    c: amount::SignedAmount,
-    d: block::BlockHeight,
-    e: block::BlockHeightInterval,
-    f: block::BlockMtp,
-    g: block::BlockMtpInterval,
-    h: fee_rate::FeeRate,
-    i: locktime::absolute::Height,
-    j: locktime::absolute::MedianTimePast,
-    k: locktime::relative::NumberOf512Seconds,
-    l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
-    n: sequence::Sequence,
-    o: time::BlockTime,
-    p: weight::Weight,
-}
+    // TODO: IMPLEMENT, not satisfied yet
+    units!(errors, assert_does_not_implement, Arbitrary);
 
-/// A struct that includes all public non-error types.
-struct Types {
-    a: Enums,
-    b: Structs,
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding codecs have no `Arbitrary`.
+    units!(codecs, assert_does_not_implement, Arbitrary);
 }
 
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
@@ -714,49 +696,4 @@ fn p_decoders_implement_new() {
     let _ = pow::CompactTargetDecoder::new();
     let _ = sequence::SequenceDecoder::new();
     let _ = time::BlockTimeDecoder::new();
-}
-
-impl<'a> Arbitrary<'a> for Types {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self { a: Enums::arbitrary(u)?, b: Structs::arbitrary(u)? };
-        Ok(a)
-    }
-}
-
-impl<'a> Arbitrary<'a> for Structs {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self {
-            a: Amount::arbitrary(u)?,
-            // Skip the `Display` type.
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
-            c: SignedAmount::arbitrary(u)?,
-            d: BlockHeight::arbitrary(u)?,
-            e: BlockHeightInterval::arbitrary(u)?,
-            f: BlockMtp::arbitrary(u)?,
-            g: BlockMtpInterval::arbitrary(u)?,
-            h: FeeRate::arbitrary(u)?,
-            i: absolute::Height::arbitrary(u)?,
-            j: absolute::MedianTimePast::arbitrary(u)?,
-            k: relative::NumberOf512Seconds::arbitrary(u)?,
-            l: relative::NumberOfBlocks::arbitrary(u)?,
-            m: pow::CompactTarget::from_consensus(u.int_in_range(0..=u32::MAX)?),
-            n: sequence::Sequence::arbitrary(u)?,
-            o: BlockTime::arbitrary(u)?,
-            p: Weight::arbitrary(u)?,
-        };
-        Ok(a)
-    }
-}
-
-impl<'a> Arbitrary<'a> for Enums {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self {
-            a: amount::Denomination::arbitrary(u)?,
-            b: absolute::LockTime::arbitrary(u)?,
-            c: relative::LockTime::arbitrary(u)?,
-            d: result::MathOp::arbitrary(u)?,
-            e: result::NumOpResult::<Amount>::arbitrary(u)?,
-        };
-        Ok(a)
-    }
 }

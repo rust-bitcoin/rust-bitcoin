@@ -40,6 +40,8 @@ mod trait_probe {
     // A trait must be listed here to be checked.
     // At the present, only units traits are expected to get listed here.
     probed_traits! {
+        #[cfg(feature = "arbitrary")]
+        Arbitrary => (for<'a> ::arbitrary::Arbitrary<'a>),
         Clone => (::core::clone::Clone),
         Copy => (::core::marker::Copy),
         Debug => (::core::fmt::Debug),
