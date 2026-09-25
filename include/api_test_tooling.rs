@@ -43,6 +43,7 @@ mod trait_probe {
         Clone => (::core::clone::Clone),
         Copy => (::core::marker::Copy),
         Debug => (::core::fmt::Debug),
+        Default => (::core::default::Default),
     }
 }
 

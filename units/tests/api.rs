@@ -167,6 +167,46 @@ fn debug_trait() {
     units!(all, assert_implements, Debug);
 }
 
+#[test]
+fn default_trait() {
+    // TODO: DO NOT IMPLEMENT
+    // Do not assume a natural default exists for these.
+    units!(
+        structs,
+        assert_does_not_implement,
+        Default,
+        except [
+            // TODO: IMPLEMENT
+            // Zero is an ok default for an amount.
+            amount::Amount,
+            amount::SignedAmount,
+            // TODO: IMPLEMENT
+            // Zero is an ok default for an interval.
+            block::BlockHeightInterval,
+            block::BlockMtpInterval,
+            locktime::relative::NumberOf512Seconds,
+            locktime::relative::NumberOfBlocks,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // Formatting adapter has nothing to default to.
+    units!(adapters, assert_does_not_implement, Default);
+
+    // TODO: DO NOT IMPLEMENT
+    // No variant is a natural default.
+    units!(enums, assert_does_not_implement, Default);
+
+    // TODO: DO NOT IMPLEMENT
+    // There is no default failure.
+    units!(errors, assert_does_not_implement, Default);
+
+    // P-DECODERS: Decoders have a default constructor.
+    units!(decoders, assert_implements, Default);
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding encoders have no `Default`.
+    units!(encoders, assert_does_not_implement, Default);
+}
+
 /// A struct that includes all public non-error enums.
 struct Enums {
     a: amount::Denomination,
@@ -226,17 +266,6 @@ struct CommonTraits {
     o: weight::Weight,
 }
 
-/// A struct that includes all types that implement `Default`.
-#[derive(Debug, Default, PartialEq, Eq)] // C-COMMON-TRAITS: `Default`
-struct Default {
-    a: Amount,
-    b: SignedAmount,
-    c: BlockHeightInterval,
-    d: BlockMtpInterval,
-    e: relative::NumberOf512Seconds,
-    f: relative::NumberOfBlocks,
-}
-
 /// A struct that includes all public error types (excl. decode errors).
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(PartialEq, Eq)]
@@ -264,17 +293,6 @@ struct Errors {
     v: parse_int::UnprefixedHexError,
     w: pow::CompactTargetDecoderError,
     x: result::NumOpError,
-}
-
-/// A struct that includes all public decoder types.
-#[derive(Default)] // All decoders implement `Default` (P-DECODERS).
-struct Decoders {
-    a: amount::AmountDecoder,
-    b: block::BlockHeightDecoder,
-    c: locktime::absolute::LockTimeDecoder,
-    d: pow::CompactTargetDecoder,
-    e: sequence::SequenceDecoder,
-    f: time::BlockTimeDecoder,
 }
 
 /// A struct that includes all public decoder error types.
@@ -577,16 +595,12 @@ fn p_consistent_exports_weight() {
 /// P-DEFAULT-CHANGE: Tests regression for Default implementation values.
 #[test]
 fn p_default_change() {
-    let got: Default = Default::default();
-    let want = Default {
-        a: Amount::ZERO,
-        b: SignedAmount::ZERO,
-        c: BlockHeightInterval::ZERO,
-        d: BlockMtpInterval::ZERO,
-        e: relative::NumberOf512Seconds::ZERO,
-        f: relative::NumberOfBlocks::ZERO,
-    };
-    assert_eq!(got, want);
+    assert_eq!(Amount::default(), Amount::ZERO);
+    assert_eq!(SignedAmount::default(), SignedAmount::ZERO);
+    assert_eq!(BlockHeightInterval::default(), BlockHeightInterval::ZERO);
+    assert_eq!(BlockMtpInterval::default(), BlockMtpInterval::ZERO);
+    assert_eq!(relative::NumberOf512Seconds::default(), relative::NumberOf512Seconds::ZERO);
+    assert_eq!(relative::NumberOfBlocks::default(), relative::NumberOfBlocks::ZERO);
 }
 
 /// P-DECODERS: Tests that decoders implement a constructor method.
