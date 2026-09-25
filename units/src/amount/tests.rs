@@ -493,6 +493,18 @@ fn parsing() {
         })))
     );
     assert_eq!(
+        p(".", den_btc),
+        Err(amt_err(ParseAmountErrorInner::MissingDigits(MissingDigitsError {
+            kind: MissingDigitsKind::OnlyDot { with_minus_sign: false }
+        })))
+    );
+    assert_eq!(
+        sp("-.", den_btc),
+        Err(amt_err(ParseAmountErrorInner::MissingDigits(MissingDigitsError {
+            kind: MissingDigitsKind::OnlyDot { with_minus_sign: true }
+        })))
+    );
+    assert_eq!(
         p("-1.0x", den_btc),
         Err(amt_err(ParseAmountErrorInner::InvalidCharacter(InvalidCharacterError {
             invalid_char: 'x',
@@ -558,6 +570,16 @@ fn parsing() {
         ),
         Ok(Amount::ONE_BTC),
     );
+}
+
+#[test]
+fn parsing_rejects_malformed_numeric_separators() {
+    use super::Denomination as D;
+
+    for input in [".", "._", "0_", "1_", "1_.0", "1._0"] {
+        assert!(Amount::from_str_in(input, D::Bitcoin).is_err(), "accepted {input:?}");
+        assert!(SignedAmount::from_str_in(input, D::Bitcoin).is_err(), "accepted {input:?}");
+    }
 }
 
 #[test]
@@ -915,7 +937,7 @@ fn from_str() {
     ok_scase("-21000000 BTC", SignedAmount::MIN);
     ok_case("1_000 sat", sat(1000));
     ok_case("1_0_0_0_0_0_0 satoshi", sat(1_000_000));
-    ok_scase("-0_._0_10_00 BTC", ssat(-1_000_000));
+    ok_scase("-0.0_10_00 BTC", ssat(-1_000_000));
 }
 
 #[test]
