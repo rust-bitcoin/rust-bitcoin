@@ -42,6 +42,7 @@ mod trait_probe {
     probed_traits! {
         Clone => (::core::clone::Clone),
         Copy => (::core::marker::Copy),
+        Debug => (::core::fmt::Debug),
     }
 }
 
