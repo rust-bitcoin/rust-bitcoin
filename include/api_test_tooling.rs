@@ -44,6 +44,7 @@ mod trait_probe {
         Copy => (::core::marker::Copy),
         Debug => (::core::fmt::Debug),
         Default => (::core::default::Default),
+        Display => (::core::fmt::Display),
     }
 }
 

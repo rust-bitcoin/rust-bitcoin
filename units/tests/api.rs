@@ -207,6 +207,32 @@ fn default_trait() {
     units!(encoders, assert_does_not_implement, Default);
 }
 
+#[test]
+fn display_trait() {
+    // TODO: IMPLEMENT
+    // Every value type, enum and formatting adapter prints.
+    units!(
+        public_types,
+        assert_implements,
+        Display,
+        except [
+            // TODO: DO NOT IMPLEMENT
+            // There is no canonical unit. `to_sat_per_*` methods make it a caller's choice.
+            fee_rate::FeeRate,
+            // TODO: UNDECIDED
+            result::NumOpResult<Amount>,
+        ]
+    );
+
+    // C-GOOD-ERR: Every error type implements `Display`.
+    // REQUIRED BY DEPENDENCY: std::error::Error
+    units!(errors, assert_implements, Display);
+
+    // TODO: DO NOT IMPLEMENT
+    // Encoders and decoders return bytes and are not printed.
+    units!(codecs, assert_does_not_implement, Display);
+}
+
 /// A struct that includes all public non-error enums.
 struct Enums {
     a: amount::Denomination,
@@ -352,38 +378,6 @@ fn c_send_sync() {
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
     assert_send::<Errors>();
     assert_sync::<Errors>();
-}
-
-/// C-GOOD-ERR: Tests that all public error types implement Display.
-#[test]
-fn c_good_err_display() {
-    use core::fmt;
-
-    fn assert_display<T: fmt::Display>() {}
-
-    assert_display::<amount::error::InvalidCharacterError>();
-    assert_display::<amount::error::MissingDenominationError>();
-    assert_display::<amount::error::MissingDigitsError>();
-    assert_display::<amount::error::OutOfRangeError>();
-    assert_display::<amount::error::ParseAmountError>();
-    assert_display::<amount::error::ParseDenominationError>();
-    assert_display::<amount::error::ParseError>();
-    assert_display::<amount::error::PossiblyConfusingDenominationError>();
-    assert_display::<amount::error::TooPreciseError>();
-    assert_display::<amount::error::UnknownDenominationError>();
-    assert_display::<block::TooBigForRelativeHeightError>();
-    assert_display::<fee_rate::serde::OverflowError>();
-    assert_display::<locktime::absolute::ConversionError>();
-    assert_display::<locktime::absolute::ParseHeightError>();
-    assert_display::<locktime::absolute::ParseTimeError>();
-    assert_display::<locktime::relative::InvalidHeightError>();
-    assert_display::<locktime::relative::InvalidTimeError>();
-    assert_display::<locktime::relative::TimeOverflowError>();
-    assert_display::<parse_int::ParseIntError>();
-    assert_display::<parse_int::PrefixedHexError>();
-    assert_display::<parse_int::UnprefixedHexError>();
-    assert_display::<pow::CompactTargetDecoderError>();
-    assert_display::<result::NumOpError>();
 }
 
 /// C-OBJECT: Tests that traits are object-safe where appropriate.
