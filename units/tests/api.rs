@@ -319,6 +319,34 @@ fn ord_trait() {
     units!(codecs, assert_does_not_implement, Ord);
 }
 
+#[test]
+fn hash_trait() {
+    // C-COMMON-TRAITS: Every public type SHOULD implement Hash
+    // POLICY: Value types use the standard derive set.
+    // REQUIRED BY DEPENDENCY: `LockTime` derives `Hash` over its heights and times.
+    units!(
+        public_types,
+        assert_implements,
+        Hash,
+        except [
+            // TODO: UNDECIDED
+            amount::Display,
+            // TODO: DO NOT IMPLEMENT
+            // Only labels a failed operation inside an error, never a key.
+            result::MathOp,
+            // FORBIDDEN BY DEPENDENCY: `NumOpError` has no `Hash`.
+            result::NumOpResult<Amount>,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // Every field inside error must implement Hash too.
+    units!(errors, assert_does_not_implement, Hash);
+
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding codecs derive only `Debug, Clone`.
+    units!(codecs, assert_does_not_implement, Hash);
+}
+
 /// A struct that includes all public non-error enums.
 struct Enums {
     a: amount::Denomination,
@@ -354,28 +382,6 @@ struct Structs {
 struct Types {
     a: Enums,
     b: Structs,
-}
-
-/// A struct that includes all public non-error non-helper structs.
-// C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
-#[derive(Hash)]
-struct CommonTraits {
-    // Full path to show alphabetic sort order.
-    a: amount::Amount,
-    // b: amount::Display,
-    c: amount::SignedAmount,
-    d: block::BlockHeight,
-    e: block::BlockHeightInterval,
-    f: block::BlockMtp,
-    g: block::BlockMtpInterval,
-    h: fee_rate::FeeRate,
-    i: locktime::absolute::Height,
-    j: locktime::absolute::MedianTimePast,
-    k: locktime::relative::NumberOf512Seconds,
-    l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
 }
 
 /// A struct that includes all public error types (excl. decode errors).

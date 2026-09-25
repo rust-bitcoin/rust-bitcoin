@@ -46,6 +46,7 @@ mod trait_probe {
         Default => (::core::default::Default),
         Display => (::core::fmt::Display),
         Eq => (::core::cmp::Eq),
+        Hash => (::core::hash::Hash),
         Ord => (::core::cmp::Ord),
         PartialEq => (::core::cmp::PartialEq),
         PartialOrd => (::core::cmp::PartialOrd),
