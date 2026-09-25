@@ -23,6 +23,114 @@ use bitcoin_units::{
 
 include!("../../include/api_test_tooling.rs");
 
+// Groups of units public types for testing semantics. Each type is listed once, in one group.
+type_groups! {
+    $ units;
+    // The value types.
+    group structs = [
+        amount::Amount,
+        amount::SignedAmount,
+        block::BlockHeight,
+        block::BlockHeightInterval,
+        block::BlockMtp,
+        block::BlockMtpInterval,
+        fee_rate::FeeRate,
+        locktime::absolute::Height,
+        locktime::absolute::MedianTimePast,
+        locktime::relative::NumberOf512Seconds,
+        locktime::relative::NumberOfBlocks,
+        pow::CompactTarget,
+        pow::Target,
+        pow::Work,
+        sequence::Sequence,
+        time::BlockTime,
+        weight::Weight,
+    ];
+    // All public non-error enums.
+    group enums = [
+        amount::Denomination,
+        locktime::absolute::LockTime,
+        locktime::relative::LockTime,
+        result::MathOp,
+        result::NumOpResult<Amount>,
+    ];
+    // Formatting adapters.
+    group adapters = [amount::Display];
+    // Every error type, feature gated ones included.
+    group errors = [
+        amount::AmountDecoderError,
+        amount::BadPositionError,
+        amount::InvalidCharacterError,
+        amount::MissingDenominationError,
+        amount::MissingDigitsError,
+        amount::OutOfRangeError,
+        amount::ParseAmountError,
+        amount::ParseDenominationError,
+        amount::ParseError,
+        amount::PossiblyConfusingDenominationError,
+        amount::TooPreciseError,
+        amount::UnknownDenominationError,
+        block::BlockHeightDecoderError,
+        block::TooBigForRelativeHeightError,
+        fee_rate::serde::OverflowError,
+        locktime::absolute::ConversionError,
+        locktime::absolute::IncompatibleHeightError,
+        locktime::absolute::IncompatibleTimeError,
+        locktime::absolute::LockTimeDecoderError,
+        locktime::absolute::ParseHeightError,
+        locktime::absolute::ParseTimeError,
+        locktime::relative::DisabledLockTimeError,
+        locktime::relative::IncompatibleHeightError,
+        locktime::relative::IncompatibleTimeError,
+        locktime::relative::InvalidHeightError,
+        locktime::relative::InvalidTimeError,
+        locktime::relative::IsSatisfiedByError,
+        locktime::relative::IsSatisfiedByHeightError,
+        locktime::relative::IsSatisfiedByTimeError,
+        locktime::relative::TimeOverflowError,
+        parse_int::ParseIntError,
+        parse_int::PrefixedHexError,
+        parse_int::UnprefixedHexError,
+        pow::CompactTargetDecoderError,
+        pow::ParseTargetError,
+        pow::ParseWorkError,
+        result::NumOpError,
+        sequence::SequenceDecoderError,
+        time::BlockTimeDecoderError,
+    ];
+    // All public decoder types.
+    group decoders = [
+        amount::AmountDecoder,
+        block::BlockHeightDecoder,
+        locktime::absolute::LockTimeDecoder,
+        pow::CompactTargetDecoder,
+        sequence::SequenceDecoder,
+        time::BlockTimeDecoder,
+    ];
+    // All public encoder types. The lifetime is a `PhantomData` marker, so `'static` probes work.
+    group encoders = [
+        amount::AmountEncoder<'static>,
+        block::BlockHeightEncoder<'static>,
+        locktime::absolute::LockTimeEncoder<'static>,
+        pow::CompactTargetEncoder<'static>,
+        sequence::SequenceEncoder<'static>,
+        time::BlockTimeEncoder<'static>,
+    ];
+    // Every encoder and decoder.
+    union codecs = decoders | encoders;
+    // Every public type that is not an error, encoder or decoder.
+    union public_types = structs | enums | adapters;
+    // Every public type.
+    union all = public_types | errors | codecs;
+}
+
+#[test]
+fn clone_trait() {
+    // C-COMMON-TRAITS: Every public type implements `Clone`.
+    // REQUIRED BY DEPENDENCY: Copy, and the derives on `LockTime`, `NumOpResult` and errors.
+    units!(all, assert_implements, Clone);
+}
+
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
 struct Enums {
@@ -137,7 +245,7 @@ struct Default {
 
 /// A struct that includes all public error types (excl. decode errors).
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
-#[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
+#[derive(Debug, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
     b: amount::error::InvalidCharacterError,
     c: amount::error::MissingDenominationError,
@@ -177,7 +285,7 @@ struct Decoders {
 
 /// A struct that includes all public decoder error types.
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
-#[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
+#[derive(Debug, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct DecoderErrors {
     a: amount::error::AmountDecoderError,
     b: block::BlockHeightDecoderError,
