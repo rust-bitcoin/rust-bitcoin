@@ -41,6 +41,7 @@ mod trait_probe {
     // At the present, only units traits are expected to get listed here.
     probed_traits! {
         Clone => (::core::clone::Clone),
+        Copy => (::core::marker::Copy),
     }
 }
 

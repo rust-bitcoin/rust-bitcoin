@@ -131,6 +131,33 @@ fn clone_trait() {
     units!(all, assert_implements, Clone);
 }
 
+#[test]
+fn copy_trait() {
+    // C-COMMON-TRAITS: Every value type and enum is `Copy`.
+    // POLICY: Value types use the standard derive set.
+    // REQUIRED BY DEPENDENCY: `LockTime` derives `Copy` over its heights and times.
+    units!(structs, assert_implements, Copy);
+    units!(enums, assert_implements, Copy);
+
+    // TODO: DO NOT IMPLEMENT
+    // A formatting adapter is just for printing.
+    units!(adapters, assert_does_not_implement, Copy);
+
+    // POLICY: Errors do not derive `Copy` unless they have to.
+    units!(
+        errors,
+        assert_does_not_implement,
+        Copy,
+        except [
+            // REQUIRED BY DEPENDENCY: `NumOpResult` is `Copy` and holds it.
+            result::NumOpError,
+        ]
+    );
+
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding codecs derive only `Debug, Clone`.
+    units!(codecs, assert_does_not_implement, Copy);
+}
+
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
 struct Enums {
@@ -212,7 +239,7 @@ impl Types {
 
 /// A struct that includes all public non-error non-helper structs.
 // C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct CommonTraits {
     // Full path to show alphabetic sort order.
     a: amount::Amount,
