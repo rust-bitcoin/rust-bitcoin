@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-29
+
+- Sanitize `serde` size hints before allocating [#6919](https://github.com/rust-bitcoin/rust-bitcoin/pull/6919)
+- Simplify `CapacityExceeded` error [#6929](https://github.com/rust-bitcoin/rust-bitcoin/pull/6929)
+- Fix work and target conversion for small values [#6923](https://github.com/rust-bitcoin/rust-bitcoin/pull/6923)
+
 ## [0.7.0] - 2026-09-07
 
 - Add `U256` type, moved from the private `include!` module duplicated in `units` and `bitcoin` [#6715](https://github.com/rust-bitcoin/rust-bitcoin/pull/6715)
