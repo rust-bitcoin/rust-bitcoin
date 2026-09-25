@@ -444,11 +444,13 @@ fn p_consistent_exports_locktime_absolute() {
 fn p_consistent_exports_locktime_relative() {
     use bitcoin_units::locktime::relative::error::{
         DisabledLockTimeError as _, InvalidHeightError as _, InvalidTimeError as _,
+        IsSatisfiedByError as _, IsSatisfiedByHeightError as _, IsSatisfiedByTimeError as _,
         TimeOverflowError as _,
     };
     use bitcoin_units::locktime::relative::{
-        DisabledLockTimeError, InvalidHeightError, InvalidTimeError, NumberOf512Seconds,
-        NumberOfBlocks, TimeOverflowError,
+        DisabledLockTimeError, InvalidHeightError, InvalidTimeError, IsSatisfiedByError,
+        IsSatisfiedByHeightError, IsSatisfiedByTimeError, NumberOf512Seconds, NumberOfBlocks,
+        TimeOverflowError,
     };
 }
 
@@ -469,6 +471,7 @@ fn p_consistent_exports_result() {
 fn p_consistent_exports_pow() {
     use bitcoin_units::pow::{
         CompactTarget, CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder,
+        ParseTargetError, ParseWorkError, Target, Work,
     };
 }
 
