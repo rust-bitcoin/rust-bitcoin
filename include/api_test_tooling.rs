@@ -47,6 +47,7 @@ mod trait_probe {
         Display => (::core::fmt::Display),
         Eq => (::core::cmp::Eq),
         PartialEq => (::core::cmp::PartialEq),
+        PartialOrd => (::core::cmp::PartialOrd),
     }
 }
 
