@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-25
+
+### TODO - Still to merge
+
+  - https://github.com/rust-bitcoin/rust-bitcoin/pull/6923
+  - https://github.com/rust-bitcoin/rust-bitcoin/pull/6919
+  - https://github.com/rust-bitcoin/rust-bitcoin/pull/6929
+
 ## [0.7.0] - 2026-09-07
 
 - Add `U256` type, moved from the private `include!` module duplicated in `units` and `bitcoin` [#6715](https://github.com/rust-bitcoin/rust-bitcoin/pull/6715)
