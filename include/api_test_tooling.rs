@@ -44,6 +44,8 @@ mod trait_probe {
         Copy => (::core::marker::Copy),
         Debug => (::core::fmt::Debug),
         Default => (::core::default::Default),
+        #[cfg(feature = "serde")]
+        Deserialize => (for<'de> ::serde::Deserialize<'de>),
         Display => (::core::fmt::Display),
         Eq => (::core::cmp::Eq),
         Hash => (::core::hash::Hash),
@@ -51,6 +53,8 @@ mod trait_probe {
         PartialEq => (::core::cmp::PartialEq),
         PartialOrd => (::core::cmp::PartialOrd),
         Send => (::core::marker::Send),
+        #[cfg(feature = "serde")]
+        Serialize => (::serde::Serialize),
         Sync => (::core::marker::Sync),
     }
 }

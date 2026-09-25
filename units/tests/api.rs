@@ -359,6 +359,78 @@ fn sync_trait() {
     units!(all, assert_implements, Sync);
 }
 
+#[test]
+fn serialize_trait() {
+    // C-SERDE: Data structures implement `Serialize`.
+    units!(
+        structs,
+        assert_implements,
+        Serialize,
+        except [
+            // TODO: DO NOT IMPLEMENT
+            // No canonical unit, sats or BTC? Pick via `serde(with = "amount::serde::as_sat")`.
+            amount::Amount,
+            amount::SignedAmount,
+            // TODO: DO NOT IMPLEMENT
+            // No canonical unit or rounding, pick a `fee_rate::serde::as_sat_per_*` module.
+            fee_rate::FeeRate,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // Denominations are a display concern and the arithmetic result types are transient.
+    units!(
+        enums,
+        assert_does_not_implement,
+        Serialize,
+        except [
+            // TODO: IMPLEMENT
+            // The locktime is stored as a `u32` that can be serialized.
+            locktime::absolute::LockTime,
+            locktime::relative::LockTime,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // A formatting adapter is just for printing.
+    units!(adapters, assert_does_not_implement, Serialize);
+
+    // TODO: DO NOT IMPLEMENT
+    // Errors are just for reporting.
+    units!(errors, assert_does_not_implement, Serialize);
+
+    // TODO: DO NOT IMPLEMENT
+    // Encoders and decoders only hold bytes mid-conversion, so they don't need serialization.
+    units!(codecs, assert_does_not_implement, Serialize);
+}
+
+#[test]
+fn deserialize_trait() {
+    // C-SERDE: Data structures implement `Deserialize`.
+    // POLICY: Follows `Serialize`.
+    units!(
+        public_types,
+        assert_implements,
+        Deserialize,
+        except [
+            // POLICY: Follows `Serialize`.
+            amount::Amount,
+            amount::SignedAmount,
+            fee_rate::FeeRate,
+            amount::Denomination,
+            result::MathOp,
+            result::NumOpResult<Amount>,
+            amount::Display,
+        ]
+    );
+
+    // POLICY: Follows `Serialize`.
+    units!(errors, assert_does_not_implement, Deserialize);
+
+    // POLICY: Follows `Serialize`.
+    units!(codecs, assert_does_not_implement, Deserialize);
+}
+
 /// A struct that includes all public non-error enums.
 struct Enums {
     a: amount::Denomination,
@@ -439,19 +511,6 @@ fn c_object() {
         // c: Box<dyn amount::serde::SerdeAmountForOpt>,
         // d: Box<dyn parse::Integer>, // Because of core::num::ParseIntError
     }
-}
-
-/// C-SERDE: Tests that serde traits are implemented where expected.
-#[test]
-fn c_serde() {
-    fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
-
-    assert_serde::<BlockHeight>();
-    assert_serde::<BlockHeightInterval>();
-    assert_serde::<BlockMtp>();
-    assert_serde::<BlockMtpInterval>();
-    assert_serde::<Weight>();
-    assert_serde::<Sequence>();
 }
 
 macro_rules! assert_format_matches {
