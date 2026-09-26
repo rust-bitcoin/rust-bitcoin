@@ -4,9 +4,11 @@
 //!
 //! Error handling macros and helpers.
 
+#[cfg(not(creusot))]
 pub mod input_string;
 mod parse_error;
 
+#[cfg(not(creusot))]
 pub use input_string::InputString;
 
 /// Formats error.
