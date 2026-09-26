@@ -150,17 +150,10 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
         I: IntoIterator<Item = T>,
         T: AsRef<[u8]>,
     {
-        let element_count = u64::from(self.element_count);
-        if element_count == 0 {
+        if self.element_count == 0 {
             return false;
         }
-
-        let range = element_count * u64::from(BASIC_FILTER_M);
-        let key = SipHashKey::from_block_hash(block_hash);
-        query.into_iter().any(|element| {
-            let value = map_to_range(key.hash(element.as_ref()), range);
-            match_value(self.payload(), element_count, value).unwrap_or(false)
-        })
+        self.match_sorted_batch(block_hash, query, |batch| self.match_any_sorted(batch))
     }
 
     /// Returns whether every distinct query element matches this filter.
@@ -174,20 +167,10 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
         I: IntoIterator<Item = T>,
         T: AsRef<[u8]>,
     {
-        let element_count = u64::from(self.element_count);
-        let mut iter = query.into_iter();
-
-        if element_count == 0 {
-            return iter.next().is_none();
+        if self.element_count == 0 {
+            return query.into_iter().next().is_none();
         }
-
-        let range = element_count * u64::from(BASIC_FILTER_M);
-        let key = SipHashKey::from_block_hash(blockhash);
-
-        iter.all(|element| {
-            let value = map_to_range(key.hash(element.as_ref()), range);
-            match_value(self.payload(), element_count, value).unwrap_or(false)
-        })
+        !self.match_sorted_batch(blockhash, query, |batch| !self.match_all_sorted(batch))
     }
 
     /// Returns whether the filter matches any element in the pre-sorted slice.
@@ -243,6 +226,43 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
     /// Unwraps the filter into its serialized representation.
     pub fn into_bytes(self) -> B { self.bytes }
 
+    fn match_sorted_batch<I, T>(
+        &self,
+        block_hash: BlockHash,
+        query: I,
+        mut visit: impl FnMut(&[u64]) -> bool,
+    ) -> bool
+    where
+        I: IntoIterator<Item = T>,
+        T: AsRef<[u8]>,
+    {
+        let elements = self.map_elements(block_hash, query);
+
+        let mut batch = [0u64; 128];
+        let mut len = 0;
+
+        for element in elements {
+            batch[len] = element;
+            len += 1;
+
+            if len == 128 {
+                batch.sort_unstable();
+                if visit(&batch) {
+                    return true;
+                }
+                len = 0;
+            }
+        }
+
+        if len > 0 {
+            let tail = &mut batch[..len];
+            tail.sort_unstable();
+            return visit(tail);
+        }
+
+        false
+    }
+
     fn payload(&self) -> &[u8] { &self.bytes.as_ref()[usize::from(self.payload_offset)..] }
 }
 
@@ -291,19 +311,6 @@ fn validate(bytes: &[u8]) -> Result<(u32, u8), DecodeError> {
     }
     let payload_offset = bytes.len() - payload.len();
     Ok((count as u32, payload_offset as u8))
-}
-
-fn match_value(payload: &[u8], element_count: u64, query: u64) -> Result<bool, DecodeError> {
-    let mut reader = BitReader::new(payload);
-    let mut value = 0u64;
-
-    for _ in 0..element_count {
-        value = value.checked_add(reader.read_golomb_rice()?).ok_or(DecodeError::ValueOverflow)?;
-        if value >= query {
-            return Ok(value == query);
-        }
-    }
-    Ok(false)
 }
 
 fn match_gcs(
