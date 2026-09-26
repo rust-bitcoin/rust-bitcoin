@@ -8,7 +8,7 @@
 
 #[cfg(feature = "alloc")]
 use alloc::{collections::BTreeSet, vec::Vec};
-use core::cmp;
+use core::cmp::{self, Ordering};
 
 use encoding::{decode_from_slice_unbounded_with_decoder, CompactSizeU64Decoder};
 #[cfg(feature = "alloc")]
@@ -190,6 +190,48 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
         })
     }
 
+    /// Returns whether the filter matches any element in the pre-sorted slice.
+    ///
+    /// `elements` must contain values produced by [`Self::map_elements`], sorted
+    /// in ascending order. If the slice is **not** sorted the result is
+    /// unspecified but soundness is guaranteed (No UB or Panics).
+    pub fn match_any_sorted(&self, elements: &[u64]) -> bool {
+        if elements.is_empty() || self.element_count == 0 {
+            return false;
+        }
+        match_gcs(self.payload(), u64::from(self.element_count), elements, false).unwrap_or(false)
+    }
+
+    /// Returns whether the filter matches every element in the pre-sorted slice.
+    ///
+    /// `elements` must contain values produced by [`Self::map_elements`], sorted
+    /// in ascending order. If the slice is **not** sorted the result is
+    /// unspecified but soundness is guaranteed (No UB or Panics).
+    pub fn match_all_sorted(&self, elements: &[u64]) -> bool {
+        if elements.is_empty() {
+            return true;
+        }
+        if self.element_count == 0 {
+            return false;
+        }
+        match_gcs(self.payload(), u64::from(self.element_count), elements, true).unwrap_or(false)
+    }
+
+    /// Maps query elements to the filter's range using the given block hash.
+    pub fn map_elements<I, T>(
+        &self,
+        block_hash: BlockHash,
+        elements: I,
+    ) -> impl Iterator<Item = u64>
+    where
+        I: IntoIterator<Item = T>,
+        T: AsRef<[u8]>,
+    {
+        let key = SipHashKey::from_block_hash(block_hash);
+        let range = u64::from(self.element_count) * u64::from(BASIC_FILTER_M);
+        elements.into_iter().map(move |element| map_to_range(key.hash(element.as_ref()), range))
+    }
+
     /// Computes the BIP-0157 double-SHA256 hash of the serialized filter.
     pub fn filter_hash(&self) -> FilterHash {
         FilterHash::from_byte_array(sha256d::Hash::hash(self.bytes.as_ref()).to_byte_array())
@@ -262,6 +304,47 @@ fn match_value(payload: &[u8], element_count: u64, query: u64) -> Result<bool, D
         }
     }
     Ok(false)
+}
+
+fn match_gcs(
+    payload: &[u8],
+    element_count: u64,
+    mapped: &[u64],
+    match_all: bool,
+) -> Result<bool, DecodeError> {
+    if mapped.is_empty() {
+        return Ok(match_all);
+    }
+
+    let mut reader = BitReader::new(payload);
+    let mut value = reader.read_golomb_rice()?;
+    let mut remaining = element_count - 1;
+
+    for &query in mapped {
+        loop {
+            match value.cmp(&query) {
+                Ordering::Equal => {
+                    if match_all {
+                        break;
+                    }
+                    return Ok(true);
+                }
+                Ordering::Less if remaining > 0 => {
+                    value = value
+                        .checked_add(reader.read_golomb_rice()?)
+                        .ok_or(DecodeError::ValueOverflow)?;
+                    remaining -= 1;
+                }
+                Ordering::Less | Ordering::Greater => {
+                    if match_all {
+                        return Ok(false);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    Ok(match_all)
 }
 
 #[derive(Copy, Clone)]
