@@ -7,11 +7,16 @@ use core::mem::MaybeUninit;
 
 pub use error::CapacityExceededError;
 pub use safety_boundary::ArrayVec;
+#[cfg(creusot)]
+use creusot_std::prelude::*;
 
 /// Limits the scope of `unsafe` auditing.
 // New trait impls and fns that don't need to access internals should go below the module, not
 // inside it!
 mod safety_boundary {
+    #[cfg(creusot)]
+    use creusot_std::prelude::*;
+
     use core::mem::MaybeUninit;
 
     /// A growable contiguous collection backed by array.
@@ -31,11 +36,16 @@ mod safety_boundary {
         /// # Panics
         ///
         /// If the slice is longer than `CAP`.
+        #[cfg_attr(creusot, check(ghost))]
+        #[cfg_attr(creusot, requires(slice@.len() <= CAP@))]
+        #[cfg_attr(creusot, ensures(result@ == slice@))]
         pub const fn from_slice(slice: &[T]) -> Self {
             assert!(slice.len() <= CAP);
             let mut data = [MaybeUninit::uninit(); CAP];
             let mut i = 0;
             // can't use mutable references and operators in const
+            #[cfg_attr(creusot, invariant(forall<j> j >= 0 && j < i@ ==> data@[j]@ == Some(slice@[j])))]
+            #[cfg_attr(creusot, variant(slice@.len() - i@))]
             while i < slice.len() {
                 data[i] = MaybeUninit::new(slice[i]);
                 i += 1;
@@ -45,23 +55,41 @@ mod safety_boundary {
         }
 
         /// Returns a reference to the underlying data.
+        #[cfg_attr(creusot, check(ghost))]
+        #[cfg_attr(creusot, ensures(self@ == result@))]
+        #[cfg_attr(creusot, ensures(result@.len() == self.len_view()))]
+        #[cfg_attr(creusot, ensures(forall<i> i >= 0 && i < self.len_view() ==> self.buf_view()[i]@ == Some((*result)@[i])))]
         pub const fn as_slice(&self) -> &[T] {
-            // transmute needed; see https://github.com/rust-lang/rust/issues/63569
-            // SAFETY: self.len is chosen such that everything is initialized up to len,
-            //  and MaybeUninit<T> has the same representation as T.
-            let ptr = self.data.as_ptr().cast::<T>();
-            unsafe { core::slice::from_raw_parts(ptr, self.len) }
+            // SAFETY: self.len is chosen such that everything is initialized up to len
+            unsafe {
+                if self.len > CAP { core::hint::unreachable_unchecked() }
+                super::slice_assume_init_ref(self.data.split_at(self.len).0)
+            }
         }
 
         /// Returns a mutable reference to the underlying data.
+        #[cfg_attr(creusot, check(ghost))]
+        #[cfg_attr(creusot, ensures(result@.len() == self.len_view()))]
+        #[cfg_attr(creusot, ensures((*self)@.len() == (^self)@.len()))]
+        #[cfg_attr(creusot, ensures((*result)@.len() == (^result)@.len()))]
+        #[cfg_attr(creusot, ensures(self@ == result@))]
+        #[cfg_attr(creusot, ensures((^self)@ == (^result)@))]
+        #[cfg_attr(creusot, ensures(forall<i> i >= 0 && i < self.len_view() ==> (*self).buf_view()[i]@ == Some((*result)@[i]) && (^self).buf_view()[i]@ == Some((^result)@[i])))]
+        #[cfg_attr(creusot, ensures(forall<i> i >= self@.len() && i < CAP@ ==> (^self).buf_view()[i] == (*self).buf_view()[i]))]
         pub fn as_mut_slice(&mut self) -> &mut [T] {
-            // SAFETY: self.len is chosen such that everything is initialized up to len,
-            //  and MaybeUninit<T> has the same representation as T.
-            let ptr = self.data.as_mut_ptr().cast::<T>();
-            unsafe { core::slice::from_raw_parts_mut(ptr, self.len) }
+            // SAFETY: self.len is chosen such that everything is initialized up to len
+            unsafe {
+                if self.len > CAP { core::hint::unreachable_unchecked() }
+                super::slice_assume_init_mut(self.data.split_at_mut(self.len).0)
+            }
         }
 
         /// Returns remaining spare capacity of the vector as a slice of `MaybeUninit<T>`.
+        #[cfg_attr(creusot, ensures((^self)@ == (*self)@))]
+        #[cfg_attr(creusot, ensures((*result)@.len() == CAP@ - self@.len()))]
+        #[cfg_attr(creusot, ensures((^result)@.len() == CAP@ - self@.len()))]
+        #[cfg_attr(creusot, ensures(forall<i> i >= 0 && i < CAP@ - self@.len() ==> (*result)[i] == (*self).buf_view()[self@.len() + i]))]
+        #[cfg_attr(creusot, ensures(forall<i> i >= 0 && i < CAP@ - self@.len() ==> (^result)[i] == (^self).buf_view()[self@.len() + i]))]
         pub fn spare_capacity_mut(&mut self) -> &mut [MaybeUninit<T>] {
             // SOUNDNESS: self.len <= CAP is the invariant on the type
             unsafe { self.data.get_unchecked_mut(self.len..) }
@@ -73,10 +101,138 @@ mod safety_boundary {
         ///
         /// * `new_len` must be less than or equal to `CAP`.
         /// * All elements up to `new_len` must be initialized.
+        #[cfg_attr(creusot, requires(new_len <= CAP))]
+        #[cfg_attr(creusot, requires(forall<i> i >= 0 && i < new_len@ ==> match (*self).buf_view()[i]@ { Some(x) => inv(x), None => false }))]
+        #[cfg_attr(creusot, ensures((^self)@.len() == new_len@))]
+        #[cfg_attr(creusot, ensures((^self).buf_view() == (*self).buf_view()))]
+        #[cfg_attr(creusot, ensures((^self).len_view() == new_len@))]
         pub unsafe fn set_len(&mut self, new_len: usize) {
             debug_assert!(new_len <= CAP);
             self.len = new_len;
         }
+
+        #[cfg(creusot)]
+        #[logic(inline)]
+        #[ensures(inv(self) ==> result.len() == CAP@)]
+        pub fn buf_view(self) -> Seq<MaybeUninit<T>> {
+            self.data.view()
+        }
+
+        #[cfg(creusot)]
+        #[logic]
+        #[ensures(inv(self) ==> result <= CAP@)]
+        pub fn len_view(self) -> Int {
+            self.len.view()
+        }
+    }
+
+    #[cfg(creusot)]
+    impl<T: Copy, const CAP: usize> Invariant for ArrayVec<T, CAP> {
+        #[logic(prophetic, inline)]
+        fn invariant(self) -> bool {
+            pearlite! {
+                self.len <= CAP && forall<i: Int> 0 <= i && i < self.len@ ==> match self.data@[i]@ { Some(x) => inv(x), None => false }
+            }
+        }
+    }
+
+    #[cfg(creusot)]
+    impl<T: Copy, const CAP: usize> View for ArrayVec<T, CAP> {
+        type ViewTy = Seq<T>;
+
+        #[logic(inline)]
+        #[ensures(inv(self) ==> result.len() <= CAP@)]
+        #[ensures(inv(self) ==> forall<i> i >= 0 && i < result.len() ==> self.buf_view()[i]@ == Some(result[i]))]
+        #[ensures(inv(self) ==> result.len() == self.len_view())]
+        fn view(self) -> Self::ViewTy {
+            pearlite! {
+                self.buf_view()
+                    .subsequence(0, self.len@)
+                    .map(|x: MaybeUninit<T>| {
+                        match x@ {
+                            Some(x) => x,
+                            None => creusot_std::logic::any(),
+                        }
+                    })
+            }
+        }
+    }
+
+    #[cfg(creusot)]
+    impl<T: Copy + DeepModel, const CAP: usize> DeepModel for ArrayVec<T, CAP> {
+        type DeepModelTy = Seq<T::DeepModelTy>;
+
+        #[logic(open, inline)]
+        #[ensures(self@.len() == result.len())]
+        #[ensures(forall<i> 0 <= i && i < self@.len() ==> result[i] == self@[i].deep_model())]
+        fn deep_model(self) -> Self::DeepModelTy {
+            pearlite! {
+                self@.map(|x: T| x.deep_model())
+            }
+        }
+    }
+}
+
+// Polyfill because creusot doesn't support pointer casting and we need const, pre-1.93 MSRV, and
+// check(ghost)
+#[cfg_attr(creusot, check(ghost))]
+#[cfg_attr(creusot, requires(forall<i> i >= 0 && i < slice@.len() ==> match slice[i]@ { Some(_) => true, None => false }))]
+#[cfg_attr(creusot, ensures(slice@.len() == result@.len()))]
+#[cfg_attr(creusot, ensures(forall<i> i >= 0 && i < slice@.len() ==> slice@[i]@ == Some(result@[i])))]
+const unsafe fn slice_assume_init_ref<T>(slice: &[MaybeUninit<T>]) -> &[T] {
+    #[cfg(creusot)]
+    {
+        // SAFETY: the caller must guarantee correctness
+        unsafe { slice.assume_init_ref() }
+    }
+    #[cfg(not(creusot))]
+    {
+        // SAFETY: the caller must guarantee correctness and the code is literally the copy of
+        // `assume_init_ref` from std.
+        unsafe { &*(slice as *const [MaybeUninit<T>] as *const [T]) }
+    }
+}
+
+// Same reason as above except here we don't have `const` as it's currently not needed even though
+// we could theoretically have it conditional on sufficiently recent Rust version.
+#[cfg_attr(creusot, check(ghost))]
+#[cfg_attr(creusot, requires(forall<i> 0 <= i && i < slice@.len() ==> (*slice)[i]@ != None))]
+#[cfg_attr(creusot, ensures((*slice)@.len() == (*result)@.len()))]
+#[cfg_attr(creusot, ensures((^slice)@.len() == (^result)@.len()))]
+#[cfg_attr(creusot, ensures((*result)@.len() == (^result)@.len()))]
+#[cfg_attr(creusot, ensures(forall<i> 0 <= i && i < slice@.len() ==> (*slice)[i]@ == Some((*result)[i])))]
+#[cfg_attr(creusot, ensures(forall<i> 0 <= i && i < slice@.len() ==> (^slice)[i]@ == Some((^result)[i])))]
+unsafe fn slice_assume_init_mut<T>(slice: &mut [MaybeUninit<T>]) -> &mut [T] {
+    #[cfg(creusot)]
+    {
+        // SAFETY: the caller must guarantee correctness
+        unsafe { slice.assume_init_mut() }
+    }
+    #[cfg(not(creusot))]
+    {
+        // SAFETY: the caller must guarantee correctness and the code is literally the copy of
+        // `assume_init_mut` from std.
+        unsafe { &mut *(slice as *mut [MaybeUninit<T>] as *mut [T]) }
+    }
+}
+
+// Same reason as above
+#[cfg_attr(creusot, check(ghost))]
+#[cfg_attr(creusot, requires(dest@.len() == src@.len()))]
+#[cfg_attr(creusot, ensures((^dest)@.len() == (*dest)@.len()))]
+#[cfg_attr(creusot, ensures(forall<i> i >= 0 && i < dest@.len() ==> (^dest)@[i]@ == Some(src[i])))]
+fn write_copy_of_slice<T: Copy>(dest: &mut [MaybeUninit<T>], src: &[T]) {
+    #[cfg(creusot)]
+    {
+        dest.write_copy_of_slice(src);
+    }
+    #[cfg(not(creusot))]
+    // We want to use std's code verbatim
+    #[allow(clippy::transmute_ptr_to_ptr)]
+    {
+        // SAFETY: &[T] and &[MaybeUninit<T>] have the same layout
+        let uninit_src: &[MaybeUninit<T>] = unsafe { core::mem::transmute(src) };
+        dest.copy_from_slice(uninit_src);
     }
 }
 
@@ -87,6 +243,8 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
     ///
     /// If the length would increase past CAP.
     #[track_caller]
+    #[cfg_attr(creusot, requires(self@.len() < CAP@))]
+    #[cfg_attr(creusot, ensures((^self)@ == self@.push_back(element)))]
     pub fn push(&mut self, element: T) {
         self.try_push(element).expect("push past the capacity of the array");
     }
@@ -96,6 +254,8 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
     /// # Errors
     ///
     /// Returns error if the `ArrayVec` is full.
+    #[cfg_attr(creusot, ensures(self@.len() < CAP@ ==> (^self)@ == self@.push_back(element) && result == Ok(())))]
+    #[cfg_attr(creusot, ensures(self@.len() == CAP@ ==> (^self)@ == (*self)@ && match result { Ok(()) => false, Err(_) => true }))]
     pub fn try_push(&mut self, element: T) -> Result<(), CapacityExceededError> {
         let first = self.spare_capacity_mut().first_mut().ok_or(CapacityExceededError { capacity: CAP })?;
         *first = MaybeUninit::new(element);
@@ -115,9 +275,14 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
     /// # Returns
     ///
     /// None if the `ArrayVec` is empty.
+    #[cfg_attr(creusot, ensures(self@.len() == 0 ==> result == None))]
+    #[cfg_attr(creusot, ensures(self@.len() == 0 ==> (^self) == (*self)))]
+    #[cfg_attr(creusot, ensures(self@.len() > 0 ==> result == Some(self@[self@.len() - 1])))]
+    #[cfg_attr(creusot, ensures(self@.len() > 0 ==> (^self)@ == (*self)@.subsequence(0, (*self)@.len() - 1)))]
     pub fn pop(&mut self) -> Option<T> {
-        let res = *self.last()?;
-        let old_len = self.len();
+        let slice = self.as_slice();
+        let res = *slice.last()?;
+        let old_len = slice.len();
         // SOUNDNESS:
         // * decreasing the already-valid len keeps the len <= CAP invariant
         // * decreasing the already-valid len does not mark any new elements as initialized
@@ -130,16 +295,13 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
     /// # Panics
     ///
     /// If the length would increase past CAP.
+    #[cfg_attr(creusot, requires(slice@.len() <= CAP@ - self@.len()))]
+    #[cfg_attr(creusot, ensures((^self)@ == (*self)@.concat(slice@)))]
     pub fn extend_from_slice(&mut self, slice: &[T]) {
-        // SAFETY: MaybeUninit<T> has the same layout as T
-        let slice = unsafe {
-            let ptr = slice.as_ptr();
-            core::slice::from_raw_parts(ptr.cast::<MaybeUninit<T>>(), slice.len())
-        };
-        self.spare_capacity_mut()
+        let dst = self.spare_capacity_mut()
             .get_mut(..slice.len())
-            .expect("buffer overflow")
-            .copy_from_slice(slice);
+            .expect("buffer overflow");
+        write_copy_of_slice(dst, slice);
         let old_len = self.len();
         unsafe { self.set_len(old_len + slice.len()) }
     }
@@ -156,70 +318,124 @@ impl<T: Copy, const CAP: usize> Default for ArrayVec<T, CAP> {
 #[allow(clippy::non_canonical_clone_impl)]
 #[allow(clippy::expl_impl_clone_on_copy)]
 impl<T: Copy, const CAP: usize> Clone for ArrayVec<T, CAP> {
+    #[cfg_attr(creusot, ensures(result@ == self@))]
     fn clone(&self) -> Self { Self::from_slice(self) }
 }
 
 impl<T: Copy, const CAP: usize> core::ops::Deref for ArrayVec<T, CAP> {
     type Target = [T];
 
+    #[cfg_attr(creusot, check(ghost))]
+    #[cfg_attr(creusot, ensures(self@ == result@))]
+    #[cfg_attr(creusot, ensures(result@.len() == self.len_view()))]
+    #[cfg_attr(creusot, ensures(forall<i> i >= 0 && i < self.len_view() ==> self.buf_view()[i]@ == Some((*result)@[i])))]
     fn deref(&self) -> &Self::Target { self.as_slice() }
 }
 
 impl<T: Copy, const CAP: usize> core::ops::DerefMut for ArrayVec<T, CAP> {
+    #[cfg_attr(creusot, check(ghost))]
+    #[cfg_attr(creusot, ensures(result@.len() == self.len_view()))]
+    #[cfg_attr(creusot, ensures((*self)@.len() == (^self)@.len()))]
+    #[cfg_attr(creusot, ensures((*result)@.len() == (^result)@.len()))]
+    #[cfg_attr(creusot, ensures(self@ == result@))]
+    #[cfg_attr(creusot, ensures((^self)@ == (^result)@))]
+    #[cfg_attr(creusot, ensures(forall<i> i >= 0 && i < self.len_view() ==> (*self).buf_view()[i]@ == Some((*result)@[i]) && (^self).buf_view()[i]@ == Some((^result)@[i])))]
+    #[cfg_attr(creusot, ensures(forall<i> i >= self@.len() && i < CAP@ ==> (^self).buf_view()[i] == (*self).buf_view()[i]))]
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_slice() }
 }
 
-impl<T: Copy + Eq, const CAP: usize> Eq for ArrayVec<T, CAP> {}
+macro_rules! with_deep_model {
+    ($(impl<$param:ident: $bound:ident $(+ $bounds:ident)*, const $cap:ident: usize $(, const $cap2:ident: usize)?> $tr:ident$(<$trait_ty:ty>)? for $ty:ty { $($imp:tt)* })*) => {
+        $(
+        #[cfg(creusot)]
+        impl<$param: $bound $(+ $bounds)* + DeepModel, const $cap: usize $(, const $cap2: usize)?> $tr $(<$trait_ty>)? for $ty {
+            $($imp)*
+        }
+
+        #[cfg(not(creusot))]
+        impl<$param: $bound $(+ $bounds)*, const $cap: usize $(, const $cap2: usize)?> $tr$(<$trait_ty>)? for $ty {
+            $($imp)*
+        }
+        )*
+    }
+}
+
+with_deep_model! {
+impl<T: Copy + PartialEq, const CAP: usize> Eq for ArrayVec<T, CAP> {}
 
 impl<T: Copy + PartialEq, const CAP1: usize, const CAP2: usize> PartialEq<ArrayVec<T, CAP2>>
     for ArrayVec<T, CAP1>
 {
-    fn eq(&self, other: &ArrayVec<T, CAP2>) -> bool { **self == **other }
+    #[cfg_attr(creusot, ensures(result == (self.deep_model() == other.deep_model())))]
+    fn eq(&self, other: &ArrayVec<T, CAP2>) -> bool {
+        /*
+        let left = &**self;
+        let right = &**other;
+
+        proof_assert!(left@ == self@);
+        proof_assert!(right@ == other@);
+        left == right
+        */
+        **self == **other
+    }
 }
 
 impl<T: Copy + PartialEq, const CAP: usize> PartialEq<[T]> for ArrayVec<T, CAP> {
+    #[cfg_attr(creusot, ensures(result == (self.deep_model() == other.deep_model())))]
     fn eq(&self, other: &[T]) -> bool { **self == *other }
 }
 
 impl<T: Copy + PartialEq, const CAP: usize> PartialEq<ArrayVec<T, CAP>> for [T] {
+    #[cfg_attr(creusot, ensures(result == (self.deep_model() == other.deep_model())))]
     fn eq(&self, other: &ArrayVec<T, CAP>) -> bool { *self == **other }
 }
 
 impl<T: Copy + PartialEq, const CAP: usize, const LEN: usize> PartialEq<[T; LEN]>
     for ArrayVec<T, CAP>
 {
-    fn eq(&self, other: &[T; LEN]) -> bool { **self == *other }
+    #[cfg_attr(creusot, ensures(result == (self.deep_model() == other.deep_model())))]
+    fn eq(&self, other: &[T; LEN]) -> bool { other == self }
 }
 
 impl<T: Copy + PartialEq, const CAP: usize, const LEN: usize> PartialEq<ArrayVec<T, CAP>>
     for [T; LEN]
 {
+    #[cfg_attr(creusot, ensures(result == (self.deep_model() == other.deep_model())))]
     fn eq(&self, other: &ArrayVec<T, CAP>) -> bool { *self == **other }
 }
 
 impl<T: Copy + Ord, const CAP: usize> Ord for ArrayVec<T, CAP> {
+    #[cfg_attr(creusot, ensures(result == (*self).deep_model().cmp_log((*rhs).deep_model())))]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
 }
 
 impl<T: Copy + PartialOrd, const CAP1: usize, const CAP2: usize> PartialOrd<ArrayVec<T, CAP2>>
     for ArrayVec<T, CAP1>
 {
+    #[cfg_attr(creusot, ensures(result == (*self).deep_model().partial_cmp_log((*rhs).deep_model())))]
     fn partial_cmp(&self, other: &ArrayVec<T, CAP2>) -> Option<core::cmp::Ordering> {
         (**self).partial_cmp(&**other)
     }
 }
+}
 
 impl<T: Copy + fmt::Debug, const CAP: usize> fmt::Debug for ArrayVec<T, CAP> {
+    #[cfg_attr(creusot, requires(false))]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&**self, f) }
 }
 
 impl<T: Copy + core::hash::Hash, const CAP: usize> core::hash::Hash for ArrayVec<T, CAP> {
+    #[cfg_attr(creusot, requires(false))]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state); }
 }
 
 /// Error types for `ArrayVec`.
 pub mod error {
     use core::fmt;
+    #[cfg(creusot)]
+    use creusot_std::prelude::*;
+    #[cfg(creusot)]
+    use creusot_std::prelude::{Clone, PartialEq};
 
     /// Errors encountered when inserting or removing elements from an `ArrayVec`.
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -229,6 +445,7 @@ pub mod error {
     }
 
     impl fmt::Display for CapacityExceededError {
+        #[cfg_attr(creusot, requires(false))]
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "Capacity exceeded: {}", self.capacity)
         }
@@ -239,6 +456,16 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self { capacity: _ } = self;
             None
+        }
+    }
+
+    #[cfg(creusot)]
+    impl DeepModel for CapacityExceededError {
+        type DeepModelTy = Self;
+
+        #[logic]
+        fn deep_model(self) -> Self::DeepModelTy {
+            self
         }
     }
 }
