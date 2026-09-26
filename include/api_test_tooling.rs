@@ -53,6 +53,7 @@ mod trait_probe {
         #[cfg(feature = "std")]
         Error => (::std::error::Error),
         FromInfallible => (::core::convert::From<::core::convert::Infallible>),
+        FromStr => (::core::str::FromStr),
         Hash => (::core::hash::Hash),
         Ord => (::core::cmp::Ord),
         PartialEq => (::core::cmp::PartialEq),

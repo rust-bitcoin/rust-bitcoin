@@ -470,6 +470,49 @@ fn error_trait() {
     units!(codecs, assert_does_not_implement, Error);
 }
 
+#[test]
+fn from_str_trait() {
+    // TODO: IMPLEMENT
+    // `FromStr` and `Display` should be complementary, and `FromStr` parses decimal.
+    units!(
+        structs,
+        assert_implements,
+        FromStr,
+        except [
+            // POLICY: Follows `Display`.
+            fee_rate::FeeRate,
+        ]
+    );
+
+    // TODO: IMPLEMENT
+    units!(
+        enums,
+        assert_implements,
+        FromStr,
+        except [
+            // TODO: DO NOT IMPLEMENT
+            // Displays just a number for both variants, so a string cannot tell blocks from time.
+            locktime::relative::LockTime,
+            // TODO: DO NOT IMPLEMENT
+            // Only printed inside error messages.
+            result::MathOp,
+            // POLICY: Follows `Display`.
+            result::NumOpResult<Amount>,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // A formatting adapter is just for printing.
+    units!(adapters, assert_does_not_implement, FromStr);
+
+    // TODO: DO NOT IMPLEMENT
+    // Error messages are for reading, not parsing.
+    units!(errors, assert_does_not_implement, FromStr);
+
+    // POLICY: Follows `Display`.
+    units!(codecs, assert_does_not_implement, FromStr);
+}
+
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
