@@ -50,6 +50,7 @@ mod trait_probe {
         Deserialize => (for<'de> ::serde::Deserialize<'de>),
         Display => (::core::fmt::Display),
         Eq => (::core::cmp::Eq),
+        FromInfallible => (::core::convert::From<::core::convert::Infallible>),
         Hash => (::core::hash::Hash),
         Ord => (::core::cmp::Ord),
         PartialEq => (::core::cmp::PartialEq),

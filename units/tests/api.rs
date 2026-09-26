@@ -450,6 +450,12 @@ fn arbitrary_trait() {
     units!(codecs, assert_does_not_implement, Arbitrary);
 }
 
+#[test]
+fn from_infallible_trait() {
+    // P-ERROR-INFALLIBLE: Every error type implements `From<Infallible>`.
+    units!(errors, assert_implements, FromInfallible);
+}
+
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
