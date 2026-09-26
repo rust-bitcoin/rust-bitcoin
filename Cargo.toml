@@ -9,7 +9,7 @@ rbmt.toolchains.nightly = "nightly-2026-09-19"
 rbmt.toolchains.stable = "1.98.1"
 
 [workspace.lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(chacha20_poly1305_fuzz)', 'cfg(fuzzing)', 'cfg(hashes_fuzz)', 'cfg(kani)'] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(chacha20_poly1305_fuzz)', 'cfg(fuzzing)', 'cfg(hashes_fuzz)', 'cfg(kani)', 'cfg(creusot)'] }
 
 [workspace.lints.clippy]
 # Exclude lints we don't think are valuable.
