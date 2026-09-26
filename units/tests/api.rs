@@ -589,6 +589,37 @@ fn decode_trait() {
     units!(codecs, assert_does_not_implement, Decode);
 }
 
+#[test]
+fn encoder_trait() {
+    // REQUIRED BY DEPENDENCY: Encode
+    units!(encoders, assert_implements, Encoder);
+
+    // TODO: IMPLEMENT
+    // Every encoded type has a fixed size, so the length is known before encoding.
+    units!(encoders, assert_implements, ExactSizeEncoder);
+
+    // REQUIRED BY DEPENDENCY: Decode
+    units!(decoders, assert_implements, Decoder);
+
+    // TODO: DO NOT IMPLEMENT
+    // An encoder only writes and a decoder only reads.
+    units!(encoders, assert_does_not_implement, Decoder);
+    units!(decoders, assert_does_not_implement, Encoder);
+    units!(decoders, assert_does_not_implement, ExactSizeEncoder);
+
+    // TODO: DO NOT IMPLEMENT
+    // A value codec is expressed through `Encode` and `Decode`.
+    units!(public_types, assert_does_not_implement, Encoder);
+    units!(public_types, assert_does_not_implement, ExactSizeEncoder);
+    units!(public_types, assert_does_not_implement, Decoder);
+
+    // TODO: DO NOT IMPLEMENT
+    // Errors are not codecs.
+    units!(errors, assert_does_not_implement, Encoder);
+    units!(errors, assert_does_not_implement, ExactSizeEncoder);
+    units!(errors, assert_does_not_implement, Decoder);
+}
+
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
