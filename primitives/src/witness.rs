@@ -819,10 +819,9 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                let mut ret = match a.size_hint() {
-                    Some(len) => Vec::with_capacity(len),
-                    None => Vec::new(),
-                };
+                let mut ret: Vec<Vec<u8>> = Vec::with_capacity(
+                    internals::serde::cautious_size_hint::<Vec<u8>>(a.size_hint()),
+                );
 
                 while let Some(elem) = a.next_element::<String>()? {
                     let vec = hex::decode_to_vec(&elem).map_err(serde::de::Error::custom)?;
@@ -1381,6 +1380,29 @@ mod test {
         witness.push([2_u8; 72]);
 
         witness
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_does_not_trust_size_hint() {
+        use serde::de::value::{Error, SeqAccessDeserializer};
+        use serde::de::{DeserializeSeed, SeqAccess};
+
+        struct FakeHugeHint;
+        impl<'de> SeqAccess<'de> for FakeHugeHint {
+            type Error = Error;
+            fn next_element_seed<T: DeserializeSeed<'de>>(
+                &mut self,
+                _: T,
+            ) -> Result<Option<T::Value>, Error> {
+                Ok(None)
+            }
+            fn size_hint(&self) -> Option<usize> { Some(usize::MAX) }
+        }
+
+        let witness: Witness =
+            serde::Deserialize::deserialize(SeqAccessDeserializer::new(FakeHugeHint)).unwrap();
+        assert!(witness.is_empty());
     }
 
     #[test]
