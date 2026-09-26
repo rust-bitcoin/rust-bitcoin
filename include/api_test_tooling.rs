@@ -45,10 +45,14 @@ mod trait_probe {
         Clone => (::core::clone::Clone),
         Copy => (::core::marker::Copy),
         Debug => (::core::fmt::Debug),
+        #[cfg(feature = "encoding")]
+        Decode => (::encoding::Decode),
         Default => (::core::default::Default),
         #[cfg(feature = "serde")]
         Deserialize => (for<'de> ::serde::Deserialize<'de>),
         Display => (::core::fmt::Display),
+        #[cfg(feature = "encoding")]
+        Encode => (::encoding::Encode),
         Eq => (::core::cmp::Eq),
         #[cfg(feature = "std")]
         Error => (::std::error::Error),

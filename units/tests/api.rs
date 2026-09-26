@@ -513,6 +513,82 @@ fn from_str_trait() {
     units!(codecs, assert_does_not_implement, FromStr);
 }
 
+#[test]
+fn encode_trait() {
+    // TODO: DO NOT IMPLEMENT
+    // Protocol only has a wire format for fields of a transaction, block header or p2p message.
+    units!(
+        structs,
+        assert_does_not_implement,
+        Encode,
+        except [
+            // TODO: IMPLEMENT
+            // The value of a transaction output.
+            amount::Amount,
+            // TODO: IMPLEMENT
+            // The start height of the p2p `getcfilters` and `getcfheaders` messages.
+            block::BlockHeight,
+            // TODO: IMPLEMENT
+            // Fields of a block header.
+            pow::CompactTarget,
+            time::BlockTime,
+            // TODO: IMPLEMENT
+            // A field of a transaction input.
+            sequence::Sequence,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // Same rule, no enum has a wire format on its own.
+    units!(
+        enums,
+        assert_does_not_implement,
+        Encode,
+        except [
+            // TODO: IMPLEMENT
+            // The lock time field of a transaction.
+            locktime::absolute::LockTime,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // A formatting adapter is just for printing.
+    units!(adapters, assert_does_not_implement, Encode);
+
+    // TODO: DO NOT IMPLEMENT
+    // Errors never go on the wire.
+    units!(errors, assert_does_not_implement, Encode);
+
+    // TODO: DO NOT IMPLEMENT
+    // They produce the wire format, they do not have one.
+    units!(codecs, assert_does_not_implement, Encode);
+}
+
+#[test]
+fn decode_trait() {
+    // POLICY: Follows `Encode`.
+    units!(
+        public_types,
+        assert_does_not_implement,
+        Decode,
+        except [
+            // POLICY: Follows `Encode`.
+            amount::Amount,
+            block::BlockHeight,
+            locktime::absolute::LockTime,
+            pow::CompactTarget,
+            sequence::Sequence,
+            time::BlockTime,
+        ]
+    );
+
+    // POLICY: Follows `Encode`.
+    units!(errors, assert_does_not_implement, Decode);
+
+    // POLICY: Follows `Encode`.
+    units!(codecs, assert_does_not_implement, Decode);
+}
+
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
