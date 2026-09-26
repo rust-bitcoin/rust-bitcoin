@@ -102,9 +102,23 @@ macro_rules! do_impl {
 pub struct Work(U256);
 
 impl Work {
-    /// Converts this [`Work`] to [`Target`].
+    /// Converts this [`Work`] to [`Target`], `target = 2^256 / work - 1`.
     #[inline]
-    pub fn to_target(self) -> Target { Target(self.0.inverse()) }
+    pub fn to_target(self) -> Target {
+        // prevents division by zero.
+        if self.0 == U256::ZERO {
+            return Target(U256::MAX);
+        }
+        // From consensus formula, we know that:
+        //  work   = 2^256 / (target + 1) =>
+        //  target = 2^256 / work - 1
+        //         = (2^256 - work) / work
+        //         = (!work + 1) / work.
+        // where 2^256 - work = -work (mod 2^256)
+        // and   work + !work = 2^256 - 1 => (a bitmask with all 1 bits)
+        //       -work = !work + 1 (mod 2^256).
+        Target((!self.0).wrapping_inc() / self.0)
+    }
 }
 
 do_impl!(Work, ParseWorkError);
@@ -229,13 +243,28 @@ impl Target {
         CompactTarget::from_consensus(compact | (size << 24))
     }
 
-    /// Converts this [`Target`] to [`Work`].
+    /// Converts this [`Target`] to [`Work`], `work = 2^256 / (target + 1)`.
     ///
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
     /// block with this target (see `Self::difficulty`).
     #[inline]
-    pub fn to_work(self) -> Work { Work(self.0.inverse()) }
+    pub fn to_work(self) -> Work {
+        if self.0 == U256::ZERO {
+            return Work(U256::MAX);
+        }
+        // target + 1 wraps to zero for the max target.
+        if self.0 == U256::MAX {
+            return Work(U256::ONE);
+        }
+
+        // Calculates 2^256 / (x + 1) where x is a 256 bit unsigned integer.
+        // But 2^256 does not fit in `U256`, so we compute as Core does:
+        // 2**256 / (x + 1) == ~x / (x + 1) + 1
+        //
+        // ref: <https://github.com/bitcoin/bitcoin/blob/5fe753b56f450b054c42227c5df8346c72447490/src/chain.cpp#L133>
+        Work((!self.0 / self.0.wrapping_inc()).wrapping_inc())
+    }
 }
 do_impl!(Target, ParseTargetError);
 impl_fmt_traits_for_u32_wrapper!(Target);
@@ -537,17 +566,19 @@ mod tests {
     }
 
     #[test]
-    fn u256_max_min_inverse_roundtrip() {
+    fn work_target_edge_values() {
         let max = U256::MAX;
 
-        for min in &[U256::ZERO, U256::ONE] {
-            // lower target means more work required.
-            assert_eq!(Target(max).to_work(), Work(U256::ONE));
-            assert_eq!(Target(*min).to_work(), Work(max));
+        let half = U256::new(1 << 127, 0);
 
-            assert_eq!(Work(max).to_target(), Target(U256::ONE));
-            assert_eq!(Work(*min).to_target(), Target(max));
-        }
+        // lower target means more work required.
+        assert_eq!(Target(max).to_work(), Work(U256::ONE));
+        assert_eq!(Target(U256::ONE).to_work(), Work(half));
+        assert_eq!(Target(U256::ZERO).to_work(), Work(max));
+
+        assert_eq!(Work(max).to_target(), Target(U256::ZERO));
+        assert_eq!(Work(U256::ONE).to_target(), Target(max));
+        assert_eq!(Work(U256::ZERO).to_target(), Target(max));
     }
 
     #[test]
@@ -559,6 +590,31 @@ mod tests {
     #[cfg(debug_assertions)]
     #[should_panic(expected = "overflowed")]
     fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
+
+    #[test]
+    fn target_one_carries_half_max_work() {
+        // nBits 0x0101_0000 is the compact encoding of target = 1.
+        let target = Target::from_compact(CompactTarget::from_consensus(0x0101_0000));
+        assert_eq!(target, Target(U256::ONE));
+        assert_eq!(target.to_work(), Work(U256::new(1 << 127, 0)));
+    }
+
+    #[test]
+    fn work_and_target_convert_both_ways() {
+        let half = U256::new(1 << 127, 0);
+
+        assert_eq!(Work(U256::new(0, 2)).to_target(), Target(U256::new(u128::MAX >> 1, u128::MAX)));
+        assert_eq!(Work(half).to_target(), Target(U256::ONE));
+
+        // Up to u128::MAX the target is smaller than its work, so to_work drops a
+        // remainder too small to change the target on the way back.
+        for target in
+            [Target(U256::ONE), Target(U256::new(0, 0xdead_beef)), Target(U256::new(0, u128::MAX))]
+        {
+            assert_eq!(target.to_work().to_target(), target);
+        }
+        assert_eq!(Target(U256::MAX).to_work().to_target(), Target(U256::MAX));
+    }
 
     #[test]
     fn compact_to_target() {

@@ -61,36 +61,7 @@ impl U256 {
         out
     }
 
-    /// Calculates 2^256 / (x + 1) where x is a 256 bit unsigned integer.
-    ///
-    /// ref: <https://github.com/bitcoin/bitcoin/blob/5fe753b56f450b054c42227c5df8346c72447490/src/chain.cpp#L133>
-    ///
-    /// 2**256 / (x + 1) == ~x / (x + 1) + 1
-    ///
-    /// (Equation shamelessly stolen from bitcoind)
-    #[must_use]
-    pub fn inverse(&self) -> Self {
-        // We should never have a target/work of zero so this doesn't matter
-        // that much but we define the inverse of 0 as max.
-        if self.is_zero() {
-            return Self::MAX;
-        }
-        // We define the inverse of 1 as max.
-        if self.is_one() {
-            return Self::MAX;
-        }
-        // We define the inverse of max as 1.
-        if self.is_max() {
-            return Self::ONE;
-        }
-
-        let ret = !*self / self.wrapping_inc();
-        ret.wrapping_inc()
-    }
-
     fn is_zero(&self) -> bool { self.0 == 0 && self.1 == 0 }
-
-    fn is_one(&self) -> bool { self.0 == 0 && self.1 == 1 }
 
     /// Returns true if `self` is equal to [`U256::MAX`].
     pub fn is_max(&self) -> bool { self.0 == u128::MAX && self.1 == u128::MAX }
@@ -1416,13 +1387,6 @@ mod tests {
 
         let u = u128::MAX;
         assert!(((U256::from(u) << 128) + U256::from(u)).is_max());
-    }
-
-    #[test]
-    fn u256_zero_min_max_inverse() {
-        assert_eq!(U256::MAX.inverse(), U256::ONE);
-        assert_eq!(U256::ONE.inverse(), U256::MAX);
-        assert_eq!(U256::ZERO.inverse(), U256::MAX);
     }
 
     #[test]
