@@ -456,6 +456,20 @@ fn from_infallible_trait() {
     units!(errors, assert_implements, FromInfallible);
 }
 
+#[test]
+fn error_trait() {
+    // C-GOOD-ERR: Every error type implements `std::error::Error`.
+    // POLICY: Public errors implement `std::error::Error`.
+    units!(errors, assert_implements, Error);
+
+    // TODO: DO NOT IMPLEMENT
+    // Not an error.
+    units!(public_types, assert_does_not_implement, Error);
+
+    // FORBIDDEN BY DEPENDENCY: Display
+    units!(codecs, assert_does_not_implement, Error);
+}
+
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
