@@ -384,14 +384,20 @@ impl Block<Unchecked> {
         if self.transactions[0].is_coinbase() {
             let coinbase = &self.transactions[0];
             if let Some(commitment) = witness_commitment_from_coinbase(coinbase) {
-                // Witness reserved value is in coinbase input witness.
-                let witness_vec: Vec<_> = coinbase.inputs[0].witness.iter().collect();
-                if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
-                    if let Some((witness_root, witness_commitment)) =
-                        self.compute_witness_commitment(witness_vec[0])
-                    {
-                        if commitment == witness_commitment {
-                            return (true, Some(witness_root));
+                // The commitment-bearing coinbase witness must be exactly one 32-byte item.
+                // Check the count first so an invalid multi-item witness is rejected in O(1)
+                // without collecting the items or being truncated by the witness iterator.
+                let witness = &coinbase.inputs[0].witness;
+                if witness.len() == 1 {
+                    if let Some(reserved) = witness.get(0) {
+                        if reserved.len() == 32 {
+                            if let Some((witness_root, witness_commitment)) =
+                                self.compute_witness_commitment(reserved)
+                            {
+                                if commitment == witness_commitment {
+                                    return (true, Some(witness_root));
+                                }
+                            }
                         }
                     }
                 }
@@ -2093,6 +2099,41 @@ mod tests {
         header.merkle_root = compute_merkle_root(&transactions).unwrap();
 
         let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_rejects_oversized_trailing_coinbase_witness_item() {
+        let reserved = [11u8; 32];
+        let mut txin = crate::TxIn::EMPTY_COINBASE;
+        txin.witness.push(reserved);
+        // `Witness::iter` stops before an item larger than the decoder cap, hiding this element.
+        txin.witness.push(vec![0u8; 4_000_001]);
+
+        let mut coinbase = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![txin],
+            outputs: vec![],
+        };
+
+        let (_, commitment) = Block::new_unchecked(dummy_header(), vec![coinbase.clone()])
+            .compute_witness_commitment(&reserved)
+            .unwrap();
+        let mut script = Vec::from(WITNESS_COMMITMENT_MAGIC);
+        script.extend_from_slice(commitment.as_byte_array());
+        coinbase.outputs.push(crate::TxOut {
+            amount: units::Amount::MIN,
+            script_pubkey: crate::script::ScriptBuf::from_bytes(script),
+        });
+
+        let transactions = vec![coinbase];
+        let mut header = dummy_header();
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+        let block = Block::new_unchecked(header, transactions);
+
         assert_eq!(block.check_witness_commitment(), (false, None));
         assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
     }
