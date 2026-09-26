@@ -99,11 +99,22 @@ version = "0.1.0"
 dependencies = [
  "base58ck",
  "bitcoin",
+ "bitcoin-bip158",
  "bitcoin-consensus-encoding",
  "bitcoin_hashes",
  "chacha20-poly1305",
  "criterion",
  "hex-conservative",
+]
+
+[[package]]
+name = "bitcoin-bip158"
+version = "0.0.0"
+dependencies = [
+ "bitcoin-consensus-encoding",
+ "bitcoin-internals",
+ "bitcoin-primitives",
+ "bitcoin_hashes",
 ]
 
 [[package]]
