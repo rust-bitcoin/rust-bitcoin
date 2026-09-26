@@ -47,6 +47,23 @@ where
     Done,
 }
 
+/// Advances `encoder` until [`Encoder::current_chunk`] returns a non-empty chunk.
+///
+/// The [`Encoder`] contract permits `current_chunk` to return an empty slice while the encoder
+/// still has bytes to yield, so an encoder must not be discarded on the basis of its first chunk
+/// alone; it has to be advanced until it reports `Finished`.
+///
+/// Returns `false` if the encoder finished without yielding any more bytes, in which case it is in
+/// an unspecified state and must not be used again.
+fn advance_to_non_empty_chunk<E: Encoder>(encoder: &mut E) -> bool {
+    while encoder.current_chunk().is_empty() {
+        if encoder.advance().has_finished() {
+            return false;
+        }
+    }
+    true
+}
+
 /// An encoder that drives a sequence of encoders yielded by an iterator.
 ///
 /// Items are encoded one after another with no separators.
@@ -65,15 +82,13 @@ where
     pub fn new(iter: impl IntoIterator<IntoIter = I>) -> Self {
         // Protect against poorly implemented iterators.
         let mut iter = iter.into_iter().fuse();
-        // Advance past any leading empty encoders so that the first call to
-        // `current_chunk` satisfies the `Encoder` contract that it must return
-        // non-empty bytes or the encoder must be `Done`.
+        // Advance past any leading empty chunks so that the first call to `current_chunk` returns
+        // non-empty bytes unless the encoder is `Done`. Encoders which yield no bytes at all are
+        // dropped, the rest are retained in their advanced state.
         let state = loop {
-            match iter.next() {
-                Some(enc) if !enc.current_chunk().is_empty() =>
-                    break EncoderState::Encoding { current: enc, remaining: iter },
-                Some(_) => {}
-                None => break EncoderState::Done,
+            let Some(mut enc) = iter.next() else { break EncoderState::Done };
+            if advance_to_non_empty_chunk(&mut enc) {
+                break EncoderState::Encoding { current: enc, remaining: iter };
             }
         };
         Self { state }
@@ -124,23 +139,22 @@ where
             return EncoderStatus::Finished;
         };
 
-        loop {
-            if current.advance().has_more() {
+        // Note the short-circuit: `advance_to_non_empty_chunk` must not be called once `advance`
+        // has reported `Finished`.
+        if current.advance().has_more() && advance_to_non_empty_chunk(current) {
+            return EncoderStatus::HasMore;
+        }
+
+        // The current encoder is exhausted, so switch to the next one which yields bytes.
+        for mut next in remaining.by_ref() {
+            if advance_to_non_empty_chunk(&mut next) {
+                *current = next;
                 return EncoderStatus::HasMore;
             }
-
-            if let Some(next) = remaining.next() {
-                *current = next;
-                // If the next encoder is empty, skip in order to maintain `Encoder` contract
-                // that it must return non-empty bytes or the encoder must be `Done`
-                if !current.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.state = EncoderState::Done;
-                return EncoderStatus::Finished;
-            }
         }
+
+        self.state = EncoderState::Done;
+        EncoderStatus::Finished
     }
 }
 
