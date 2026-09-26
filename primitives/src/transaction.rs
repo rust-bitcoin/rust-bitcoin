@@ -360,6 +360,44 @@ const SEGWIT_MARKER: u8 = 0x00;
 #[cfg(feature = "alloc")]
 const SEGWIT_FLAG: u8 = 0x01;
 
+/// Maximum block weight, and therefore the maximum weight of any single transaction. (BIP-0141)
+#[cfg(feature = "alloc")]
+pub(crate) const MAX_BLOCK_WEIGHT: Weight = Weight::from_wu(4_000_000);
+
+/// Computes the consensus weight of a transaction.
+///
+/// Weight is `4 * base_size + witness_overhead`, where the base size excludes the segwit marker,
+/// flag and witness data, all of which contribute a weight of one.
+#[cfg(feature = "alloc")]
+pub(crate) fn transaction_weight(tx: &Transaction) -> Weight {
+    let compact = |n: usize| crate::compact_size_encode(n).as_slice().len();
+
+    let mut base = 4; // version
+    base += compact(tx.inputs.len());
+    for input in &tx.inputs {
+        let script = input.script_sig.len();
+        base += 36 + compact(script) + script + 4; // outpoint + script + sequence
+    }
+    base += compact(tx.outputs.len());
+    for output in &tx.outputs {
+        let script = output.script_pubkey.len();
+        base += 8 + compact(script) + script; // amount + script
+    }
+    base += 4; // lock_time
+
+    let witness = if tx.uses_segwit_serialization() {
+        let mut w = 2; // segwit marker and flag
+        for input in &tx.inputs {
+            w += input.witness.size();
+        }
+        w
+    } else {
+        0
+    };
+
+    Weight::from_wu((base as u64) * 4 + witness as u64)
+}
+
 // This is equivalent to consensus encoding but hashes the fields manually.
 #[cfg(feature = "alloc")]
 fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256d::Hash {
@@ -641,6 +679,12 @@ impl encoding::Decoder for TransactionDecoder {
                 // Reject transactions with no outputs
                 if tx.outputs.is_empty() {
                     return Err(E(Inner::NoOutputs));
+                }
+                // A transaction heavier than a whole block can never be valid; reject it before
+                // the more expensive checks below.
+                let weight = transaction_weight(&tx);
+                if weight > MAX_BLOCK_WEIGHT {
+                    return Err(E(Inner::TransactionTooHeavy(weight.to_wu())));
                 }
                 // check for null prevout in non-coinbase txs
                 if tx.inputs.len() > 1 {
@@ -1353,6 +1397,8 @@ pub mod error {
         OutputValueSumTooLarge(u64),
         /// Transaction has no outputs.
         NoOutputs,
+        /// Transaction weight exceeds the maximum block weight.
+        TransactionTooHeavy(u64),
     }
 
     #[cfg(feature = "alloc")]
@@ -1388,6 +1434,12 @@ pub mod error {
                 E::OutputValueSumTooLarge(val) =>
                     write!(f, "sum of output values {} satoshis exceeds MAX_MONEY", val),
                 E::NoOutputs => write!(f, "transaction has no outputs"),
+                E::TransactionTooHeavy(wu) => write!(
+                    f,
+                    "transaction weight {} exceeds the maximum block weight of {}",
+                    wu,
+                    super::MAX_BLOCK_WEIGHT.to_wu()
+                ),
             }
         }
     }
@@ -1414,6 +1466,7 @@ pub mod error {
                 E::DuplicateInput(_) => None,
                 E::OutputValueSumTooLarge(_) => None,
                 E::NoOutputs => None,
+                E::TransactionTooHeavy(_) => None,
             }
         }
     }
@@ -2298,6 +2351,89 @@ mod tests {
         decoder.push_bytes(&mut slice).unwrap();
         let err = decoder.end().unwrap_err();
         assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NoOutputs));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn reject_transaction_exceeding_maximum_block_weight() {
+        let script_len = 600_000usize;
+        let mut tx_bytes = Vec::new();
+
+        tx_bytes.extend_from_slice(&Version::ONE.to_u32().to_le_bytes());
+        tx_bytes.push(1); // input count
+        tx_bytes.extend_from_slice(&[0x01; 32]); // non-null prevout txid
+        tx_bytes.extend_from_slice(&0u32.to_le_bytes()); // prevout vout
+        tx_bytes.push(0); // empty script_sig
+        tx_bytes.extend_from_slice(&Sequence::MAX.to_consensus_u32().to_le_bytes());
+        tx_bytes.push(2); // output count
+
+        for _ in 0..2 {
+            tx_bytes.extend_from_slice(&0u64.to_le_bytes()); // amount
+            tx_bytes.extend_from_slice(crate::compact_size_encode(script_len).as_slice());
+            tx_bytes.resize(tx_bytes.len() + script_len, 0);
+        }
+        tx_bytes.extend_from_slice(&0u32.to_le_bytes()); // lock_time
+
+        // With no witness discount this transaction weighs more than 4,000,000 WU,
+        // so it cannot fit in a consensus-valid block.
+        let err = encoding::decode_from_slice::<Transaction>(&tx_bytes).unwrap_err();
+        assert!(matches!(
+            err,
+            encoding::DecodeError::Parse(TransactionDecoderError(
+                TransactionDecoderErrorInner::TransactionTooHeavy(_)
+            ))
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_weight_matches_expected() {
+        // A segwit transaction with a non-empty script_sig, a non-empty script_pubkey and
+        // witness data, so that every term in `transaction_weight` contributes to the result.
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![TxIn {
+                previous_output: OutPoint { txid: Txid::from_byte_array([1u8; 32]), vout: 0 },
+                script_sig: ScriptSigBuf::from_bytes(vec![0u8; 5]),
+                sequence: Sequence::MAX,
+                witness: Witness::from_slice(&[[0xab; 72].as_slice(), [0xcd; 33].as_slice()]),
+            }],
+            outputs: vec![TxOut {
+                amount: Amount::ONE_SAT,
+                script_pubkey: ScriptPubKeyBuf::from_bytes(vec![0u8; 7]),
+            }],
+        };
+
+        // base    = 4 (version) + 1 (input count) + (36 + 1 + 5 + 4) (input)
+        //           + 1 (output count) + (8 + 1 + 7) (output) + 4 (locktime) = 72
+        // witness = 2 (segwit marker and flag) + 108 (witness.size()) = 110
+        // weight  = 72 * 4 + 110 = 398
+        assert_eq!(transaction_weight(&tx).to_wu(), 398);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn accept_transaction_at_maximum_block_weight() {
+        // A base size of 1,000,000 bytes gives a weight of exactly MAX_BLOCK_WEIGHT, which the
+        // `weight > MAX_BLOCK_WEIGHT` boundary in `end` must accept rather than reject.
+        let script_len = 999_936usize;
+        let mut tx_bytes = Vec::new();
+
+        tx_bytes.extend_from_slice(&Version::ONE.to_u32().to_le_bytes());
+        tx_bytes.push(1); // input count
+        tx_bytes.extend_from_slice(&[0x01; 32]); // non-null prevout txid
+        tx_bytes.extend_from_slice(&0u32.to_le_bytes()); // prevout vout
+        tx_bytes.push(0); // empty script_sig
+        tx_bytes.extend_from_slice(&Sequence::MAX.to_consensus_u32().to_le_bytes());
+        tx_bytes.push(1); // output count
+        tx_bytes.extend_from_slice(&0u64.to_le_bytes()); // amount
+        tx_bytes.extend_from_slice(crate::compact_size_encode(script_len).as_slice());
+        tx_bytes.resize(tx_bytes.len() + script_len, 0);
+        tx_bytes.extend_from_slice(&0u32.to_le_bytes()); // lock_time
+
+        let tx = encoding::decode_from_slice::<Transaction>(&tx_bytes).unwrap();
+        assert_eq!(transaction_weight(&tx).to_wu(), MAX_BLOCK_WEIGHT.to_wu());
     }
 
     #[test]

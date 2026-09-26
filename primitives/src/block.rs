@@ -589,10 +589,31 @@ crate::decoder_newtype! {
     /// Constructs a new [`Block`] decoder.
     pub const fn new() -> Self { Self(Decoder2::new(HeaderDecoder::new(), VecDecoder::new())) }
 
+    fn map_push_bytes_err(err: <BlockInnerDecoder as encoding::Decoder>::Error) -> BlockDecoderError {
+        BlockDecoderError(error::BlockDecoderErrorInner::Decode(err))
+    }
+
     fn end(result: Result<(Header, Vec<Transaction>), <BlockInnerDecoder as encoding::Decoder>::Error>) -> Result<Block, BlockDecoderError> {
-        let (header, transactions) = result.map_err(BlockDecoderError)?;
+        let (header, transactions) =
+            result.map_err(|e| BlockDecoderError(error::BlockDecoderErrorInner::Decode(e)))?;
+        let weight = block_weight_wu(&transactions);
+        if weight > crate::transaction::MAX_BLOCK_WEIGHT.to_wu() {
+            return Err(BlockDecoderError(error::BlockDecoderErrorInner::BlockTooHeavy(weight)));
+        }
         Ok(Self::Output::new_unchecked(header, transactions))
     }
+}
+
+/// Computes the consensus weight, in weight units, of a decoded block.
+#[cfg(feature = "alloc")]
+fn block_weight_wu(transactions: &[Transaction]) -> u64 {
+    // The 80-byte header and the transaction count prefix are non-witness data.
+    let header_and_count = 80 + crate::compact_size_encode(transactions.len()).as_slice().len();
+    let mut weight = (header_and_count as u64) * 4;
+    for tx in transactions {
+        weight = weight.saturating_add(crate::transaction::transaction_weight(tx).to_wu());
+    }
+    weight
 }
 
 /// Computes the Merkle root for a list of transactions.
@@ -1017,7 +1038,16 @@ pub mod error {
     /// [`Block`]: super::Block
     #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct BlockDecoderError(pub(super) <super::BlockInnerDecoder as encoding::Decoder>::Error);
+    pub struct BlockDecoderError(pub(super) BlockDecoderErrorInner);
+
+    #[cfg(feature = "alloc")]
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(super) enum BlockDecoderErrorInner {
+        /// Error decoding the block header or transactions.
+        Decode(<super::BlockInnerDecoder as encoding::Decoder>::Error),
+        /// Block weight exceeds the maximum block weight.
+        BlockTooHeavy(u64),
+    }
 
     #[cfg(feature = "alloc")]
     impl From<Infallible> for BlockDecoderError {
@@ -1029,7 +1059,15 @@ pub mod error {
     impl fmt::Display for BlockDecoderError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write_err!(f, "block decoder error"; self.0)
+            match self.0 {
+                BlockDecoderErrorInner::Decode(ref e) => write_err!(f, "block decoder error"; e),
+                BlockDecoderErrorInner::BlockTooHeavy(weight) => write!(
+                    f,
+                    "block weight {} exceeds the maximum of {}",
+                    weight,
+                    crate::transaction::MAX_BLOCK_WEIGHT.to_wu()
+                ),
+            }
         }
     }
 
@@ -1037,7 +1075,12 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for BlockDecoderError {
         #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self.0 {
+                BlockDecoderErrorInner::Decode(ref e) => Some(e),
+                BlockDecoderErrorInner::BlockTooHeavy(_) => None,
+            }
+        }
     }
 
     /// Invalid block error.
@@ -2180,17 +2223,17 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn block_decoder_error() {
         fn is_first(err: &BlockDecoderError) -> bool {
-            match err.0 {
-                encoding::Decoder2Error::First(_) => true,
-                encoding::Decoder2Error::Second(_) => false,
-            }
+            matches!(
+                err.0,
+                error::BlockDecoderErrorInner::Decode(encoding::Decoder2Error::First(_))
+            )
         }
 
         fn is_second(err: &BlockDecoderError) -> bool {
-            match err.0 {
-                encoding::Decoder2Error::First(_) => false,
-                encoding::Decoder2Error::Second(_) => true,
-            }
+            matches!(
+                err.0,
+                error::BlockDecoderErrorInner::Decode(encoding::Decoder2Error::Second(_))
+            )
         }
 
         let err_first = Block::decoder().end().unwrap_err();
@@ -2216,6 +2259,69 @@ mod tests {
         assert!(!err_second.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(std::error::Error::source(&err_second).is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_rejects_aggregate_weight_over_limit() {
+        fn large_transaction(tag: u8) -> Transaction {
+            Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: crate::absolute::LockTime::ZERO,
+                inputs: vec![crate::TxIn {
+                    previous_output: crate::OutPoint {
+                        txid: crate::Txid::from_byte_array([tag; 32]),
+                        vout: 0,
+                    },
+                    script_sig: crate::ScriptSigBuf::from_bytes(vec![tag; 550_000]),
+                    sequence: crate::Sequence::MAX,
+                    witness: crate::Witness::new(),
+                }],
+                outputs: vec![crate::TxOut {
+                    amount: units::Amount::ZERO,
+                    script_pubkey: crate::ScriptPubKeyBuf::new(),
+                }],
+            }
+        }
+
+        // Each transaction is individually valid but together they exceed a block's weight.
+        let transactions = vec![large_transaction(1), large_transaction(2)];
+        let block = Block::new_unchecked(dummy_header(), transactions);
+        let encoded = encoding::encode_to_vec(&block);
+
+        let err = encoding::decode_from_slice::<Block>(&encoded).unwrap_err();
+        assert!(matches!(
+            err,
+            encoding::DecodeError::Parse(BlockDecoderError(
+                error::BlockDecoderErrorInner::BlockTooHeavy(_)
+            ))
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_weight_wu_matches_expected() {
+        let tx = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn {
+                previous_output: crate::OutPoint {
+                    txid: crate::Txid::from_byte_array([1u8; 32]),
+                    vout: 0,
+                },
+                script_sig: crate::ScriptSigBuf::new(),
+                sequence: crate::Sequence::MAX,
+                witness: crate::Witness::new(),
+            }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::ZERO,
+                script_pubkey: crate::ScriptPubKeyBuf::new(),
+            }],
+        };
+
+        // header_and_count = 80 + 1 (compact size of a single transaction) = 81
+        // weight = 81 * 4 + transaction_weight(tx) = 324 + 240 = 564
+        assert_eq!(block_weight_wu(&[tx]), 564);
     }
 
     #[test]
