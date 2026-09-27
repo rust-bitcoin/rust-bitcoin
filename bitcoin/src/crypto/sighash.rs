@@ -1435,6 +1435,22 @@ mod tests {
     const DUMMY_TXOUT: TxOut = TxOut { amount: Amount::MIN, script_pubkey: ScriptPubKeyBuf::new() };
 
     #[test]
+    fn legacy_script_code_separator() {
+        let script_code = ScriptPubKey::from_bytes(&[0xab, 0x4c, 0x01, 0xab, 0xab]);
+        let mut encoded = Vec::new();
+        legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
+        assert_eq!(encoded, [0x03, 0x4c, 0x01, 0xab]);
+    }
+
+    #[test]
+    fn legacy_script_code_incomplete_push() {
+        let script_code = ScriptPubKey::from_bytes(&[0xab, 0x4c, 0x02, 0xab]);
+        let mut encoded = Vec::new();
+        legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
+        assert_eq!(encoded, [0x03, 0x4c, 0x02]);
+    }
+
+    #[test]
     fn sighash_single_bug() {
         // We need a tx with more inputs than outputs.
         let tx = Transaction {
