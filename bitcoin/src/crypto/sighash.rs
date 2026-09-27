@@ -687,7 +687,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// # Warning
     ///
     /// - Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
-    ///   `script_pubkey` to determine which separators get evaluated and which don't, which we don't
+    ///   `script_code` to determine which separators get evaluated and which don't, which we don't
     ///   have the information to determine.
     /// - Does NOT handle the sighash single bug (see "Return type" section)
     ///
@@ -699,7 +699,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &self,
         mut writer: W,
         input_index: usize,
-        script_pubkey: &crate::script::Script<T>,
+        script_code: &crate::script::Script<T>,
         sighash_type: EcdsaSighashType,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
@@ -723,7 +723,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             self_: &Transaction,
             mut writer: W,
             input_index: usize,
-            script_pubkey: &crate::script::Script<T>,
+            script_code: &crate::script::Script<T>,
             sighash_type: EcdsaSighashType,
         ) -> Result<(), io::Error> {
             let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -733,14 +733,14 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             if anyone_can_pay {
                 io::drain_to_writer(&mut CompactSizeEncoder::new(1), &mut writer)?;
                 io::encode_to_writer(&self_.inputs[input_index].previous_output, &mut writer)?;
-                io::encode_to_writer(script_pubkey, &mut writer)?;
+                io::encode_to_writer(script_code, &mut writer)?;
                 io::encode_to_writer(&self_.inputs[input_index].sequence, &mut writer)?;
             } else {
                 io::drain_to_writer(&mut CompactSizeEncoder::new(self_.inputs.len()), &mut writer)?;
                 for (n, input) in self_.inputs.iter().enumerate() {
                     io::encode_to_writer(&input.previous_output, &mut writer)?;
                     if n == input_index {
-                        io::encode_to_writer(script_pubkey, &mut writer)?;
+                        io::encode_to_writer(script_code, &mut writer)?;
                     } else {
                         io::encode_to_writer(ScriptPubKey::new(), &mut writer)?;
                     }
@@ -790,7 +790,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 self.tx.borrow(),
                 &mut writer,
                 input_index,
-                script_pubkey,
+                script_code,
                 sighash_type,
             )
             .map_err(Into::into),
@@ -814,17 +814,17 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// # Warning
     ///
     /// Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
-    /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
+    /// `script_code` to determine which separators get evaluated and which don't, which we don't
     /// have the information to determine.
     pub fn legacy_signature_hash<T: ScriptHashableTag>(
         &self,
         input_index: usize,
-        script_pubkey: &crate::script::Script<T>,
+        script_code: &crate::script::Script<T>,
         sighash_type: EcdsaSighashType,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
         match self
-            .legacy_encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_type)
+            .legacy_encode_signing_data_to(&mut engine, input_index, script_code, sighash_type)
             .is_sighash_single_bug()
         {
             Ok(true) => Ok(LegacySighash::from_byte_array(UINT256_ONE)),
