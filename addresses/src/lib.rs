@@ -1307,7 +1307,7 @@ mod tests {
         assert!(a1.matches_script_pubkey(&a1.script_pubkey()));
         assert!(!a0.matches_script_pubkey(&a1.script_pubkey()));
         assert!(!a1.matches_script_pubkey(&a0.script_pubkey()));
-}
+    }
 
     #[test]
     fn address_debug() {

@@ -68,8 +68,8 @@ use encoding::FromHexError;
 use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{
-    Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6,
-    IterEncoder, PrefixedSliceEncoder, VecDecoder,
+    Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6, IterEncoder,
+    PrefixedSliceEncoder, VecDecoder,
 };
 #[cfg(feature = "alloc")]
 use hashes::sha256d;

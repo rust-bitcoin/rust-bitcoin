@@ -97,7 +97,8 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
     ///
     /// Returns error if the `ArrayVec` is full.
     pub fn try_push(&mut self, element: T) -> Result<(), CapacityExceededError> {
-        let first = self.spare_capacity_mut().first_mut().ok_or(CapacityExceededError { capacity: CAP })?;
+        let first =
+            self.spare_capacity_mut().first_mut().ok_or(CapacityExceededError { capacity: CAP })?;
         *first = MaybeUninit::new(element);
         let old_len = self.len();
         // SOUNDNESS:

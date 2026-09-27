@@ -73,7 +73,10 @@ impl FeeRate {
         // No `map()` in const context.
         match sat_kwu.checked_mul(4_000) {
             Some(fee_rate) => R::Valid(Self::from_sat_per_mvb(fee_rate)),
-            None => R::Error(E::while_doing(MathErrorKind::Overflow { op: MathOp::Mul, is_negative: false })),
+            None => R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Mul,
+                is_negative: false,
+            })),
         }
     }
 
@@ -96,7 +99,10 @@ impl FeeRate {
         // No `map()` in const context.
         match sat_vb.checked_mul(1_000_000) {
             Some(fee_rate) => R::Valid(Self::from_sat_per_mvb(fee_rate)),
-            None => R::Error(E::while_doing(MathErrorKind::Overflow { op: MathOp::Mul, is_negative: false })),
+            None => R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Mul,
+                is_negative: false,
+            })),
         }
     }
 
@@ -126,7 +132,10 @@ impl FeeRate {
         // No `map()` in const context.
         match sat_kvb.checked_mul(1_000) {
             Some(fee_rate) => R::Valid(Self::from_sat_per_mvb(fee_rate)),
-            None => R::Error(E::while_doing(MathErrorKind::Overflow { op: MathOp::Mul, is_negative: false })),
+            None => R::Error(E::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Mul,
+                is_negative: false,
+            })),
         }
     }
 
@@ -327,7 +336,6 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn feerate_div_nonzero() {
-
         let rate = FeeRate::from_sat_per_kwu_u32(200);
         let divisor = NonZeroU64::new(2).unwrap();
         assert_eq!(rate / divisor, ONE_HUNDRED);
@@ -502,8 +510,7 @@ mod tests {
 
     #[test]
     fn checked_div() {
-        let fee_rate =
-            TEN.checked_div(10).expect("expected feerate in sat/kwu");
+        let fee_rate = TEN.checked_div(10).expect("expected feerate in sat/kwu");
         assert_eq!(fee_rate, ONE);
 
         let fee_rate = TEN.checked_div(0);
