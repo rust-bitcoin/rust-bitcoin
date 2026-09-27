@@ -742,6 +742,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     if n == input_index {
                         io::encode_to_writer(script_code, &mut writer)?;
                     } else {
+                        // TODO: Use ScriptCode instead of ScriptPubKey once it exists (see #6079)
                         io::encode_to_writer(ScriptPubKey::new(), &mut writer)?;
                     }
                     if n != input_index
