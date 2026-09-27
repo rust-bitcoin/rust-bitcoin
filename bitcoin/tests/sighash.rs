@@ -38,9 +38,8 @@ fn legacy_sighash() {
         assert_eq!(got, want);
     }
 
-    // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
-    // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
-    // OP_CODESEPARATOR in their pubkeys were removed
+    // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT.
+    // Source: https://github.com/bitcoin/bitcoin/blob/ed7dd7cf4e1561a97edf72eba29a67b14e28c717/src/test/data/sighash.json
     let data = include_str!("data/legacy_sighash.json");
 
     let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
