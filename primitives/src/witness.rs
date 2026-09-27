@@ -198,18 +198,10 @@ impl Witness {
     /// assert_eq!(Witness::new().size(), 1); // 1 byte for the '0' encoded as compact size.
     /// ```
     pub fn size(&self) -> usize {
-        let mut size: usize = 0;
-
-        size += CompactSizeEncoder::encoded_size(self.witness_elements);
-        size += self
-            .iter()
-            .map(|witness_element| {
-                let len = witness_element.len();
-                CompactSizeEncoder::encoded_size(len) + len
-            })
-            .sum::<usize>();
-
-        size
+        // `indices_start` is the length of every serialized element, each with its own compact
+        // size length prefix. Using it keeps the count in sync with the encoding even for a
+        // witness holding an item larger than the witness iterator will yield.
+        CompactSizeEncoder::encoded_size(self.witness_elements) + self.indices_start
     }
 
     /// Clears the witness.
@@ -601,7 +593,7 @@ impl<T: core::borrow::Borrow<[u8]>> PartialEq<[T]> for Witness {
         if self.len() != rhs.len() {
             return false;
         }
-        self.iter().zip(rhs).all(|(left, right)| left == right.borrow())
+        self.iter().eq(rhs.iter().map(<T as core::borrow::Borrow<[u8]>>::borrow))
     }
 }
 
@@ -1361,6 +1353,15 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
+    fn oversized_element_does_not_compare_equal_to_different_stack() {
+        let oversized = vec![0u8; MAX_WITNESS_ITEM_SIZE + 1];
+        let witness = Witness::from_slice(&[oversized]);
+
+        assert_ne!(witness, [&[0xAAu8][..]]);
+    }
+
+    #[test]
     #[cfg(feature = "serde")]
     fn serde_bincode_backward_compatibility() {
         let old_witness_format = vec![vec![0u8], vec![2]];
@@ -1853,6 +1854,17 @@ mod test {
         witness.push([0u8; 252]);
         assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
         witness.push([0u8; 253]);
+        assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn oversized_public_witness_size_matches_encoding_length() {
+        // Public constructors can hold an oversized item even though Iter::next() rejects it.
+        // size() must not silently omit bytes that Encode will still serialize.
+        let oversized = vec![0u8; MAX_WITNESS_ITEM_SIZE + 1];
+        let witness = Witness::from_slice(&[oversized]);
+
         assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
     }
 
