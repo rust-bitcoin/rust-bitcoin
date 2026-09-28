@@ -116,6 +116,28 @@ fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
 fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
 #[test]
+fn serde_amount_as_sat_varint_round_trip() {
+    // Other tests use JSON and serde_test, which carry the type with
+    // the value and ignore the deserialize hint.
+    // Varint bincode bytes do not say if a number is signed, so the
+    // deserialize hint decides how they get decoded.
+    use bincode::Options as _;
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::amount::serde::as_sat")]
+        pub amt: Amount,
+    }
+
+    let opts = || bincode::DefaultOptions::new().with_varint_encoding();
+    for amt in [Amount::ZERO, Amount::ONE_SAT, Amount::MAX] {
+        let t = T { amt };
+        let bytes = opts().serialize(&t).unwrap();
+        assert_eq!(opts().deserialize::<T>(&bytes).unwrap(), t);
+    }
+}
+
+#[test]
 #[cfg(feature = "serde")]
 fn serde_amount_as_sat() {
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -134,6 +156,25 @@ fn serde_amount_as_sat() {
             serde_test::Token::U64(123_456_789),
             serde_test::Token::Str("samt"),
             serde_test::Token::I64(-123_456_789),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+fn serde_amount_as_sat_accepts_positive_i64() {
+    #[derive(Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::amount::serde::as_sat")]
+        pub amt: Amount,
+    }
+
+    serde_test::assert_de_tokens(
+        &T { amt: sat(123_456_789) },
+        &[
+            serde_test::Token::Struct { name: "T", len: 1 },
+            serde_test::Token::Str("amt"),
+            serde_test::Token::I64(123_456_789),
             serde_test::Token::StructEnd,
         ],
     );
