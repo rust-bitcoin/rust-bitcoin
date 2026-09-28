@@ -30,13 +30,11 @@ pub mod _export {
     pub extern crate alloc;
 }
 
-#[cfg(not(creusot))]
 pub mod array;
 pub mod array_vec;
 pub mod error;
 #[cfg(not(creusot))]
 pub mod script;
-#[cfg(not(creusot))]
 pub mod slice;
 #[cfg(not(creusot))]
 #[cfg(feature = "serde")]
