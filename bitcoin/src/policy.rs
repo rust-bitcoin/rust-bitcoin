@@ -14,6 +14,7 @@
 use core::cmp;
 
 use super::constants::{MAX_BLOCK_SIGOPS_COST, WITNESS_SCALE_FACTOR};
+use crate::FeeRate;
 
 /// Maximum weight of a transaction for it to be relayed by most nodes on the network
 pub const MAX_STANDARD_TX_WEIGHT: u32 = 400_000;
@@ -38,6 +39,14 @@ pub const DUST_RELAY_TX_FEE: u32 = 3_000;
 /// Minimum feerate, in sats per virtual kilobyte, for a transaction to be relayed by most nodes on
 /// the network.
 pub const DEFAULT_MIN_RELAY_TX_FEE: u32 = 1_000;
+
+/// The minimum fee rate required to broadcast a transaction.
+///
+/// The value matches the default Bitcoin Core policy before v29.1.
+pub const BROADCAST_MIN_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_u32(1);
+
+/// The fee rate used to compute dust amount.
+pub const DUST_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_u32(3);
 
 /// Default number of hours for an unconfirmed transaction to expire in most of the network nodes'
 /// mempools.

@@ -78,13 +78,13 @@ impl Serde {
             signed_opt_as_sat: Some(SignedAmount::MAX),
             signed_opt_as_btc: Some(SignedAmount::MAX),
 
-            vb_floor: FeeRate::BROADCAST_MIN,
-            vb_ceil: FeeRate::BROADCAST_MIN,
-            kwu: FeeRate::BROADCAST_MIN,
+            vb_floor: FeeRate::from_sat_per_vb_u32(1),
+            vb_ceil: FeeRate::from_sat_per_vb_u32(1),
+            kwu: FeeRate::from_sat_per_vb_u32(1),
 
-            opt_vb_floor: Some(FeeRate::BROADCAST_MIN),
-            opt_vb_ceil: Some(FeeRate::BROADCAST_MIN),
-            opt_kwu: Some(FeeRate::BROADCAST_MIN),
+            opt_vb_floor: Some(FeeRate::from_sat_per_vb_u32(1)),
+            opt_vb_ceil: Some(FeeRate::from_sat_per_vb_u32(1)),
+            opt_kwu: Some(FeeRate::from_sat_per_vb_u32(1)),
 
             block_height: BlockHeight::MAX,
             block_height_interval: BlockHeightInterval::MAX,

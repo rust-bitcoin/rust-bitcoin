@@ -494,8 +494,8 @@ impl<'a> Arbitrary<'a> for FeeFilter {
         let choice = u.int_in_range(0..=3)?;
         match choice {
             0 => Ok(Self(FeeRate::MIN)),
-            1 => Ok(Self(FeeRate::BROADCAST_MIN)),
-            2 => Ok(Self(FeeRate::DUST)),
+            1 => Ok(Self(FeeRate::from_sat_per_vb_u32(1))),
+            2 => Ok(Self(FeeRate::from_sat_per_vb_u32(3))),
             _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=MAX_SAT_PER_KVB)?).unwrap())),
         }
     }
@@ -2480,7 +2480,7 @@ mod test {
                 reason: "Cause".into(),
                 hash: hash([255u8; 32]),
             }),
-            NetworkMessage::FeeFilter(FeeFilter::from(FeeRate::BROADCAST_MIN)),
+            NetworkMessage::FeeFilter(FeeFilter::from(FeeRate::from_sat_per_vb_u32(1))),
             NetworkMessage::WtxidRelay,
             NetworkMessage::AddrV2(AddrV2Payload(vec![AddrV2Message {
                 addr: AddrV2::Ipv4(Ipv4Addr::new(127, 0, 0, 1)),

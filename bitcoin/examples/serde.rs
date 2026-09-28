@@ -27,7 +27,11 @@ pub struct Foo {
 }
 
 fn main() {
-    let f = Foo { header: dummy_header(), amount: Amount::ONE_BTC, fee_rate: FeeRate::DUST };
+    let f = Foo {
+        header: dummy_header(),
+        amount: Amount::ONE_BTC,
+        fee_rate: bitcoin::policy::DUST_FEE_RATE,
+    };
 
     let s = serde_json::to_string(&f).unwrap();
     println!("{s}");
