@@ -96,7 +96,8 @@ impl<T> SliceExt for [T] {
     }
 
     fn get_array<const ARRAY_LEN: usize>(&self, offset: usize) -> Option<&[Self::Item; ARRAY_LEN]> {
-        self.get(offset..(offset + ARRAY_LEN)).map(|slice| {
+        let end = offset.checked_add(ARRAY_LEN)?;
+        self.get(offset..end).map(|slice| {
             slice
                 .try_into()
                 .expect("the arguments to `get` evaluate to the same length the return type uses")
