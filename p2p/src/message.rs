@@ -2850,9 +2850,7 @@ mod test {
             FeeFilter(FeeRate::ZERO)
         );
         let bytes = max_money.to_le_bytes();
-        let max_feerate = FeeFilter(
-            FeeRate::from_sat_per_kvb(Amount::MAX_MONEY.to_sat()).unwrap(),
-        );
+        let max_feerate = FeeFilter(FeeRate::from_sat_per_kvb(Amount::MAX_MONEY.to_sat()).unwrap());
         assert_eq!(encoding::decode_from_slice::<FeeFilter>(&bytes).unwrap(), max_feerate);
 
         // Invalid cases

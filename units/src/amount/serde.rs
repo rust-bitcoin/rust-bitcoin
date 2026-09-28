@@ -63,13 +63,12 @@ pub mod as_sat {
 
     use core::fmt;
     use core::marker::PhantomData;
+
     use serde::{Deserializer, Serialize, Serializer};
 
     use crate::SignedAmount;
 
-    fn is_signed<T: TryFrom<SignedAmount>>() -> bool {
-        T::try_from(-SignedAmount::ONE_SAT).is_ok()
-    }
+    fn is_signed<T: TryFrom<SignedAmount>>() -> bool { T::try_from(-SignedAmount::ONE_SAT).is_ok() }
 
     #[test]
     fn is_signed_correct() {
@@ -103,7 +102,10 @@ pub mod as_sat {
         // We use custom visitor to have better control over error messages
         struct Visitor<T>(PhantomData<fn() -> T>);
 
-        impl<'de, T> serde::de::Visitor<'de> for Visitor<T> where T: TryFrom<SignedAmount> {
+        impl<'de, T> serde::de::Visitor<'de> for Visitor<T>
+        where
+            T: TryFrom<SignedAmount>,
+        {
             type Value = T;
 
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -112,7 +114,8 @@ pub mod as_sat {
 
             fn visit_i64<E: serde::de::Error>(self, value: i64) -> Result<Self::Value, E> {
                 fn range_error<T, E1, E2: serde::de::Error>(value: i64) -> impl FnOnce(E1) -> E2
-                    where T: TryFrom<SignedAmount>
+                where
+                    T: TryFrom<SignedAmount>,
                 {
                     move |_| {
                         let unexpected = serde::de::Unexpected::Signed(value);
@@ -128,7 +131,8 @@ pub mod as_sat {
 
             fn visit_u64<E: serde::de::Error>(self, value: u64) -> Result<Self::Value, E> {
                 fn range_error<T, E1, E2: serde::de::Error>(value: u64) -> impl FnOnce(E1) -> E2
-                    where T: TryFrom<SignedAmount>
+                where
+                    T: TryFrom<SignedAmount>,
                 {
                     move |_| {
                         let unexpected = serde::de::Unexpected::Unsigned(value);
@@ -159,9 +163,9 @@ pub mod as_sat {
         use core::fmt;
         use core::marker::PhantomData;
 
-        use super::is_signed;
         use serde::{de, Deserializer, Serialize, Serializer};
 
+        use super::is_signed;
         use crate::SignedAmount;
 
         #[inline]
@@ -232,11 +236,11 @@ pub mod as_sat {
         use alloc::vec::Vec;
         use core::fmt;
         use core::marker::PhantomData;
-        use super::is_signed;
 
         use serde::de::{self, SeqAccess};
         use serde::{Deserialize, Deserializer, Serializer};
 
+        use super::is_signed;
         use crate::SignedAmount;
 
         #[inline]
@@ -279,7 +283,9 @@ pub mod as_sat {
                 {
                     #[derive(Deserialize)]
                     #[serde(transparent)]
-                    struct Wrapper<T: TryFrom<SignedAmount>>(#[serde(with = "super")] T) where T::Error: core::fmt::Display;
+                    struct Wrapper<T: TryFrom<SignedAmount>>(#[serde(with = "super")] T)
+                    where
+                        T::Error: core::fmt::Display;
 
                     let mut out = Vec::with_capacity(seq.size_hint().unwrap_or(0));
                     while let Some(wrapped) = seq.next_element::<Wrapper<X>>()? {
