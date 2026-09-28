@@ -45,13 +45,11 @@ pub mod as_sat_per_kwu_floor {
         use crate::serde::de::Error;
 
         let sat_per_kwu = u64::deserialize(d)?;
-        FeeRate::from_sat_per_kwu(sat_per_kwu)
-            .into_result()
-            .map_err(|_| {
-                let unexpected = serde::de::Unexpected::Unsigned(sat_per_kwu);
-                let expected = &"non-negative integer up to 4611686018427387";
-                D::Error::invalid_value(unexpected, expected)
-             })
+        FeeRate::from_sat_per_kwu(sat_per_kwu).into_result().map_err(|_| {
+            let unexpected = serde::de::Unexpected::Unsigned(sat_per_kwu);
+            let expected = &"non-negative integer up to 4611686018427387";
+            D::Error::invalid_value(unexpected, expected)
+        })
     }
 
     pub mod opt {

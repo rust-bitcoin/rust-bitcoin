@@ -316,7 +316,8 @@ impl core::iter::Sum<Self> for NumOpResult<Amount> {
     where
         I: Iterator<Item = Self>,
     {
-        let result = iter.try_fold(Amount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
+        let result =
+            iter.try_fold(Amount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
         Self::from_result(result)
     }
 }
@@ -326,7 +327,8 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<Amount> {
     where
         I: Iterator<Item = &'a Self>,
     {
-        let result = iter.try_fold(Amount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
+        let result =
+            iter.try_fold(Amount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
         Self::from_result(result)
     }
 }
@@ -359,7 +361,9 @@ impl core::iter::Sum<Self> for NumOpResult<SignedAmount> {
     where
         I: Iterator<Item = Self>,
     {
-        let result = iter.try_fold(SignedAmount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
+        let result = iter.try_fold(SignedAmount::ZERO, |acc, amount| {
+            (acc + amount.into_result()?).into_result()
+        });
         Self::from_result(result)
     }
 }
@@ -370,7 +374,9 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<SignedAmount> {
     where
         I: Iterator<Item = &'a Self>,
     {
-        let result = iter.try_fold(SignedAmount::ZERO, |acc, amount| (acc + amount.into_result()?).into_result());
+        let result = iter.try_fold(SignedAmount::ZERO, |acc, amount| {
+            (acc + amount.into_result()?).into_result()
+        });
         Self::from_result(result)
     }
 }
