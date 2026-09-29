@@ -145,7 +145,7 @@ pub use primitives::{
         RedeemScript, RedeemScriptBuf, RedeemScriptTag, ScriptHashableTag, ScriptPubKey,
         ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, SignetBlockScript,
         SignetBlockScriptBuf, SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag,
-        WitnessScript, WitnessScriptBuf, WitnessScriptTag,
+        WitnessScript, WitnessScriptBuf, WitnessScriptTag, ScriptCode, ScriptCodeTag,
     },
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,

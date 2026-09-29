@@ -50,7 +50,7 @@ pub use self::{
     builder::Builder,
     owned::{ScriptBuf, ScriptBufDecoder},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesErrorReport},
-    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag},
+    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag, ScriptCodeTag},
 };
 #[doc(no_inline)]
 pub use self::error::{
@@ -100,6 +100,9 @@ pub type WitnessScriptBuf = ScriptBuf<WitnessScriptTag>;
 
 /// A reference to a Segwit v0 witness script.
 pub type WitnessScript = Script<WitnessScriptTag>;
+
+/// A reference to a script code (scriptCode) used in sighash computation.
+pub type ScriptCode = Script<ScriptCodeTag>;
 
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;

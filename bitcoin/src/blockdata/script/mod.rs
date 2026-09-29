@@ -78,7 +78,7 @@ pub use primitives::script::{
     ScriptEncoder, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag,
     ScriptSig, ScriptSigBuf, ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf,
     SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash, WitnessScript,
-    WitnessScriptBuf, WitnessScriptTag,
+    WitnessScriptBuf, WitnessScriptTag, ScriptCode, ScriptCodeTag,
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
