@@ -22,8 +22,9 @@ use encoding::CompactSizeEncoder;
 use hashes::{hash_newtype, sha256, sha256d, sha256t};
 use io::Write;
 
+use crate::opcodes::all::OP_CODESEPARATOR;
 use crate::prelude::{Borrow, BorrowMut};
-use crate::script::{ScriptExt as _, ScriptHashableTag};
+use crate::script::{Instruction, ScriptExt as _, ScriptHashableTag};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
@@ -686,9 +687,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// # Warning
     ///
-    /// - Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
-    ///   `script_pubkey` to determine which separators get evaluated and which don't, which we don't
-    ///   have the information to determine.
+    /// - The caller must remove everything up to and including the last
+    ///   **executed** `OP_CODESEPARATOR` before the signature check.
+    ///   This function removes all remaining `OP_CODESEPARATOR` instructions
+    ///   when encoding `script_code`.
     /// - Does NOT handle the sighash single bug (see "Return type" section)
     ///
     /// # Returns
@@ -699,7 +701,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &self,
         mut writer: W,
         input_index: usize,
-        script_pubkey: &crate::script::Script<T>,
+        script_code: &crate::script::Script<T>,
         sighash_type: EcdsaSighashType,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
@@ -723,7 +725,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             self_: &Transaction,
             mut writer: W,
             input_index: usize,
-            script_pubkey: &crate::script::Script<T>,
+            script_code: &crate::script::Script<T>,
             sighash_type: EcdsaSighashType,
         ) -> Result<(), io::Error> {
             let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -733,15 +735,16 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             if anyone_can_pay {
                 io::drain_to_writer(&mut CompactSizeEncoder::new(1), &mut writer)?;
                 io::encode_to_writer(&self_.inputs[input_index].previous_output, &mut writer)?;
-                io::encode_to_writer(script_pubkey, &mut writer)?;
+                legacy_encode_script_code_to(script_code, &mut writer)?;
                 io::encode_to_writer(&self_.inputs[input_index].sequence, &mut writer)?;
             } else {
                 io::drain_to_writer(&mut CompactSizeEncoder::new(self_.inputs.len()), &mut writer)?;
                 for (n, input) in self_.inputs.iter().enumerate() {
                     io::encode_to_writer(&input.previous_output, &mut writer)?;
                     if n == input_index {
-                        io::encode_to_writer(script_pubkey, &mut writer)?;
+                        legacy_encode_script_code_to(script_code, &mut writer)?;
                     } else {
+                        // TODO: Use ScriptCode instead of ScriptPubKey once it exists (see #6079)
                         io::encode_to_writer(ScriptPubKey::new(), &mut writer)?;
                     }
                     if n != input_index
@@ -790,7 +793,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 self.tx.borrow(),
                 &mut writer,
                 input_index,
-                script_pubkey,
+                script_code,
                 sighash_type,
             )
             .map_err(Into::into),
@@ -811,20 +814,17 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// sighash single bug becomes exploitable when one tries to sign a transaction with
     /// `SIGHASH_SINGLE` and there is not a corresponding output with the same index as the input.
     ///
-    /// # Warning
-    ///
-    /// Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
-    /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
-    /// have the information to determine.
+    /// See [`Self::legacy_encode_signing_data_to`] for the requirements on
+    /// `script_code` and the handling of `OP_CODESEPARATOR`.
     pub fn legacy_signature_hash<T: ScriptHashableTag>(
         &self,
         input_index: usize,
-        script_pubkey: &crate::script::Script<T>,
+        script_code: &crate::script::Script<T>,
         sighash_type: EcdsaSighashType,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
         match self
-            .legacy_encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_type)
+            .legacy_encode_signing_data_to(&mut engine, input_index, script_code, sighash_type)
             .is_sighash_single_bug()
         {
             Ok(true) => Ok(LegacySighash::from_byte_array(UINT256_ONE)),
@@ -954,6 +954,71 @@ fn is_invalid_use_of_sighash_single(
     outputs_len: usize,
 ) -> bool {
     sighash.is_single() && input_index >= outputs_len
+}
+
+fn legacy_encode_script_code_to<W: Write, T: ScriptHashableTag>(
+    script_code: &crate::script::Script<T>,
+    writer: &mut W,
+) -> Result<(), io::Error> {
+    let bytes = script_code.as_bytes();
+
+    let mut count_sep = 0usize;
+
+    for inst in script_code.instructions() {
+        match inst {
+            Ok(Instruction::Op(OP_CODESEPARATOR)) => {
+                count_sep += 1;
+            }
+            Ok(_) => {}
+            Err(_) => break,
+        }
+    }
+
+    let script_code_len = bytes.len() - count_sep;
+    let mut length_encoder = CompactSizeEncoder::new(script_code_len);
+
+    io::drain_to_writer(&mut length_encoder, &mut *writer)?;
+
+    // Scan again and write slices while skipping OP_CODESEPARATOR instructions.
+    let mut start = 0;
+    let mut end = bytes.len();
+    let mut instructions = script_code.instruction_indices();
+
+    loop {
+        let offset = bytes.len() - instructions.as_script::<T>().len();
+        match instructions.next() {
+            Some(Ok((index, Instruction::Op(OP_CODESEPARATOR)))) => {
+                writer.write_all(&bytes[start..index])?;
+                start = index + 1;
+            }
+            Some(Ok(_)) => {}
+            Some(Err(_)) => {
+                // Follow Core's approach: keep the push opcode and any complete length field,
+                // and leave out the remaining data.
+                // https://github.com/bitcoin/bitcoin/blob/ed7dd7cf4e1561a97edf72eba29a67b14e28c717/src/script/interpreter.cpp#L1283-L1302
+                end = offset + 1; // Inlcude the opcode.
+                let length_bytes = match bytes[offset] {
+                    0x4c => 1,
+                    0x4d => 2,
+                    0x4e => 4,
+                    _ => 0,
+                };
+
+                // Include the length field only if it is complete.
+                if bytes.len() - end >= length_bytes {
+                    end += length_bytes;
+                }
+
+                break;
+            }
+            None => break,
+        }
+    }
+
+    if start < end {
+        writer.write_all(&bytes[start..end])?;
+    }
+    Ok(())
 }
 
 /// Result of [`SighashCache::legacy_encode_signing_data_to`].
@@ -1368,6 +1433,22 @@ mod tests {
     extern crate serde_json;
 
     const DUMMY_TXOUT: TxOut = TxOut { amount: Amount::MIN, script_pubkey: ScriptPubKeyBuf::new() };
+
+    #[test]
+    fn legacy_script_code_separator() {
+        let script_code = ScriptPubKey::from_bytes(&[0xab, 0x4c, 0x01, 0xab, 0xab]);
+        let mut encoded = Vec::new();
+        legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
+        assert_eq!(encoded, [0x03, 0x4c, 0x01, 0xab]);
+    }
+
+    #[test]
+    fn legacy_script_code_incomplete_push() {
+        let script_code = ScriptPubKey::from_bytes(&[0xab, 0x4c, 0x02, 0xab]);
+        let mut encoded = Vec::new();
+        legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
+        assert_eq!(encoded, [0x03, 0x4c, 0x02]);
+    }
 
     #[test]
     fn sighash_single_bug() {
