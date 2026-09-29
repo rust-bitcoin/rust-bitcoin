@@ -11,7 +11,7 @@ use encoding::CompactSizeEncoder;
 
 use crate::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
-use crate::pow::TargetExt as _;
+use crate::pow::{InvalidCompactTargetError, TargetExt as _};
 use crate::prelude::Vec;
 use crate::script::{PushBytesExt as _, ScriptExt as _};
 use crate::transaction::{Coinbase, Transaction, TransactionExt as _};
@@ -45,26 +45,34 @@ internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Header`] type.
     pub trait HeaderExt impl for Header {
         /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
-        fn target(&self) -> Target { self.bits.into() }
+        ///
+        /// # Errors
+        ///
+        /// If `bits` is negative or overflows. Such a header can never be valid, so a validator
+        /// should reject the block (zero work) and a miner should not try to produce
+        /// it (infinite work).
+        fn target(&self) -> Result<Target, InvalidCompactTargetError> {
+            Target::from_compact(self.bits)
+        }
 
         /// Computes the popular "difficulty" measure for mining.
         ///
         /// Difficulty represents how difficult the current target makes it to find a block, relative to
         /// how difficult it would be at the highest possible target (highest target == lowest difficulty).
         fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
-            self.target().difficulty(params)
+            self.target().unwrap_or(Target::ZERO).difficulty(params)
         }
 
         /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
         fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
-            self.target().difficulty_float(params)
+            self.target().unwrap_or(Target::ZERO).difficulty_float(params)
         }
 
         /// Checks that the proof-of-work for the block is valid, returning the block hash.
         fn validate_pow(&self, required_target: Target) -> Result<BlockHash, ValidationError> {
-            let target = self.target();
+            let target = self.target().map_err(|_| ValidationError::InvalidTarget)?;
             if target != required_target {
-                return Err(ValidationError::BadTarget);
+                return Err(ValidationError::TargetNotMet);
             }
             let block_hash = self.block_hash();
             if target.is_met_by(block_hash) {
@@ -75,7 +83,7 @@ internal_macros::define_extension_trait! {
         }
 
         /// Returns the total work of the block.
-        fn work(&self) -> Work { self.target().to_work() }
+        fn work(&self) -> Work { self.target().unwrap_or(Target::ZERO).to_work() }
     }
 }
 
@@ -287,7 +295,9 @@ pub mod error {
         /// The header hash is not below the target.
         BadProofOfWork,
         /// The `target` field of a block header did not match the expected difficulty.
-        BadTarget,
+        TargetNotMet,
+        /// The `bits` field of a block header is negative, overflows, or encodes a zero target.
+        InvalidTarget,
     }
 
     impl From<Infallible> for ValidationError {
@@ -298,7 +308,9 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::BadProofOfWork => f.write_str("block target correct but not attained"),
-                Self::BadTarget => f.write_str("block target incorrect"),
+                Self::TargetNotMet => f.write_str("block target incorrect"),
+                Self::InvalidTarget =>
+                    f.write_str("block target is negative, overflows, or is zero"),
             }
         }
     }
@@ -307,7 +319,7 @@ pub mod error {
     impl std::error::Error for ValidationError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::BadProofOfWork | Self::BadTarget => None,
+                Self::BadProofOfWork | Self::TargetNotMet | Self::InvalidTarget => None,
             }
         }
     }
@@ -417,7 +429,7 @@ mod tests {
         assert_eq!(real_decode.header().difficulty_float(&params), 1.0);
 
         assert_eq!(
-            real_decode.header().validate_pow(real_decode.header().target()).unwrap(),
+            real_decode.header().validate_pow(real_decode.header().target().unwrap()).unwrap(),
             real_decode.block_hash()
         );
         assert_eq!(real_decode.total_size(), some_block.len());
@@ -433,20 +445,20 @@ mod tests {
         let some_header: Header =
             decode_from_slice(&some_header).expect("can't deserialize correct block header");
         assert_eq!(
-            some_header.validate_pow(some_header.target()).unwrap(),
+            some_header.validate_pow(some_header.target().unwrap()).unwrap(),
             some_header.block_hash()
         );
 
         // test with zero target
         match some_header.validate_pow(Target::ZERO) {
-            Err(ValidationError::BadTarget) => (),
+            Err(ValidationError::TargetNotMet) => (),
             _ => panic!("unexpected result from validate_pow"),
         }
 
         // test with modified header
         let mut invalid_header: Header = some_header;
         invalid_header.version = Version::from_consensus(invalid_header.version.to_consensus() + 1);
-        match invalid_header.validate_pow(invalid_header.target()) {
+        match invalid_header.validate_pow(invalid_header.target().unwrap()) {
             Err(ValidationError::BadProofOfWork) => (),
             _ => panic!("unexpected result from validate_pow"),
         }
@@ -460,7 +472,7 @@ mod tests {
     #[test]
     fn compact_roundtrip() {
         let header = header();
-        assert_eq!(header.bits, header.target().to_compact_lossy());
+        assert_eq!(header.bits, header.target().unwrap().to_compact_lossy());
     }
 
     #[test]
