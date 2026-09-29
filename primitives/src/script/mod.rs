@@ -204,6 +204,25 @@ impl TryFrom<&WitnessScript> for WScriptHash {
     }
 }
 
+/// Borrows `WitnessScript` as `ScriptCode` without modifying its bytes.
+///
+/// If the witness script contains `OP_CODESEPARATOR`s, it is up to the caller
+/// to remove everything up to and including the last **executed**
+/// `OP_CODESEPARATOR` before the signature check.
+impl AsRef<ScriptCode> for WitnessScript {
+    fn as_ref(&self) -> &ScriptCode {
+        ScriptCode::from_bytes(self.as_bytes())
+    }
+}
+
+impl AsRef<ScriptCode> for WitnessScriptBuf {
+    #[inline]
+    fn as_ref(&self) -> &ScriptCode {
+        let witness_script: &WitnessScript = self.as_script();
+        witness_script.as_ref()
+    }
+}
+
 impl From<WitnessScriptBuf> for SignetBlockScriptBuf {
     #[inline]
     fn from(buf: WitnessScriptBuf) -> Self { Self::from_bytes(buf.into_bytes()) }
