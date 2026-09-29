@@ -65,3 +65,14 @@ macro_rules! serde_string_impl {
         $crate::serde_string_serialize_impl!($name, $expecting);
     };
 }
+
+/// Upper and lower bound a sequence size hint before preallocating, the same way serde does for `Vec`.
+pub fn cautious_size_hint<T>(hint: Option<usize>) -> usize {
+    // The 1MB limit below was taken from serde
+    // https://github.com/serde-rs/serde/blob/master/serde_core/src/private/size_hint.rs
+    const MAX_PREALLOC_BYTES: usize = 1024 * 1024;
+    match MAX_PREALLOC_BYTES.checked_div(core::mem::size_of::<T>()) {
+        Some(max) => hint.unwrap_or(0).min(max),
+        None => 0,
+    }
+}
