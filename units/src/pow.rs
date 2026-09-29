@@ -829,6 +829,13 @@ mod tests {
     }
 
     #[test]
+    fn from_compact_errors_on_negative_and_overflow() {
+        for bits in [0x0492_3456, 0x2101_0000, 0x2300_0001] {
+            assert!(Target::try_from(CompactTarget::from_consensus(bits)).is_err());
+        }
+    }
+
+    #[test]
     fn max_target_from_compact() {
         // The highest possible target is defined as 0x1d00ffff
         let bits = 0x1d00_ffff_u32;
