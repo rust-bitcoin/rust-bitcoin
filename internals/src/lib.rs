@@ -33,7 +33,6 @@ pub mod _export {
 pub mod array;
 pub mod array_vec;
 pub mod error;
-#[cfg(not(creusot))]
 pub mod script;
 pub mod slice;
 #[cfg(not(creusot))]
