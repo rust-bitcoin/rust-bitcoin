@@ -52,7 +52,7 @@ fn segwit_block() {
     assert_eq!(real_decode.header().time, BlockTime::from_u32(1472004949));
     assert_eq!(real_decode.header().bits, CompactTarget::from_consensus(0x1a06d450));
     assert_eq!(real_decode.header().nonce, 1879759182);
-    assert_eq!(real_decode.header().work(), work);
+    assert_eq!(real_decode.header().work().unwrap(), work);
     assert_eq!(real_decode.header().difficulty(&params), 2456598);
     assert_eq!(real_decode.header().difficulty_float(&params), 2456598.4399242126);
 

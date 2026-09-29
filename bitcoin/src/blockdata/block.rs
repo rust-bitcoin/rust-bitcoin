@@ -83,7 +83,16 @@ internal_macros::define_extension_trait! {
         }
 
         /// Returns the total work of the block.
-        fn work(&self) -> Work { self.target().unwrap_or(Target::ZERO).to_work() }
+        ///
+        /// # Errors
+        ///
+        /// If `bits` is negative, overflows, or encodes a zero target. For the purpose of
+        /// validation, Bitcoin Core counts such a header as zero work. Use
+        /// `.unwrap_or(Work::ZERO)` to match that behavior.
+        fn work(&self) -> Result<Work, ValidationError> {
+            let target = self.target().map_err(|_| ValidationError::InvalidTarget)?;
+            target.to_work().map_err(|_| ValidationError::InvalidTarget)
+        }
     }
 }
 
@@ -423,7 +432,7 @@ mod tests {
         assert_eq!(real_decode.header().time, BlockTime::from_u32(1231965655));
         assert_eq!(real_decode.header().bits, CompactTarget::from_consensus(486604799));
         assert_eq!(real_decode.header().nonce, 2067413810);
-        assert_eq!(real_decode.header().work(), work);
+        assert_eq!(real_decode.header().work().unwrap(), work);
 
         assert_eq!(real_decode.header().difficulty(&params), 1);
         assert_eq!(real_decode.header().difficulty_float(&params), 1.0);
