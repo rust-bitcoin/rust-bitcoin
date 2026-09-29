@@ -57,7 +57,7 @@ fn segwit_block() {
     assert_eq!(real_decode.header().difficulty_float(&params), 2456598.4399242126);
 
     assert_eq!(
-        real_decode.header().validate_pow(real_decode.header().target()).unwrap(),
+        real_decode.header().validate_pow(real_decode.header().target().unwrap()).unwrap(),
         real_decode.block_hash()
     );
     assert_eq!(real_decode.total_size(), segwit_block.len());

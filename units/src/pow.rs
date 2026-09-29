@@ -19,7 +19,7 @@ use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 #[doc(no_inline)]
 pub use self::error::CompactTargetDecoderError;
 #[doc(no_inline)]
-pub use self::error::{ParseTargetError, ParseWorkError};
+pub use self::error::{InvalidCompactTargetError, ParseTargetError, ParseWorkError};
 
 /// Implement traits and methods shared by [`Target`] and [`Work`].
 macro_rules! do_impl {
@@ -193,8 +193,29 @@ impl Target {
 
     /// Computes the [`Target`] value from a compact representation.
     ///
+    /// Bitcoin Core parses a negative or overflowing compact value as a zero target. Use
+    /// `.unwrap_or(Target::ZERO)` to match that behavior.
+    ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
-    pub fn from_compact(c: CompactTarget) -> Self {
+    ///
+    /// # Errors
+    ///
+    /// - If the compact value is negative or overflows 256 bits.
+    pub fn from_compact(c: CompactTarget) -> Result<Self, InvalidCompactTargetError> {
+        let (target, negative, overflow) = Self::decode_compact(c);
+        // The mantissa is signed but may not be negative or overflow.
+        if negative || overflow {
+            Err(InvalidCompactTargetError(c))
+        } else {
+            Ok(target)
+        }
+    }
+
+    /// Decodes a compact value the way Bitcoin Core's `SetCompact` does, returning the target
+    /// along with the negative and overflow flags.
+    ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/f13ae519de94394314cd63a27924b0998ac65d45/src/arith_uint256.cpp#L176>
+    pub(super) fn decode_compact(c: CompactTarget) -> (Self, bool, bool) {
         let bits = c.to_consensus_u32();
         // This is a floating-point "compact" encoding originally used by
         // OpenSSL, which satoshi put into consensus code, so we're stuck
@@ -216,12 +237,9 @@ impl Target {
                 || (mant > 0xFF && unshifted_expt > 33)
                 || (mant > 0xFFFF && unshifted_expt > 32));
 
-        // The mantissa is signed but may not be negative or overflow.
-        if negative || overflow {
-            Self::ZERO
-        } else {
-            Self(U256::from(mant) << expt)
-        }
+        // A shift of 256 or more bits leaves zero in Core.
+        let target = if expt < 256 { Self(U256::from(mant) << expt) } else { Self::ZERO };
+        (target, negative, overflow)
     }
 
     /// Computes the compact value from a [`Target`] representation.
@@ -304,8 +322,14 @@ impl CompactTarget {
     /// Computes the [`Target`] value from this compact representation.
     ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
+    ///
+    /// # Errors
+    ///
+    /// - If the compact value is negative or overflows 256 bits.
     #[inline]
-    pub fn to_target(self) -> Target { Target::from_compact(self) }
+    pub fn to_target(self) -> Result<Target, InvalidCompactTargetError> {
+        Target::from_compact(self)
+    }
 
     /// Constructs a new [`CompactTarget`] from a prefixed hex string.
     ///
@@ -347,9 +371,11 @@ impl fmt::Display for CompactTarget {
 
 parse_int::impl_parse_str_from_int_infallible!(CompactTarget, u32, from_consensus);
 
-impl From<CompactTarget> for Target {
+impl TryFrom<CompactTarget> for Target {
+    type Error = InvalidCompactTargetError;
+
     #[inline]
-    fn from(c: CompactTarget) -> Self { Self::from_compact(c) }
+    fn try_from(c: CompactTarget) -> Result<Self, Self::Error> { Self::from_compact(c) }
 }
 
 #[cfg(feature = "encoding")]
@@ -398,6 +424,55 @@ pub mod error {
 
     use internals::u256::ParseU256Error;
     use internals::write_err;
+
+    use super::{CompactTarget, Target};
+
+    /// Returns true if the sign bit is set and the mantissa is non-zero.
+    ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/f13ae519de94394314cd63a27924b0998ac65d45/src/arith_uint256.cpp#L176>
+    fn is_target_negative(c: CompactTarget) -> bool { Target::decode_compact(c).1 }
+
+    /// Error returned when a compact target is negative or overflows 256 bits.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct InvalidCompactTargetError(pub(super) CompactTarget);
+
+    impl InvalidCompactTargetError {
+        /// Returns the compact value that failed to convert.
+        #[inline]
+        pub fn invalid_compact(&self) -> CompactTarget { self.0 }
+
+        /// Returns the target as Bitcoin Core decodes it, ignoring the error.
+        ///
+        /// ref: <https://github.com/bitcoin/bitcoin/blob/830583eb9d07e054c54a177907a98153ab3e29ae/src/pow.cpp#L64>
+        #[inline]
+        pub fn invalid_target(&self) -> Target { Target::decode_compact(self.0).0 }
+    }
+
+    impl From<Infallible> for InvalidCompactTargetError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for InvalidCompactTargetError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            let bits = self.0.to_consensus_u32();
+            if is_target_negative(self.0) {
+                write!(f, "compact target {:#010x} is negative", bits)
+            } else {
+                write!(f, "compact target {:#010x} overflows 256 bits", bits)
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidCompactTargetError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
+    }
 
     /// An error consensus decoding a [`CompactTarget`].
     ///
@@ -594,7 +669,7 @@ mod tests {
     #[test]
     fn target_one_carries_half_max_work() {
         // nBits 0x0101_0000 is the compact encoding of target = 1.
-        let target = Target::from_compact(CompactTarget::from_consensus(0x0101_0000));
+        let target = Target::from_compact(CompactTarget::from_consensus(0x0101_0000)).unwrap();
         assert_eq!(target, Target(U256::ONE));
         assert_eq!(target.to_work(), Work(U256::new(1 << 127, 0)));
     }
@@ -634,7 +709,7 @@ mod tests {
 
         for (n_bits, target) in tests {
             let want = Target(U256::from(target));
-            let got = CompactTarget::from_consensus(n_bits).to_target();
+            let got = CompactTarget::from_consensus(n_bits).to_target().unwrap_or(Target::ZERO);
             assert_eq!(got, want);
         }
     }
@@ -647,7 +722,7 @@ mod tests {
         ];
 
         for (n_bits, want) in tests {
-            let got = CompactTarget::from_consensus(n_bits).to_target();
+            let got = CompactTarget::from_consensus(n_bits).to_target().unwrap();
             assert_eq!(got, want);
         }
     }
@@ -759,8 +834,8 @@ mod tests {
     fn roundtrip_compact_target() {
         let consensus = 0x1d00_ffff;
         let compact = CompactTarget::from_consensus(consensus);
-        let t = Target::from_compact(CompactTarget::from_consensus(consensus));
-        assert_eq!(t, Target::from(compact)); // From/Into sanity check.
+        let t = Target::from_compact(CompactTarget::from_consensus(consensus)).unwrap();
+        assert_eq!(t, Target::try_from(compact).unwrap()); // From/Into sanity check.
 
         let back = t.to_compact_lossy();
         assert_eq!(back, compact); // From/Into sanity check.
@@ -773,7 +848,10 @@ mod tests {
         // Exponents of 1 and 2 shift the mantissa right by 16 and 8, which is where
         // a sign bit left in the mantissa may hide from the sign test.
         for bits in [0x0180_0000_u32, 0x0280_0000] {
-            assert_eq!(Target::from_compact(CompactTarget::from_consensus(bits)), Target::ZERO);
+            assert_eq!(
+                Target::from_compact(CompactTarget::from_consensus(bits)).unwrap_or(Target::ZERO),
+                Target::ZERO
+            );
         }
     }
 
@@ -782,7 +860,7 @@ mod tests {
         // The highest possible target is defined as 0x1d00ffff
         let bits = 0x1d00_ffff_u32;
         let want = Target::MAX;
-        let got = Target::from_compact(CompactTarget::from_consensus(bits));
+        let got = Target::from_compact(CompactTarget::from_consensus(bits)).unwrap();
         assert_eq!(got, want);
     }
 
@@ -800,19 +878,19 @@ mod tests {
 
         assert_eq!(
             Target::MAX_ATTAINABLE_MAINNET,
-            Target::from_compact(max_mainnet.to_compact_lossy())
+            Target::from_compact(max_mainnet.to_compact_lossy()).unwrap()
         );
         assert_eq!(
             Target::MAX_ATTAINABLE_TESTNET,
-            Target::from_compact(max_testnet.to_compact_lossy())
+            Target::from_compact(max_testnet.to_compact_lossy()).unwrap()
         );
         assert_eq!(
             Target::MAX_ATTAINABLE_REGTEST,
-            Target::from_compact(max_regtest.to_compact_lossy())
+            Target::from_compact(max_regtest.to_compact_lossy()).unwrap()
         );
         assert_eq!(
             Target::MAX_ATTAINABLE_SIGNET,
-            Target::from_compact(max_signet.to_compact_lossy())
+            Target::from_compact(max_signet.to_compact_lossy()).unwrap()
         );
     }
 
