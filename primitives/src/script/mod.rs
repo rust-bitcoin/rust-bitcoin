@@ -223,6 +223,33 @@ impl AsRef<ScriptCode> for WitnessScriptBuf {
     }
 }
 
+/// Borrows `RedeemScript` as `ScriptCode` without modifying its bytes.
+impl AsRef<ScriptCode> for RedeemScript {
+    fn as_ref(&self) -> &ScriptCode {
+        ScriptCode::from_bytes(self.as_bytes())
+    }
+}
+
+impl AsRef<ScriptCode> for RedeemScriptBuf {
+    fn as_ref(&self) -> &ScriptCode {
+        let redeem_script: &RedeemScript = self.as_script();
+        redeem_script.as_ref()
+    }
+}
+
+/// Borrows `ScriptPubKey` as `ScriptCode` without modifying its bytes.
+impl AsRef<ScriptCode> for ScriptPubKey {
+    fn as_ref(&self) -> &ScriptCode {
+        ScriptCode::from_bytes(self.as_bytes())
+    }
+}
+
+impl AsRef<ScriptCode> for ScriptPubKeyBuf {
+    fn as_ref(&self) -> &ScriptCode {
+        let script_pub_key: &ScriptPubKey = self.as_script();
+        script_pub_key.as_ref()
+    }
+}
 impl From<WitnessScriptBuf> for SignetBlockScriptBuf {
     #[inline]
     fn from(buf: WitnessScriptBuf) -> Self { Self::from_bytes(buf.into_bytes()) }
