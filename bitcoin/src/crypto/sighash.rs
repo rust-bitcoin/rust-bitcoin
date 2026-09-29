@@ -29,7 +29,7 @@ use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX}
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
 use crate::{
-    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript,
+    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript, ScriptCode
 };
 
 #[rustfmt::skip]            // Keep public re-exports separate.
@@ -565,7 +565,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// [`std::io::Write`] trait.
     ///
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
-    /// [`WitnessScript::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
+    /// [`ScriptPubKey::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
     /// [`Self::p2wpkh_signature_hash`] and [`SighashCache::p2wsh_signature_hash`].)
     ///
     /// In order to sign, the data written by this function must be hashed using a double SHA256
@@ -575,10 +575,11 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         mut writer: W,
         input_index: usize,
-        script_code: &WitnessScript,
+        script_code: impl AsRef<ScriptCode>,
         amount: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), SigningDataError<transaction::InputsIndexError>> {
+        let script_code = script_code.as_ref();
         let zero_hash = [0; 32];
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
