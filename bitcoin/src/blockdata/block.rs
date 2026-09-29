@@ -473,6 +473,15 @@ mod tests {
         }
     }
 
+    #[test]
+    fn invalid_bits_header_has_zero_work() {
+        let mut header = header();
+        header.bits = CompactTarget::from_consensus(0x0492_3456);
+        assert!(header.target().is_err());
+        assert_eq!(header.work(), Err(ValidationError::InvalidTarget));
+        assert_eq!(header.work().unwrap_or(Work::ZERO), Work::ZERO);
+    }
+
     fn header() -> Header {
         let header = hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b");
         decode_from_slice(&header).expect("can't deserialize correct block header")
