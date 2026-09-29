@@ -81,7 +81,9 @@ internal_macros::define_extension_trait! {
         }
 
         /// Returns the total work of the block.
-        fn work(&self) -> Work { self.target().unwrap_or(Target::ZERO).to_work() }
+        fn work(&self) -> Work {
+            self.target().unwrap_or(Target::ZERO).to_work().unwrap_or(Work::ZERO)
+        }
     }
 }
 

@@ -19,7 +19,9 @@ use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 #[doc(no_inline)]
 pub use self::error::CompactTargetDecoderError;
 #[doc(no_inline)]
-pub use self::error::{InvalidCompactTargetError, ParseTargetError, ParseWorkError};
+pub use self::error::{
+    InvalidCompactTargetError, ParseTargetError, ParseWorkError, ZeroConversionError,
+};
 
 /// Implement traits and methods shared by [`Target`] and [`Work`].
 macro_rules! do_impl {
@@ -102,12 +104,19 @@ macro_rules! do_impl {
 pub struct Work(U256);
 
 impl Work {
+    /// Zero work.
+    pub const ZERO: Self = Self(U256::ZERO);
+
     /// Converts this [`Work`] to [`Target`], `target = 2^256 / work - 1`.
+    ///
+    /// # Errors
+    ///
+    /// - If the work is zero.
     #[inline]
-    pub fn to_target(self) -> Target {
+    pub fn to_target(self) -> Result<Target, ZeroConversionError> {
         // prevents division by zero.
         if self.0 == U256::ZERO {
-            return Target(U256::MAX);
+            return Err(ZeroConversionError);
         }
         // From consensus formula, we know that:
         //  work   = 2^256 / (target + 1) =>
@@ -117,7 +126,7 @@ impl Work {
         // where 2^256 - work = -work (mod 2^256)
         // and   work + !work = 2^256 - 1 => (a bitmask with all 1 bits)
         //       -work = !work + 1 (mod 2^256).
-        Target((!self.0).wrapping_inc() / self.0)
+        Ok(Target((!self.0).wrapping_inc() / self.0))
     }
 }
 
@@ -255,14 +264,21 @@ impl Target {
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
     /// block with this target (see `Self::difficulty`).
+    ///
+    /// Bitcoin Core counts a zero target as zero work. Use `.unwrap_or(Work::ZERO)` to match that
+    /// behavior.
+    ///
+    /// # Errors
+    ///
+    /// - If the target is zero.
     #[inline]
-    pub fn to_work(self) -> Work {
+    pub fn to_work(self) -> Result<Work, ZeroConversionError> {
         if self.0 == U256::ZERO {
-            return Work(U256::MAX);
+            return Err(ZeroConversionError);
         }
         // target + 1 wraps to zero for the max target.
         if self.0 == U256::MAX {
-            return Work(U256::ONE);
+            return Ok(Work(U256::ONE));
         }
 
         // Calculates 2^256 / (x + 1) where x is a 256 bit unsigned integer.
@@ -270,7 +286,7 @@ impl Target {
         // 2**256 / (x + 1) == ~x / (x + 1) + 1
         //
         // ref: <https://github.com/bitcoin/bitcoin/blob/5fe753b56f450b054c42227c5df8346c72447490/src/chain.cpp#L133>
-        Work((!self.0 / self.0.wrapping_inc()).wrapping_inc())
+        Ok(Work((!self.0 / self.0.wrapping_inc()).wrapping_inc()))
     }
 }
 do_impl!(Target, ParseTargetError);
@@ -447,6 +463,33 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidCompactTargetError {}
 
+    /// Error returned when converting zero [`Work`] or zero [`Target`].
+    ///
+    /// Zero work conversion divides by zero, and the work of a zero target does not fit in U256
+    /// bits. Bitcoin Core maps both to zero, which can be matched with `.unwrap_or(Work::ZERO)`
+    /// or `.unwrap_or(Target::ZERO)`.
+    ///
+    /// [`Work`]: super::Work
+    /// [`Target`]: super::Target
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct ZeroConversionError;
+
+    impl From<Infallible> for ZeroConversionError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for ZeroConversionError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("zero work or target cannot be converted")
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for ZeroConversionError {}
+
     /// An error consensus decoding a [`CompactTarget`].
     ///
     /// [`CompactTarget`]: super::CompactTarget
@@ -620,13 +663,13 @@ mod tests {
         let half = U256::new(1 << 127, 0);
 
         // lower target means more work required.
-        assert_eq!(Target(max).to_work(), Work(U256::ONE));
-        assert_eq!(Target(U256::ONE).to_work(), Work(half));
-        assert_eq!(Target(U256::ZERO).to_work(), Work(max));
+        assert_eq!(Target(max).to_work(), Ok(Work(U256::ONE)));
+        assert_eq!(Target(U256::ONE).to_work(), Ok(Work(half)));
+        assert_eq!(Target(U256::ZERO).to_work(), Err(ZeroConversionError));
 
-        assert_eq!(Work(max).to_target(), Target(U256::ZERO));
-        assert_eq!(Work(U256::ONE).to_target(), Target(max));
-        assert_eq!(Work(U256::ZERO).to_target(), Target(max));
+        assert_eq!(Work(max).to_target(), Ok(Target(U256::ZERO)));
+        assert_eq!(Work(U256::ONE).to_target(), Ok(Target(max)));
+        assert_eq!(Work(U256::ZERO).to_target(), Err(ZeroConversionError));
     }
 
     #[test]
@@ -644,24 +687,27 @@ mod tests {
         // nBits 0x0101_0000 is the compact encoding of target = 1.
         let target = Target::from_compact(CompactTarget::from_consensus(0x0101_0000)).unwrap();
         assert_eq!(target, Target(U256::ONE));
-        assert_eq!(target.to_work(), Work(U256::new(1 << 127, 0)));
+        assert_eq!(target.to_work(), Ok(Work(U256::new(1 << 127, 0))));
     }
 
     #[test]
     fn work_and_target_convert_both_ways() {
         let half = U256::new(1 << 127, 0);
 
-        assert_eq!(Work(U256::new(0, 2)).to_target(), Target(U256::new(u128::MAX >> 1, u128::MAX)));
-        assert_eq!(Work(half).to_target(), Target(U256::ONE));
+        assert_eq!(
+            Work(U256::new(0, 2)).to_target(),
+            Ok(Target(U256::new(u128::MAX >> 1, u128::MAX)))
+        );
+        assert_eq!(Work(half).to_target(), Ok(Target(U256::ONE)));
 
         // Up to u128::MAX the target is smaller than its work, so to_work drops a
         // remainder too small to change the target on the way back.
         for target in
             [Target(U256::ONE), Target(U256::new(0, 0xdead_beef)), Target(U256::new(0, u128::MAX))]
         {
-            assert_eq!(target.to_work().to_target(), target);
+            assert_eq!(target.to_work().unwrap().to_target(), Ok(target));
         }
-        assert_eq!(Target(U256::MAX).to_work().to_target(), Target(U256::MAX));
+        assert_eq!(Target(U256::MAX).to_work().unwrap().to_target(), Ok(Target(U256::MAX)));
     }
 
     #[test]

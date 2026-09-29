@@ -19,7 +19,9 @@ use crate::network::Params;
 #[doc(inline)]
 pub use primitives::pow::{error, CompactTarget, CompactTargetEncoder, CompactTargetDecoder, Target, Work};
 #[doc(no_inline)]
-pub use primitives::pow::{InvalidCompactTargetError, ParseTargetError, ParseWorkError};
+pub use primitives::pow::{
+    InvalidCompactTargetError, ParseTargetError, ParseWorkError, ZeroConversionError,
+};
 
 #[doc(no_inline)]
 pub use self::error::CompactTargetDecoderError;
@@ -636,8 +638,8 @@ mod tests {
     #[test]
     fn roundtrip_target_work() {
         let target = u32_to_target(0xdeadbeef_u32);
-        let work = target.to_work();
-        let back = work.to_target();
+        let work = target.to_work().unwrap();
+        let back = work.to_target().unwrap();
         assert_eq!(back, target)
     }
 
