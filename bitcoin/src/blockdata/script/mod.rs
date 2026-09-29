@@ -50,6 +50,7 @@ mod builder;
 mod instruction;
 mod owned;
 mod push_bytes;
+mod script_code;
 #[cfg(test)]
 mod tests;
 pub mod witness_version;
@@ -67,6 +68,7 @@ pub use self::{
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{ScriptBufExt, ScriptPubKeyBufExt, ScriptSigBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesExt, PushBytesErrorReport},
+    script_code::P2wpkhScriptCode
 };
 #[doc(inline)]
 pub use addresses::witness_program;
