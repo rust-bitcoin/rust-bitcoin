@@ -131,7 +131,7 @@ use primitives::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
 use primitives::opcodes::Opcode;
 #[cfg(feature = "alloc")]
 use primitives::script::{
-    Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHashableTag, ScriptPubKey,
+    Builder, PushBytes, RedeemScriptError, Script, ScriptBuf, ScriptHashableTag, ScriptPubKey,
     ScriptPubKeyBuf, WitnessScript, WitnessScriptSizeError,
 };
 use primitives::script::{ScriptHash, WScriptHash};
@@ -691,13 +691,13 @@ impl Address {
     ///
     /// # Errors
     ///
-    /// Returns an error if the script exceeds 520 bytes.
+    /// Returns an error if the script exceeds 520 bytes or is a SegWit version 1+ witness program.
     #[inline]
     #[cfg(feature = "alloc")]
     pub fn p2sh<T: ScriptHashableTag>(
         redeem_script: &Script<T>,
         params: impl Into<AddressParams>,
-    ) -> Result<Self, RedeemScriptSizeError> {
+    ) -> Result<Self, RedeemScriptError> {
         let hash = redeem_script.script_hash()?;
         Ok(Self::p2sh_from_hash(hash, params))
     }
@@ -1292,7 +1292,10 @@ mod tests {
     fn p2sh_parse_for_large_script() {
         let script = RedeemScriptBuf::from_hex_no_length_prefix("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
         let res = Address::p2sh(&script, AddressParams::TESTNET3);
-        assert_eq!(res.unwrap_err().invalid_size(), script.len());
+        match res.unwrap_err() {
+            RedeemScriptError::Size(e) => assert_eq!(e.invalid_size(), script.len()),
+            e => panic!("unexpected error: {e}"),
+        }
     }
 
     #[test]

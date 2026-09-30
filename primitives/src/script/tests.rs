@@ -514,6 +514,11 @@ fn redeem_script_size_error() {
     let result = ScriptHash::try_from(script);
 
     let err = result.unwrap_err();
+    assert!(!err.to_string().is_empty());
+    #[cfg(feature = "std")]
+    assert!(err.source().is_some());
+
+    let RedeemScriptError::Size(err) = err else { panic!("expected a size error") };
     assert_eq!(err.invalid_size(), 521);
 
     assert!(!err.to_string().is_empty());

@@ -85,7 +85,8 @@ pub(crate) use self::borrowed::ScriptExtPriv;
 pub(in crate::blockdata) use self::builder::BuilderExtPriv;
 #[doc(no_inline)]
 pub use self::error::{
-    Error, PushBytesError, RedeemScriptSizeError, ScriptIntError, WitnessScriptSizeError,
+    Error, PushBytesError, RedeemScriptError, RedeemScriptSizeError, ScriptIntError,
+    WitnessScriptSizeError,
 };
 pub(crate) use self::owned::ScriptBufExtPriv;
 
@@ -226,7 +227,8 @@ pub mod error {
     pub use super::push_bytes::ScriptIntError;
     #[doc(no_inline)]
     pub use primitives::script::error::{
-        PushBytesError, RedeemScriptSizeError, ScriptBufDecoderError, WitnessScriptSizeError,
+        PushBytesError, RedeemScriptError, RedeemScriptSizeError, ScriptBufDecoderError,
+        WitnessScriptSizeError,
     };
 
     /// Ways that a script might fail. Not everything is split up as

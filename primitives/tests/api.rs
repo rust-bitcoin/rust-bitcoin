@@ -318,6 +318,7 @@ struct Errors {
     e: block::InvalidBlockError,
     g: block::VersionDecoderError,
     h: merkle_tree::TxMerkleNodeDecoderError,
+    l: script::RedeemScriptError,
     m: script::PushBytesError,
     n: script::RedeemScriptSizeError,
     o: script::ScriptBufDecoderError,
@@ -462,6 +463,7 @@ fn c_good_err_display() {
     assert_display::<block::VersionDecoderError>();
     assert_display::<merkle_tree::TxMerkleNodeDecoderError>();
     assert_display::<script::PushBytesError>();
+    assert_display::<script::RedeemScriptError>();
     assert_display::<script::RedeemScriptSizeError>();
     assert_display::<script::ScriptBufDecoderError>();
     assert_display::<script::WitnessScriptSizeError>();
@@ -675,17 +677,17 @@ fn p_consistent_exports_locktime_relative() {
 #[test]
 fn p_consistent_exports_script() {
     use bitcoin_primitives::script::error::{
-        PushBytesError as _, RedeemScriptSizeError as _, ScriptBufDecoderError as _,
-        WitnessScriptSizeError as _,
+        PushBytesError as _, RedeemScriptError as _, RedeemScriptSizeError as _,
+        ScriptBufDecoderError as _, WitnessScriptSizeError as _,
     };
     use bitcoin_primitives::script::{
         Builder, PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, RedeemScript,
-        RedeemScriptBuf, RedeemScriptSizeError, RedeemScriptTag, Script, ScriptBuf,
-        ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash, ScriptHashableTag,
-        ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufDecoder, ScriptPubKeyTag, ScriptSig,
-        ScriptSigBuf, ScriptSigBufDecoder, ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf,
-        SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash,
-        WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
+        RedeemScriptBuf, RedeemScriptError, RedeemScriptSizeError, RedeemScriptTag, Script,
+        ScriptBuf, ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash,
+        ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufDecoder, ScriptPubKeyTag,
+        ScriptSig, ScriptSigBuf, ScriptSigBufDecoder, ScriptSigTag, SignetBlockScript,
+        SignetBlockScriptBuf, SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag,
+        WScriptHash, WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
     };
 }
 

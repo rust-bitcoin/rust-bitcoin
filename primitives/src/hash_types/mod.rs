@@ -29,7 +29,10 @@ pub use self::{
 };
 #[cfg(feature = "alloc")]
 #[doc(inline)]
-pub use self::{script_hash::RedeemScriptSizeError, witness_script_hash::WitnessScriptSizeError};
+pub use self::{
+    script_hash::{RedeemScriptError, RedeemScriptSizeError},
+    witness_script_hash::WitnessScriptSizeError,
+};
 
 /// Adds trait impls to a bytelike type.
 ///
