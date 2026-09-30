@@ -24,12 +24,14 @@ use io::Write;
 
 use crate::opcodes::all::OP_CODESEPARATOR;
 use crate::prelude::{Borrow, BorrowMut};
-use crate::script::{Instruction, ScriptExt as _, ScriptHashableTag};
+use crate::script::{Instruction, ScriptCodeTag, ScriptExt as _, ScriptHashableTag};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
+#[cfg(doc)]
+use crate::ScriptPubKey;
 use crate::{
-    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript, ScriptCode
+    transaction, Amount, Sequence, TapScript, Transaction, TxOut, WitnessScript, ScriptCode
 };
 
 #[rustfmt::skip]            // Keep public re-exports separate.
@@ -698,13 +700,14 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<W: Write, T: ScriptHashableTag>(
+    pub fn legacy_encode_signing_data_to<W: Write>(
         &self,
         mut writer: W,
         input_index: usize,
-        script_code: &crate::script::Script<T>,
+        script_code: impl AsRef<ScriptCode>,
         sighash_type: EcdsaSighashType,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
+        let script_code = script_code.as_ref();
         // Validate input_index.
         if let Err(e) = self.tx.borrow().tx_in(input_index) {
             return EncodeSigningDataResult::WriteResult(Err(SigningDataError::Sighash(e)));
@@ -722,11 +725,11 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             return EncodeSigningDataResult::SighashSingleBug;
         }
 
-        fn encode_signing_data_to_inner<W: Write, T: ScriptHashableTag>(
+        fn encode_signing_data_to_inner<W: Write>(
             self_: &Transaction,
             mut writer: W,
             input_index: usize,
-            script_code: &crate::script::Script<T>,
+            script_code: &ScriptCode,
             sighash_type: EcdsaSighashType,
         ) -> Result<(), io::Error> {
             let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -745,8 +748,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     if n == input_index {
                         legacy_encode_script_code_to(script_code, &mut writer)?;
                     } else {
-                        // TODO: Use ScriptCode instead of ScriptPubKey once it exists (see #6079)
-                        io::encode_to_writer(ScriptPubKey::new(), &mut writer)?;
+                        io::encode_to_writer(ScriptCode::new(), &mut writer)?;
                     }
                     if n != input_index
                         && (sighash == EcdsaSighashType::Single
@@ -817,10 +819,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// See [`Self::legacy_encode_signing_data_to`] for the requirements on
     /// `script_code` and the handling of `OP_CODESEPARATOR`.
-    pub fn legacy_signature_hash<T: ScriptHashableTag>(
+    pub fn legacy_signature_hash(
         &self,
         input_index: usize,
-        script_code: &crate::script::Script<T>,
+        script_code: impl AsRef<ScriptCode>,
         sighash_type: EcdsaSighashType,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
@@ -957,8 +959,8 @@ fn is_invalid_use_of_sighash_single(
     sighash.is_single() && input_index >= outputs_len
 }
 
-fn legacy_encode_script_code_to<W: Write, T: ScriptHashableTag>(
-    script_code: &crate::script::Script<T>,
+fn legacy_encode_script_code_to<W: Write>(
+    script_code: &ScriptCode,
     writer: &mut W,
 ) -> Result<(), io::Error> {
     let bytes = script_code.as_bytes();
@@ -986,7 +988,7 @@ fn legacy_encode_script_code_to<W: Write, T: ScriptHashableTag>(
     let mut instructions = script_code.instruction_indices();
 
     loop {
-        let offset = bytes.len() - instructions.as_script::<T>().len();
+        let offset = bytes.len() - instructions.as_script::<ScriptCodeTag>().len();
         match instructions.next() {
             Some(Ok((index, Instruction::Op(OP_CODESEPARATOR)))) => {
                 writer.write_all(&bytes[start..index])?;
@@ -1437,7 +1439,7 @@ mod tests {
 
     #[test]
     fn legacy_script_code_separator() {
-        let script_code = ScriptPubKey::from_bytes(&[0xab, 0x4c, 0x01, 0xab, 0xab]);
+        let script_code = ScriptCode::from_bytes(&[0xab, 0x4c, 0x01, 0xab, 0xab]);
         let mut encoded = Vec::new();
         legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
         assert_eq!(encoded, [0x03, 0x4c, 0x01, 0xab]);
@@ -1445,7 +1447,7 @@ mod tests {
 
     #[test]
     fn legacy_script_code_incomplete_push() {
-        let script_code = ScriptPubKey::from_bytes(&[0xab, 0x4c, 0x02, 0xab]);
+        let script_code = ScriptCode::from_bytes(&[0xab, 0x4c, 0x02, 0xab]);
         let mut encoded = Vec::new();
         legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
         assert_eq!(encoded, [0x03, 0x4c, 0x02]);
