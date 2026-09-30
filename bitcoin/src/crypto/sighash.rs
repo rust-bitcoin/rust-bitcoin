@@ -1912,6 +1912,48 @@ mod tests {
         );
     }
 
+    #[test]
+    fn bip143_p2wsh_separator() {
+        // Source: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wsh
+        let tx = decode_from_slice::<Transaction>(&hex!(
+            "0100000002fe3dc9208094f3ffd12645477b3dc56f60ec4fa8e6f5d67c565d1c6b9216b36e00000000\
+             00ffffffff0815cf020f013ed6cf91d29f4202e8a58726b1ac6c79da47c23d1bee0a6925f800000000\
+             00ffffffff0100f2052a010000001976a914a30741f8145e5acadf23f751864167f32e0963f788ac00000000"
+        ))
+        .unwrap();
+        let witness_script = hex!(
+            "21026dccc749adc2a9d0d89497ac511f760f45c47dc5ed9cf352a58ac706453880aeadab\
+             210255a9626aebf5e29c0e6538428ba0d1dcf6ca98ffdf086aa8ced5e0d0215ea465ac"
+        );
+        let amount = Amount::from_sat(4_900_000_000).unwrap();
+        let mut cache = SighashCache::new(&tx);
+
+        for (script_code, expected) in [
+            // At CHECKSIGVERIFY, OP_CODESEPARATOR has not executed and must be kept.
+            (
+                ScriptCode::from_bytes(&witness_script),
+                "82dde6e4f1e94d02c2b7ad03d2115d691f48d064e9d52f58194a6637e4194391",
+            ),
+            // At CHECKSIG, the caller removes the prefix through OP_CODESEPARATOR at byte 35.
+            (
+                ScriptCode::from_bytes(&witness_script[36..]),
+                "fef7bd749cce710c5c052bd796df1af0d935e59cea63736268bcbe2d2134fc47",
+            ),
+        ] {
+            let mut enc = SegwitV0Sighash::engine();
+            cache
+                .segwit_v0_encode_signing_data_to(
+                    &mut enc,
+                    1,
+                    script_code,
+                    amount,
+                    EcdsaSighashType::Single,
+                )
+                .unwrap();
+            assert_eq!(SegwitV0Sighash::from_engine(enc), expected.parse().unwrap());
+        }
+    }
+
     // Note, if you are looking at the test vectors in BIP-0143 and wondering why there is a `cf`
     // prepended to all the script_code hex it is the length byte, it gets added when we consensus
     // encode a script.
