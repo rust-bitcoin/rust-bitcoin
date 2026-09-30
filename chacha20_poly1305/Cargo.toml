@@ -1,7 +1,7 @@
 [package]
 name = "chacha20-poly1305"
 version = "0.2.1"
-authors = ["Nick Johnson <nick@yonson.dev>", "Robert Netzke <rustaceanrob@protonmail.com>"]
+authors = ["Nick Johnson <nick@yonson.dev>", "Robert Netzke <rob@2140.dev>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
 homepage = "https://rust-bitcoin.org"
