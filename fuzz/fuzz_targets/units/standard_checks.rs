@@ -65,7 +65,7 @@ mod fuzz {
     wrap_for_checks!(Sequence, super::Sequence::MAX);
     wrap_for_checks!(BlockMtp, super::BlockMtp::from_u32(1_742_979_600)); // 26 Mar 2025 9:00 UTC
     wrap_for_checks!(BlockTime, super::BlockTime::from(1_742_979_600)); // 26 Mar 2025 9:00 UTC
-    wrap_for_checks!(FeeRate, super::FeeRate::BROADCAST_MIN);
+    wrap_for_checks!(FeeRate, super::FeeRate::from_sat_per_vb_u32(1));
     wrap_for_checks!(Height, super::Height::MIN);
     wrap_for_checks!(MedianTimePast, super::MedianTimePast::MIN);
     wrap_for_checks!(Weight, super::Weight::MIN_TRANSACTION);
