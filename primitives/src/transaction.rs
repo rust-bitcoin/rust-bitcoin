@@ -2329,6 +2329,44 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn compute_ntxid_preserves_coinbase_script_sig() {
+        let mut tx_in = TxIn::EMPTY_COINBASE;
+        // BIP-34 height 840001.
+        tx_in.script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x41, 0xd1, 0x0c]);
+
+        let first = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![tx_in],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        let mut second = first.clone();
+        // BIP-34 height 840002.
+        second.inputs[0].script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x42, 0xd1, 0x0c]);
+
+        assert_ne!(first.compute_txid(), second.compute_txid());
+        assert_ne!(first.compute_ntxid(), second.compute_ntxid());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn compute_ntxid_matches_coinbase_txid() {
+        let mut tx_in = TxIn::EMPTY_COINBASE;
+        tx_in.script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x41, 0xd1, 0x0c]);
+
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![tx_in],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        assert_eq!(tx.compute_ntxid().to_byte_array(), tx.compute_txid().to_byte_array());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn transaction_decoder_push_bytes_after_done_is_false() {
         let tx_bytes = [
             0x01, 0x00, 0x00, 0x00, // version
