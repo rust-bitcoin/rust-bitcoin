@@ -377,6 +377,33 @@ fn script_hash_from_script() {
 }
 
 #[test]
+fn script_hash_from_script_rejects_segwit_v1_plus() {
+    // OP_1 OP_PUSHBYTES_32 <32 bytes>
+    let mut bytes = vec![0x51, 0x20];
+    bytes.extend_from_slice(&[0x42; 32]);
+
+    let p2tr = ScriptPubKeyBuf::from(bytes.clone());
+    assert_eq!(p2tr.witness_version(), Some(WitnessVersion::V1));
+    assert!(ScriptHash::from_script(&p2tr).is_err());
+    assert!(ScriptHash::try_from(&p2tr).is_err());
+    assert!(p2tr.script_hash().is_err());
+
+    let redeem_script = RedeemScriptBuf::from(bytes);
+    assert!(ScriptHash::from_script(&redeem_script).is_err());
+
+    // OP_16 OP_PUSHBYTES_2 <2 bytes>
+    let v16 = ScriptPubKey::from_bytes(&[0x60, 0x02, 0x00, 0x00]);
+    assert_eq!(v16.witness_version(), Some(WitnessVersion::V16));
+    assert!(ScriptHash::from_script(v16).is_err());
+
+    // OP_0 OP_PUSHBYTES_20 <20 bytes> (P2SH-wrapped P2WPKH is valid)
+    let mut bytes = vec![0x00, 0x14];
+    bytes.extend_from_slice(&[0x42; 20]);
+    let p2wpkh = ScriptPubKeyBuf::from(bytes);
+    assert!(ScriptHash::from_script(&p2wpkh).is_ok());
+}
+
+#[test]
 fn script_hash_from_script_unchecked() {
     let script = WitnessScript::from_bytes(&[0x51; 521]);
 
