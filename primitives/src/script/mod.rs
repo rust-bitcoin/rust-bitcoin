@@ -50,7 +50,7 @@ pub use self::{
     builder::Builder,
     owned::{ScriptBuf, ScriptBufDecoder},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesErrorReport},
-    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag},
+    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag, ScriptCodeTag},
 };
 #[doc(no_inline)]
 pub use self::error::{
@@ -100,6 +100,9 @@ pub type WitnessScriptBuf = ScriptBuf<WitnessScriptTag>;
 
 /// A reference to a Segwit v0 witness script.
 pub type WitnessScript = Script<WitnessScriptTag>;
+
+/// A reference to a script code (scriptCode) used in sighash computation.
+pub type ScriptCode = Script<ScriptCodeTag>;
 
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
@@ -201,6 +204,52 @@ impl TryFrom<&WitnessScript> for WScriptHash {
     }
 }
 
+/// Borrows `WitnessScript` as `ScriptCode` without modifying its bytes.
+///
+/// If the witness script contains `OP_CODESEPARATOR`s, it is up to the caller
+/// to remove everything up to and including the last **executed**
+/// `OP_CODESEPARATOR` before the signature check.
+impl AsRef<ScriptCode> for WitnessScript {
+    fn as_ref(&self) -> &ScriptCode {
+        ScriptCode::from_bytes(self.as_bytes())
+    }
+}
+
+impl AsRef<ScriptCode> for WitnessScriptBuf {
+    #[inline]
+    fn as_ref(&self) -> &ScriptCode {
+        let witness_script: &WitnessScript = self.as_script();
+        witness_script.as_ref()
+    }
+}
+
+/// Borrows `RedeemScript` as `ScriptCode` without modifying its bytes.
+impl AsRef<ScriptCode> for RedeemScript {
+    fn as_ref(&self) -> &ScriptCode {
+        ScriptCode::from_bytes(self.as_bytes())
+    }
+}
+
+impl AsRef<ScriptCode> for RedeemScriptBuf {
+    fn as_ref(&self) -> &ScriptCode {
+        let redeem_script: &RedeemScript = self.as_script();
+        redeem_script.as_ref()
+    }
+}
+
+/// Borrows `ScriptPubKey` as `ScriptCode` without modifying its bytes.
+impl AsRef<ScriptCode> for ScriptPubKey {
+    fn as_ref(&self) -> &ScriptCode {
+        ScriptCode::from_bytes(self.as_bytes())
+    }
+}
+
+impl AsRef<ScriptCode> for ScriptPubKeyBuf {
+    fn as_ref(&self) -> &ScriptCode {
+        let script_pub_key: &ScriptPubKey = self.as_script();
+        script_pub_key.as_ref()
+    }
+}
 impl From<WitnessScriptBuf> for SignetBlockScriptBuf {
     #[inline]
     fn from(buf: WitnessScriptBuf) -> Self { Self::from_bytes(buf.into_bytes()) }
