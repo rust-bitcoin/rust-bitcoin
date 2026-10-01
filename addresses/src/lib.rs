@@ -1280,10 +1280,7 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
             let address = Address::from_base58_str(s).map_err(ParseError::Base58)?;
             Ok(Self::from_inner(address.to_inner()))
         } else {
-            let hrp = match s.rfind('1') {
-                Some(pos) => &s[..pos],
-                None => s,
-            };
+            let hrp = s.rfind('1').map_or(s, |pos| &s[..pos]);
             Err(UnknownHrpError(hrp.into()))
                 .map_err(Bech32Error::UnknownHrp)
                 .map_err(ParseError::Bech32)
