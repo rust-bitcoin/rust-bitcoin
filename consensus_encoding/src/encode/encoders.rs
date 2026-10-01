@@ -227,30 +227,37 @@ macro_rules! define_encoder_n {
         impl<$($enc_ty: Encoder,)*> Encoder for $name<$($enc_ty,)*> {
             #[inline]
             fn current_chunk(&self) -> &[u8] {
-                match self.cur_idx {
-                    $($enc_idx => self.$enc_field.current_chunk(),)*
-                    _ => unreachable!("index never reaches this value"),
-                }
+                $(
+                    if self.cur_idx <= $enc_idx {
+                        let chunk = self.$enc_field.current_chunk();
+                        if !chunk.is_empty() {
+                            return chunk;
+                        }
+                    }
+                )*
+                &[]
             }
 
             #[inline]
             fn advance(&mut self) -> EncoderStatus {
-                match self.cur_idx {
-                    $(
-                        $enc_idx => {
-                            // For the last encoder, just pass through
-                            if $enc_idx == $idx_limit - 1 {
-                                return self.$enc_field.advance()
+                $(
+                    if self.cur_idx <= $enc_idx {
+                        self.cur_idx = $enc_idx;
+                        if !self.$enc_field.current_chunk().is_empty() {
+                            if self.$enc_field.advance().has_more() {
+                                return EncoderStatus::HasMore;
                             }
-                            // For all others, return EncoderStatus::HasMore, or increment to next encoder
-                            if self.$enc_field.advance().has_finished() {
-                                self.cur_idx += 1;
+                            self.cur_idx += 1;
+                            if self.current_chunk().is_empty() {
+                                self.cur_idx = $idx_limit;
+                                return EncoderStatus::Finished;
                             }
-                            EncoderStatus::HasMore
+                            return EncoderStatus::HasMore;
                         }
-                    )*
-                    _ => EncoderStatus::Finished,
-                }
+                    }
+                )*
+                self.cur_idx = $idx_limit;
+                EncoderStatus::Finished
             }
         }
 

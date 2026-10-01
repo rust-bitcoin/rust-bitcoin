@@ -193,14 +193,41 @@ fn encode_slice_encoder_mixed_empty_and_data() {
 }
 
 #[test]
-fn encode_encoder2_with_first_empty_encoder() {
-    // Test Encoder2 when first encoder produces no data.
-    let enc1 = ArrayEncoder::<0>::without_length_prefix([]);
-    let enc2 = ArrayEncoder::<3>::without_length_prefix([1, 2, 3]);
+fn composite_encoders_skip_empty_components() {
+    let mut encoder2 = Encoder2::new(
+        ArrayEncoder::<0>::without_length_prefix([]),
+        ArrayEncoder::without_length_prefix([1]),
+    );
+    assert_eq!(encoder2.current_chunk(), [1]);
+    check_encoder(&mut encoder2, &[1]);
 
-    let mut encoder = Encoder2::new(enc1, enc2);
+    let mut encoder3 = Encoder3::new(
+        ArrayEncoder::<0>::without_length_prefix([]),
+        ArrayEncoder::without_length_prefix([2]),
+        ArrayEncoder::<0>::without_length_prefix([]),
+    );
+    assert_eq!(encoder3.current_chunk(), [2]);
+    check_encoder(&mut encoder3, &[2]);
 
-    check_encoder(&mut encoder, &[1, 2, 3]);
+    let mut encoder4 = Encoder4::new(
+        ArrayEncoder::<0>::without_length_prefix([]),
+        ArrayEncoder::without_length_prefix([3]),
+        ArrayEncoder::<0>::without_length_prefix([]),
+        ArrayEncoder::without_length_prefix([4]),
+    );
+    assert_eq!(encoder4.current_chunk(), [3]);
+    check_encoder(&mut encoder4, &[3, 4]);
+
+    let mut encoder6 = Encoder6::new(
+        ArrayEncoder::<0>::without_length_prefix([]),
+        ArrayEncoder::without_length_prefix([5]),
+        ArrayEncoder::<0>::without_length_prefix([]),
+        ArrayEncoder::without_length_prefix([6]),
+        ArrayEncoder::<0>::without_length_prefix([]),
+        ArrayEncoder::without_length_prefix([7]),
+    );
+    assert_eq!(encoder6.current_chunk(), [5]);
+    check_encoder(&mut encoder6, &[5, 6, 7]);
 }
 
 #[test]

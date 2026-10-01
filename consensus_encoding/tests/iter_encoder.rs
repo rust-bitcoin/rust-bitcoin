@@ -4,7 +4,7 @@
 
 #![cfg(feature = "alloc")]
 
-use bitcoin_consensus_encoding::{drain_to_vec, BytesEncoder, IterEncoder};
+use bitcoin_consensus_encoding::{drain_to_vec, BytesEncoder, Encoder2, IterEncoder};
 
 /// Constructs a [`BytesEncoder`] from a static byte slice for use in tests.
 fn enc(b: &'static [u8]) -> BytesEncoder<'static> { BytesEncoder::without_length_prefix(b) }
@@ -53,4 +53,14 @@ fn trailing_empty_encoders_skipped() {
 #[test]
 fn interleaved_empty_encoders_skipped() {
     assert_eq!(encode([enc(&[1]), enc(&[]), enc(&[2]), enc(&[]), enc(&[3])]), [1, 2, 3]);
+}
+
+#[test]
+fn composite_encoder_with_empty_leading_component_not_dropped() {
+    let encoders = [
+        Encoder2::new(enc(&[]), enc(&[1])),
+        Encoder2::new(enc(&[2]), enc(&[])),
+        Encoder2::new(enc(&[]), enc(&[3])),
+    ];
+    assert_eq!(encode(encoders), [1, 2, 3]);
 }
