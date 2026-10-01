@@ -193,6 +193,7 @@ fn encode_block() {
     };
 
     let block = Block::new_unchecked(header, vec![tx]);
+    #[rustfmt::skip]
     let expected = concat_slices!(
         // The block version.
         &[2u8, 0, 0, 0],
