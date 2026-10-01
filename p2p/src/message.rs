@@ -1307,11 +1307,10 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn read_limit(&self) -> usize {
-        match self.payload_len {
-            Some(expected) =>
-                self.inner.read_limit().min(expected.saturating_sub(self.bytes_consumed)),
-            None => self.inner.read_limit(),
-        }
+        self.payload_len.map_or_else(
+            || self.inner.read_limit(),
+            |expected| self.inner.read_limit().min(expected.saturating_sub(self.bytes_consumed)),
+        )
     }
 }
 
