@@ -1674,11 +1674,17 @@ impl<'a> Arbitrary<'a> for ChildNumber {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Xpub {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let depth = u.arbitrary()?;
+        let (parent_fingerprint, child_number) = match depth {
+            0 => (Fingerprint::default(), ChildNumber::ZERO_NORMAL),
+            _ => (u.arbitrary()?, u.arbitrary()?),
+        };
+
         Ok(Self {
             network: u.arbitrary()?,
-            depth: u.arbitrary()?,
-            parent_fingerprint: u.arbitrary()?,
-            child_number: u.arbitrary()?,
+            depth,
+            parent_fingerprint,
+            child_number,
             public_key: u.arbitrary()?,
             chain_code: u.arbitrary()?,
         })
@@ -1713,6 +1719,32 @@ mod tests {
     use hex::hex;
 
     use super::*;
+
+    #[cfg(feature = "arbitrary")]
+    #[test]
+    fn arbitrary_master_xpub() {
+        let mut data = [1; 128];
+        // Use zero for both depth and network, leaving nonzero input for the other fields.
+        data[..2].fill(0);
+        let xpub = Xpub::arbitrary(&mut Unstructured::new(&data)).unwrap();
+
+        assert_eq!(xpub.depth, 0);
+        assert_eq!(xpub.parent_fingerprint, Fingerprint::default());
+        assert_eq!(xpub.child_number, ChildNumber::ZERO_NORMAL);
+        assert_eq!(Xpub::decode(&xpub.encode()).unwrap(), xpub);
+    }
+
+    #[cfg(feature = "arbitrary")]
+    #[test]
+    fn arbitrary_non_master_xpub() {
+        let data = [1; 128];
+        let xpub = Xpub::arbitrary(&mut Unstructured::new(&data)).unwrap();
+
+        assert_eq!(xpub.depth, 1);
+        assert_eq!(xpub.parent_fingerprint, Fingerprint::from_byte_array([1; 4]));
+        assert_eq!(xpub.child_number, ChildNumber::from_raw(0x0101_0101));
+        assert_eq!(Xpub::decode(&xpub.encode()).unwrap(), xpub);
+    }
 
     #[test]
     fn parse_derivation_path_invalid_format() {
