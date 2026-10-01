@@ -219,7 +219,7 @@ impl FromStr for Denomination {
 
         if CONFUSING_FORMS.contains(&s) {
             return Err(PossiblyConfusingDenominationError(s.into())).map_err(E::PossiblyConfusing);
-        };
+        }
 
         let form = Self::forms(s);
 
