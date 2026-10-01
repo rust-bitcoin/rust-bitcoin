@@ -276,7 +276,7 @@ impl PartialMerkleTree {
         // An empty set will not work
         if self.num_transactions == 0 {
             return Err(MerkleBlockError::NoTransactions);
-        };
+        }
         // check for excessively high numbers of transactions
         if u64::from(self.num_transactions) > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
             return Err(MerkleBlockError::TooManyTransactions);
@@ -284,11 +284,11 @@ impl PartialMerkleTree {
         // there can never be more hashes provided than one for every txid
         if self.hashes.len() as u32 > self.num_transactions {
             return Err(MerkleBlockError::TooManyHashes);
-        };
+        }
         // there must be at least one bit per node in the partial tree, and at least one node per hash
         if self.bits.len() < self.hashes.len() {
             return Err(MerkleBlockError::NotEnoughBits);
-        };
+        }
 
         let height = self.calc_tree_height();
 
@@ -764,7 +764,7 @@ mod tests {
 
                 if include {
                     match_txid1.push(tx_ids[j]);
-                };
+                }
             }
 
             // Build the partial Merkle tree

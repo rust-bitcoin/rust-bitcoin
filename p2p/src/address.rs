@@ -72,11 +72,10 @@ impl Address {
         }
         let ipv6 =
             Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
-        if let Some(ipv4) = ipv6.to_ipv4() {
-            Ok(SocketAddr::V4(SocketAddrV4::new(ipv4, self.port)))
-        } else {
-            Ok(SocketAddr::V6(SocketAddrV6::new(ipv6, self.port, 0, 0)))
-        }
+        ipv6.to_ipv4().map_or_else(
+            || Ok(SocketAddr::V6(SocketAddrV6::new(ipv6, self.port, 0, 0))),
+            |ipv4| Ok(SocketAddr::V4(SocketAddrV4::new(ipv4, self.port))),
+        )
     }
 }
 
