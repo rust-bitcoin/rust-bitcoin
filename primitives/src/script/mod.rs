@@ -334,7 +334,15 @@ impl<T> fmt::Display for Script<T> {
         macro_rules! read_push_data_len {
             ($iter:expr, $size:path, $formatter:expr) => {
                 match script::read_push_data_len($iter, $size) {
-                    Ok(n) => n,
+                    Ok(n) => {
+                        match usize::try_from(n) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                $formatter.write_str("<push past end>")?;
+                                break;
+                            }
+                        }
+                    },
                     Err(_) => {
                         $formatter.write_str("<unexpected end>")?;
                         break;

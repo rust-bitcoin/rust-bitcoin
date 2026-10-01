@@ -22,6 +22,11 @@ alloc = []
 [dependencies]
 serde = { version = "1.0.195", default-features = false, optional = true }
 
+[target.'cfg(creusot)'.dependencies]
+# Commented out to avoid messing up with MSRV, it gets uncommented in CI or you can uncomment it before running creusot
+# DO NOT UNCOMMENT OR REMOVE WHEN COMMITTING!
+# creusot-std = { workspace = true }
+
 [dev-dependencies]
 serde_json = { version = "1.0.68" }
 bincode = { version = "1.3.1" }

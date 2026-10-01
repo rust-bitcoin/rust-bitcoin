@@ -35,10 +35,12 @@ pub mod array_vec;
 pub mod error;
 pub mod script;
 pub mod slice;
+#[cfg(not(creusot))]
 #[cfg(feature = "serde")]
 #[macro_use]
 pub mod serde;
 pub mod const_casts;
+#[cfg(not(creusot))]
 pub mod u256;
 
 /// Asserts a boolean expression at compile time.
