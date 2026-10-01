@@ -4,11 +4,14 @@
 //!
 //! See [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/about.html) and the [rust-bitcoin policies](../../docs/policy.md).
 
+// Intentionally put all features so that gates don't kill readability.
+#![cfg(feature = "encoding")]
+#![cfg(feature = "serde")]
+#![cfg(feature = "arbitrary")]
+#![cfg(feature = "std")]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
@@ -17,270 +20,637 @@ use bitcoin_units::{
     Sequence, SignedAmount, Weight,
 };
 
-/// A struct that includes all public non-error enums.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
-struct Enums {
-    a: amount::Denomination,
-    b: absolute::LockTime,
-    c: relative::LockTime,
-    d: result::MathOp,
-    e: result::NumOpResult<Amount>,
+include!("../../include/api_test_tooling.rs");
+
+// Groups of units public types for testing semantics. Each type is listed once, in one group.
+type_groups! {
+    $ units;
+    // The value types.
+    group structs = [
+        amount::Amount,
+        amount::SignedAmount,
+        block::BlockHeight,
+        block::BlockHeightInterval,
+        block::BlockMtp,
+        block::BlockMtpInterval,
+        fee_rate::FeeRate,
+        locktime::absolute::Height,
+        locktime::absolute::MedianTimePast,
+        locktime::relative::NumberOf512Seconds,
+        locktime::relative::NumberOfBlocks,
+        pow::CompactTarget,
+        pow::Target,
+        pow::Work,
+        sequence::Sequence,
+        time::BlockTime,
+        weight::Weight,
+    ];
+    // All public non-error enums.
+    group enums = [
+        amount::Denomination,
+        locktime::absolute::LockTime,
+        locktime::relative::LockTime,
+        result::MathOp,
+        result::NumOpResult<Amount>,
+    ];
+    // Formatting adapters.
+    group adapters = [amount::Display];
+    // Every error type, feature gated ones included.
+    group errors = [
+        amount::AmountDecoderError,
+        amount::BadPositionError,
+        amount::InvalidCharacterError,
+        amount::MissingDenominationError,
+        amount::MissingDigitsError,
+        amount::OutOfRangeError,
+        amount::ParseAmountError,
+        amount::ParseDenominationError,
+        amount::ParseError,
+        amount::PossiblyConfusingDenominationError,
+        amount::TooPreciseError,
+        amount::UnknownDenominationError,
+        block::BlockHeightDecoderError,
+        block::TooBigForRelativeHeightError,
+        fee_rate::serde::OverflowError,
+        locktime::absolute::ConversionError,
+        locktime::absolute::IncompatibleHeightError,
+        locktime::absolute::IncompatibleTimeError,
+        locktime::absolute::LockTimeDecoderError,
+        locktime::absolute::ParseHeightError,
+        locktime::absolute::ParseTimeError,
+        locktime::relative::DisabledLockTimeError,
+        locktime::relative::IncompatibleHeightError,
+        locktime::relative::IncompatibleTimeError,
+        locktime::relative::InvalidHeightError,
+        locktime::relative::InvalidTimeError,
+        locktime::relative::IsSatisfiedByError,
+        locktime::relative::IsSatisfiedByHeightError,
+        locktime::relative::IsSatisfiedByTimeError,
+        locktime::relative::TimeOverflowError,
+        parse_int::ParseIntError,
+        parse_int::PrefixedHexError,
+        parse_int::UnprefixedHexError,
+        pow::CompactTargetDecoderError,
+        pow::ParseTargetError,
+        pow::ParseWorkError,
+        result::NumOpError,
+        sequence::SequenceDecoderError,
+        time::BlockTimeDecoderError,
+    ];
+    // All public decoder types.
+    group decoders = [
+        amount::AmountDecoder,
+        block::BlockHeightDecoder,
+        locktime::absolute::LockTimeDecoder,
+        pow::CompactTargetDecoder,
+        sequence::SequenceDecoder,
+        time::BlockTimeDecoder,
+    ];
+    // All public encoder types. The lifetime is a `PhantomData` marker, so `'static` probes work.
+    group encoders = [
+        amount::AmountEncoder<'static>,
+        block::BlockHeightEncoder<'static>,
+        locktime::absolute::LockTimeEncoder<'static>,
+        pow::CompactTargetEncoder<'static>,
+        sequence::SequenceEncoder<'static>,
+        time::BlockTimeEncoder<'static>,
+    ];
+    // Every encoder and decoder.
+    union codecs = decoders | encoders;
+    // Every public type that is not an error, encoder or decoder.
+    union public_types = structs | enums | adapters;
+    // Every public type.
+    union all = public_types | errors | codecs;
 }
 
-impl Enums {
-    fn new() -> Self {
-        Self {
-            a: amount::Denomination::Bitcoin,
-            b: absolute::LockTime::Blocks(absolute::Height::MAX),
-            c: relative::LockTime::Blocks(relative::NumberOfBlocks::MAX),
-            d: result::MathOp::Add,
-            e: result::NumOpResult::Valid(Amount::MAX),
-        }
-    }
+#[test]
+fn clone_trait() {
+    // C-COMMON-TRAITS: Every public type implements `Clone`.
+    // REQUIRED BY DEPENDENCY: Copy, and the derives on `LockTime`, `NumOpResult` and errors.
+    units!(all, assert_implements, Clone);
 }
 
-/// A struct that includes all public non-error structs.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
-                 // Does not include encoders and decoders.
-struct Structs {
-    // Full path to show alphabetic sort order.
-    a: amount::Amount,
-    b: amount::Display,
-    c: amount::SignedAmount,
-    d: block::BlockHeight,
-    e: block::BlockHeightInterval,
-    f: block::BlockMtp,
-    g: block::BlockMtpInterval,
-    h: fee_rate::FeeRate,
-    i: locktime::absolute::Height,
-    j: locktime::absolute::MedianTimePast,
-    k: locktime::relative::NumberOf512Seconds,
-    l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
-    n: sequence::Sequence,
-    o: time::BlockTime,
-    p: weight::Weight,
+#[test]
+fn copy_trait() {
+    // C-COMMON-TRAITS: Every value type and enum is `Copy`.
+    // POLICY: Value types use the standard derive set.
+    // REQUIRED BY DEPENDENCY: `LockTime` derives `Copy` over its heights and times.
+    units!(structs, assert_implements, Copy);
+    units!(enums, assert_implements, Copy);
+
+    // TODO: DO NOT IMPLEMENT
+    // A formatting adapter is just for printing.
+    units!(adapters, assert_does_not_implement, Copy);
+
+    // POLICY: Errors do not derive `Copy` unless they have to.
+    units!(
+        errors,
+        assert_does_not_implement,
+        Copy,
+        except [
+            // REQUIRED BY DEPENDENCY: `NumOpResult` is `Copy` and holds it.
+            result::NumOpError,
+        ]
+    );
+
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding codecs derive only `Debug, Clone`.
+    units!(codecs, assert_does_not_implement, Copy);
 }
 
-impl Structs {
-    fn max() -> Self {
-        Self {
-            a: Amount::MAX,
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
-            c: SignedAmount::MAX,
-            d: BlockHeight::MAX,
-            e: BlockHeightInterval::MAX,
-            f: BlockMtp::MAX,
-            g: BlockMtpInterval::MAX,
-            h: FeeRate::MAX,
-            i: absolute::Height::MAX,
-            j: absolute::MedianTimePast::MAX,
-            k: relative::NumberOf512Seconds::MAX,
-            l: relative::NumberOfBlocks::MAX,
-            m: pow::CompactTarget::from_consensus(u32::MAX),
-            n: sequence::Sequence::MAX,
-            o: BlockTime::from_u32(u32::MAX),
-            p: Weight::MAX,
-        }
-    }
+#[test]
+fn debug_trait() {
+    // C-DEBUG, C-GOOD-ERR: Every public type implements `Debug`.
+    // POLICY: Errors derive `Debug`, value types use the standard derive set.
+    // REQUIRED BY DEPENDENCY: std::error::Error
+    // REQUIRED BY DEPENDENCY: The derives on `relative::LockTime`, `NumOpResult` and errors.
+    units!(all, assert_implements, Debug);
 }
 
-/// A struct that includes all public non-error types.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
-struct Types {
-    a: Enums,
-    b: Structs,
+#[test]
+fn default_trait() {
+    // TODO: DO NOT IMPLEMENT
+    // Do not assume a natural default exists for these.
+    units!(
+        structs,
+        assert_does_not_implement,
+        Default,
+        except [
+            // TODO: IMPLEMENT
+            // Zero is an ok default for an amount.
+            amount::Amount,
+            amount::SignedAmount,
+            // TODO: IMPLEMENT
+            // Zero is an ok default for an interval.
+            block::BlockHeightInterval,
+            block::BlockMtpInterval,
+            locktime::relative::NumberOf512Seconds,
+            locktime::relative::NumberOfBlocks,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // Formatting adapter has nothing to default to.
+    units!(adapters, assert_does_not_implement, Default);
+
+    // TODO: DO NOT IMPLEMENT
+    // No variant is a natural default.
+    units!(enums, assert_does_not_implement, Default);
+
+    // TODO: DO NOT IMPLEMENT
+    // There is no default failure.
+    units!(errors, assert_does_not_implement, Default);
+
+    // P-DECODERS: Decoders have a default constructor.
+    units!(decoders, assert_implements, Default);
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding encoders have no `Default`.
+    units!(encoders, assert_does_not_implement, Default);
 }
 
-impl Types {
-    fn new() -> Self { Self { a: Enums::new(), b: Structs::max() } }
+#[test]
+fn display_trait() {
+    // TODO: IMPLEMENT
+    // Every value type, enum and formatting adapter prints.
+    units!(
+        public_types,
+        assert_implements,
+        Display,
+        except [
+            // TODO: DO NOT IMPLEMENT
+            // There is no canonical unit. `to_sat_per_*` methods make it a caller's choice.
+            fee_rate::FeeRate,
+            // TODO: UNDECIDED
+            result::NumOpResult<Amount>,
+        ]
+    );
+
+    // C-GOOD-ERR: Every error type implements `Display`.
+    // REQUIRED BY DEPENDENCY: std::error::Error
+    units!(errors, assert_implements, Display);
+
+    // TODO: DO NOT IMPLEMENT
+    // Encoders and decoders return bytes and are not printed.
+    units!(codecs, assert_does_not_implement, Display);
 }
 
-/// A struct that includes all public non-error non-helper structs.
-// C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct CommonTraits {
-    // Full path to show alphabetic sort order.
-    a: amount::Amount,
-    // b: amount::Display,
-    c: amount::SignedAmount,
-    d: block::BlockHeight,
-    e: block::BlockHeightInterval,
-    f: block::BlockMtp,
-    g: block::BlockMtpInterval,
-    h: fee_rate::FeeRate,
-    i: locktime::absolute::Height,
-    j: locktime::absolute::MedianTimePast,
-    k: locktime::relative::NumberOf512Seconds,
-    l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
+#[test]
+fn partial_eq_trait() {
+    // C-COMMON-TRAITS: Every value type and enum implements `PartialEq`.
+    // POLICY: Value types use the standard derive set.
+    // REQUIRED BY DEPENDENCY: Eq, PartialOrd, and the derives on `LockTime`.
+    units!(
+        public_types,
+        assert_implements,
+        PartialEq,
+        except [
+            // TODO: UNDECIDED
+            amount::Display,
+        ]
+    );
+
+    // POLICY: Every error type derives `PartialEq`.
+    // REQUIRED BY DEPENDENCY: Eq, and the derives on `NumOpResult` and errors.
+    units!(errors, assert_implements, PartialEq);
+
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding codecs derive only `Debug, Clone`.
+    units!(codecs, assert_does_not_implement, PartialEq);
 }
 
-/// A struct that includes all types that implement `Default`.
-#[derive(Debug, Default, PartialEq, Eq)] // C-COMMON-TRAITS: `Default`
-struct Default {
-    a: Amount,
-    b: SignedAmount,
-    c: BlockHeightInterval,
-    d: BlockMtpInterval,
-    e: relative::NumberOf512Seconds,
-    f: relative::NumberOfBlocks,
+#[test]
+fn eq_trait() {
+    // C-COMMON-TRAITS: Every value type and enum implements `Eq`.
+    // POLICY: Value types use the standard derive set.
+    // REQUIRED BY DEPENDENCY: Ord, and the derives on `LockTime`.
+    units!(
+        public_types,
+        assert_implements,
+        Eq,
+        except [
+            // FORBIDDEN BY DEPENDENCY: PartialEq
+            amount::Display,
+        ]
+    );
+
+    // POLICY: Every error type derives `Eq`.
+    // REQUIRED BY DEPENDENCY: Errors and `NumOpResult` derive `Eq` over inner errors.
+    units!(errors, assert_implements, Eq);
+
+    // FORBIDDEN BY DEPENDENCY: PartialEq
+    units!(codecs, assert_does_not_implement, Eq);
 }
 
-/// A struct that includes all public error types (excl. decode errors).
-// These derives are the policy of `rust-bitcoin` not Rust API guidelines.
-#[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
-struct Errors {
-    b: amount::error::InvalidCharacterError,
-    c: amount::error::MissingDenominationError,
-    d: amount::error::MissingDigitsError,
-    e: amount::error::OutOfRangeError,
-    f: amount::error::ParseAmountError,
-    g: amount::error::ParseDenominationError,
-    h: amount::error::ParseError,
-    i: amount::error::PossiblyConfusingDenominationError,
-    j: amount::error::TooPreciseError,
-    k: amount::error::UnknownDenominationError,
-    l: block::TooBigForRelativeHeightError,
-    #[cfg(feature = "serde")]
-    m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
-    #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
+#[test]
+fn partial_ord_trait() {
+    // C-COMMON-TRAITS: Every value type implements `PartialOrd`.
+    // POLICY: Value types use the standard derive set.
+    // REQUIRED BY DEPENDENCY: Ord
+    units!(structs, assert_implements, PartialOrd);
+
+    // FORBIDDEN BY DEPENDENCY: PartialEq
+    units!(adapters, assert_does_not_implement, PartialOrd);
+
+    // POLICY: Consider carefully before deriving, it bakes variant order into the public API.
+    units!(enums, assert_does_not_implement, PartialOrd);
+
+    // TODO: DO NOT IMPLEMENT
+    // Errors are not ordered.
+    units!(errors, assert_does_not_implement, PartialOrd);
+
+    // FORBIDDEN BY DEPENDENCY: PartialEq
+    units!(codecs, assert_does_not_implement, PartialOrd);
 }
 
-/// A struct that includes all public decoder types.
-#[derive(Default)] // All decoders implement `Default` (P-DECODERS).
-#[cfg(feature = "encoding")]
-struct Decoders {
-    a: amount::AmountDecoder,
-    b: block::BlockHeightDecoder,
-    c: locktime::absolute::LockTimeDecoder,
-    d: pow::CompactTargetDecoder,
-    e: sequence::SequenceDecoder,
-    f: time::BlockTimeDecoder,
+#[test]
+fn ord_trait() {
+    // C-COMMON-TRAITS: Every value type implements `Ord`.
+    // POLICY: Value types use the standard derive set.
+    units!(structs, assert_implements, Ord);
+
+    // FORBIDDEN BY DEPENDENCY: PartialOrd
+    units!(enums, assert_does_not_implement, Ord);
+
+    // FORBIDDEN BY DEPENDENCY: Eq, PartialOrd
+    units!(adapters, assert_does_not_implement, Ord);
+
+    // FORBIDDEN BY DEPENDENCY: PartialOrd
+    units!(errors, assert_does_not_implement, Ord);
+
+    // FORBIDDEN BY DEPENDENCY: Eq, PartialOrd
+    units!(codecs, assert_does_not_implement, Ord);
 }
 
-/// A struct that includes all public decoder error types.
-// These derives are the policy of `rust-bitcoin` not Rust API guidelines.
-#[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
-#[cfg(feature = "encoding")]
-struct DecoderErrors {
-    a: amount::error::AmountDecoderError,
-    b: block::BlockHeightDecoderError,
-    c: locktime::absolute::LockTimeDecoderError,
-    d: sequence::SequenceDecoderError,
-    e: time::BlockTimeDecoderError,
+#[test]
+fn hash_trait() {
+    // C-COMMON-TRAITS: Every public type SHOULD implement Hash
+    // POLICY: Value types use the standard derive set.
+    // REQUIRED BY DEPENDENCY: `LockTime` derives `Hash` over its heights and times.
+    units!(
+        public_types,
+        assert_implements,
+        Hash,
+        except [
+            // TODO: UNDECIDED
+            amount::Display,
+            // TODO: DO NOT IMPLEMENT
+            // Only labels a failed operation inside an error, never a key.
+            result::MathOp,
+            // FORBIDDEN BY DEPENDENCY: `NumOpError` has no `Hash`.
+            result::NumOpResult<Amount>,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // Every field inside error must implement Hash too.
+    units!(errors, assert_does_not_implement, Hash);
+
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding codecs derive only `Debug, Clone`.
+    units!(codecs, assert_does_not_implement, Hash);
+}
+
+#[test]
+fn send_trait() {
+    // C-SEND-SYNC: Every public type implements `Send`.
+    units!(all, assert_implements, Send);
+}
+
+#[test]
+fn sync_trait() {
+    // C-SEND-SYNC: Every public type implements `Sync`.
+    units!(all, assert_implements, Sync);
+}
+
+#[test]
+fn serialize_trait() {
+    // C-SERDE: Data structures implement `Serialize`.
+    units!(
+        structs,
+        assert_implements,
+        Serialize,
+        except [
+            // TODO: DO NOT IMPLEMENT
+            // No canonical unit, sats or BTC? Pick via `serde(with = "amount::serde::as_sat")`.
+            amount::Amount,
+            amount::SignedAmount,
+            // TODO: DO NOT IMPLEMENT
+            // No canonical unit or rounding, pick a `fee_rate::serde::as_sat_per_*` module.
+            fee_rate::FeeRate,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // Denominations are a display concern and the arithmetic result types are transient.
+    units!(
+        enums,
+        assert_does_not_implement,
+        Serialize,
+        except [
+            // TODO: IMPLEMENT
+            // The locktime is stored as a `u32` that can be serialized.
+            locktime::absolute::LockTime,
+            locktime::relative::LockTime,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // A formatting adapter is just for printing.
+    units!(adapters, assert_does_not_implement, Serialize);
+
+    // TODO: DO NOT IMPLEMENT
+    // Errors are just for reporting.
+    units!(errors, assert_does_not_implement, Serialize);
+
+    // TODO: DO NOT IMPLEMENT
+    // Encoders and decoders only hold bytes mid-conversion, so they don't need serialization.
+    units!(codecs, assert_does_not_implement, Serialize);
+}
+
+#[test]
+fn deserialize_trait() {
+    // C-SERDE: Data structures implement `Deserialize`.
+    // POLICY: Follows `Serialize`.
+    units!(
+        public_types,
+        assert_implements,
+        Deserialize,
+        except [
+            // POLICY: Follows `Serialize`.
+            amount::Amount,
+            amount::SignedAmount,
+            fee_rate::FeeRate,
+            amount::Denomination,
+            result::MathOp,
+            result::NumOpResult<Amount>,
+            amount::Display,
+        ]
+    );
+
+    // POLICY: Follows `Serialize`.
+    units!(errors, assert_does_not_implement, Deserialize);
+
+    // POLICY: Follows `Serialize`.
+    units!(codecs, assert_does_not_implement, Deserialize);
+}
+
+#[test]
+fn arbitrary_trait() {
+    // P-ARBITRARY: Public types implement `Arbitrary`.
+    units!(
+        public_types,
+        assert_implements,
+        Arbitrary,
+        except [
+            // TODO: IMPLEMENT, not satisfied yet
+            amount::Display,
+        ]
+    );
+
+    // TODO: IMPLEMENT, not satisfied yet
+    units!(errors, assert_does_not_implement, Arbitrary);
+
+    // FORBIDDEN BY DEPENDENCY: consensus_encoding codecs have no `Arbitrary`.
+    units!(codecs, assert_does_not_implement, Arbitrary);
+}
+
+#[test]
+fn from_infallible_trait() {
+    // P-ERROR-INFALLIBLE: Every error type implements `From<Infallible>`.
+    units!(errors, assert_implements, FromInfallible);
+}
+
+#[test]
+fn error_trait() {
+    // C-GOOD-ERR: Every error type implements `std::error::Error`.
+    // POLICY: Public errors implement `std::error::Error`.
+    units!(errors, assert_implements, Error);
+
+    // TODO: DO NOT IMPLEMENT
+    // Not an error.
+    units!(public_types, assert_does_not_implement, Error);
+
+    // FORBIDDEN BY DEPENDENCY: Display
+    units!(codecs, assert_does_not_implement, Error);
+}
+
+#[test]
+fn from_str_trait() {
+    // TODO: IMPLEMENT
+    // `FromStr` and `Display` should be complementary, and `FromStr` parses decimal.
+    units!(
+        structs,
+        assert_implements,
+        FromStr,
+        except [
+            // POLICY: Follows `Display`.
+            fee_rate::FeeRate,
+        ]
+    );
+
+    // TODO: IMPLEMENT
+    units!(
+        enums,
+        assert_implements,
+        FromStr,
+        except [
+            // TODO: DO NOT IMPLEMENT
+            // Displays just a number for both variants, so a string cannot tell blocks from time.
+            locktime::relative::LockTime,
+            // TODO: DO NOT IMPLEMENT
+            // Only printed inside error messages.
+            result::MathOp,
+            // POLICY: Follows `Display`.
+            result::NumOpResult<Amount>,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // A formatting adapter is just for printing.
+    units!(adapters, assert_does_not_implement, FromStr);
+
+    // TODO: DO NOT IMPLEMENT
+    // Error messages are for reading, not parsing.
+    units!(errors, assert_does_not_implement, FromStr);
+
+    // POLICY: Follows `Display`.
+    units!(codecs, assert_does_not_implement, FromStr);
+}
+
+#[test]
+fn encode_trait() {
+    // TODO: DO NOT IMPLEMENT
+    // Protocol only has a wire format for fields of a transaction, block header or p2p message.
+    units!(
+        structs,
+        assert_does_not_implement,
+        Encode,
+        except [
+            // TODO: IMPLEMENT
+            // The value of a transaction output.
+            amount::Amount,
+            // TODO: IMPLEMENT
+            // The start height of the p2p `getcfilters` and `getcfheaders` messages.
+            block::BlockHeight,
+            // TODO: IMPLEMENT
+            // Fields of a block header.
+            pow::CompactTarget,
+            time::BlockTime,
+            // TODO: IMPLEMENT
+            // A field of a transaction input.
+            sequence::Sequence,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // Same rule, no enum has a wire format on its own.
+    units!(
+        enums,
+        assert_does_not_implement,
+        Encode,
+        except [
+            // TODO: IMPLEMENT
+            // The lock time field of a transaction.
+            locktime::absolute::LockTime,
+        ]
+    );
+
+    // TODO: DO NOT IMPLEMENT
+    // A formatting adapter is just for printing.
+    units!(adapters, assert_does_not_implement, Encode);
+
+    // TODO: DO NOT IMPLEMENT
+    // Errors never go on the wire.
+    units!(errors, assert_does_not_implement, Encode);
+
+    // TODO: DO NOT IMPLEMENT
+    // They produce the wire format, they do not have one.
+    units!(codecs, assert_does_not_implement, Encode);
+}
+
+#[test]
+fn decode_trait() {
+    // POLICY: Follows `Encode`.
+    units!(
+        public_types,
+        assert_does_not_implement,
+        Decode,
+        except [
+            // POLICY: Follows `Encode`.
+            amount::Amount,
+            block::BlockHeight,
+            locktime::absolute::LockTime,
+            pow::CompactTarget,
+            sequence::Sequence,
+            time::BlockTime,
+        ]
+    );
+
+    // POLICY: Follows `Encode`.
+    units!(errors, assert_does_not_implement, Decode);
+
+    // POLICY: Follows `Encode`.
+    units!(codecs, assert_does_not_implement, Decode);
+}
+
+#[test]
+fn encoder_trait() {
+    // REQUIRED BY DEPENDENCY: Encode
+    units!(encoders, assert_implements, Encoder);
+
+    // TODO: IMPLEMENT
+    // Every encoded type has a fixed size, so the length is known before encoding.
+    units!(encoders, assert_implements, ExactSizeEncoder);
+
+    // REQUIRED BY DEPENDENCY: Decode
+    units!(decoders, assert_implements, Decoder);
+
+    // TODO: DO NOT IMPLEMENT
+    // An encoder only writes and a decoder only reads.
+    units!(encoders, assert_does_not_implement, Decoder);
+    units!(decoders, assert_does_not_implement, Encoder);
+    units!(decoders, assert_does_not_implement, ExactSizeEncoder);
+
+    // TODO: DO NOT IMPLEMENT
+    // A value codec is expressed through `Encode` and `Decode`.
+    units!(public_types, assert_does_not_implement, Encoder);
+    units!(public_types, assert_does_not_implement, ExactSizeEncoder);
+    units!(public_types, assert_does_not_implement, Decoder);
+
+    // TODO: DO NOT IMPLEMENT
+    // Errors are not codecs.
+    units!(errors, assert_does_not_implement, Encoder);
+    units!(errors, assert_does_not_implement, ExactSizeEncoder);
+    units!(errors, assert_does_not_implement, Decoder);
 }
 
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
 #[test]
 fn c_debug_nonempty() {
-    let t = Types::new();
-
-    let debug = format!("{:?}", t.a.a);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.b);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.c);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.d);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.e);
-    assert!(!debug.is_empty());
-
-    let debug = format!("{:?}", t.b.a);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.b);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.c);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.d);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.e);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.f);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.g);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.h);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.i);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.j);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.k);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.l);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.m);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.n);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.o);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.p);
-    assert!(!debug.is_empty());
-}
-
-/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
-#[test]
-fn c_send_sync() {
-    fn assert_send<T: Send>() {}
-    fn assert_sync<T: Sync>() {}
-
-    //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
-    assert_send::<Types>();
-    assert_sync::<Types>();
-
-    // Error types should implement the Send and Sync traits (C-GOOD-ERR).
-    assert_send::<Errors>();
-    assert_sync::<Errors>();
-}
-
-/// C-GOOD-ERR: Tests that all public error types implement Display.
-#[test]
-fn c_good_err_display() {
-    use core::fmt;
-
-    fn assert_display<T: fmt::Display>() {}
-
-    assert_display::<amount::error::InvalidCharacterError>();
-    assert_display::<amount::error::MissingDenominationError>();
-    assert_display::<amount::error::MissingDigitsError>();
-    assert_display::<amount::error::OutOfRangeError>();
-    assert_display::<amount::error::ParseAmountError>();
-    assert_display::<amount::error::ParseDenominationError>();
-    assert_display::<amount::error::ParseError>();
-    assert_display::<amount::error::PossiblyConfusingDenominationError>();
-    assert_display::<amount::error::TooPreciseError>();
-    assert_display::<amount::error::UnknownDenominationError>();
-    assert_display::<block::TooBigForRelativeHeightError>();
-    #[cfg(feature = "serde")]
-    assert_display::<fee_rate::serde::OverflowError>();
-    assert_display::<locktime::absolute::ConversionError>();
-    assert_display::<locktime::absolute::ParseHeightError>();
-    assert_display::<locktime::absolute::ParseTimeError>();
-    assert_display::<locktime::relative::InvalidHeightError>();
-    assert_display::<locktime::relative::InvalidTimeError>();
-    assert_display::<locktime::relative::TimeOverflowError>();
-    assert_display::<parse_int::ParseIntError>();
-    assert_display::<parse_int::PrefixedHexError>();
-    assert_display::<parse_int::UnprefixedHexError>();
-    #[cfg(feature = "encoding")]
-    assert_display::<pow::CompactTargetDecoderError>();
-    assert_display::<result::NumOpError>();
+    let debug = [
+        format!("{:?}", amount::Denomination::Bitcoin),
+        format!("{:?}", absolute::LockTime::Blocks(absolute::Height::MAX)),
+        format!("{:?}", relative::LockTime::Blocks(relative::NumberOfBlocks::MAX)),
+        format!("{:?}", result::MathOp::Add),
+        format!("{:?}", result::NumOpResult::Valid(Amount::MAX)),
+        format!("{:?}", Amount::MAX),
+        format!("{:?}", Amount::MAX.display_in(amount::Denomination::Bitcoin)),
+        format!("{:?}", SignedAmount::MAX),
+        format!("{:?}", BlockHeight::MAX),
+        format!("{:?}", BlockHeightInterval::MAX),
+        format!("{:?}", BlockMtp::MAX),
+        format!("{:?}", BlockMtpInterval::MAX),
+        format!("{:?}", FeeRate::MAX),
+        format!("{:?}", absolute::Height::MAX),
+        format!("{:?}", absolute::MedianTimePast::MAX),
+        format!("{:?}", relative::NumberOf512Seconds::MAX),
+        format!("{:?}", relative::NumberOfBlocks::MAX),
+        format!("{:?}", pow::CompactTarget::from_consensus(u32::MAX)),
+        format!("{:?}", pow::Target::MAX),
+        format!("{:?}", pow::Target::MAX.to_work()),
+        format!("{:?}", Sequence::MAX),
+        format!("{:?}", BlockTime::from_u32(u32::MAX)),
+        format!("{:?}", Weight::MAX),
+    ];
+    for s in debug {
+        assert!(!s.is_empty());
+    }
 }
 
 /// C-OBJECT: Tests that traits are object-safe where appropriate.
@@ -293,20 +663,6 @@ fn c_object() {
         // c: Box<dyn amount::serde::SerdeAmountForOpt>,
         // d: Box<dyn parse::Integer>, // Because of core::num::ParseIntError
     }
-}
-
-/// C-SERDE: Tests that serde traits are implemented where expected.
-#[test]
-#[cfg(feature = "serde")]
-fn c_serde() {
-    fn assert_serde<T: serde::Serialize + for<'de> serde::Deserialize<'de>>() {}
-
-    assert_serde::<BlockHeight>();
-    assert_serde::<BlockHeightInterval>();
-    assert_serde::<BlockMtp>();
-    assert_serde::<BlockMtpInterval>();
-    assert_serde::<Weight>();
-    assert_serde::<Sequence>();
 }
 
 macro_rules! assert_format_matches {
@@ -388,11 +744,9 @@ fn p_consistent_exports_crate_types() {
 #[test]
 fn p_consistent_exports_amount() {
     use bitcoin_units::amount::{
-        Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
-        ParseError, SignedAmount,
+        Amount, AmountDecoder, AmountDecoderError, AmountEncoder, Denomination, Display,
+        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError, SignedAmount,
     };
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::amount::{AmountDecoder, AmountDecoderError, AmountEncoder};
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `amount::error` module.
@@ -409,24 +763,22 @@ fn p_consistent_exports_amount_error() {
 #[test]
 fn p_consistent_exports_block() {
     use bitcoin_units::block::{
-        BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, TooBigForRelativeHeightError,
+        BlockHeight, BlockHeightDecoder, BlockHeightDecoderError, BlockHeightEncoder,
+        BlockHeightInterval, BlockMtp, BlockMtpInterval, TooBigForRelativeHeightError,
     };
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::block::{BlockHeightDecoder, BlockHeightDecoderError, BlockHeightEncoder};
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `sequence` module.
 #[test]
 fn p_consistent_exports_sequence() {
-    use bitcoin_units::sequence::Sequence;
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::sequence::{SequenceDecoder, SequenceDecoderError, SequenceEncoder};
+    use bitcoin_units::sequence::{
+        Sequence, SequenceDecoder, SequenceDecoderError, SequenceEncoder,
+    };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `fee_rate` module.
 #[test]
 fn p_consistent_exports_fee_rate() {
-    #[cfg(feature = "serde")]
     use bitcoin_units::fee_rate::serde::OverflowError;
     use bitcoin_units::fee_rate::FeeRate;
 }
@@ -434,19 +786,13 @@ fn p_consistent_exports_fee_rate() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `locktime::absolute` module.
 #[test]
 fn p_consistent_exports_locktime_absolute() {
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::locktime::absolute::error::LockTimeDecoderError as _;
     use bitcoin_units::locktime::absolute::error::{
         ConversionError as _, IncompatibleHeightError as _, IncompatibleTimeError as _,
-        ParseHeightError as _, ParseTimeError as _,
+        LockTimeDecoderError as _, ParseHeightError as _, ParseTimeError as _,
     };
     use bitcoin_units::locktime::absolute::{
-        ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError,
-        ParseTimeError,
-    };
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::locktime::absolute::{
-        LockTimeDecoder, LockTimeDecoderError, LockTimeEncoder,
+        ConversionError, IncompatibleHeightError, IncompatibleTimeError, LockTimeDecoder,
+        LockTimeDecoderError, LockTimeEncoder, ParseHeightError, ParseTimeError,
     };
 }
 
@@ -455,11 +801,13 @@ fn p_consistent_exports_locktime_absolute() {
 fn p_consistent_exports_locktime_relative() {
     use bitcoin_units::locktime::relative::error::{
         DisabledLockTimeError as _, InvalidHeightError as _, InvalidTimeError as _,
+        IsSatisfiedByError as _, IsSatisfiedByHeightError as _, IsSatisfiedByTimeError as _,
         TimeOverflowError as _,
     };
     use bitcoin_units::locktime::relative::{
-        DisabledLockTimeError, InvalidHeightError, InvalidTimeError, NumberOf512Seconds,
-        NumberOfBlocks, TimeOverflowError,
+        DisabledLockTimeError, InvalidHeightError, InvalidTimeError, IsSatisfiedByError,
+        IsSatisfiedByHeightError, IsSatisfiedByTimeError, NumberOf512Seconds, NumberOfBlocks,
+        TimeOverflowError,
     };
 }
 
@@ -478,19 +826,18 @@ fn p_consistent_exports_result() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `pow` module.
 #[test]
 fn p_consistent_exports_pow() {
-    use bitcoin_units::pow::CompactTarget;
-    #[cfg(feature = "encoding")]
     use bitcoin_units::pow::{
-        CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder,
+        CompactTarget, CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder,
+        ParseTargetError, ParseWorkError, Target, Work,
     };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `time` module.
 #[test]
 fn p_consistent_exports_time() {
-    use bitcoin_units::time::BlockTime;
-    #[cfg(feature = "encoding")]
-    use bitcoin_units::time::{BlockTimeDecoder, BlockTimeDecoderError, BlockTimeEncoder};
+    use bitcoin_units::time::{
+        BlockTime, BlockTimeDecoder, BlockTimeDecoderError, BlockTimeEncoder,
+    };
 }
 
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `weight` module.
@@ -502,21 +849,16 @@ fn p_consistent_exports_weight() {
 /// P-DEFAULT-CHANGE: Tests regression for Default implementation values.
 #[test]
 fn p_default_change() {
-    let got: Default = Default::default();
-    let want = Default {
-        a: Amount::ZERO,
-        b: SignedAmount::ZERO,
-        c: BlockHeightInterval::ZERO,
-        d: BlockMtpInterval::ZERO,
-        e: relative::NumberOf512Seconds::ZERO,
-        f: relative::NumberOfBlocks::ZERO,
-    };
-    assert_eq!(got, want);
+    assert_eq!(Amount::default(), Amount::ZERO);
+    assert_eq!(SignedAmount::default(), SignedAmount::ZERO);
+    assert_eq!(BlockHeightInterval::default(), BlockHeightInterval::ZERO);
+    assert_eq!(BlockMtpInterval::default(), BlockMtpInterval::ZERO);
+    assert_eq!(relative::NumberOf512Seconds::default(), relative::NumberOf512Seconds::ZERO);
+    assert_eq!(relative::NumberOfBlocks::default(), relative::NumberOfBlocks::ZERO);
 }
 
 /// P-DECODERS: Tests that decoders implement a constructor method.
 #[test]
-#[cfg(feature = "encoding")]
 fn p_decoders_implement_new() {
     let _ = amount::AmountDecoder::new();
     let _ = block::BlockHeightDecoder::new();
@@ -524,52 +866,4 @@ fn p_decoders_implement_new() {
     let _ = pow::CompactTargetDecoder::new();
     let _ = sequence::SequenceDecoder::new();
     let _ = time::BlockTimeDecoder::new();
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Types {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self { a: Enums::arbitrary(u)?, b: Structs::arbitrary(u)? };
-        Ok(a)
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Structs {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self {
-            a: Amount::arbitrary(u)?,
-            // Skip the `Display` type.
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
-            c: SignedAmount::arbitrary(u)?,
-            d: BlockHeight::arbitrary(u)?,
-            e: BlockHeightInterval::arbitrary(u)?,
-            f: BlockMtp::arbitrary(u)?,
-            g: BlockMtpInterval::arbitrary(u)?,
-            h: FeeRate::arbitrary(u)?,
-            i: absolute::Height::arbitrary(u)?,
-            j: absolute::MedianTimePast::arbitrary(u)?,
-            k: relative::NumberOf512Seconds::arbitrary(u)?,
-            l: relative::NumberOfBlocks::arbitrary(u)?,
-            m: pow::CompactTarget::from_consensus(u.int_in_range(0..=u32::MAX)?),
-            n: sequence::Sequence::arbitrary(u)?,
-            o: BlockTime::arbitrary(u)?,
-            p: Weight::arbitrary(u)?,
-        };
-        Ok(a)
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Enums {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self {
-            a: amount::Denomination::arbitrary(u)?,
-            b: absolute::LockTime::arbitrary(u)?,
-            c: relative::LockTime::arbitrary(u)?,
-            d: result::MathOp::arbitrary(u)?,
-            e: result::NumOpResult::<Amount>::arbitrary(u)?,
-        };
-        Ok(a)
-    }
 }
