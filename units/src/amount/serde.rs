@@ -80,10 +80,14 @@ pub mod as_sat {
     #[inline]
     pub fn serialize<A, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error>
     where
-        A: Into<SignedAmount> + Copy,
+        A: Into<SignedAmount> + TryFrom<SignedAmount> + Copy,
     {
-        let amount: SignedAmount = (*a).into();
-        i64::serialize(&amount.to_sat(), s)
+        let sat = (*a).into().to_sat();
+        if is_signed::<A>() {
+            i64::serialize(&sat, s)
+        } else {
+            u64::serialize(&(sat as u64), s)
+        }
     }
 
     #[inline]
@@ -168,9 +172,14 @@ pub mod as_sat {
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<A, S: Serializer>(a: &Option<A>, s: S) -> Result<S::Ok, S::Error>
         where
-            A: Into<SignedAmount> + Copy,
+            A: Into<SignedAmount> + TryFrom<SignedAmount> + Copy,
         {
-            a.map(Into::into).map(SignedAmount::to_sat).serialize(s)
+            let sat = a.map(Into::into).map(SignedAmount::to_sat);
+            if is_signed::<A>() {
+                sat.serialize(s)
+            } else {
+                sat.map(|sat| sat as u64).serialize(s)
+            }
         }
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Option<A>, D::Error>
@@ -242,9 +251,14 @@ pub mod as_sat {
         #[inline]
         pub fn serialize<A, S: Serializer>(a: &[A], s: S) -> Result<S::Ok, S::Error>
         where
-            A: Into<SignedAmount> + Copy,
+            A: Into<SignedAmount> + TryFrom<SignedAmount> + Copy,
         {
-            s.collect_seq(a.iter().map(|&amount| amount.into()).map(SignedAmount::to_sat))
+            let sats = a.iter().map(|&amount| amount.into()).map(SignedAmount::to_sat);
+            if is_signed::<A>() {
+                s.collect_seq(sats)
+            } else {
+                s.collect_seq(sats.map(|sat| sat as u64))
+            }
         }
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Vec<A>, D::Error>
