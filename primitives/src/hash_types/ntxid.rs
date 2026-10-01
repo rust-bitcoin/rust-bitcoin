@@ -20,6 +20,9 @@ use hashes::sha256d;
 ///
 /// This gives a way to identify a transaction that is "the same" as another in the sense of
 /// having the same inputs and outputs.
+///
+/// A coinbase `script_sig` is not a signature and may contain a BIP-34 height commitment, so
+/// for a coinbase transaction the ntxid is equal to the txid.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Ntxid(sha256d::Hash);
 
