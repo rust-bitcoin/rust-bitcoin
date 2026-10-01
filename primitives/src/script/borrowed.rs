@@ -17,8 +17,7 @@ use crate::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUAL, OP_EQUALVERIFY, OP_HASH
 use crate::opcodes::{Opcode, OP_PUSHBYTES_2, OP_PUSHBYTES_20, OP_PUSHBYTES_32};
 use crate::prelude::{Box, ToOwned, Vec};
 use crate::script::{
-    Builder, RedeemScriptSizeError, ScriptHash, ScriptHashableTag, WScriptHash,
-    WitnessScriptSizeError,
+    Builder, RedeemScriptError, ScriptHash, ScriptHashableTag, WScriptHash, WitnessScriptSizeError,
 };
 use crate::witness_version::WitnessVersion;
 use crate::{ScriptPubKey, WitnessScript};
@@ -324,9 +323,9 @@ impl<T: ScriptHashableTag> Script<T> {
     ///
     /// # Errors
     ///
-    /// Returns an error if the script exceeds 520 bytes.
+    /// Returns an error if the script exceeds 520 bytes or is a SegWit version 1+ witness program.
     #[inline]
-    pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
+    pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptError> {
         ScriptHash::from_script(self)
     }
 }
