@@ -19,7 +19,9 @@ use crate::network::Params;
 #[doc(inline)]
 pub use primitives::pow::{error, CompactTarget, CompactTargetEncoder, CompactTargetDecoder, Target, Work};
 #[doc(no_inline)]
-pub use primitives::pow::{ParseTargetError, ParseWorkError};
+pub use primitives::pow::{
+    InvalidCompactTargetError, ParseTargetError, ParseWorkError, ZeroConversionError,
+};
 
 #[doc(no_inline)]
 pub use self::error::CompactTargetDecoderError;
@@ -319,7 +321,7 @@ internal_macros::define_extension_trait! {
             let min_timespan = params.pow_target_timespan >> 2; // Lines 56/57
             let max_timespan = params.pow_target_timespan << 2; // Lines 58/59
             let actual_timespan = timespan.clamp(min_timespan.into(), max_timespan.into());
-            let prev_target: Target = last.into();
+            let prev_target: Target = last.try_into().unwrap_or(Target::ZERO);
             let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
             let retarget = prev_target.to_inner(); // bnNew
             let (retarget, _) = retarget.mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"));
@@ -511,8 +513,10 @@ mod tests {
         let starting_bits = CompactTarget::from_consensus(503403001);
         let timespan = params.pow_target_timespan / 5;
         let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), params);
-        let want =
-            Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
+        let want = Target::from_compact(starting_bits)
+            .unwrap()
+            .min_transition_threshold()
+            .to_compact_lossy();
         assert_eq!(got, want);
     }
 
@@ -522,8 +526,10 @@ mod tests {
         let starting_bits = CompactTarget::from_consensus(503403001);
         let timespan: i64 = -i64::from(params.pow_target_timespan);
         let got = CompactTarget::from_next_work_required(starting_bits, timespan, params);
-        let want =
-            Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
+        let want = Target::from_compact(starting_bits)
+            .unwrap()
+            .min_transition_threshold()
+            .to_compact_lossy();
         assert_eq!(got, want);
     }
 
@@ -533,8 +539,10 @@ mod tests {
         let starting_bits = CompactTarget::from_consensus(403403001); // High difficulty for Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
         let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
-        let want =
-            Target::from_compact(starting_bits).max_transition_threshold(params).to_compact_lossy();
+        let want = Target::from_compact(starting_bits)
+            .unwrap()
+            .max_transition_threshold(params)
+            .to_compact_lossy();
         assert_eq!(got, want);
     }
 
@@ -609,16 +617,19 @@ mod tests {
         assert_eq!(Target::MAX.difficulty_float(&params), 1.0_f64);
         assert_eq!(
             Target::from_compact(CompactTarget::from_consensus(0x1c00ffff_u32))
+                .unwrap()
                 .difficulty_float(&params),
             256.0_f64
         );
         assert_eq!(
             Target::from_compact(CompactTarget::from_consensus(0x1b00ffff_u32))
+                .unwrap()
                 .difficulty_float(&params),
             65536.0_f64
         );
         assert_eq!(
             Target::from_compact(CompactTarget::from_consensus(0x1a00f3a2_u32))
+                .unwrap()
                 .difficulty_float(&params),
             17628585.065897066_f64
         );
@@ -627,8 +638,8 @@ mod tests {
     #[test]
     fn roundtrip_target_work() {
         let target = u32_to_target(0xdeadbeef_u32);
-        let work = target.to_work();
-        let back = work.to_target();
+        let work = target.to_work().unwrap();
+        let back = work.to_target().unwrap();
         assert_eq!(back, target)
     }
 
