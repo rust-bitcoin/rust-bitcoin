@@ -124,7 +124,9 @@ fn bench_large_block(c: &mut Criterion) {
     let mut g = c.benchmark_group("large_block");
     g.measurement_time(Duration::from_secs(15)).warm_up_time(Duration::from_secs(3));
 
-    for num_tx in [1000, 10000, 64000] {
+    // The largest count is kept below the number of minimal transactions that fit within the
+    // maximum block weight, otherwise the decoder rejects the block as too heavy.
+    for num_tx in [1000, 10000, 16000] {
         let raw_block = build_test_block(num_tx);
 
         g.bench_function(BenchmarkId::new("decode", format!("{}tx", num_tx)), |b| {
