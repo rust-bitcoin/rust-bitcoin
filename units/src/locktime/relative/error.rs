@@ -47,7 +47,7 @@ impl std::error::Error for DisabledLockTimeError {
 /// [`is_satisfied_by`]: super::LockTime::is_satisfied_by
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum IsSatisfiedByError {
-    /// Error when attempting to satisfy lock by height.
+    /// Error when attempting to satisfy lock by block count.
     Blocks(InvalidHeightError),
     /// Error when attempting to satisfy lock by time.
     Time(InvalidTimeError),
@@ -130,7 +130,7 @@ impl From<Infallible> for IncompatibleHeightError {
 impl fmt::Display for IncompatibleHeightError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tried to satisfy a lock-by-height locktime using seconds {}", self.0)
+        write!(f, "tried to satisfy a lock-by-block-count locktime using seconds {}", self.0)
     }
 }
 
@@ -150,7 +150,7 @@ impl std::error::Error for IncompatibleHeightError {
 pub enum IsSatisfiedByTimeError {
     /// Satisfaction of the lock time value failed.
     Satisfaction(InvalidTimeError),
-    /// Tried to satisfy a lock-by-height locktime using an MTP.
+    /// Tried to satisfy a lock-by-block-count locktime using an MTP.
     Incompatible(IncompatibleTimeError),
 }
 
