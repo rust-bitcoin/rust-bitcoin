@@ -67,6 +67,7 @@
 
 #[cfg(feature = "alloc")]
 use core::borrow::Borrow;
+use core::cmp::Ordering;
 use core::fmt;
 #[cfg(feature = "alloc")]
 use core::marker::PhantomData;
@@ -674,7 +675,7 @@ fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCom
 /// # Bitcoin Core References
 ///
 /// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
-#[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
+#[derive(Copy, PartialEq, Eq, Clone, Hash)]
 pub struct Header {
     /// Block version, now repurposed for soft fork signalling.
     pub version: Version,
@@ -722,6 +723,29 @@ impl Header {
         let hash = hashes::encode_to_hash::<_, sha256d::HashEngine>(self);
         BlockHash::from_byte_array(hash.to_byte_array())
     }
+}
+
+impl Ord for Header {
+    /// Orders headers lexicographically by their consensus serialization.
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        let key = |h: &Self| {
+            (
+                h.version.to_consensus().to_le_bytes(),
+                h.prev_blockhash.to_byte_array(),
+                h.merkle_root.to_byte_array(),
+                h.time.to_u32().to_le_bytes(),
+                h.bits.to_consensus_u32().to_le_bytes(),
+                h.nonce.to_le_bytes(),
+            )
+        };
+        key(self).cmp(&key(other))
+    }
+}
+
+impl PartialOrd for Header {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
 }
 
 #[cfg(feature = "hex")]
@@ -1560,6 +1584,26 @@ mod tests {
         let transactions = vec![];
         let block = Block::new_unchecked(header, transactions);
         assert_eq!(block.block_hash(), header.block_hash());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_order_matches_serialization() {
+        let high_bits = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::from_byte_array([0; 32]),
+            merkle_root: TxMerkleNode::from_byte_array([0; 32]),
+            time: BlockTime::from_u32(0),
+            bits: CompactTarget::from_consensus(0x0100_0000),
+            nonce: 0,
+        };
+        let low_bits = Header { bits: CompactTarget::from_consensus(0x0000_0001), ..high_bits };
+
+        assert_eq!(
+            high_bits.cmp(&low_bits),
+            encoding::encode_to_vec(&high_bits).cmp(&encoding::encode_to_vec(&low_bits))
+        );
+        assert!(high_bits < low_bits);
     }
 
     #[test]
