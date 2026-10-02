@@ -140,6 +140,7 @@ struct Default {
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
+    a: amount::error::BadPositionError,
     b: amount::error::InvalidCharacterError,
     c: amount::error::MissingDenominationError,
     d: amount::error::MissingDigitsError,
@@ -154,17 +155,25 @@ struct Errors {
     #[cfg(feature = "serde")]
     m: fee_rate::serde::OverflowError,
     n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
-    #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
+    o: locktime::absolute::IncompatibleHeightError,
+    p: locktime::absolute::IncompatibleTimeError,
+    q: locktime::absolute::ParseHeightError,
+    r: locktime::absolute::ParseTimeError,
+    s: locktime::relative::DisabledLockTimeError,
+    t: locktime::relative::IncompatibleHeightError,
+    u: locktime::relative::IncompatibleTimeError,
+    v: locktime::relative::InvalidHeightError,
+    w: locktime::relative::InvalidTimeError,
+    x: locktime::relative::IsSatisfiedByError,
+    y: locktime::relative::IsSatisfiedByHeightError,
+    z: locktime::relative::IsSatisfiedByTimeError,
+    aa: locktime::relative::TimeOverflowError,
+    ab: parse_int::ParseIntError,
+    ac: parse_int::PrefixedHexError,
+    ad: parse_int::UnprefixedHexError,
+    ae: pow::ParseTargetError,
+    af: pow::ParseWorkError,
+    ag: result::NumOpError,
 }
 
 /// A struct that includes all public decoder types.
@@ -187,8 +196,9 @@ struct DecoderErrors {
     a: amount::error::AmountDecoderError,
     b: block::BlockHeightDecoderError,
     c: locktime::absolute::LockTimeDecoderError,
-    d: sequence::SequenceDecoderError,
-    e: time::BlockTimeDecoderError,
+    d: pow::CompactTargetDecoderError,
+    e: sequence::SequenceDecoderError,
+    f: time::BlockTimeDecoderError,
 }
 
 /// C-DEBUG-NONEMPTY: Tests that all public non-error types have non-empty Debug.
@@ -267,6 +277,7 @@ fn c_good_err_display() {
 
     fn assert_display<T: fmt::Display>() {}
 
+    assert_display::<amount::error::BadPositionError>();
     assert_display::<amount::error::InvalidCharacterError>();
     assert_display::<amount::error::MissingDenominationError>();
     assert_display::<amount::error::MissingDigitsError>();
@@ -281,16 +292,26 @@ fn c_good_err_display() {
     #[cfg(feature = "serde")]
     assert_display::<fee_rate::serde::OverflowError>();
     assert_display::<locktime::absolute::ConversionError>();
+    assert_display::<locktime::absolute::IncompatibleHeightError>();
+    assert_display::<locktime::absolute::IncompatibleTimeError>();
     assert_display::<locktime::absolute::ParseHeightError>();
     assert_display::<locktime::absolute::ParseTimeError>();
+    assert_display::<locktime::relative::DisabledLockTimeError>();
+    assert_display::<locktime::relative::IncompatibleHeightError>();
+    assert_display::<locktime::relative::IncompatibleTimeError>();
     assert_display::<locktime::relative::InvalidHeightError>();
     assert_display::<locktime::relative::InvalidTimeError>();
+    assert_display::<locktime::relative::IsSatisfiedByError>();
+    assert_display::<locktime::relative::IsSatisfiedByHeightError>();
+    assert_display::<locktime::relative::IsSatisfiedByTimeError>();
     assert_display::<locktime::relative::TimeOverflowError>();
     assert_display::<parse_int::ParseIntError>();
     assert_display::<parse_int::PrefixedHexError>();
     assert_display::<parse_int::UnprefixedHexError>();
     #[cfg(feature = "encoding")]
     assert_display::<pow::CompactTargetDecoderError>();
+    assert_display::<pow::ParseTargetError>();
+    assert_display::<pow::ParseWorkError>();
     assert_display::<result::NumOpError>();
 }
 
@@ -465,12 +486,14 @@ fn p_consistent_exports_locktime_absolute() {
 #[test]
 fn p_consistent_exports_locktime_relative() {
     use bitcoin_units::locktime::relative::error::{
-        DisabledLockTimeError as _, InvalidHeightError as _, InvalidTimeError as _,
-        TimeOverflowError as _,
+        DisabledLockTimeError as _, IncompatibleHeightError as _, IncompatibleTimeError as _,
+        InvalidHeightError as _, InvalidTimeError as _, IsSatisfiedByError as _,
+        IsSatisfiedByHeightError as _, IsSatisfiedByTimeError as _, TimeOverflowError as _,
     };
     use bitcoin_units::locktime::relative::{
-        DisabledLockTimeError, InvalidHeightError, InvalidTimeError, NumberOf512Seconds,
-        NumberOfBlocks, TimeOverflowError,
+        DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError, InvalidHeightError,
+        InvalidTimeError, IsSatisfiedByError, IsSatisfiedByHeightError, IsSatisfiedByTimeError,
+        NumberOf512Seconds, NumberOfBlocks, TimeOverflowError,
     };
 }
 
@@ -489,7 +512,8 @@ fn p_consistent_exports_result() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `pow` module.
 #[test]
 fn p_consistent_exports_pow() {
-    use bitcoin_units::pow::{CompactTarget, Target, Work};
+    use bitcoin_units::pow::error::{ParseTargetError as _, ParseWorkError as _};
+    use bitcoin_units::pow::{CompactTarget, ParseTargetError, ParseWorkError, Target, Work};
     #[cfg(feature = "encoding")]
     use bitcoin_units::pow::{
         CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder,
