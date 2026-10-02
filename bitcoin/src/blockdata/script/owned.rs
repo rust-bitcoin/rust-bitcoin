@@ -250,7 +250,7 @@ impl<'a, Tg> Extend<Instruction<'a>> for ScriptBuf<Tg> {
         let iter = iter.into_iter();
         // Most of Bitcoin scripts have only a few opcodes, so we can avoid reallocations in many
         // cases.
-        if iter.size_hint().1.map(|max| max < 6).unwrap_or(false) {
+        if iter.size_hint().1.is_some_and(|max| max < 6) {
             let mut iter = iter.fuse();
             // `MaybeUninit` might be faster but we don't want to introduce more `unsafe` than
             // required.

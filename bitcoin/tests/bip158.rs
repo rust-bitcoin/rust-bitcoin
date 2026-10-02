@@ -28,7 +28,7 @@ fn blockfilters() {
         let mut txmap = HashMap::new();
         let mut si = scripts.iter();
         for tx in block.transactions().iter().skip(1) {
-            for input in tx.inputs.iter() {
+            for input in &tx.inputs {
                 txmap.insert(
                     input.previous_output,
                     ScriptPubKeyBuf::from(hex(si.next().unwrap().as_str().unwrap())),
@@ -37,11 +37,7 @@ fn blockfilters() {
         }
 
         let filter = BlockFilter::new_script_filter(&block, |o| {
-            if let Some(s) = txmap.get(o) {
-                Ok(s.clone())
-            } else {
-                Err(Error::UtxoMissing(*o))
-            }
+            txmap.get(o).map_or_else(|| Err(Error::UtxoMissing(*o)), |s| Ok(s.clone()))
         })
         .unwrap();
 
@@ -53,11 +49,7 @@ fn blockfilters() {
         assert!(filter
             .match_all(
                 *block_hash,
-                &mut txmap.values().filter_map(|s| if !s.is_empty() {
-                    Some(s.as_bytes())
-                } else {
-                    None
-                })
+                &mut txmap.values().filter_map(|s| (!s.is_empty()).then_some(s.as_bytes()))
             )
             .unwrap());
 

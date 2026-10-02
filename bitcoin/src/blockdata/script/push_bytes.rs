@@ -62,9 +62,8 @@ crate::internal_macros::define_extension_trait! {
 /// need to return data. In practice, if the max_size parameter is 4 or less, this function
 /// will always return a value that can fit into an i32, and can thus be safely cast.
 fn read_scriptint_internal(bytes: &PushBytes, max_size: usize) -> Result<i64, ScriptIntError> {
-    let last = match bytes.as_bytes().last() {
-        Some(last) => last,
-        None => return Ok(0),
+    let Some(last) = bytes.as_bytes().last() else {
+        return Ok(0);
     };
     if bytes.len() > max_size {
         return Err(ScriptIntError::NumericOverflow);

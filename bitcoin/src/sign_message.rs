@@ -65,7 +65,7 @@ mod message_signing {
             if bytes[0] < 27 {
                 return Err(secp256k1::Error::InvalidRecoveryId);
             };
-            let recid = RecoveryId::try_from(((bytes[0] - 27) & 0x03) as i32)?;
+            let recid = RecoveryId::try_from(i32::from((bytes[0] - 27) & 0x03))?;
             Ok(Self {
                 signature: RecoverableSignature::from_compact(&bytes[1..], recid)?,
                 compressed: ((bytes[0] - 27) & 0x04) != 0,
