@@ -27,6 +27,8 @@
 //! * `serde` - causes the crate to depend on `serde` and provide support for serializing and
 //!   deserializing its types.
 //! * `arbitrary` - causes the crate to depend on `arbitrary` and implement the `Arbitrary` trait.
+//! * `encoding` - causes the crate to depend on `bitcoin-consensus-encoding` and provide consensus
+//!   encoders and decoders for its types.
 //!
 //! # MSRV
 //!
