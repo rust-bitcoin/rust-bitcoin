@@ -268,6 +268,14 @@ fn c_send_sync() {
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
     assert_send::<Errors>();
     assert_sync::<Errors>();
+
+    #[cfg(feature = "encoding")]
+    {
+        assert_send::<Decoders>();
+        assert_sync::<Decoders>();
+        assert_send::<DecoderErrors>();
+        assert_sync::<DecoderErrors>();
+    }
 }
 
 /// C-GOOD-ERR: Tests that all public error types implement Display.
@@ -308,11 +316,19 @@ fn c_good_err_display() {
     assert_display::<parse_int::ParseIntError>();
     assert_display::<parse_int::PrefixedHexError>();
     assert_display::<parse_int::UnprefixedHexError>();
-    #[cfg(feature = "encoding")]
-    assert_display::<pow::CompactTargetDecoderError>();
     assert_display::<pow::ParseTargetError>();
     assert_display::<pow::ParseWorkError>();
     assert_display::<result::NumOpError>();
+
+    #[cfg(feature = "encoding")]
+    {
+        assert_display::<amount::error::AmountDecoderError>();
+        assert_display::<block::BlockHeightDecoderError>();
+        assert_display::<locktime::absolute::LockTimeDecoderError>();
+        assert_display::<pow::CompactTargetDecoderError>();
+        assert_display::<sequence::SequenceDecoderError>();
+        assert_display::<time::BlockTimeDecoderError>();
+    }
 }
 
 /// C-OBJECT: Tests that traits are object-safe where appropriate.
