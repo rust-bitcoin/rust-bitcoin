@@ -62,9 +62,8 @@ crate::internal_macros::define_extension_trait! {
 /// need to return data. In practice, if the max_size parameter is 4 or less, this function
 /// will always return a value that can fit into an i32, and can thus be safely cast.
 fn read_scriptint_internal(bytes: &PushBytes, max_size: usize) -> Result<i64, ScriptIntError> {
-    let last = match bytes.as_bytes().last() {
-        Some(last) => last,
-        None => return Ok(0),
+    let Some(last) = bytes.as_bytes().last() else {
+        return Ok(0);
     };
     if bytes.len() > max_size {
         return Err(ScriptIntError::NumericOverflow);
@@ -74,7 +73,7 @@ fn read_scriptint_internal(bytes: &PushBytes, max_size: usize) -> Result<i64, Sc
     // If the most-significant-byte - excluding the sign bit - is zero
     // then we're not minimal. Note how this test also rejects the
     // negative-zero encoding, 0x80.
-    if (*last & 0x7f) == 0 {
+    if (*last).trailing_zeros() >= 7 {
         // One exception: if there's more than one byte and the most
         // significant bit of the second-most-significant-byte is set
         // it would conflict with the sign bit. An example of this case

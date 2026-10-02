@@ -578,10 +578,7 @@ impl encoding::Decoder for WitnessDecoder {
             self.witness_count_decoder.read_limit()
         } else {
             // Reading an element.
-            match self.element_bytes_remaining {
-                None => self.element_length_decoder.read_limit(),
-                Some(remaining) => remaining,
-            }
+            self.element_bytes_remaining.unwrap_or_else(|| self.element_length_decoder.read_limit())
         }
     }
 }

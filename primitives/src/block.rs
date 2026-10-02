@@ -308,10 +308,7 @@ impl Block<Unchecked> {
     /// Checks if Merkle root of header matches Merkle root of the transaction list.
     #[inline]
     pub fn check_merkle_root(&self) -> bool {
-        match compute_merkle_root(&self.transactions) {
-            Some(merkle_root) => self.header.merkle_root == merkle_root,
-            None => false,
-        }
+        compute_merkle_root(&self.transactions) == Some(self.header.merkle_root)
     }
 
     /// Computes the witness commitment for a list of transactions.
@@ -653,15 +650,11 @@ fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCom
     }
 
     // Commitment is in the last output that starts with magic bytes.
-    if let Some(pos) = coinbase.outputs.iter().rposition(|o| {
-        o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == WITNESS_COMMITMENT_MAGIC
-    }) {
-        let bytes =
-            <[u8; 32]>::try_from(&coinbase.outputs[pos].script_pubkey.as_bytes()[6..38]).unwrap();
+    coinbase.outputs.iter().rev().find_map(|o| {
+        let payload = o.script_pubkey.as_bytes().strip_prefix(&WITNESS_COMMITMENT_MAGIC)?;
+        let bytes = <[u8; 32]>::try_from(payload.get(..32)?).ok()?;
         Some(WitnessCommitment::from_byte_array(bytes))
-    } else {
-        None
-    }
+    })
 }
 
 /// Bitcoin block header.

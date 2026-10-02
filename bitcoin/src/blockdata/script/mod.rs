@@ -167,7 +167,7 @@ pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i32, ScriptIntError> {
 
 // Caller to guarantee that `v` is not empty.
 fn scriptint_parse(v: &[u8]) -> i64 {
-    let (mut ret, sh) = v.iter().fold((0, 0), |(acc, sh), n| (acc + ((*n as i64) << sh), sh + 8));
+    let (mut ret, sh) = v.iter().fold((0, 0), |(acc, sh), n| (acc + (i64::from(*n) << sh), sh + 8));
     if v[v.len() - 1] & 0x80 != 0 {
         ret &= (1 << (sh - 1)) - 1;
         ret = -ret;

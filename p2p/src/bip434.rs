@@ -88,7 +88,7 @@ impl encoding::Decoder for FeatureIdDecoder {
         let feature_string = String::from_utf8(feature_id)
             .map_err(|_| FeatureIdError::NotAscii)
             .map_err(FeatureIdDecoderError::Malformed)?;
-        Ok(feature_string.parse().map_err(FeatureIdDecoderError::Malformed)?)
+        feature_string.parse().map_err(FeatureIdDecoderError::Malformed)
     }
 }
 
