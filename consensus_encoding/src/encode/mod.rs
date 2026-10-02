@@ -79,8 +79,16 @@ pub trait Encoder {
     /// Yields the current encoded byte slice.
     ///
     /// Will always return the same value until [`Self::advance`] is called.
-    /// May return an empty slice, however implementors should avoid returning empty slices unless
-    /// the encoded type is truly empty.
+    ///
+    /// # Empty Slices
+    ///
+    /// May return an empty slice, however implementors should avoid returning empty slices
+    /// unless the encoded type is truly empty (next [`advance`](Self::advance) returns
+    /// [`Finished`](EncoderStatus::Finished)).
+    ///
+    /// For optional or collection fields, a state machine that omits absent fields is potentially
+    /// more efficient than a fixed [`crate::Encoder2`] with an empty first component. This avoids
+    /// unnecessary walks up and down the encoder's state.
     fn current_chunk(&self) -> &[u8];
 
     /// Moves the encoder to its next state.
