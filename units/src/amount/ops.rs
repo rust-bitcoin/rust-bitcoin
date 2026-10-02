@@ -224,7 +224,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Rem<NonZeroI64> for SignedAmount {
         type Output = SignedAmount;
 
-        fn rem(self, modulus: NonZeroI64) -> Self::Output { SignedAmount::from_sat(self.to_sat() % modulus.get()).expect("construction from reamainder cannot fail") }
+        fn rem(self, modulus: NonZeroI64) -> Self::Output { SignedAmount::from_sat(self.to_sat() % modulus.get()).expect("construction from remainder cannot fail") }
     }
     impl ops::Rem<i64> for NumOpResult<SignedAmount> {
         type Output = NumOpResult<SignedAmount>;

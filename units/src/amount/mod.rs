@@ -3,8 +3,8 @@
 //! Bitcoin amounts.
 //!
 //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types to express the bitcoin
-//! amounts supporting arithmetic, conversions between denomintaions and other important
-//! opertaions.
+//! amounts supporting arithmetic, conversions between denominations and other important
+//! operations.
 //!
 //! # The 21M limit
 //!
