@@ -130,7 +130,11 @@ impl From<Infallible> for IncompatibleHeightError {
 impl fmt::Display for IncompatibleHeightError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tried to satisfy a lock-by-height locktime using seconds {}", self.0)
+        write!(
+            f,
+            "tried to satisfy a lock-by-time locktime ({} 512-second intervals) using a height",
+            self.0
+        )
     }
 }
 
@@ -194,7 +198,7 @@ impl From<Infallible> for IncompatibleTimeError {
 impl fmt::Display for IncompatibleTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tried to satisfy a lock-by-time locktime using blocks {}", self.0)
+        write!(f, "tried to satisfy a lock-by-height locktime ({} blocks) using an MTP", self.0)
     }
 }
 
