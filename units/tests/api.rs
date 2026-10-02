@@ -57,9 +57,11 @@ struct Structs {
     k: locktime::relative::NumberOf512Seconds,
     l: locktime::relative::NumberOfBlocks,
     m: pow::CompactTarget,
-    n: sequence::Sequence,
-    o: time::BlockTime,
-    p: weight::Weight,
+    n: pow::Target,
+    o: pow::Work,
+    p: sequence::Sequence,
+    q: time::BlockTime,
+    r: weight::Weight,
 }
 
 impl Structs {
@@ -78,9 +80,11 @@ impl Structs {
             k: relative::NumberOf512Seconds::MAX,
             l: relative::NumberOfBlocks::MAX,
             m: pow::CompactTarget::from_consensus(u32::MAX),
-            n: sequence::Sequence::MAX,
-            o: BlockTime::from_u32(u32::MAX),
-            p: Weight::MAX,
+            n: pow::Target::MAX,
+            o: pow::Work::from_be_bytes([0xff; 32]),
+            p: sequence::Sequence::MAX,
+            q: BlockTime::from_u32(u32::MAX),
+            r: Weight::MAX,
         }
     }
 }
@@ -114,8 +118,11 @@ struct CommonTraits {
     k: locktime::relative::NumberOf512Seconds,
     l: locktime::relative::NumberOfBlocks,
     m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
+    n: pow::Target,
+    o: pow::Work,
+    p: sequence::Sequence,
+    q: time::BlockTime,
+    r: weight::Weight,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -231,6 +238,10 @@ fn c_debug_nonempty() {
     let debug = format!("{:?}", t.b.o);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.b.p);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.b.q);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.b.r);
     assert!(!debug.is_empty());
 }
 
@@ -380,7 +391,7 @@ fn p_consistent_exports_crate_modules() {
 fn p_consistent_exports_crate_types() {
     use bitcoin_units::{
         Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime,
-        CompactTarget, FeeRate, NumOpResult, Sequence, SignedAmount, Weight,
+        CompactTarget, FeeRate, NumOpResult, Sequence, SignedAmount, Target, Weight, Work,
     };
 }
 
@@ -478,7 +489,7 @@ fn p_consistent_exports_result() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `pow` module.
 #[test]
 fn p_consistent_exports_pow() {
-    use bitcoin_units::pow::CompactTarget;
+    use bitcoin_units::pow::{CompactTarget, Target, Work};
     #[cfg(feature = "encoding")]
     use bitcoin_units::pow::{
         CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder,
@@ -552,9 +563,11 @@ impl<'a> Arbitrary<'a> for Structs {
             k: relative::NumberOf512Seconds::arbitrary(u)?,
             l: relative::NumberOfBlocks::arbitrary(u)?,
             m: pow::CompactTarget::from_consensus(u.int_in_range(0..=u32::MAX)?),
-            n: sequence::Sequence::arbitrary(u)?,
-            o: BlockTime::arbitrary(u)?,
-            p: Weight::arbitrary(u)?,
+            n: pow::Target::arbitrary(u)?,
+            o: pow::Work::arbitrary(u)?,
+            p: sequence::Sequence::arbitrary(u)?,
+            q: BlockTime::arbitrary(u)?,
+            r: Weight::arbitrary(u)?,
         };
         Ok(a)
     }
