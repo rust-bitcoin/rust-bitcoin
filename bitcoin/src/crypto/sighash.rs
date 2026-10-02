@@ -311,7 +311,7 @@ impl SplitAnyoneCanPay for EcdsaSighashType {
             SinglePlusAnyoneCanPay => (Single, true),
             NonStandard(n) => {
                 let n = n.to_u32();
-                // Check sighash tyoe
+                // Check sighash type
                 let sighash_type = match n & 0x1f {
                     0x02 => None,
                     0x03 => Single,
