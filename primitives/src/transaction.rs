@@ -201,8 +201,15 @@ impl Transaction {
     ///
     /// This gives a way to identify a transaction that is "the same" as another in the sense of
     /// having the same inputs and outputs.
+    ///
+    /// A coinbase `script_sig` is not a signature and may contain a BIP-34 height commitment, so
+    /// for a coinbase transaction the ntxid is equal to the txid.
     #[doc(alias = "ntxid")]
     pub fn compute_ntxid(&self) -> Ntxid {
+        if self.is_coinbase() {
+            return Ntxid::from_byte_array(self.compute_txid().to_byte_array());
+        }
+
         let normalized = Self {
             version: self.version,
             lock_time: self.lock_time,
@@ -2301,6 +2308,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn compute_ntxid_ignores_script_sig_and_witness() {
         let mut tx_in = TxIn::EMPTY_COINBASE;
+        tx_in.previous_output = OutPoint { txid: Txid::from_byte_array([0xAA; 32]), vout: 0 };
         tx_in.script_sig = ScriptSigBuf::from_bytes(vec![1, 2, 3]);
         tx_in.witness = Witness::from_slice(&[&[0xAAu8][..]]);
 
@@ -2317,6 +2325,44 @@ mod tests {
         tx.inputs[0].witness = Witness::default();
 
         assert_eq!(ntxid, Ntxid::from_byte_array(tx.compute_txid().to_byte_array()));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn compute_ntxid_preserves_coinbase_script_sig() {
+        let mut tx_in = TxIn::EMPTY_COINBASE;
+        // BIP-34 height 840001.
+        tx_in.script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x41, 0xd1, 0x0c]);
+
+        let first = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![tx_in],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        let mut second = first.clone();
+        // BIP-34 height 840002.
+        second.inputs[0].script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x42, 0xd1, 0x0c]);
+
+        assert_ne!(first.compute_txid(), second.compute_txid());
+        assert_ne!(first.compute_ntxid(), second.compute_ntxid());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn compute_ntxid_matches_coinbase_txid() {
+        let mut tx_in = TxIn::EMPTY_COINBASE;
+        tx_in.script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x41, 0xd1, 0x0c]);
+
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![tx_in],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        assert_eq!(tx.compute_ntxid().to_byte_array(), tx.compute_txid().to_byte_array());
     }
 
     #[test]
