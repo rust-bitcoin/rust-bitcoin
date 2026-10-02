@@ -6,7 +6,7 @@ use internals::array::ArrayExt; // For `split_first`.
 
 use super::witness_version::WitnessVersion;
 use super::{
-    Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript, RedeemScriptSizeError,
+    Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript, RedeemScriptError,
     Script, ScriptHashableTag, ScriptPubKey, ScriptSig, TapScript, WitnessScript,
     WitnessScriptSizeError,
 };
@@ -141,7 +141,7 @@ internal_macros::define_extension_trait! {
         // where clauses on them.
 
         /// Computes the P2SH output corresponding to this redeem script.
-        fn to_p2sh(&self) -> Result<ScriptPubKeyBuf, RedeemScriptSizeError>
+        fn to_p2sh(&self) -> Result<ScriptPubKeyBuf, RedeemScriptError>
         where T: ScriptHashableTag
         {
             self.script_hash().map(ScriptPubKeyBuf::new_p2sh)

@@ -54,7 +54,8 @@ pub use self::{
 };
 #[doc(no_inline)]
 pub use self::error::{
-    PushBytesError, RedeemScriptSizeError, ScriptBufDecoderError, WitnessScriptSizeError,
+    PushBytesError, RedeemScriptError, RedeemScriptSizeError, ScriptBufDecoderError,
+    WitnessScriptSizeError,
 };
 #[doc(inline)]
 pub use crate::hash_types::{ScriptHash, WScriptHash};
@@ -134,8 +135,8 @@ pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
 /// relating to P2SH and signature hashing. These methods take either a normal
 /// P2SH redeem script, or a Segwit version 0 scriptpubkey.
 ///
-/// Segwit version 1 (Taproot) and higher do **not** support P2SH-wrapping, and such
-/// scriptPubKeys should not be used with this trait.
+/// Segwit version 1 (Taproot) and higher do **not** support P2SH-wrapping, and hashing
+/// such a script with [`ScriptHash::from_script`] returns an error.
 pub trait ScriptHashableTag: sealed::Sealed {}
 
 impl ScriptHashableTag for RedeemScriptTag {}
@@ -148,7 +149,7 @@ mod sealed {
 }
 
 impl<T: ScriptHashableTag> TryFrom<ScriptBuf<T>> for ScriptHash {
-    type Error = RedeemScriptSizeError;
+    type Error = RedeemScriptError;
 
     #[inline]
     fn try_from(redeem_script: ScriptBuf<T>) -> Result<Self, Self::Error> {
@@ -157,7 +158,7 @@ impl<T: ScriptHashableTag> TryFrom<ScriptBuf<T>> for ScriptHash {
 }
 
 impl<T: ScriptHashableTag> TryFrom<&ScriptBuf<T>> for ScriptHash {
-    type Error = RedeemScriptSizeError;
+    type Error = RedeemScriptError;
 
     #[inline]
     fn try_from(redeem_script: &ScriptBuf<T>) -> Result<Self, Self::Error> {
@@ -166,7 +167,7 @@ impl<T: ScriptHashableTag> TryFrom<&ScriptBuf<T>> for ScriptHash {
 }
 
 impl<T: ScriptHashableTag> TryFrom<&Script<T>> for ScriptHash {
-    type Error = RedeemScriptSizeError;
+    type Error = RedeemScriptError;
 
     #[inline]
     fn try_from(redeem_script: &Script<T>) -> Result<Self, Self::Error> {

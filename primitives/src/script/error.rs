@@ -10,7 +10,7 @@ use internals::write_err;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use crate::hash_types::{RedeemScriptSizeError, WitnessScriptSizeError};
+pub use crate::hash_types::{RedeemScriptError, RedeemScriptSizeError, WitnessScriptSizeError};
 #[doc(inline)]
 pub use super::push_bytes::PushBytesError;
 

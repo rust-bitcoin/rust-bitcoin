@@ -326,7 +326,7 @@ impl ScriptPubKeyBuf {
     /// let script_pubkey = ScriptPubKeyBuf::new_p2sh(ScriptHash::from_script(&redeem_script)?);
     ///
     /// assert!(script_pubkey.is_p2sh());
-    /// # Ok::<_, bitcoin_primitives::script::RedeemScriptSizeError>(())
+    /// # Ok::<_, bitcoin_primitives::script::RedeemScriptError>(())
     /// ```
     #[inline]
     pub fn new_p2sh(script_hash: ScriptHash) -> Self {
