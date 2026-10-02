@@ -65,16 +65,9 @@ where
     pub fn new(iter: impl IntoIterator<IntoIter = I>) -> Self {
         // Protect against poorly implemented iterators.
         let mut iter = iter.into_iter().fuse();
-        // Advance past any leading empty encoders so that the first call to
-        // `current_chunk` satisfies the `Encoder` contract that it must return
-        // non-empty bytes or the encoder must be `Done`.
-        let state = loop {
-            match iter.next() {
-                Some(enc) if !enc.current_chunk().is_empty() =>
-                    break EncoderState::Encoding { current: enc, remaining: iter },
-                Some(_) => {}
-                None => break EncoderState::Done,
-            }
+        let state = match iter.next() {
+            Some(enc) => EncoderState::Encoding { current: enc, remaining: iter },
+            None => EncoderState::Done,
         };
         Self { state }
     }
@@ -124,23 +117,21 @@ where
             return EncoderStatus::Finished;
         };
 
-        loop {
-            if current.advance().has_more() {
-                return EncoderStatus::HasMore;
-            }
-
-            if let Some(next) = remaining.next() {
-                *current = next;
-                // If the next encoder is empty, skip in order to maintain `Encoder` contract
-                // that it must return non-empty bytes or the encoder must be `Done`
-                if !current.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.state = EncoderState::Done;
-                return EncoderStatus::Finished;
-            }
+        // Drive the current encoder to completion.
+        if current.advance().has_more() {
+            return EncoderStatus::HasMore;
         }
+
+        // Current encoder exhausted. Pull the next one.
+        if let Some(next) = remaining.next() {
+            *current = next;
+            return EncoderStatus::HasMore;
+        }
+
+        // No more encoders.
+        self.state = EncoderState::Done;
+
+        EncoderStatus::Finished
     }
 }
 
