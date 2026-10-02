@@ -290,6 +290,7 @@ mod test {
     }
 
     #[test]
+    #[allow(deprecated, deprecated_in_future)] // Tests the deprecated method.
     fn get_tapscript() {
         let tapscript = hex!("deadbeef");
         let control_block =
@@ -327,6 +328,7 @@ mod test {
     }
 
     #[test]
+    #[allow(deprecated, deprecated_in_future)] // Tests the deprecated method.
     fn get_tapscript_from_keypath() {
         let signature = hex!("deadbeef");
         // annex starting with 0x50 causes the branching logic.
