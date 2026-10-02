@@ -6,7 +6,7 @@ resolver = "2"
 [workspace.metadata]
 rbmt.version = "0.5.3"
 rbmt.toolchains.nightly = "nightly-2026-09-26"
-rbmt.toolchains.stable = "1.98.1"
+rbmt.toolchains.stable = "1.99.0"
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(chacha20_poly1305_fuzz)', 'cfg(fuzzing)', 'cfg(hashes_fuzz)', 'cfg(kani)'] }
