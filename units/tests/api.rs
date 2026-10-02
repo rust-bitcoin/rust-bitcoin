@@ -331,6 +331,58 @@ fn c_good_err_display() {
     }
 }
 
+/// C-GOOD-ERR: Tests that all public error types implement [`std::error::Error`].
+#[cfg(feature = "std")]
+#[test]
+fn c_good_err_error() {
+    fn assert_error<T: std::error::Error>() {}
+
+    assert_error::<amount::error::BadPositionError>();
+    assert_error::<amount::error::InvalidCharacterError>();
+    assert_error::<amount::error::MissingDenominationError>();
+    assert_error::<amount::error::MissingDigitsError>();
+    assert_error::<amount::error::OutOfRangeError>();
+    assert_error::<amount::error::ParseAmountError>();
+    assert_error::<amount::error::ParseDenominationError>();
+    assert_error::<amount::error::ParseError>();
+    assert_error::<amount::error::PossiblyConfusingDenominationError>();
+    assert_error::<amount::error::TooPreciseError>();
+    assert_error::<amount::error::UnknownDenominationError>();
+    assert_error::<block::TooBigForRelativeHeightError>();
+    #[cfg(feature = "serde")]
+    assert_error::<fee_rate::serde::OverflowError>();
+    assert_error::<locktime::absolute::ConversionError>();
+    assert_error::<locktime::absolute::IncompatibleHeightError>();
+    assert_error::<locktime::absolute::IncompatibleTimeError>();
+    assert_error::<locktime::absolute::ParseHeightError>();
+    assert_error::<locktime::absolute::ParseTimeError>();
+    assert_error::<locktime::relative::DisabledLockTimeError>();
+    assert_error::<locktime::relative::IncompatibleHeightError>();
+    assert_error::<locktime::relative::IncompatibleTimeError>();
+    assert_error::<locktime::relative::InvalidHeightError>();
+    assert_error::<locktime::relative::InvalidTimeError>();
+    assert_error::<locktime::relative::IsSatisfiedByError>();
+    assert_error::<locktime::relative::IsSatisfiedByHeightError>();
+    assert_error::<locktime::relative::IsSatisfiedByTimeError>();
+    assert_error::<locktime::relative::TimeOverflowError>();
+    assert_error::<parse_int::ParseIntError>();
+    assert_error::<parse_int::PrefixedHexError>();
+    assert_error::<parse_int::UnprefixedHexError>();
+    assert_error::<pow::ParseTargetError>();
+    assert_error::<pow::ParseWorkError>();
+    assert_error::<result::NumOpError>();
+
+    #[cfg(feature = "encoding")]
+    {
+        assert_error::<amount::error::AmountDecoderError>();
+        assert_error::<block::BlockHeightDecoderError>();
+        assert_error::<locktime::absolute::LockTimeDecoderError>();
+        assert_error::<pow::CompactTargetDecoderError>();
+        assert_error::<sequence::SequenceDecoderError>();
+        assert_error::<time::BlockTimeDecoderError>();
+    }
+}
+
 /// C-OBJECT: Tests that traits are object-safe where appropriate.
 #[test]
 fn c_object() {
