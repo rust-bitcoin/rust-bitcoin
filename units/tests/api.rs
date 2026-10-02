@@ -113,7 +113,7 @@ struct CommonTraits {
     j: locktime::absolute::MedianTimePast,
     k: locktime::relative::NumberOf512Seconds,
     l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
+    // m: pow::CompactTarget, // does not include Ord or PartialOrd
     n: time::BlockTime,
     o: weight::Weight,
 }
