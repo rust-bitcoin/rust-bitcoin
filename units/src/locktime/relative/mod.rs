@@ -242,7 +242,7 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// Returns an error if this lock is not lock-by-height.
+    /// Returns an error if this lock is not lock-by-block-count.
     #[inline]
     pub fn is_satisfied_by_height(
         self,
@@ -363,7 +363,7 @@ impl fmt::Display for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
             match *self {
-                Self::Blocks(ref h) => write!(f, "block-height {}", h),
+                Self::Blocks(ref h) => write!(f, "block-count {}", h),
                 Self::Time(ref t) => write!(f, "block-time {} (512 second intervals)", t),
             }
         } else {
@@ -728,7 +728,7 @@ mod tests {
         let lock_by_time = LockTime::from_512_second_intervals(70);
 
         assert_eq!(format!("{}", lock_by_height), "10");
-        assert_eq!(format!("{:#}", lock_by_height), "block-height 10");
+        assert_eq!(format!("{:#}", lock_by_height), "block-count 10");
         assert!(!format!("{:?}", lock_by_height).is_empty());
 
         assert_eq!(format!("{}", lock_by_time), "70");
