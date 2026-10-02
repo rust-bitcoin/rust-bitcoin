@@ -1439,4 +1439,11 @@ mod tests {
         assert_eq!((U256::MAX >> (256 - 16)).to_f64(), 65535.0_f64);
         assert_eq!((U256::MAX >> (256 - 8)).to_f64(), 255.0_f64);
     }
+
+    #[test]
+    fn u256_from_str_rejects_sign_at_chunk_boundary() {
+        assert!("+7".parse::<U256>().is_err());
+        // With 39 digits, the second 38 digit chunk starts with the sign.
+        assert!("1+0000000000000000000000000000000000000".parse::<U256>().is_err());
+    }
 }
