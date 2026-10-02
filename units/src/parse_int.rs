@@ -328,7 +328,9 @@ macro_rules! parse_hex_for {
         #[doc = "`."]
         #[inline]
         fn $uncheck_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
-            <$int_type>::from_str_radix(s, 16).map_err(|error| {
+            // `from_str_radix` accepts a leading sign, which is not part of a hex encoding.
+            let digits = if s.starts_with('+') { "+" } else { s };
+            <$int_type>::from_str_radix(digits, 16).map_err(|error| {
                 let (input, truncated) = error::BoundedInput::into_bounded_input(s);
                 ParseIntError { input, bits: $bits, is_signed: false, truncated, source: error }
             })
@@ -877,6 +879,12 @@ mod tests {
     fn parse_u32_from_hex_unchecked_errors_on_overflow() {
         assert!(hex_u32_unchecked("1234abcd").is_ok());
         assert!(hex_u32_unchecked("1234abcd1").is_err());
+    }
+
+    #[test]
+    fn parse_u32_from_hex_unchecked_errors_on_sign() {
+        assert!(hex_u32_unchecked("+ab").is_err());
+        assert!(hex_u32("0x+ab").is_err());
     }
 
     #[test]
