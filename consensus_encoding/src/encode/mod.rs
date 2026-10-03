@@ -39,6 +39,12 @@ pub mod iter;
 /// # }
 /// ```
 pub trait Encode {
+    /// The minimum length in bytes the type is guaranteed to encode to.
+    ///
+    /// The default value is 0. Types that have some known minimum encoded length should override
+    /// this to aid optimizations. However they MUST also override the `tail` method.
+    const MIN_ENCODED_LEN: usize = 0;
+
     /// The encoder associated with this type. Conceptually, the encoder is like
     /// an iterator which yields byte slices.
     type Encoder<'e>: Encoder
@@ -46,7 +52,30 @@ pub trait Encode {
         Self: 'e;
 
     /// Constructs a "default encoder" for the type.
+    ///
+    /// This function MUST be deterministic: for any given input it must return an encoder which
+    /// yields the exact same bytes and reports exact same length. But it does NOT have to yield
+    /// the bytes with the same chunking.
     fn encoder(&self) -> Self::Encoder<'_>;
+
+    /// Returns the length of encoded data.
+    ///
+    /// By default this just reports the value from encoder and does not need to be overridden.
+    /// Overriding this is only slightly valuable when you can somehow avoid the addition of
+    /// `MIN_ENCODED_LEN` and `encoded_tail_len`.
+    #[inline]
+    fn encoded_len<'e>(&'e self) -> usize where Self::Encoder<'e>: ExactSizeEncoder {
+        Self::MIN_ENCODED_LEN + self.encoder().len()
+    }
+
+    /// Returns the length of encoded data with `MIN_ENCODED_LEN` subtracted.
+    ///
+    /// This defaults to the length of the encoder because `MIN_ENCODED_LEN` defaults to 0.
+    /// Implementors MUST always either override both values or none of them.
+    #[inline]
+    fn encoded_tail_len<'e>(&'e self) -> usize where Self::Encoder<'e>: ExactSizeEncoder {
+        self.encoder().len()
+    }
 }
 
 /// A pull based encoder that yields bytes in chunks.
@@ -484,4 +513,45 @@ impl<T: Encoder> Encoder for Option<T> {
 
 impl<T: ExactSizeEncoder> ExactSizeEncoder for Option<T> {
     fn len(&self) -> usize { self.as_ref().map_or(0, T::len) }
+}
+
+/// Implements `Encode` for a given type that is encoded as little-endian unsigned integer.
+#[macro_export]
+macro_rules! impl_encode_le_uint {
+    (impl Encode for $ty:ty { type Encoder<'_> = $encoder:ident<'_>; using $f:expr; }) => {
+        impl $crate::Encode for $ty {
+            type Encoder<'e> = $encoder<'e>;
+
+            #[inline]
+            fn encoder(&self) -> Self::Encoder<'_> {
+                $encoder($crate::ArrayEncoder::without_length_prefix($f(self).to_le_bytes()), Default::default())
+            }
+
+            const MIN_ENCODED_LEN: usize = $crate::_size_of_return_type(&$f);
+
+            #[inline]
+            fn encoded_tail_len<'e>(&'e self) -> usize where Self::Encoder<'e>: $crate::ExactSizeEncoder {
+                0
+            }
+        }
+
+        /// The encoder for the [`
+        #[doc = stringify!($ty)]
+        /// `] type.
+        #[derive(Debug, Clone)]
+        pub struct $encoder<'e>($crate::ArrayEncoder<{ $crate::_size_of_return_type(&$f) }>, core::marker::PhantomData<&'e $ty>);
+
+        impl<'e> $crate::Encoder for $encoder<'e> {
+            #[inline]
+            fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+            #[inline]
+            fn advance(&mut self) -> $crate::EncoderStatus { self.0.advance() }
+        }
+
+        impl<'e> $crate::ExactSizeEncoder for $encoder<'e> {
+            #[inline]
+            fn len(&self) -> usize { self.0.len() }
+        }
+    }
 }
