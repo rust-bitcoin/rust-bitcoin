@@ -177,7 +177,7 @@ Exposes the new stabilized encoding library through the optional `encoding` feat
 **Bump the MSRV to Rust 1.74.0**
 
 Note the version number jump. We jumped to `v0.32.100` when doing the MSRV bump so as to
-leave room for a bunch of secuity releases up to this number if needed.
+leave room for a bunch of security releases up to this number if needed.
 
 - Our primary users (BDK and LDK) are at 1.85 already well ahead of `1.74`.
 - We would like to deliver the new sans-IO `consensus_encoding` crate in a point release.
