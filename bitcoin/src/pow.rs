@@ -69,7 +69,7 @@ internal_macros::define_extension_trait! {
         /// alternatively, it will take, again on average, ~6.6 million times as many hashes to find a
         /// valid block.
         ///
-        /// Values for the `max_target` paramter can be taken from const values on [`Target`]
+        /// Values for the `max_target` parameter can be taken from const values on [`Target`]
         /// (e.g. [`Target::MAX_ATTAINABLE_MAINNET`]).
         ///
         /// # Note
