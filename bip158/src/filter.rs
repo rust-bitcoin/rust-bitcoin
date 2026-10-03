@@ -8,6 +8,7 @@
 
 #[cfg(feature = "alloc")]
 use alloc::{collections::BTreeSet, vec::Vec};
+use core::cmp::{self, Ordering};
 
 use encoding::{decode_from_slice_unbounded_with_decoder, CompactSizeU64Decoder};
 #[cfg(feature = "alloc")]
@@ -149,17 +150,10 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
         I: IntoIterator<Item = T>,
         T: AsRef<[u8]>,
     {
-        let element_count = u64::from(self.element_count);
-        if element_count == 0 {
+        if self.element_count == 0 {
             return false;
         }
-
-        let range = element_count * u64::from(BASIC_FILTER_M);
-        let key = SipHashKey::from_block_hash(block_hash);
-        query.into_iter().any(|element| {
-            let value = map_to_range(key.hash(element.as_ref()), range);
-            match_value(self.payload(), element_count, value).unwrap_or(false)
-        })
+        self.match_sorted_batch(block_hash, query, |batch| self.match_any_sorted(batch))
     }
 
     /// Returns whether every distinct query element matches this filter.
@@ -173,20 +167,52 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
         I: IntoIterator<Item = T>,
         T: AsRef<[u8]>,
     {
-        let element_count = u64::from(self.element_count);
-        let mut iter = query.into_iter();
-
-        if element_count == 0 {
-            return iter.next().is_none();
+        if self.element_count == 0 {
+            return query.into_iter().next().is_none();
         }
+        !self.match_sorted_batch(blockhash, query, |batch| !self.match_all_sorted(batch))
+    }
 
-        let range = element_count * u64::from(BASIC_FILTER_M);
-        let key = SipHashKey::from_block_hash(blockhash);
+    /// Returns whether the filter matches any element in the pre-sorted slice.
+    ///
+    /// `elements` must contain values produced by [`Self::map_elements`], sorted
+    /// in ascending order. If the slice is **not** sorted the result is
+    /// unspecified but soundness is guaranteed (No UB or Panics).
+    pub fn match_any_sorted(&self, elements: &[u64]) -> bool {
+        if elements.is_empty() || self.element_count == 0 {
+            return false;
+        }
+        match_gcs(self.payload(), u64::from(self.element_count), elements, false).unwrap_or(false)
+    }
 
-        iter.all(|element| {
-            let value = map_to_range(key.hash(element.as_ref()), range);
-            match_value(self.payload(), element_count, value).unwrap_or(false)
-        })
+    /// Returns whether the filter matches every element in the pre-sorted slice.
+    ///
+    /// `elements` must contain values produced by [`Self::map_elements`], sorted
+    /// in ascending order. If the slice is **not** sorted the result is
+    /// unspecified but soundness is guaranteed (No UB or Panics).
+    pub fn match_all_sorted(&self, elements: &[u64]) -> bool {
+        if elements.is_empty() {
+            return true;
+        }
+        if self.element_count == 0 {
+            return false;
+        }
+        match_gcs(self.payload(), u64::from(self.element_count), elements, true).unwrap_or(false)
+    }
+
+    /// Maps query elements to the filter's range using the given block hash.
+    pub fn map_elements<I, T>(
+        &self,
+        block_hash: BlockHash,
+        elements: I,
+    ) -> impl Iterator<Item = u64>
+    where
+        I: IntoIterator<Item = T>,
+        T: AsRef<[u8]>,
+    {
+        let key = SipHashKey::from_block_hash(block_hash);
+        let range = u64::from(self.element_count) * u64::from(BASIC_FILTER_M);
+        elements.into_iter().map(move |element| map_to_range(key.hash(element.as_ref()), range))
     }
 
     /// Computes the BIP-0157 double-SHA256 hash of the serialized filter.
@@ -199,6 +225,43 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
 
     /// Unwraps the filter into its serialized representation.
     pub fn into_bytes(self) -> B { self.bytes }
+
+    fn match_sorted_batch<I, T>(
+        &self,
+        block_hash: BlockHash,
+        query: I,
+        mut visit: impl FnMut(&[u64]) -> bool,
+    ) -> bool
+    where
+        I: IntoIterator<Item = T>,
+        T: AsRef<[u8]>,
+    {
+        let elements = self.map_elements(block_hash, query);
+
+        let mut batch = [0u64; 128];
+        let mut len = 0;
+
+        for element in elements {
+            batch[len] = element;
+            len += 1;
+
+            if len == 128 {
+                batch.sort_unstable();
+                if visit(&batch) {
+                    return true;
+                }
+                len = 0;
+            }
+        }
+
+        if len > 0 {
+            let tail = &mut batch[..len];
+            tail.sort_unstable();
+            return visit(tail);
+        }
+
+        false
+    }
 
     fn payload(&self) -> &[u8] { &self.bytes.as_ref()[usize::from(self.payload_offset)..] }
 }
@@ -250,17 +313,45 @@ fn validate(bytes: &[u8]) -> Result<(u32, u8), DecodeError> {
     Ok((count as u32, payload_offset as u8))
 }
 
-fn match_value(payload: &[u8], element_count: u64, query: u64) -> Result<bool, DecodeError> {
-    let mut reader = BitReader::new(payload);
-    let mut value = 0u64;
+fn match_gcs(
+    payload: &[u8],
+    element_count: u64,
+    mapped: &[u64],
+    match_all: bool,
+) -> Result<bool, DecodeError> {
+    if mapped.is_empty() {
+        return Ok(match_all);
+    }
 
-    for _ in 0..element_count {
-        value = value.checked_add(reader.read_golomb_rice()?).ok_or(DecodeError::ValueOverflow)?;
-        if value >= query {
-            return Ok(value == query);
+    let mut reader = BitReader::new(payload);
+    let mut value = reader.read_golomb_rice()?;
+    let mut remaining = element_count - 1;
+
+    for &query in mapped {
+        loop {
+            match value.cmp(&query) {
+                Ordering::Equal => {
+                    if match_all {
+                        break;
+                    }
+                    return Ok(true);
+                }
+                Ordering::Less if remaining > 0 => {
+                    value = value
+                        .checked_add(reader.read_golomb_rice()?)
+                        .ok_or(DecodeError::ValueOverflow)?;
+                    remaining -= 1;
+                }
+                Ordering::Less | Ordering::Greater => {
+                    if match_all {
+                        return Ok(false);
+                    }
+                    break;
+                }
+            }
         }
     }
-    Ok(false)
+    Ok(match_all)
 }
 
 #[derive(Copy, Clone)]
@@ -290,25 +381,35 @@ struct BitReader<'a> {
 impl<'a> BitReader<'a> {
     fn new(bytes: &'a [u8]) -> Self { Self { bytes, bit_position: 0 } }
 
-    fn read_bit(&mut self) -> Result<u8, DecodeError> {
-        let byte = self.bytes.get(self.bit_position / 8).ok_or(DecodeError::FilterTooShort)?;
-        let bit = (byte >> (7 - self.bit_position % 8)) & 1;
-        self.bit_position += 1;
-        Ok(bit)
-    }
-
-    fn read_bits(&mut self, count: u8) -> Result<u64, DecodeError> {
-        let mut value = 0;
-        for _ in 0..count {
-            value = (value << 1) | u64::from(self.read_bit()?);
+    fn read_bits(&mut self, mut count: u8) -> Result<u64, DecodeError> {
+        let mut value = 0u64;
+        while count > 0 {
+            let byte = *self.bytes.get(self.bit_position / 8).ok_or(DecodeError::FilterTooShort)?;
+            let offset = (self.bit_position % 8) as u8;
+            let available = 8 - offset;
+            let take = cmp::min(available, count);
+            let chunk = (byte >> (8 - offset - take)) & (0xFFu8 >> (8 - take));
+            value = (value << usize::from(take)) | u64::from(chunk);
+            self.bit_position += usize::from(take);
+            count -= take;
         }
         Ok(value)
     }
 
     fn read_golomb_rice(&mut self) -> Result<u64, DecodeError> {
-        let mut quotient: u64 = 0;
-        while self.read_bit()? == 1 {
-            quotient = quotient.checked_add(1).ok_or(DecodeError::ValueOverflow)?;
+        let mut quotient = 0u64;
+        loop {
+            let byte = *self.bytes.get(self.bit_position / 8).ok_or(DecodeError::FilterTooShort)?;
+            let offset = (self.bit_position % 8) as u8;
+            let available = 8 - offset;
+            let ones = cmp::min((byte << offset).leading_ones() as u8, available);
+            quotient = quotient.checked_add(u64::from(ones)).ok_or(DecodeError::ValueOverflow)?;
+            self.bit_position += usize::from(ones);
+
+            if ones < available {
+                self.bit_position += 1;
+                break;
+            }
         }
         if quotient > (u64::MAX >> BASIC_FILTER_P) {
             return Err(DecodeError::ValueOverflow);
@@ -322,39 +423,48 @@ impl<'a> BitReader<'a> {
 #[cfg(feature = "alloc")]
 struct BitWriter {
     bytes: Vec<u8>,
+    partial: u8,
     bit_offset: u8,
 }
 
 #[cfg(feature = "alloc")]
 impl BitWriter {
-    fn new(bytes: Vec<u8>) -> Self { Self { bytes, bit_offset: 0 } }
+    fn new(bytes: Vec<u8>) -> Self { Self { bytes, partial: 0, bit_offset: 0 } }
 
-    fn write_bit(&mut self, bit: bool) {
-        if self.bit_offset == 0 {
-            self.bytes.push(0);
-        }
-        if bit {
-            let last = self.bytes.last_mut().expect("byte was just pushed");
-            *last |= 1 << (7 - self.bit_offset);
-        }
-        self.bit_offset = (self.bit_offset + 1) % 8;
-    }
-
-    fn write_bits(&mut self, value: u64, count: u8) {
-        for shift in (0..count).rev() {
-            self.write_bit(((value >> shift) & 1) != 0);
+    fn write_bits(&mut self, value: u64, mut count: u8) {
+        while count > 0 {
+            if self.bit_offset == 8 {
+                self.bytes.push(self.partial);
+                self.partial = 0;
+                self.bit_offset = 0;
+            }
+            let available = 8 - self.bit_offset;
+            let take = cmp::min(available, count);
+            // Casting as `u8` is safe because `take <= 8` places all target bits in the lowest byte.
+            let chunk = ((value >> (count - take)) as u8) & (0xFFu8 >> (8 - take));
+            self.partial |= chunk << (available - take);
+            self.bit_offset += take;
+            count -= take;
         }
     }
 
     fn write_golomb_rice(&mut self, value: u64) {
-        for _ in 0..(value >> BASIC_FILTER_P) {
-            self.write_bit(true);
+        let mut quotient = value >> BASIC_FILTER_P;
+        while quotient > 0 {
+            let nbits = cmp::min(quotient, 64) as u8;
+            self.write_bits(!0u64, nbits);
+            quotient -= u64::from(nbits);
         }
-        self.write_bit(false);
+        self.write_bits(0, 1);
         self.write_bits(value, BASIC_FILTER_P);
     }
 
-    fn finish(self) -> Vec<u8> { self.bytes }
+    fn finish(mut self) -> Vec<u8> {
+        if self.bit_offset > 0 {
+            self.bytes.push(self.partial);
+        }
+        self.bytes
+    }
 }
 
 pub mod error {
