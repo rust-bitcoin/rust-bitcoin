@@ -41,7 +41,7 @@ macro_rules! impl_u32_wrapper {
         impl $newtype {
             #[doc = "Constructs a new [`"]
             #[doc = stringify!($newtype)]
-            #[doc = "`] from an unprefixed hex string.\n\n"]
+            #[doc = "`] from a prefixed hex string.\n\n"]
             #[doc = "# Errors\n\n"]
             #[doc = "If the input string is not a valid hex representation of a [`"]
             #[doc = stringify!($newtype)]
@@ -54,7 +54,7 @@ macro_rules! impl_u32_wrapper {
 
             #[doc = "Constructs a new [`"]
             #[doc = stringify!($newtype)]
-            #[doc = "`] from a prefixed hex string.\n\n"]
+            #[doc = "`] from an unprefixed hex string.\n\n"]
             #[doc = "# Errors\n\n"]
             #[doc = "If the input string is not a valid hex representation of a [`"]
             #[doc = stringify!($newtype)]
