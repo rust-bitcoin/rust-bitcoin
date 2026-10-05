@@ -370,7 +370,7 @@ pub trait Write {
     fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
         while !buf.is_empty() {
             match self.write(buf) {
-                Ok(0) => return Err(ErrorKind::UnexpectedEof.into()),
+                Ok(0) => return Err(ErrorKind::WriteZero.into()),
                 Ok(len) => buf = &buf[len..],
                 Err(e) if e.kind() == ErrorKind::Interrupted => {}
                 Err(e) => return Err(e),
@@ -662,6 +662,20 @@ mod tests {
     use encoding::{ArrayDecoder, ArrayEncoder, UnexpectedEofError};
 
     use super::*;
+
+    struct ZeroWriter;
+
+    impl Write for ZeroWriter {
+        fn write(&mut self, _: &[u8]) -> Result<usize> { Ok(0) }
+
+        fn flush(&mut self) -> Result<()> { Ok(()) }
+    }
+
+    #[test]
+    fn write_all_returns_write_zero_when_writer_makes_no_progress() {
+        let err = ZeroWriter.write_all(b"bitcoin").unwrap_err();
+        assert_eq!(err.kind(), ErrorKind::WriteZero);
+    }
 
     #[test]
     fn buf_read_fill_and_consume_slice() {
