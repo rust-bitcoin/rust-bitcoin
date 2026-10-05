@@ -567,7 +567,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// [`std::io::Write`] trait.
     ///
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
-    /// [`ScriptPubKey::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
+    /// [`ScriptPubKey::p2wpkh_script_code`], for p2wsh use the witness script, prepared as
+    /// described in [`ScriptCode`] if it contains `OP_CODESEPARATOR` instructions. (Also see
     /// [`Self::p2wpkh_signature_hash`] and [`SighashCache::p2wsh_signature_hash`].)
     ///
     /// In order to sign, the data written by this function must be hashed using a double SHA256
@@ -658,6 +659,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// `script_code` is the prepared P2WSH script code derived from the witness script,
     /// the script that goes into the [`Witness`], not the `script_pubkey` of a [`TxOut`].
+    ///
+    /// The caller must prepare `script_code` as described in [`ScriptCode`].
+    /// This function keeps all remaining `OP_CODESEPARATOR` instructions.
     pub fn p2wsh_signature_hash(
         &mut self,
         input_index: usize,
@@ -690,8 +694,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// # Warning
     ///
-    /// - The caller must remove everything up to and including the last
-    ///   **executed** `OP_CODESEPARATOR` before the signature check.
+    /// - The caller must prepare `script_code` as described in [`ScriptCode`].
     ///   This function removes all remaining `OP_CODESEPARATOR` instructions
     ///   when encoding `script_code`.
     /// - Does NOT handle the sighash single bug (see "Return type" section)
