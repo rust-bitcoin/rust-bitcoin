@@ -35,7 +35,7 @@
 //!
 //! ## Policy
 //!
-//! Our MSRV policy it to only bump MSRV to the one that is available on the latest Debian stable
+//! Our MSRV policy is to only bump MSRV to the one that is available on the latest Debian stable
 //! and is at least two years old. However, we will try to be even more conservative when practical
 //! given this crate is very widely used.
 //!

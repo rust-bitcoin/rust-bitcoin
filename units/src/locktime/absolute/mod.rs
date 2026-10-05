@@ -937,7 +937,7 @@ mod tests {
 
     #[test]
     fn satisfied_by_time() {
-        let time_before = MedianTimePast::from_u32(1_653_109_200).unwrap(); // "May 21th 2022, 5am UTC.
+        let time_before = MedianTimePast::from_u32(1_653_109_200).unwrap(); // "May 21st 2022, 5am UTC.
         let time = MedianTimePast::from_u32(1_653_195_600).unwrap(); // "May 22nd 2022, 5am UTC.
         let time_after = MedianTimePast::from_u32(1_653_282_000).unwrap(); // "May 23rd 2022, 5am UTC.
 

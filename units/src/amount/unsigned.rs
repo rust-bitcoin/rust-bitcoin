@@ -278,7 +278,7 @@ impl Amount {
     /// Constructs an [`Amount`] from floating-point notation in the given [`Denomination`].
     ///
     /// **Warning:** due to precision loss, using floats for financial operations is generally not
-    /// recommended. It an be avoided by using an integer number of satoshis or string-encoded btc
+    /// recommended. It can be avoided by using an integer number of satoshis or string-encoded btc
     /// in APIs that require it.
     ///
     /// # Errors
