@@ -102,6 +102,23 @@ pub type WitnessScriptBuf = ScriptBuf<WitnessScriptTag>;
 pub type WitnessScript = Script<WitnessScriptTag>;
 
 /// A reference to a script code (scriptCode) used in sighash computation.
+///
+/// Used for legacy and Segwit v0 signature hashing. The `AsRef` implementations on
+/// [`WitnessScript`], [`RedeemScript`], [`ScriptPubKey`], and their owned `Buf` variants
+/// borrow the script bytes without modifying them.
+///
+/// # `OP_CODESEPARATOR`
+///
+/// The caller must remove everything up to and including the last **executed**
+/// `OP_CODESEPARATOR` before the signature checking opcode. If no
+/// `OP_CODESEPARATOR` has executed, no prefix is removed.
+///
+/// For Segwit v0, all `OP_CODESEPARATOR` instructions in the remaining script are
+/// kept, including those in unexecuted branches (see [BIP-0143]). For legacy
+/// signature hashing, the remaining `OP_CODESEPARATOR` instructions are removed
+/// when encoding the signing data.
+///
+/// [BIP-0143]: <https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki>
 pub type ScriptCode = Script<ScriptCodeTag>;
 
 /// The maximum allowed redeem script size for a P2SH output.
@@ -205,10 +222,6 @@ impl TryFrom<&WitnessScript> for WScriptHash {
 }
 
 /// Borrows `WitnessScript` as `ScriptCode` without modifying its bytes.
-///
-/// If the witness script contains `OP_CODESEPARATOR`s, it is up to the caller
-/// to remove everything up to and including the last **executed**
-/// `OP_CODESEPARATOR` before the signature check.
 impl AsRef<ScriptCode> for WitnessScript {
     fn as_ref(&self) -> &ScriptCode {
         ScriptCode::from_bytes(self.as_bytes())
