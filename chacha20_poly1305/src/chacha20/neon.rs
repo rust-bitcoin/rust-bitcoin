@@ -232,7 +232,7 @@ pub(super) fn apply_8_blocks(
 ) {
     // This function is identical to the 4 block case, however two
     // separate working states are mutated. The function calls are
-    // interleved so Neon instuctions can execute independly.
+    // interleaved so Neon instructions can execute independently.
     // SAFETY: Neon intrinsics are gated by target feature `neon`.
     unsafe {
         // Initial state values shared across all 8 blocks,

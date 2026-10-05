@@ -92,7 +92,7 @@ pub mod error {
         pub(super) fn invalid_mode() -> Self { Self(SendCmpctDecoderErrorInner::InvalidMode) }
     }
 
-    /// Errors occuring when decoding a [`SendCmpct`] message.
+    /// Errors occurring when decoding a [`SendCmpct`] message.
     ///
     /// [`SendCmpct`]: super::SendCmpct
     #[derive(Debug, Clone, PartialEq, Eq)]
