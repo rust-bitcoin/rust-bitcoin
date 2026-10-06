@@ -510,6 +510,18 @@ encoding::encoder_newtype_exact! {
 }
 
 /// The decoder for the [`Transaction`] type.
+///
+/// As well as checking the encoding, the decoder rejects some transactions that cannot be valid
+/// in a block. Decoding fails if the transaction:
+///
+/// * Has no outputs.
+/// * Is heavier than the maximum block weight.
+/// * Has more than one input and any of them spends the null (coinbase) prevout.
+/// * Is a coinbase transaction with a `script_sig` shorter than 2 or longer than 100 bytes.
+/// * Spends the same outpoint more than once.
+/// * Has outputs whose total value exceeds [`Amount::MAX_MONEY`].
+/// * Has inputs and uses the SegWit serialization but all of its witnesses are empty. Zero-input
+///   transactions use SegWit serialization to avoid ambiguity (see [`Transaction`]).
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone)]
 pub struct TransactionDecoder {

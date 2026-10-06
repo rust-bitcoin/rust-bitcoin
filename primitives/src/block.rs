@@ -606,6 +606,11 @@ crate::decoder_newtype! {
     /// The decoder for the [`Block`] type.
     ///
     /// This decoder can only produce a [`Block<Unchecked>`].
+    ///
+    /// Decoding fails if the block weight exceeds the maximum block weight of 4,000,000 weight
+    /// units, or if any of its transactions fail to decode (see [`TransactionDecoder`]).
+    ///
+    /// [`TransactionDecoder`]: crate::transaction::TransactionDecoder
     #[derive(Debug, Clone)]
     pub struct BlockDecoder(BlockInnerDecoder);
 
