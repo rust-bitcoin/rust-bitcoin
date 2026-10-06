@@ -2114,7 +2114,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn out_point_serde_human_readable_rountrips() {
+    fn out_point_serde_human_readable_roundtrips() {
         let out_point = tc_out_point();
 
         let ser = serde_json::to_string(&out_point).unwrap();
@@ -2125,7 +2125,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn out_point_serde_non_human_readable_rountrips() {
+    fn out_point_serde_non_human_readable_roundtrips() {
         let out_point = tc_out_point();
 
         let ser = bincode::serialize(&out_point).unwrap();
