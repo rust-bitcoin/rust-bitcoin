@@ -294,7 +294,7 @@ pub mod error {
     impl fmt::Display for InvalidWitnessVersionError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "invalid witness script version: {}", self.invalid)
+            write!(f, "invalid witness version: {}", self.invalid)
         }
     }
 
