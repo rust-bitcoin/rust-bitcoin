@@ -181,17 +181,15 @@ pub mod serde_details {
         type Value = [u8; N];
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("a bytestring")
+            write!(formatter, "a sequence of {} bytes", N)
         }
 
         fn visit_bytes<E>(self, v: &[u8]) -> core::result::Result<Self::Value, E>
         where
             E: de::Error,
         {
-            let bytes = <[u8; N]>::try_from(v).map_err(|_| {
-                // from_slice only errors on incorrect length
-                E::invalid_length(v.len(), &stringify!(N))
-            })?;
+            // `try_from` only errors on incorrect length.
+            let bytes = <[u8; N]>::try_from(v).map_err(|_| E::invalid_length(v.len(), &self))?;
 
             Ok(bytes)
         }
