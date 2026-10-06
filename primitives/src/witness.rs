@@ -1061,8 +1061,10 @@ pub mod error {
             use WitnessDecoderErrorInner as E;
 
             match self.0 {
-                E::LengthPrefixDecode(ref e) => write_err!(f, "vec decoder error"; e),
-                E::UnexpectedEof(ref e) => write_err!(f, "decoder error"; e),
+                E::LengthPrefixDecode(ref e) =>
+                    write_err!(f, "failed to decode witness length prefix"; e),
+                E::UnexpectedEof(ref e) =>
+                    write_err!(f, "failed to decode witness"; e),
                 E::WitnessTooLarge(size) => write!(
                     f,
                     "serialized witness size of {} bytes exceeds the maximum of {}",
