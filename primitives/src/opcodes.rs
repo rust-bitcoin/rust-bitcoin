@@ -109,9 +109,9 @@ all_opcodes! {
     OP_NOTIF => 0x64, "Pop and execute the next statements if a zero element was popped.";
     OP_ELSE => 0x67, "Execute statements if those after the previous `OP_IF` were not, and vice-versa. \
              If there is no previous `OP_IF`, this acts as a RETURN.";
-    OP_ENDIF => 0x68, "Pop and execute the next statements if a zero element was popped.";
+    OP_ENDIF => 0x68, "End an `OP_IF` or `OP_NOTIF` block.";
     OP_VERIFY => 0x69, "If the top value is zero or the stack is empty, fail; otherwise, pop the stack.";
-    OP_RETURN => 0x6a, "Fail the script immediately. (Must be executed.).";
+    OP_RETURN => 0x6a, "Fail the script immediately (must be executed).";
     OP_TOALTSTACK => 0x6b, "Pop one element from the main stack onto the alt stack.";
     OP_FROMALTSTACK => 0x6c, "Pop one element from the alt stack onto the main stack.";
     OP_2DROP => 0x6d, "Drops the top two stack items.";
@@ -153,19 +153,19 @@ all_opcodes! {
     OP_GREATERTHANOREQUAL  => 0xa2, "Pop the top two items; push 1 if the second is >= the top, 0 otherwise.";
     OP_MIN => 0xa3, "Pop the top two items; push the smaller.";
     OP_MAX => 0xa4, "Pop the top two items; push the larger.";
-    OP_WITHIN => 0xa5, "Pop the top three items; if the top is >= the second and < the third, push 1, otherwise push 0.";
+    OP_WITHIN => 0xa5, "Pop the top three items; if the third is >= the second and < the top, push 1, otherwise push 0.";
     OP_RIPEMD160 => 0xa6, "Pop the top stack item and push its RIPEMD160 hash.";
     OP_SHA1 => 0xa7, "Pop the top stack item and push its SHA1 hash.";
     OP_SHA256 => 0xa8, "Pop the top stack item and push its SHA256 hash.";
-    OP_HASH160 => 0xa9, "Pop the top stack item and push its RIPEMD(SHA256) hash.";
+    OP_HASH160 => 0xa9, "Pop the top stack item and push its RIPEMD160(SHA256) hash.";
     OP_HASH256 => 0xaa, "Pop the top stack item and push its SHA256(SHA256) hash.";
     OP_CODESEPARATOR => 0xab, "Ignore this and everything preceding when deciding what to sign when signature-checking.";
-    OP_CHECKSIG => 0xac, "<https://en.bitcoin.it/wiki/OP_CHECKSIG> pushing 1/0 for success/failure.";
-    OP_CHECKSIGVERIFY => 0xad, "<https://en.bitcoin.it/wiki/OP_CHECKSIG> returning success/failure.";
+    OP_CHECKSIG => 0xac, "Pop a public key and a signature and push 1 for a successful check or 0 for a failed check. Invalid encodings may fail the script.";
+    OP_CHECKSIGVERIFY => 0xad, "Same as `OP_CHECKSIG` followed by `OP_VERIFY`.";
     OP_CHECKMULTISIG => 0xae, "Pop N, N pubkeys, M, M signatures, a dummy (due to bug in reference code), \
                       and verify that all M signatures are valid. Push 1 for 'all valid', 0 otherwise.";
-    OP_CHECKMULTISIGVERIFY => 0xaf, "Like the above but return success/failure.";
-    OP_CHECKSIGADD => 0xba, "`OP_CHECKSIGADD` post tapscript.";
+    OP_CHECKMULTISIGVERIFY => 0xaf, "Same as `OP_CHECKMULTISIG` followed by `OP_VERIFY`.";
+    OP_CHECKSIGADD => 0xba, "In tapscript, pop a public key, a number `n` and a signature; push `n + 1` for a successful check or `n` for an empty signature. Invalid inputs fail the script. Unknown public key types accept any nonempty signature.";
 }
 
 /// Read the following byte as a length, and read the following
