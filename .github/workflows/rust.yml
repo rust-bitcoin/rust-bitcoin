@@ -316,7 +316,7 @@ jobs:
         run: git fetch origin master
       - name: "Retrieve relative diff"
         run: git diff origin/master.. -- '*.rs' | tee git.diff
-      - uses: taiki-e/install-action@065d6a08a14e61e89fb0a4c10eecdbdef39c7d8e # v2.85.4
+      - uses: taiki-e/install-action@cb33e69fad06166ca28a42b2575e4dadabf62ee8 # v2.85.8
         with:
           tool: cargo-mutants
       - run: cargo mutants --no-shuffle --in-diff git.diff
