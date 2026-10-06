@@ -164,10 +164,6 @@ pub use crate::hash_types::{Ntxid, Txid, Wtxid};
 /// on their representation as a `u32`, which is not a semantically meaningful
 /// order, and therefore the ordering on [`Transaction`] itself is not semantically
 /// meaningful either.
-///
-/// The ordering is, however, consistent with the ordering present in this library
-/// before this change, so users should not notice any breakage (here) when
-/// transitioning from 0.29 to 0.30.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg(feature = "alloc")]
 pub struct Transaction {
@@ -195,9 +191,9 @@ impl Transaction {
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
     /// This function is needed only for legacy (pre-Segwit or P2SH-wrapped segwit version 0)
-    /// applications. This method clears the `script_sig` field of each input, which in Segwit
-    /// transactions is already empty, so for Segwit transactions the ntxid will be equal to the
-    /// txid, and you should simply use the latter.
+    /// applications. This method clears the `script_sig` and `witness` fields of each input. The
+    /// `script_sig` in Segwit transactions is already empty, so for Segwit transactions the ntxid
+    /// will be equal to the txid, and you should simply use the latter.
     ///
     /// This gives a way to identify a transaction that is "the same" as another in the sense of
     /// having the same inputs and outputs.
@@ -848,10 +844,13 @@ pub struct TxIn {
     /// The script which pushes values on the stack which will cause
     /// the referenced output's script to be accepted.
     pub script_sig: ScriptSigBuf,
-    /// The sequence number, which suggests to miners which of two
-    /// conflicting transactions should be preferred, or 0xFFFFFFFF
-    /// to ignore this feature. This is generally never used since
-    /// the miner behavior cannot be enforced.
+    /// The sequence number.
+    ///
+    /// Used to enable the transaction lock time, to encode a relative lock time ([BIP-0068])
+    /// and to signal replaceability ([BIP-0125]).
+    ///
+    /// [BIP-0068]: <https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki>
+    /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
     pub sequence: Sequence,
     /// Witness data: an array of byte-arrays.
     /// Note that this field is *not* (de)serialized with the rest of the [`TxIn`] in
