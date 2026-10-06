@@ -211,7 +211,6 @@ mod tests {
     #[cfg(feature = "serde")]
     fn dummy_test_case() -> Txid { DUMMY_TXID_HEX_STR.parse::<Txid>().unwrap() }
 
-    #[cfg(feature = "alloc")]
     fn ab_test_case() -> (Txid, &'static str) {
         let mut a = [0xab; 32];
         a[0] = 0xff; // Just so we can see which way the array is printing.
@@ -239,9 +238,8 @@ mod tests {
         assert_eq!(got, tc);
     }
 
+    // Debug printing works with and without the "hex" feature.
     #[test]
-    // This is solely to test that we can debug print WITH and WITHOUT "hex" so its ok to require "alloc".
-    #[cfg(feature = "alloc")]
     fn debug() {
         let (tc, want) = ab_test_case();
         let got = alloc::format!("{:?}", tc);
