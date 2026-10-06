@@ -223,8 +223,7 @@ mod tests {
     fn tx_merkle_node_single_leaf() {
         let (leaf, node) = make_leaf_node(1);
         let root = TxMerkleNode::calculate_root([leaf]);
-        assert!(root.is_some(), "Root should exist for a single leaf");
-        assert_eq!(root.unwrap(), node, "Root should equal the leaf node");
+        assert_eq!(root, Some(node));
     }
 
     #[test]
@@ -234,11 +233,7 @@ mod tests {
         let combined = node1.combine(&node2);
 
         let root = TxMerkleNode::calculate_root([leaf1, leaf2]);
-        assert_eq!(
-            root.unwrap(),
-            combined,
-            "Root of two leaves should equal combine of the two leaf nodes"
-        );
+        assert_eq!(root, Some(combined));
     }
 
     #[test]
@@ -246,15 +241,12 @@ mod tests {
         let leaf = Txid::from_byte_array([3; 32]);
         // Duplicate transaction list should be rejected (CVE 2012‑2459).
         let root = TxMerkleNode::calculate_root([leaf, leaf]);
-        assert!(root.is_none(), "Duplicate leaves should return None");
+        assert_eq!(root, None);
     }
 
     #[test]
     fn tx_merkle_node_empty() {
-        assert!(
-            TxMerkleNode::calculate_root([].into_iter()).is_none(),
-            "Empty iterator should return None"
-        );
+        assert_eq!(TxMerkleNode::calculate_root([]), None);
     }
 
     #[test]
@@ -333,16 +325,14 @@ mod tests {
     fn witness_merkle_node_single_leaf() {
         let leaf = Wtxid::from_byte_array([1; 32]);
         let root = WitnessMerkleNode::calculate_root([leaf]);
-        assert!(root.is_some(), "Root should exist for a single witness leaf");
-        let node = WitnessMerkleNode::from_leaf(leaf);
-        assert_eq!(root.unwrap(), node, "Root should equal the leaf node");
+        assert_eq!(root, Some(WitnessMerkleNode::from_leaf(leaf)));
     }
 
     #[test]
     fn witness_merkle_node_duplicate_leaves() {
         let leaf = Wtxid::from_byte_array([2; 32]);
         let root = WitnessMerkleNode::calculate_root([leaf, leaf]);
-        assert!(root.is_none(), "Duplicate witness leaves should return None");
+        assert_eq!(root, None);
     }
 
     // The tests below exercise the default trait `MerkleNode::calculate_root`
