@@ -198,7 +198,7 @@ impl Transaction {
     /// This gives a way to identify a transaction that is "the same" as another in the sense of
     /// having the same inputs and outputs.
     ///
-    /// A coinbase `script_sig` is not a signature and may contain a BIP-34 height commitment, so
+    /// A coinbase `script_sig` is not a signature and may contain a BIP-0034 height commitment, so
     /// for a coinbase transaction the ntxid is equal to the txid.
     #[doc(alias = "ntxid")]
     pub fn compute_ntxid(&self) -> Ntxid {
@@ -2478,7 +2478,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn compute_ntxid_preserves_coinbase_script_sig() {
         let mut tx_in = TxIn::EMPTY_COINBASE;
-        // BIP-34 height 840001.
+        // BIP-0034 height 840001.
         tx_in.script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x41, 0xd1, 0x0c]);
 
         let first = Transaction {
@@ -2489,7 +2489,7 @@ mod tests {
         };
 
         let mut second = first.clone();
-        // BIP-34 height 840002.
+        // BIP-0034 height 840002.
         second.inputs[0].script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x42, 0xd1, 0x0c]);
 
         assert_ne!(first.compute_txid(), second.compute_txid());
