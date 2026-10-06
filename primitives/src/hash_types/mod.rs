@@ -351,7 +351,9 @@ mod tests {
 
     #[rustfmt::skip]
     hex_roundtrip_test_lower_hex! {
+        txid_lower_hex_roundtrip, Txid, 32, 0x34;
         ntxid_lower_hex_roundtrip, Ntxid, 32, 0x1c;
+        wtxid_lower_hex_roundtrip, Wtxid, 32, 0x35;
         block_hash_lower_hex_roundtrip, BlockHash, 32, 0x1d;
         tx_merkle_node_lower_hex_roundtrip, TxMerkleNode, 32, 0x1e;
         witness_merkle_node_lower_hex_roundtrip, WitnessMerkleNode, 32, 0x1f;
