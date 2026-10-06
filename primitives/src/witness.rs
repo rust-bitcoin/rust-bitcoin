@@ -1117,7 +1117,7 @@ pub mod error {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     #[cfg(feature = "alloc")]
     use alloc::string::ToString;
     #[cfg(feature = "alloc")]
