@@ -139,7 +139,7 @@ impl<T> ScriptBuf<T> {
     ///
     /// Unlike `reserve`, this will not deliberately over-allocate to speculatively avoid frequent
     /// allocations. After calling `reserve_exact`, capacity will be greater than or equal to
-    /// `self.len() + additional`. Does nothing if the capacity is already sufficient.
+    /// `self.len() + additional_len`. Does nothing if the capacity is already sufficient.
     ///
     /// Note that the allocator may give the collection more space than it requests. Therefore,
     /// capacity cannot be relied upon to be precisely minimal. Prefer [`reserve`]

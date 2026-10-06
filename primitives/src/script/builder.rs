@@ -33,7 +33,7 @@ use crate::prelude::Vec;
 pub struct Builder<T>(ScriptBuf<T>);
 
 impl<T> Builder<T> {
-    /// Constructs a new empty script.
+    /// Constructs a new builder for an empty script.
     #[inline]
     pub const fn new() -> Self { Self(ScriptBuf::new()) }
 
