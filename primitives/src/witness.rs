@@ -2,7 +2,7 @@
 
 //! A witness.
 //!
-//! This module contains the [`Witness`] struct and related methods to operate on it
+//! This module contains the [`Witness`] struct and related methods to operate on it.
 //!
 //! # Examples
 //!
@@ -136,7 +136,8 @@ impl Witness {
     /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     ///
     /// # Examples
-    /// ```
+    ///
+    /// ```rust
     /// use bitcoin_primitives::witness::Witness;
     ///
     /// let mut witness = Witness::from_slice(&[b"A", b"B", b"C", b"D"]);
@@ -272,7 +273,8 @@ impl Witness {
     /// Returns [`None`] if the requested index is beyond the witness's elements.
     ///
     /// # Examples
-    /// ```
+    ///
+    /// ```rust
     /// use bitcoin_primitives::witness::Witness;
     ///
     /// let mut witness = Witness::new();
