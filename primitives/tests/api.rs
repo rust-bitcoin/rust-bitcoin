@@ -280,6 +280,7 @@ struct Encoders<'a> {
     c: block::HeaderEncoder<'a>,
     d: block::VersionEncoder<'a>,
     e: merkle_tree::TxMerkleNodeEncoder<'a>,
+    e2: merkle_tree::WitnessMerkleNodeEncoder<'a>,
     f: script::ScriptEncoder<'a>,
     g: transaction::OutPointEncoder<'a>,
     h: transaction::TransactionEncoder<'a>,
@@ -298,6 +299,7 @@ struct Decoders {
     c: block::HeaderDecoder,
     d: block::VersionDecoder,
     e: merkle_tree::TxMerkleNodeDecoder,
+    e2: merkle_tree::WitnessMerkleNodeDecoder,
     f: ScriptPubKeyBufDecoder,
     g: ScriptSigBufDecoder,
     h: transaction::TransactionDecoder,
@@ -318,6 +320,7 @@ struct Errors {
     e: block::InvalidBlockError,
     g: block::VersionDecoderError,
     h: merkle_tree::TxMerkleNodeDecoderError,
+    i: merkle_tree::WitnessMerkleNodeDecoderError,
     l: script::RedeemScriptError,
     m: script::PushBytesError,
     n: script::RedeemScriptSizeError,
@@ -404,6 +407,7 @@ fn c_debug_nonempty() {
         block::HeaderDecoder::new();
         block::VersionDecoder::new();
         merkle_tree::TxMerkleNodeDecoder::new();
+        merkle_tree::WitnessMerkleNodeDecoder::new();
         ScriptPubKeyBufDecoder::new();
         ScriptSigBufDecoder::new();
         transaction::OutPointDecoder::new();
@@ -462,6 +466,7 @@ fn c_good_err_display() {
     assert_display::<block::InvalidBlockError>();
     assert_display::<block::VersionDecoderError>();
     assert_display::<merkle_tree::TxMerkleNodeDecoderError>();
+    assert_display::<merkle_tree::WitnessMerkleNodeDecoderError>();
     assert_display::<script::PushBytesError>();
     assert_display::<script::RedeemScriptError>();
     assert_display::<script::RedeemScriptSizeError>();
@@ -571,6 +576,7 @@ fn p_decoders_implement_new() {
     let _ = block::HeaderDecoder::new();
     let _ = block::VersionDecoder::new();
     let _ = merkle_tree::TxMerkleNodeDecoder::new();
+    let _ = merkle_tree::WitnessMerkleNodeDecoder::new();
     let _ = ScriptPubKeyBufDecoder::new();
     let _ = ScriptSigBufDecoder::new();
     let _ = transaction::TransactionDecoder::new();
@@ -712,10 +718,13 @@ fn p_consistent_exports_block() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `merkle_tree` module.
 #[test]
 fn p_consistent_exports_merkle_tree() {
-    use bitcoin_primitives::merkle_tree::error::TxMerkleNodeDecoderError as _;
+    use bitcoin_primitives::merkle_tree::error::{
+        TxMerkleNodeDecoderError as _, WitnessMerkleNodeDecoderError as _,
+    };
     use bitcoin_primitives::merkle_tree::{
         TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
-        WitnessMerkleNode,
+        WitnessMerkleNode, WitnessMerkleNodeDecoder, WitnessMerkleNodeDecoderError,
+        WitnessMerkleNodeEncoder,
     };
 }
 
