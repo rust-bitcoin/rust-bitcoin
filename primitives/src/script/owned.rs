@@ -119,7 +119,12 @@ impl<T> ScriptBuf<T> {
     }
 
     /// Constructs a new empty script with at least the specified capacity.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
     #[inline]
+    #[track_caller]
     pub fn with_capacity(capacity: usize) -> Self { Self::from_bytes(Vec::with_capacity(capacity)) }
 
     /// Pre-allocates at least `additional_len` bytes if needed.
@@ -133,6 +138,7 @@ impl<T> ScriptBuf<T> {
     ///
     /// Panics if the new capacity exceeds `isize::MAX` bytes.
     #[inline]
+    #[track_caller]
     pub fn reserve(&mut self, additional_len: usize) { self.1.reserve(additional_len); }
 
     /// Pre-allocates exactly `additional_len` bytes if needed.
@@ -151,6 +157,7 @@ impl<T> ScriptBuf<T> {
     ///
     /// [`reserve`]: Self::reserve
     #[inline]
+    #[track_caller]
     pub fn reserve_exact(&mut self, additional_len: usize) { self.1.reserve_exact(additional_len); }
 
     /// Returns the number of **bytes** available for writing without reallocation.
