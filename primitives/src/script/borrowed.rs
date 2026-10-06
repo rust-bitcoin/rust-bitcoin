@@ -83,10 +83,10 @@ crate::transparent_newtype! {
     pub struct Script<T>(PhantomData<T>, [u8]);
 
     impl<T> Script<T> {
-        /// Treat byte slice as [`Script`].
+        /// Treats a byte slice as a [`Script`].
         pub const fn from_bytes(bytes: &_) -> &Self;
 
-        /// Treat mutable byte slice as [`Script`].
+        /// Treats a mutable byte slice as a [`Script`].
         pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
 
         pub(crate) fn from_boxed_bytes(bytes: Box<_>) -> Box<Self>;
@@ -301,7 +301,7 @@ impl ScriptPubKey {
             && self.as_bytes()[2..] == P2A_PROGRAM
     }
 
-    /// Check if this is a consensus-valid `OP_RETURN` output.
+    /// Checks whether this is a consensus-valid `OP_RETURN` output.
     ///
     /// To validate if the `OP_RETURN` obeys Bitcoin Core's current standardness policy, use
     /// `bitcoin::ScriptPubKeyExt::is_standard_op_return()` instead.

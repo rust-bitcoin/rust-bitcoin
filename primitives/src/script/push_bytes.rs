@@ -257,13 +257,13 @@ mod primitive {
         #[inline]
         pub fn with_capacity(capacity: usize) -> Self { Self(Vec::with_capacity(capacity)) }
 
-        /// Reserve capacity for `additional_capacity` bytes.
+        /// Reserves capacity for `additional_capacity` bytes.
         #[inline]
         pub fn reserve(&mut self, additional_capacity: usize) {
             self.0.reserve(additional_capacity);
         }
 
-        /// Try pushing a single byte.
+        /// Tries to push a single byte.
         ///
         /// # Errors
         ///
@@ -277,7 +277,7 @@ mod primitive {
             Ok(())
         }
 
-        /// Try appending a slice to [`PushBytesBuf`]
+        /// Tries to append a slice to [`PushBytesBuf`].
         ///
         /// # Errors
         ///
@@ -290,11 +290,11 @@ mod primitive {
             Ok(())
         }
 
-        /// Remove the last byte from buffer if any.
+        /// Removes the last byte from the buffer, if any.
         #[inline]
         pub fn pop(&mut self) -> Option<u8> { self.0.pop() }
 
-        /// Remove the byte at `index` and return it.
+        /// Removes the byte at `index` and returns it.
         ///
         /// # Panics
         ///
@@ -303,22 +303,22 @@ mod primitive {
         #[track_caller]
         pub fn remove(&mut self, index: usize) -> u8 { self.0.remove(index) }
 
-        /// Remove all bytes from buffer without affecting capacity.
+        /// Removes all bytes from the buffer without affecting capacity.
         #[inline]
         pub fn clear(&mut self) { self.0.clear() }
 
-        /// Remove bytes from buffer past `len`.
+        /// Removes bytes from the buffer past `len`.
         #[inline]
         pub fn truncate(&mut self, len: usize) { self.0.truncate(len) }
 
-        /// Extracts [`PushBytes`] slice
+        /// Extracts a [`PushBytes`] slice.
         #[inline]
         pub fn as_push_bytes(&self) -> &PushBytes {
             // length guaranteed by our invariant
             PushBytes::from_slice_unchecked(&self.0)
         }
 
-        /// Extracts mutable [`PushBytes`] slice
+        /// Extracts a mutable [`PushBytes`] slice.
         #[inline]
         pub fn as_mut_push_bytes(&mut self) -> &mut PushBytes {
             // length guaranteed by our invariant
