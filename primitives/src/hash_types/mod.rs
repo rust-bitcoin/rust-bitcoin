@@ -229,6 +229,16 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "serde")]
+    fn serde_non_human_readable_wrong_length() {
+        use alloc::string::ToString as _;
+
+        let ser = bincode::serialize(&[0u8; 31].as_slice()).unwrap();
+        let err = bincode::deserialize::<Txid>(&ser).unwrap_err();
+        assert!(err.to_string().contains(" 32 "));
+    }
+
+    #[test]
     #[cfg(feature = "serde")] // Implies alloc and hex
     fn serde_non_human_readable_roundtrips() {
         let tc = dummy_test_case();
