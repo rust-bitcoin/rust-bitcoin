@@ -29,16 +29,16 @@ type Inner = sha256d::Hash;
 include!("./generic.rs");
 
 impl WitnessMerkleNode {
-    /// Convert a [`Wtxid`] hash to a leaf node of the tree.
+    /// Converts a [`Wtxid`] hash to a leaf node of the tree.
     #[inline]
     pub fn from_leaf(leaf: Wtxid) -> Self { MerkleNode::from_leaf(leaf) }
 
-    /// Combine two nodes to get a single node. The final node of a tree is called the "root".
+    /// Combines two nodes to get a single node. The final node of a tree is called the "root".
     #[inline]
     #[must_use]
     pub fn combine(&self, other: &Self) -> Self { MerkleNode::combine(self, other) }
 
-    /// Given an iterator of leaves, compute the Merkle root.
+    /// Computes the Merkle root from an iterator of leaves.
     ///
     /// Returns [`None`] if the iterator was empty, or if the transaction list contains
     /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate

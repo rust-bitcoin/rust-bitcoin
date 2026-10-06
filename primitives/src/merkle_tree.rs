@@ -38,13 +38,13 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
     /// The hash (TXID or WTXID) of a transaction in the tree.
     type Leaf: TxIdentifier;
 
-    /// Convert a hash to a leaf node of the tree.
+    /// Converts a hash to a leaf node of the tree.
     fn from_leaf(leaf: Self::Leaf) -> Self;
-    /// Combine two nodes to get a single node. The final node of a tree is called the "root".
+    /// Combines two nodes to get a single node. The final node of a tree is called the "root".
     #[must_use]
     fn combine(&self, other: &Self) -> Self;
 
-    /// Given an iterator of leaves, compute the Merkle root.
+    /// Computes the Merkle root from an iterator of leaves.
     ///
     /// Returns [`None`] if the iterator was empty, or if the transaction list contains
     /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
