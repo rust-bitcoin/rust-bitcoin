@@ -1,0 +1,283 @@
+name: Creusot
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  Creusot:
+    name: Formal verification with Creusot
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Uncomment creusot-std dependency
+        run: sed -i 's/^# creusot-std = /creusot-std = /' Cargo.toml */Cargo.toml
+
+      # --no-deps reads the dependency declarations without fetching anything.
+      # Cargo's `source` field contains both the git URL and the resolved
+      # commit, e.g.:
+      #   git+https://github.com/creusot-rs/creusot#7b3a2133...
+      - name: Resolve Creusot dependency
+        id: creusot-dependency
+        run: |
+          commit="$(python3 -c '
+          import tomllib
+          with open("Cargo.toml", "rb") as f:
+              print(tomllib.load(f)["workspace"]["dependencies"]["creusot-std"]["rev"])
+          ')"
+
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+          git="$(python3 -c '
+          import tomllib
+          with open("Cargo.toml", "rb") as f:
+              print(tomllib.load(f)["workspace"]["dependencies"]["creusot-std"]["git"])
+          ')"
+
+          echo "git=$git" >> "$GITHUB_OUTPUT"
+
+      # To optimize the speed of building, we don't clone the creusot repository directly
+      # but let cargo clone it, so it can be reused for both creusot installation and
+      # creusot-std dependency.
+      - name: Fetch Creusot sources
+        run: cargo fetch
+
+      # ── Locate the Cargo-fetched Creusot checkout ───────────────────────────
+      # Cargo stores git checkouts as:
+      #
+      #   ~/.cargo/git/checkouts/<repo>-<hash>/<revision>/
+      #
+      # The revision directory uses the short form of the commit ID. For
+      # example:
+      #
+      #   ~/.cargo/git/checkouts/creusot-1ab658fd39688aa3/7b3a213/
+      #
+      # Find the checkout using the commit itself rather than merely looking
+      # for a directory containing a toolchain file.
+      - name: Resolve Creusot checkout
+        id: creusot-checkout
+        env:
+          commit: ${{ steps.creusot-dependency.outputs.commit }}
+        run: |
+          commit_short="${commit:0:7}"
+
+          creusot_src="$(find ~/.cargo/git/checkouts \
+            -mindepth 2 \
+            -maxdepth 2 \
+            -type d \
+            -path "*/creusot-*/*" \
+            -name "$commit_short" \
+            -print -quit)"
+
+          if [[ -z "$creusot_src" ]]; then
+            echo "Could not find Creusot checkout for commit $commit" >&2
+            exit 1
+          fi
+
+          echo "path=$creusot_src" >> "$GITHUB_OUTPUT"
+          echo "Creusot checkout: $creusot_src"
+
+      - name: Install Rust toolchain
+        id: creusot-toolchain
+        working-directory: ${{ steps.creusot-checkout.outputs.path }}
+        run: rustup toolchain install --default
+
+      # The opam switch takes crazy long time to build and updates rarely,
+      # so it's best to cache is separately.
+      # hashFiles doesn't work outside of GITHUB_WORKSPACE (IDK WTF it is so)
+      - name: Hash opam deps
+        id: hash-opam-deps
+        working-directory: ${{ steps.creusot-checkout.outputs.path }}
+        run: |
+          echo "hash=$(sha256sum creusot-deps.opam | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Opam cache
+        id: cache-opam
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.opam
+            ~/.local/share/creusot/bin
+            ~/.local/share/creusot/creusot_deps.opam
+            ~/.local/share/creusot/_opam
+          key: ${{ runner.os }}-creusot-opam-${{ steps.hash-opam-deps.outputs.hash }}
+          restore-keys: ${{ runner.os }}-creusot-opam-
+
+      # Sometimes only the creusot-std library changes without the compiler which makes recompiling the compiler useless
+      # To avoid it we hash the relevant parts of the source code. And since git alredy knows the hashes, we don't have
+      # to re-hash everything - just the file list with hashes and only the relevant parts (no documentation etc).
+      # However we're a bit careful and instead of whitelisting we blacklist known safe directories.
+      - name: Hash creusot source code
+        id: hash-creusot-source
+        working-directory: ${{ steps.creusot-checkout.outputs.path }}
+        run: |
+          echo "hash=$(git ls-files --format '%(objectname) %(path)' -- ':(exclude)creusot-std/**' ':(exclude)tests/**' ':(exclude)nix/**' ':(exclude)why3tests/**' ':(exclude)guide/**' ':(exclude)examples/**' ':(exclude)exercises/**' ':(exclude)testsuite_regenerate' ':(exclude)testsuite_upgrade_prover' ':(exclude)flake.*' ':(exclude).github/**' ':(exclude)*.md' ':(exclude)static/**' ':(exclude)creusot-std-proc/**' ':(exclude)ci/**' ':(exclude).git*' ':(exclude).vscode/**' ':(exclude)INSTALL' ':(exclude)LICENSE' | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
+
+      # Caches cargo-creusot, creusot-rustc, and the config files.
+      - name: Restore Creusot installation cache
+        id: cache-creusot
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cargo/bin/cargo-creusot
+            ~/.local/share/creusot/creusot_why3.conf
+            ~/.local/share/creusot/share
+            ~/.local/share/creusot/toolchains
+            ~/.local/share/creusot/why3find.json
+            ~/.config/creusot
+          key: ${{ runner.os }}-creusot-${{ steps.hash-creusot-source.outputs.hash }}
+
+      # ── First-time install (skipped on cache hit) ───────────────────────────
+      - name: Install system dependencies for Creusot
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y opam libzmq3-dev
+
+      - name: Setup opam
+        if: steps.cache-opam.outputs.cache-hit != 'true'
+        working-directory: ${{ steps.creusot-checkout.outputs.path }}
+        run: |
+          opam init --bare
+          opam --cli=2.1 var --global in-creusot-ci=true
+
+      # ── Install Creusot from the Cargo-fetched sources ─────────────────────
+      - name: Install Creusot
+        if: steps.cache-creusot.outputs.cache-hit != 'true'
+        working-directory: ${{ steps.creusot-checkout.outputs.path }}
+        env:
+          CARGO_INCREMENTAL: false
+        run: |
+          ./INSTALL
+          opam clean --switch=~/.local/share/creusot/ -y
+
+      # cargo-creusot looks for why3/alt-ergo in ~/.local/share/creusot/bin
+      # via its own symlinks created by ./INSTALL; exporting that directory
+      # to GITHUB_PATH makes them available to all subsequent steps without
+      # requiring `eval $(opam env)`.
+      - name: Add Creusot tools to PATH
+        run: echo "$HOME/.local/share/creusot/bin" >> "$GITHUB_PATH"
+
+      - name: Save Opam cache
+        if: success() && steps.cache-opam.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.opam
+            ~/.local/share/creusot/bin
+            ~/.local/share/creusot/creusot_deps.opam
+            ~/.local/share/creusot/_opam
+          key: ${{ steps.cache-opam.outputs.cache-primary-key }}
+
+
+      # Caches cargo-creusot, creusot-rustc, and the config files.
+      - name: Save Creusot installation cache
+        if: success() && steps.cache-creusot.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cargo/bin/cargo-creusot
+            ~/.local/share/creusot/creusot_why3.conf
+            ~/.local/share/creusot/share
+            ~/.local/share/creusot/toolchains
+            ~/.local/share/creusot/why3find.json
+            ~/.config/creusot
+          key: ${{ steps.cache-creusot.outputs.cache-primary-key }}
+
+      - name: Prepare lock file
+        run: cp Cargo-creusot.lock Cargo.lock
+
+      # These dependencies change infrequently, so we want a good restore key for them
+      - name: Hash dependencies except creusot-std (but with its deps)
+        id: hash-non-creusot-deps
+        env:
+          COMMIT: ${{ steps.creusot-dependency.outputs.commit }}
+          GIT: ${{ steps.creusot-dependency.outputs.git }}
+        # Strip all references to creusot's source before hashing
+        run: echo "hash=$(sed -e 's/'"$COMMIT"'//' -e 's|'"$GIT"'||' Cargo.lock | git hash-object --stdin)" >> "$GITHUB_OUTPUT" 
+
+      - name: Restore crate dependencies
+        id: cache-crate-deps
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            target
+            .why3find
+            ~/.cargo/registry
+            ~/.cargo/git
+          # Sometimes the only reason to update creusot is for newer std in which case the artifacts are reusable
+          # Also, maybe only some dependencies changed. However, changing the compiler nukes everything.
+          key: ${{ runner.os }}-creusot-crate-deps-${{ steps.hash-creusot-source.outputs.hash }}-${{ steps.hash-non-creusot-deps.outputs.hash }}-${{ steps.creusot-dependency.outputs.commit }}
+          restore-keys: |
+            ${{ runner.os }}-creusot-crate-deps-${{ steps.hash-creusot-source.outputs.hash }}-${{ steps.hash-non-creusot-deps.outputs.hash }}-
+            ${{ runner.os }}-creusot-crate-deps-${{ steps.hash-creusot-source.outputs.hash }}-
+
+      - name: Compile dependencies only
+        if: steps.cache-crate-deps.outputs.cache-hit != 'true'
+        env:
+          CARGO_INCREMENTAL: false
+        run: |
+          while IFS=$'\t' read -r package manifest; do
+            echo "::group::Compiling dependencies of $package"
+
+            # To compile only dependencies, we need to replace src with a dummy, near-empty lib.rs
+            # and then put it back after compilation
+            package_dir="$(dirname "$manifest")"
+            src="$package_dir/src"
+            backup="$package_dir/src-b"
+
+            mv -T "$src" "$backup"
+            mkdir "$src"
+
+            # Creusot requires that there is something to prove
+            echo 'use creusot_std::prelude::*;#[requires(a@ + b@ <= u32::MAX@)] fn add(a: u32, b: u32) -> u32 { a + b }' > "$src/lib.rs"
+
+            cargo creusot --package "$package" -- --locked
+
+            rm -rf "$src"
+            mv -T "$backup" "$src"
+
+            echo "::endgroup::"
+          done < <(
+            cargo metadata --format-version 1 --no-deps |
+              jq -r '.packages[] | select(.dependencies[]?.name == "creusot-std") | [.name, .manifest_path] | @tsv'
+          )
+          rm -rf verif
+
+      - name: Save crate dependencies
+        if: success() && steps.cache-crate-deps.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            target
+            .why3find
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ steps.cache-crate-deps.outputs.cache-primary-key }}
+
+      - name: Run Creusot verification
+        env:
+          CARGO_INCREMENTAL: false
+        run: |
+          failed=0
+
+          while IFS= read -r package; do
+            echo "::group::Verifying $package"
+
+            if ! cargo creusot --package "$package" -- --locked; then
+              failed=1
+              echo "::error::Creusot verification failed for package $package"
+            fi
+
+            echo "::endgroup::"
+          done < <(
+            cargo metadata --format-version 1 --no-deps |
+              jq -r '.packages[] | select(.dependencies[]?.name == "creusot-std") | .name'
+          )
+
+          exit "$failed"

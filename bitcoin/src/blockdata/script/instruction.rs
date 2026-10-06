@@ -135,6 +135,13 @@ impl<'a> Instructions<'a> {
                 return Some(Err(Error::EarlyEndOfScript));
             }
         };
+        let n = match usize::try_from(n) {
+            Ok(n) => n,
+            Err(_) => {
+                self.kill();
+                return Some(Err(Error::EarlyEndOfScript));
+            }
+        };
         if self.enforce_minimal && n < min_push_len {
             self.kill();
             return Some(Err(Error::NonMinimalPush));
