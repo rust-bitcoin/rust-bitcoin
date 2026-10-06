@@ -286,6 +286,11 @@ pub mod error {
         pub fn invalid_version(&self) -> u8 { self.invalid }
     }
 
+    impl From<Infallible> for InvalidWitnessVersionError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     impl fmt::Display for InvalidWitnessVersionError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
