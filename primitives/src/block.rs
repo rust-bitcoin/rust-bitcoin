@@ -649,7 +649,7 @@ fn block_weight_wu(transactions: &[Transaction]) -> u64 {
 /// Returns [`None`] if the iterator was empty, or if the transaction list contains
 /// consecutive duplicates which would trigger CVE-2012-2459. Blocks with duplicate
 /// transactions will always be invalid, so there is no harm in us refusing to
-/// compute their merkle roots.
+/// compute their Merkle roots.
 ///
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
 /// you should not unwrap the [`Option`] returned by this method!
@@ -668,7 +668,7 @@ where
 /// Returns [`None`] if the iterator was empty, or if the transaction list contains
 /// consecutive duplicates which would trigger CVE-2012-2459. Blocks with duplicate
 /// transactions will always be invalid, so there is no harm in us refusing to
-/// compute their merkle roots.
+/// compute their Merkle roots.
 ///
 /// Unless you are certain your transaction list is nonempty and has no duplicates,
 /// you should not unwrap the [`Option`] returned by this method!

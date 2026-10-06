@@ -49,7 +49,7 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
     /// Returns [`None`] if the iterator was empty, or if the transaction list contains
     /// consecutive duplicates which would trigger CVE-2012-2459. Blocks with duplicate
     /// transactions will always be invalid, so there is no harm in us refusing to
-    /// compute their merkle roots.
+    /// compute their Merkle roots.
     ///
     /// Also returns [`None`] if the `alloc` feature is disabled and `iter` has more than
     /// 32,767 transactions.
@@ -199,7 +199,7 @@ impl MerkleNode for WitnessMerkleNode {
     }
 }
 
-/// Error types for the merkle tree module.
+/// Error types for the Merkle tree module.
 pub mod error {
     #[doc(inline)]
     pub use crate::hash_types::TxMerkleNodeDecoderError;
