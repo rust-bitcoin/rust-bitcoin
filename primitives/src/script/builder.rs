@@ -6,7 +6,7 @@ use super::{PushBytes, Script, ScriptBuf};
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
 
-/// An Object which can be used to construct a script piece by piece.
+/// An object which can be used to construct a script piece by piece.
 ///
 /// # Panics
 ///
@@ -75,7 +75,7 @@ impl<T> Builder<T> {
     /// Converts the [`Builder`] into [`ScriptBuf`].
     pub fn into_script(self) -> ScriptBuf<T> { self.0 }
 
-    /// Returns the internal script
+    /// Returns the internal script.
     pub fn as_script(&self) -> &Script<T> { &self.0 }
 }
 
