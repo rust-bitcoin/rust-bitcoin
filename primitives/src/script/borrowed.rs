@@ -26,7 +26,7 @@ use crate::{ScriptPubKey, WitnessScript};
 crate::transparent_newtype! {
     /// Bitcoin script slice.
     ///
-    /// *[See also the `bitcoin::script` module](super).*
+    /// *[See also the `script` module](super).*
     ///
     /// [`Script`] is a script slice, the most primitive script type. It's usually seen in its borrowed
     /// form `&Script`. It is always encoded as a series of bytes representing the opcodes and data
@@ -47,8 +47,9 @@ crate::transparent_newtype! {
     ///
     /// Slicing is similar to how `str` works: some ranges may be incorrect and indexing by
     /// `usize` is not supported. However, as opposed to `std`, we have no way of checking
-    /// correctness without causing linear complexity so there are **no panics on invalid
-    /// ranges!** If you supply an invalid range, you'll get a garbled script.
+    /// correctness without causing linear complexity so there are **no panics on ranges that
+    /// are not at an instruction boundary!** If you supply such a range, you'll get a garbled
+    /// script. As with slices, a range that is out of bounds does panic.
     ///
     /// The range is considered valid if it's at a boundary of instruction. Care must be taken
     /// especially with push operations because you could get a reference to arbitrary
