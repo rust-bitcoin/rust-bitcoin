@@ -341,6 +341,24 @@ mod tests {
     }
 
     #[test]
+    fn witness_version_from_str() {
+        assert_eq!("0".parse::<WitnessVersion>().unwrap(), WitnessVersion::V0);
+        assert_eq!("16".parse::<WitnessVersion>().unwrap(), WitnessVersion::V16);
+
+        let err = "17".parse::<WitnessVersion>().unwrap_err();
+        assert!(matches!(err, ParseWitnessVersionError::Invalid(_)));
+        let err = "v1".parse::<WitnessVersion>().unwrap_err();
+        assert!(matches!(err, ParseWitnessVersionError::Unparsable(_)));
+    }
+
+    #[test]
+    fn witness_version_try_from_u8() {
+        assert_eq!(WitnessVersion::try_from(0_u8).unwrap(), WitnessVersion::V0);
+        assert_eq!(WitnessVersion::try_from(16_u8).unwrap(), WitnessVersion::V16);
+        assert_eq!(WitnessVersion::try_from(17_u8).unwrap_err().invalid_version(), 17);
+    }
+
+    #[test]
     fn witness_version_try_from_opcode() {
         assert_eq!(WitnessVersion::try_from(OP_PUSHBYTES_0).unwrap(), WitnessVersion::V0);
         assert_eq!(WitnessVersion::try_from(OP_1).unwrap(), WitnessVersion::V1);
