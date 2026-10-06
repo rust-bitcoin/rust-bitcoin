@@ -146,7 +146,9 @@ impl<T> Script<T> {
     /// Consensus encodes the script as lower-case hex.
     ///
     /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
-    /// `to_hex_string_no_length_prefix`.
+    /// [`to_hex_string_no_length_prefix`].
+    ///
+    /// [`to_hex_string_no_length_prefix`]: Self::to_hex_string_no_length_prefix
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     pub fn to_hex_string_prefixed(&self) -> String {
@@ -159,7 +161,9 @@ impl<T> Script<T> {
     /// Encodes the script as lower-case hex.
     ///
     /// This is **not** consensus encoding. The returned hex string will not include the length
-    /// prefix. See `to_hex_string_prefixed`.
+    /// prefix. See [`to_hex_string_prefixed`].
+    ///
+    /// [`to_hex_string_prefixed`]: Self::to_hex_string_prefixed
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     pub fn to_hex_string_no_length_prefix(&self) -> String {
