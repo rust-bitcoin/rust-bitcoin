@@ -277,13 +277,11 @@ impl_fmt_traits_for_u32_wrapper!(Target);
 /// OpenSSL's bignum (BN) type has an encoding, which is even called "compact" as in Bitcoin, which
 /// is exactly this format.
 ///
-/// # Note on order/equality
+/// # Note on equality
 ///
-/// Usage of the ordering and equality traits for this type may be surprising. Converting between
-/// [`CompactTarget`] and [`Target`] is lossy *in both directions* (there are multiple
-/// [`CompactTarget`] values that map to the same [`Target`] value). Ordering and equality for this
-/// type are defined in terms of the underlying `u32`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// Equality is on the consensus encoded `u32`. Conversion to [`Target`] is lossy, so this type is
+/// not ordered. To compare two targets convert them first.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CompactTarget(u32);
 
@@ -882,13 +880,13 @@ mod tests {
     }
 
     #[test]
-    fn compact_target_ordering() {
+    fn compact_target_equality() {
         let lower = CompactTarget::from_consensus(0x1d00_fffe);
         let lower_copy = CompactTarget::from_consensus(0x1d00_fffe);
         let higher = CompactTarget::from_consensus(0x1d00_ffff);
 
-        assert!(lower < higher);
         assert!(lower == lower_copy);
+        assert!(lower != higher);
     }
 
     #[test]
