@@ -214,42 +214,50 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<Weight> for Weight {
         type Output = Weight;
 
+        #[track_caller]
         fn add(self, rhs: Weight) -> Self::Output { Weight::from_wu(self.to_wu() + rhs.to_wu()) }
     }
     impl ops::Sub<Weight> for Weight {
         type Output = Weight;
 
+        #[track_caller]
         fn sub(self, rhs: Weight) -> Self::Output { Weight::from_wu(self.to_wu() - rhs.to_wu()) }
     }
 
     impl ops::Mul<u64> for Weight {
         type Output = Weight;
 
+        #[track_caller]
         fn mul(self, rhs: u64) -> Self::Output { Weight::from_wu(self.to_wu() * rhs) }
     }
     impl ops::Mul<Weight> for u64 {
         type Output = Weight;
 
+        #[track_caller]
         fn mul(self, rhs: Weight) -> Self::Output { Weight::from_wu(self * rhs.to_wu()) }
     }
     impl ops::Div<u64> for Weight {
         type Output = Weight;
 
+        #[track_caller]
         fn div(self, rhs: u64) -> Self::Output { Weight::from_wu(self.to_wu() / rhs) }
     }
     impl ops::Div<Weight> for Weight {
         type Output = u64;
 
+        #[track_caller]
         fn div(self, rhs: Weight) -> Self::Output { self.to_wu() / rhs.to_wu() }
     }
     impl ops::Rem<u64> for Weight {
         type Output = Weight;
 
+        #[track_caller]
         fn rem(self, rhs: u64) -> Self::Output { Weight::from_wu(self.to_wu() % rhs) }
     }
     impl ops::Rem<Weight> for Weight {
         type Output = Weight;
 
+        #[track_caller]
         fn rem(self, rhs: Weight) -> Self::Output { Weight::from_wu(self.to_wu() % rhs.to_wu()) }
     }
     impl ops::Div<NonZeroU64> for Weight {
@@ -263,16 +271,19 @@ crate::internal_macros::impl_sub_assign!(Weight);
 
 impl ops::MulAssign<u64> for Weight {
     #[inline]
+    #[track_caller]
     fn mul_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() * rhs); }
 }
 
 impl ops::DivAssign<u64> for Weight {
     #[inline]
+    #[track_caller]
     fn div_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() / rhs); }
 }
 
 impl ops::RemAssign<u64> for Weight {
     #[inline]
+    #[track_caller]
     fn rem_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() % rhs); }
 }
 

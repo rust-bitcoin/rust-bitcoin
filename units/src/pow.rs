@@ -127,12 +127,14 @@ impl_fmt_traits_for_u32_wrapper!(Work);
 impl Add for Work {
     type Output = Self;
     #[inline]
+    #[track_caller]
     fn add(self, rhs: Self) -> Self { Self(self.0 + rhs.0) }
 }
 
 impl Sub for Work {
     type Output = Self;
     #[inline]
+    #[track_caller]
     fn sub(self, rhs: Self) -> Self { Self(self.0 - rhs.0) }
 }
 

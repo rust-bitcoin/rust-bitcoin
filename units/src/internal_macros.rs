@@ -85,11 +85,13 @@ macro_rules! impl_add_assign {
     ($ty:ident) => {
         impl core::ops::AddAssign<$ty> for $ty {
             #[inline]
+            #[track_caller]
             fn add_assign(&mut self, rhs: $ty) { *self = *self + rhs }
         }
 
         impl core::ops::AddAssign<&$ty> for $ty {
             #[inline]
+            #[track_caller]
             fn add_assign(&mut self, rhs: &$ty) { *self = *self + *rhs }
         }
     };
@@ -169,11 +171,13 @@ macro_rules! impl_sub_assign {
     ($ty:ident) => {
         impl core::ops::SubAssign<$ty> for $ty {
             #[inline]
+            #[track_caller]
             fn sub_assign(&mut self, rhs: $ty) { *self = *self - rhs }
         }
 
         impl core::ops::SubAssign<&$ty> for $ty {
             #[inline]
+            #[track_caller]
             fn sub_assign(&mut self, rhs: &$ty) { *self = *self - *rhs }
         }
     };
