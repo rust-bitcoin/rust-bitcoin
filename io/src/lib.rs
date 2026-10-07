@@ -183,6 +183,11 @@ impl<R: Read> Take<R> {
 impl<R: Read> Read for Take<R> {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        // Don't call into inner reader at all at EOF because it may still block
+        if self.remaining == 0 {
+            return Ok(0);
+        }
+
         let len = cmp::min(buf.len(), self.remaining.try_into().unwrap_or(buf.len()));
         let read = self.reader.read(&mut buf[..len])?;
         self.remaining -= read.try_into().unwrap_or(self.remaining);
@@ -763,6 +768,24 @@ mod tests {
         let read = take.read(&mut buf[0..0]).unwrap();
         assert_eq!(read, 0);
         assert_eq!(buf[0], 0x00); // Check the buffer didn't get touched.
+    }
+
+    #[test]
+    fn exhausted_take_does_not_read_inner_reader() {
+        use crate::Read as _;
+
+        /// A reader that errors on every call, to detect any call into the inner reader.
+        struct ErrorReader;
+
+        impl Read for ErrorReader {
+            fn read(&mut self, _buf: &mut [u8]) -> Result<usize> { Err(ErrorKind::Other.into()) }
+        }
+
+        let mut take = ErrorReader.take(0);
+        let mut buf = [0_u8; 1];
+
+        // A `Take` that has no bytes left must report EOF without calling the inner reader.
+        assert_eq!(take.read(&mut buf).unwrap(), 0);
     }
 
     #[test]
