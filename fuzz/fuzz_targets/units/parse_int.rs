@@ -24,8 +24,6 @@ fn do_test(data: &[u8]) {
         let _ = parse_int::int_from_str::<u64>(s);
         let _ = parse_int::int_from_str::<u128>(s);
 
-        let _ = parse_int::hex_remove_prefix(s);
-
         if parse_int::hex_u32_prefixed(s).is_ok() {
             assert!(parse_int::hex_u32(s).is_ok());
             assert!(parse_int::hex_u32_unprefixed(s).is_err());

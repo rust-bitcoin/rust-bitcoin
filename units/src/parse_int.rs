@@ -236,7 +236,7 @@ pub(crate) use impl_tryfrom_str;
 ///
 /// If the input string does not contain a prefix.
 #[inline]
-pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
+pub(crate) fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
     if let Some(checked) = s.strip_prefix("0x") {
         Ok(checked)
     } else if let Some(checked) = s.strip_prefix("0X") {
@@ -254,7 +254,7 @@ pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
 ///
 /// If the input string contains a prefix.
 #[inline]
-pub fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> {
+pub(crate) fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> {
     if s.starts_with("0x") || s.starts_with("0X") {
         return Err(error::ContainsPrefixError::new(s))
             .map_err(error::UnprefixedHexErrorInner::ContainsPrefix)
