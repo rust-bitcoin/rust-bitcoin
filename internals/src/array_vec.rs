@@ -36,6 +36,7 @@ mod safety_boundary {
         /// # Panics
         ///
         /// If the slice is longer than `CAP`.
+        #[track_caller]
         #[cfg_attr(creusot, check(ghost))]
         #[cfg_attr(creusot, requires(slice@.len() <= CAP@))]
         #[cfg_attr(creusot, ensures(result@ == slice@))]
@@ -296,6 +297,7 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
     /// # Panics
     ///
     /// If the length would increase past CAP.
+    #[track_caller]
     #[cfg_attr(creusot, requires(slice@.len() <= CAP@ - self@.len()))]
     #[cfg_attr(creusot, ensures((^self)@ == (*self)@.concat(slice@)))]
     pub fn extend_from_slice(&mut self, slice: &[T]) {
