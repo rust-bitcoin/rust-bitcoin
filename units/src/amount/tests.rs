@@ -236,15 +236,12 @@ fn amount_try_from_signed_amount() {
 
 #[test]
 fn mul_div() {
-    let op_result_sat = |a| NumOpResult::Valid(sat(a));
-    let op_result_ssat = |a| NumOpResult::Valid(ssat(a));
-
-    assert_eq!(sat(14) * 3, op_result_sat(42));
-    assert_eq!(sat(14) / 2, op_result_sat(7));
-    assert_eq!(sat(14) % 3, op_result_sat(2));
-    assert_eq!(ssat(-14) * 3, op_result_ssat(-42));
-    assert_eq!(ssat(-14) / 2, op_result_ssat(-7));
-    assert_eq!(ssat(-14) % 3, op_result_ssat(-2));
+    assert_eq!(sat(14) * 3, res(42));
+    assert_eq!(sat(14) / 2, res(7));
+    assert_eq!(sat(14) % 3, res(2));
+    assert_eq!(ssat(-14) * 3, sres(-42));
+    assert_eq!(ssat(-14) / 2, sres(-7));
+    assert_eq!(ssat(-14) % 3, sres(-2));
 }
 
 #[test]
@@ -397,7 +394,7 @@ fn div_by_fee_rate_floor_preserves_mvb_precision() {
 #[cfg(feature = "alloc")]
 fn div_by_fee_rate_ceil_preserves_mvb_precision() {
     // `div_by_fee_rate_ceil` must compute the minimum weight at full FeeRate precision.
-    let budget = Amount::from_sat(100).unwrap();
+    let budget = sat(100);
     let rate = FeeRate::from_sat_per_kvb_u32(1);
     let weight = budget.div_by_fee_rate_ceil(rate).unwrap();
     assert!(
@@ -946,65 +943,60 @@ fn from_str() {
 fn to_from_string_in() {
     use super::Denomination as D;
     let ua_str = Amount::from_str_in;
-    let ua_sat = |n| Amount::from_sat(n).unwrap();
     let sa_str = SignedAmount::from_str_in;
-    let sa_sat = |n| SignedAmount::from_sat(n).unwrap();
 
-    assert_eq!("0.5", ua_sat(50).to_string_in(D::Bit));
-    assert_eq!("-0.5", sa_sat(-50).to_string_in(D::Bit));
-    assert_eq!("0.00253583", ua_sat(253_583).to_string_in(D::Bitcoin));
-    assert_eq!("-5", sa_sat(-5).to_string_in(D::Satoshi));
-    assert_eq!("0.1", ua_sat(100_000_00).to_string_in(D::Bitcoin));
-    assert_eq!("-0.1", sa_sat(-100_000_00).to_string_in(D::Bitcoin));
+    assert_eq!("0.5", sat(50).to_string_in(D::Bit));
+    assert_eq!("-0.5", ssat(-50).to_string_in(D::Bit));
+    assert_eq!("0.00253583", sat(253_583).to_string_in(D::Bitcoin));
+    assert_eq!("-5", ssat(-5).to_string_in(D::Satoshi));
+    assert_eq!("0.1", sat(100_000_00).to_string_in(D::Bitcoin));
+    assert_eq!("-0.1", ssat(-100_000_00).to_string_in(D::Bitcoin));
 
-    assert_eq!("0.253583", ua_sat(253_583).to_string_in(D::CentiBitcoin));
-    assert_eq!("-0.253583", sa_sat(-253_583).to_string_in(D::CentiBitcoin));
-    assert_eq!("10", ua_sat(100_000_00).to_string_in(D::CentiBitcoin));
-    assert_eq!("-10", sa_sat(-100_000_00).to_string_in(D::CentiBitcoin));
+    assert_eq!("0.253583", sat(253_583).to_string_in(D::CentiBitcoin));
+    assert_eq!("-0.253583", ssat(-253_583).to_string_in(D::CentiBitcoin));
+    assert_eq!("10", sat(100_000_00).to_string_in(D::CentiBitcoin));
+    assert_eq!("-10", ssat(-100_000_00).to_string_in(D::CentiBitcoin));
 
-    assert_eq!("2.53583", ua_sat(253_583).to_string_in(D::MilliBitcoin));
-    assert_eq!("-2.53583", sa_sat(-253_583).to_string_in(D::MilliBitcoin));
-    assert_eq!("100", ua_sat(100_000_00).to_string_in(D::MilliBitcoin));
-    assert_eq!("-100", sa_sat(-100_000_00).to_string_in(D::MilliBitcoin));
+    assert_eq!("2.53583", sat(253_583).to_string_in(D::MilliBitcoin));
+    assert_eq!("-2.53583", ssat(-253_583).to_string_in(D::MilliBitcoin));
+    assert_eq!("100", sat(100_000_00).to_string_in(D::MilliBitcoin));
+    assert_eq!("-100", ssat(-100_000_00).to_string_in(D::MilliBitcoin));
 
-    assert_eq!("2535.83", ua_sat(253_583).to_string_in(D::MicroBitcoin));
-    assert_eq!("-2535.83", sa_sat(-253_583).to_string_in(D::MicroBitcoin));
-    assert_eq!("100000", ua_sat(100_000_00).to_string_in(D::MicroBitcoin));
-    assert_eq!("-100000", sa_sat(-100_000_00).to_string_in(D::MicroBitcoin));
+    assert_eq!("2535.83", sat(253_583).to_string_in(D::MicroBitcoin));
+    assert_eq!("-2535.83", ssat(-253_583).to_string_in(D::MicroBitcoin));
+    assert_eq!("100000", sat(100_000_00).to_string_in(D::MicroBitcoin));
+    assert_eq!("-100000", ssat(-100_000_00).to_string_in(D::MicroBitcoin));
 
-    assert_eq!("0.5", ua_sat(50).to_string_in(D::Bit));
-    assert_eq!("100", ua_sat(10_000).to_string_in(D::Bit));
-    assert_eq!("-0.5", sa_sat(-50).to_string_in(D::Bit));
-    assert_eq!("-100", sa_sat(-10_000).to_string_in(D::Bit));
+    assert_eq!("0.5", sat(50).to_string_in(D::Bit));
+    assert_eq!("100", sat(10_000).to_string_in(D::Bit));
+    assert_eq!("-0.5", ssat(-50).to_string_in(D::Bit));
+    assert_eq!("-100", ssat(-10_000).to_string_in(D::Bit));
 
-    assert_eq!("5", ua_sat(5).to_string_in(D::Satoshi));
-    assert_eq!("-5", sa_sat(-5).to_string_in(D::Satoshi));
+    assert_eq!("5", sat(5).to_string_in(D::Satoshi));
+    assert_eq!("-5", ssat(-5).to_string_in(D::Satoshi));
 
-    assert_eq!("0.50", format!("{:.2}", ua_sat(50).display_in(D::Bit)));
-    assert_eq!("-0.50", format!("{:.2}", sa_sat(-50).display_in(D::Bit)));
+    assert_eq!("0.50", format!("{:.2}", sat(50).display_in(D::Bit)));
+    assert_eq!("-0.50", format!("{:.2}", ssat(-50).display_in(D::Bit)));
 
-    assert_eq!("0.10000000", format!("{:.8}", ua_sat(100_000_00).display_in(D::Bitcoin)));
-    assert_eq!("-100.00", format!("{:.2}", sa_sat(-10_000).display_in(D::Bit)));
+    assert_eq!("0.10000000", format!("{:.8}", sat(100_000_00).display_in(D::Bitcoin)));
+    assert_eq!("-100.00", format!("{:.2}", ssat(-10_000).display_in(D::Bit)));
 
-    assert_eq!(ua_str(&ua_sat(500).to_string_in(D::Bitcoin), D::Bitcoin), Ok(ua_sat(500)));
-    assert_eq!(ua_str(&ua_sat(1).to_string_in(D::CentiBitcoin), D::CentiBitcoin), Ok(ua_sat(1)));
+    assert_eq!(ua_str(&sat(500).to_string_in(D::Bitcoin), D::Bitcoin), Ok(sat(500)));
+    assert_eq!(ua_str(&sat(1).to_string_in(D::CentiBitcoin), D::CentiBitcoin), Ok(sat(1)));
     assert_eq!(
-        ua_str(&ua_sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
-        Ok(ua_sat(1_000_000_000_000))
+        ua_str(&sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
+        Ok(sat(1_000_000_000_000))
     );
-    assert_eq!(ua_str(&ua_sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(ua_sat(1)));
-    assert_eq!(ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(ua_sat(21_000_000)));
-    assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
+    assert_eq!(ua_str(&sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(sat(1)));
+    assert_eq!(ua_str(&sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(sat(21_000_000)));
+    assert_eq!(ua_str(&sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(sat(0)));
 
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bitcoin), D::Bitcoin).is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::CentiBitcoin), D::CentiBitcoin)
-        .is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin), D::MilliBitcoin)
-        .is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MicroBitcoin), D::MicroBitcoin)
-        .is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bit), D::Bit).is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Satoshi), D::Satoshi).is_ok());
+    assert!(ua_str(&Amount::MAX.to_string_in(D::Bitcoin), D::Bitcoin).is_ok());
+    assert!(ua_str(&Amount::MAX.to_string_in(D::CentiBitcoin), D::CentiBitcoin).is_ok());
+    assert!(ua_str(&Amount::MAX.to_string_in(D::MilliBitcoin), D::MilliBitcoin).is_ok());
+    assert!(ua_str(&Amount::MAX.to_string_in(D::MicroBitcoin), D::MicroBitcoin).is_ok());
+    assert!(ua_str(&Amount::MAX.to_string_in(D::Bit), D::Bit).is_ok());
+    assert!(ua_str(&Amount::MAX.to_string_in(D::Satoshi), D::Satoshi).is_ok());
 
     assert_eq!(
         sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::MicroBitcoin),
@@ -1200,26 +1192,26 @@ fn add_sub_combos() {
 
 #[test]
 fn unsigned_addition() {
-    assert_eq!(sat(0) + sat(0), NumOpResult::from(sat(0)));
-    assert_eq!(sat(0) + sat(307), NumOpResult::from(sat(307)));
-    assert_eq!(sat(307) + sat(0), NumOpResult::from(sat(307)));
-    assert_eq!(sat(307) + sat(461), NumOpResult::from(sat(768)));
+    assert_eq!(sat(0) + sat(0), res(0));
+    assert_eq!(sat(0) + sat(307), res(307));
+    assert_eq!(sat(307) + sat(0), res(307));
+    assert_eq!(sat(307) + sat(461), res(768));
     assert_eq!(sat(0) + Amount::MAX_MONEY, NumOpResult::from(Amount::MAX_MONEY));
 }
 
 #[test]
 fn signed_addition() {
-    assert_eq!(ssat(0) + ssat(0), NumOpResult::from(ssat(0)));
-    assert_eq!(ssat(0) + ssat(307), NumOpResult::from(ssat(307)));
-    assert_eq!(ssat(307) + ssat(0), NumOpResult::from(ssat(307)));
-    assert_eq!(ssat(307) + ssat(461), NumOpResult::from(ssat(768)));
+    assert_eq!(ssat(0) + ssat(0), sres(0));
+    assert_eq!(ssat(0) + ssat(307), sres(307));
+    assert_eq!(ssat(307) + ssat(0), sres(307));
+    assert_eq!(ssat(307) + ssat(461), sres(768));
     assert_eq!(ssat(0) + SignedAmount::MAX_MONEY, NumOpResult::from(SignedAmount::MAX_MONEY));
 
-    assert_eq!(ssat(0) + ssat(-307), NumOpResult::from(ssat(-307)));
-    assert_eq!(ssat(-307) + ssat(0), NumOpResult::from(ssat(-307)));
-    assert_eq!(ssat(-307) + ssat(461), NumOpResult::from(ssat(154)));
-    assert_eq!(ssat(307) + ssat(-461), NumOpResult::from(ssat(-154)));
-    assert_eq!(ssat(-307) + ssat(-461), NumOpResult::from(ssat(-768)));
+    assert_eq!(ssat(0) + ssat(-307), sres(-307));
+    assert_eq!(ssat(-307) + ssat(0), sres(-307));
+    assert_eq!(ssat(-307) + ssat(461), sres(154));
+    assert_eq!(ssat(307) + ssat(-461), sres(-154));
+    assert_eq!(ssat(-307) + ssat(-461), sres(-768));
     assert_eq!(
         SignedAmount::MAX_MONEY + -SignedAmount::MAX_MONEY,
         NumOpResult::from(SignedAmount::ZERO)
@@ -1228,24 +1220,24 @@ fn signed_addition() {
 
 #[test]
 fn unsigned_subtraction() {
-    assert_eq!(sat(0) - sat(0), NumOpResult::from(sat(0)));
-    assert_eq!(sat(307) - sat(0), NumOpResult::from(sat(307)));
-    assert_eq!(sat(461) - sat(307), NumOpResult::from(sat(154)));
+    assert_eq!(sat(0) - sat(0), res(0));
+    assert_eq!(sat(307) - sat(0), res(307));
+    assert_eq!(sat(461) - sat(307), res(154));
 }
 
 #[test]
 fn signed_subtraction() {
-    assert_eq!(ssat(0) - ssat(0), NumOpResult::from(ssat(0)));
-    assert_eq!(ssat(0) - ssat(307), NumOpResult::from(ssat(-307)));
-    assert_eq!(ssat(307) - ssat(0), NumOpResult::from(ssat(307)));
-    assert_eq!(ssat(307) - ssat(461), NumOpResult::from(ssat(-154)));
+    assert_eq!(ssat(0) - ssat(0), sres(0));
+    assert_eq!(ssat(0) - ssat(307), sres(-307));
+    assert_eq!(ssat(307) - ssat(0), sres(307));
+    assert_eq!(ssat(307) - ssat(461), sres(-154));
     assert_eq!(ssat(0) - SignedAmount::MAX_MONEY, NumOpResult::from(-SignedAmount::MAX_MONEY));
 
-    assert_eq!(ssat(0) - ssat(-307), NumOpResult::from(ssat(307)));
-    assert_eq!(ssat(-307) - ssat(0), NumOpResult::from(ssat(-307)));
-    assert_eq!(ssat(-307) - ssat(461), NumOpResult::from(ssat(-768)));
-    assert_eq!(ssat(307) - ssat(-461), NumOpResult::from(ssat(768)));
-    assert_eq!(ssat(-307) - ssat(-461), NumOpResult::from(ssat(154)));
+    assert_eq!(ssat(0) - ssat(-307), sres(307));
+    assert_eq!(ssat(-307) - ssat(0), sres(-307));
+    assert_eq!(ssat(-307) - ssat(461), sres(-768));
+    assert_eq!(ssat(307) - ssat(-461), sres(768));
+    assert_eq!(ssat(-307) - ssat(-461), sres(154));
 }
 
 #[test]
@@ -1380,8 +1372,8 @@ fn sanity_all_ops() {
 #[test]
 #[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
 fn num_op_result_ops() {
-    let sat = Amount::from_sat(1).unwrap();
-    let ssat = SignedAmount::from_sat(1).unwrap();
+    let sat = sat(1);
+    let ssat = ssat(1);
 
     // Explicit type as sanity check.
     let res: NumOpResult<Amount> = sat + sat;
@@ -1431,8 +1423,8 @@ fn num_op_result_ops() {
 #[test]
 #[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
 fn num_op_result_ops_integer() {
-    let sat = Amount::from_sat(1).unwrap();
-    let ssat = SignedAmount::from_sat(1).unwrap();
+    let sat = sat(1);
+    let ssat = ssat(1);
 
     // Explicit type as sanity check.
     let res: NumOpResult<Amount> = sat + sat;
@@ -1472,30 +1464,20 @@ fn num_op_result_ops_integer() {
 // Verify we have implemented all `Neg` for the amount types.
 #[test]
 fn amount_op_result_neg() {
-    let sat = Amount::from_sat(1).unwrap();
-    let ssat = SignedAmount::from_sat(1).unwrap();
-
     // Test negation of Amount (returns SignedAmount)
-    let neg_sat = -sat;
-    assert_eq!(neg_sat, SignedAmount::from_sat(-1).unwrap());
+    assert_eq!(-sat(1), ssat(-1));
 
     // Test negation of SignedAmount
-    let neg_ssat = -ssat;
-    assert_eq!(neg_ssat, SignedAmount::from_sat(-1).unwrap());
+    assert_eq!(-ssat(1), ssat(-1));
 
     // Test negation of NumOpResult<Amount>
-    let res = NumOpResult::from(sat);
-    let neg_res = -res;
-    assert_eq!(neg_res, NumOpResult::from(SignedAmount::from_sat(-1).unwrap()));
+    assert_eq!(-res(1), sres(-1));
 
     // Test negation of NumOpResult<SignedAmount>
-    let sres = NumOpResult::from(ssat);
-    let neg_sres = -sres;
-    assert_eq!(neg_sres, NumOpResult::from(SignedAmount::from_sat(-1).unwrap()));
+    assert_eq!(-sres(1), sres(-1));
 
     // Test double negation
-    let double_neg = -(-sat);
-    assert_eq!(double_neg, ssat);
+    assert_eq!(-(-sat(1)), ssat(1));
 
     // Test negation of zero
     let zero = Amount::ZERO;
@@ -1511,7 +1493,7 @@ fn amount_op_result_neg() {
 // Verify we have implemented all `Sum` for the `NumOpResult` type.
 #[test]
 fn amount_op_result_sum() {
-    let res = Amount::from_sat(1).unwrap() + Amount::from_sat(1).unwrap();
+    let res = sat(1) + sat(1);
     let amounts = [res, res];
     let amount_refs = [&res, &res];
 
@@ -1523,7 +1505,7 @@ fn amount_op_result_sum() {
 
 #[test]
 fn math_op_errors() {
-    let overflow = Amount::MAX + Amount::from_sat(1).unwrap();
+    let overflow = Amount::MAX + sat(1);
     if let NumOpResult::Error(err) = overflow {
         assert!(matches!(err.operation(), MathOp::Add));
         assert!(matches!(err.0, MathErrorKind::Overflow { .. }));
@@ -1531,7 +1513,7 @@ fn math_op_errors() {
         panic!("Expected an overflow error, but got a valid result");
     }
 
-    let div_by_zero = Amount::from_sat(10).unwrap() / Amount::ZERO;
+    let div_by_zero = sat(10) / Amount::ZERO;
     if let NumOpResult::Error(err) = div_by_zero {
         assert!(matches!(err.operation(), MathOp::Div));
         assert!(matches!(err.0, MathErrorKind::DivByZero));
@@ -1543,24 +1525,24 @@ fn math_op_errors() {
 #[test]
 #[allow(clippy::op_ref)]
 fn amount_div_nonzero() {
-    let amount = Amount::from_sat(100).unwrap();
+    let amount = sat(100);
     let divisor = NonZeroU64::new(4).unwrap();
     let result = amount / divisor;
-    assert_eq!(result, Amount::from_sat(25).unwrap());
+    assert_eq!(result, sat(25));
     //checking also for &T/&U variant
-    assert_eq!(&amount / &divisor, Amount::from_sat(25).unwrap());
+    assert_eq!(&amount / &divisor, sat(25));
 }
 
 #[test]
 #[allow(clippy::op_ref)]
 fn signed_amount_div_nonzero() {
-    let signed = SignedAmount::from_sat(-100).unwrap();
+    let signed = ssat(-100);
     let divisor = NonZeroI64::new(4).unwrap();
     let result = signed / divisor;
-    assert_eq!(result, SignedAmount::from_sat(-25).unwrap());
+    assert_eq!(result, ssat(-25));
     //checking also for &T/U, T/&Uvariant
-    assert_eq!(&signed / divisor, SignedAmount::from_sat(-25).unwrap());
-    assert_eq!(signed / &divisor, SignedAmount::from_sat(-25).unwrap());
+    assert_eq!(&signed / divisor, ssat(-25));
+    assert_eq!(signed / &divisor, ssat(-25));
 }
 
 #[test]
