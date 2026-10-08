@@ -346,7 +346,6 @@ impl Witness {
 }
 
 /// Correctness Requirements: value must always fit within u32
-// This is duplicated in `bitcoin::blockdata::witness`, if you change it please do so over there also.
 #[inline]
 fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value: usize) {
     let start = start_of_indices + index * 4;
