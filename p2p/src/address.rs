@@ -70,9 +70,11 @@ impl Address {
         if addr[0..3] == ONION {
             return Err(UnroutableAddressError::TorV2);
         }
-        let ipv6 =
-            Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
-        if let Some(ipv4) = ipv6.to_ipv4() {
+        let ipv6 = Ipv6Addr::from(*addr);
+        // `to_ipv4_mapped()` converts only IPv4-*mapped* IPv6 addresses (`::ffff:a.b.c.d`, the form
+        // the Bitcoin wire format uses to embed IPv4) and leaves IPv4-compatible addresses such as
+        // `::1` as IPv6, so the public `SocketAddr -> Address -> SocketAddr` round-trip is preserved.
+        if let Some(ipv4) = ipv6.to_ipv4_mapped() {
             Ok(SocketAddr::V4(SocketAddrV4::new(ipv4, self.port)))
         } else {
             Ok(SocketAddr::V6(SocketAddrV6::new(ipv6, self.port, 0, 0)))
@@ -97,17 +99,20 @@ impl fmt::Debug for Address {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let ipv6 = Ipv6Addr::from(self.address);
 
-        match ipv6.to_ipv4() {
-            Some(addr) => write!(
+        // Mirror `socket_addr`: only an IPv4-mapped IPv6 address is rendered as IPv4, otherwise the
+        // original IPv6 address is shown verbatim (e.g. `::1` stays `::1`, not `0.0.0.1`).
+        if let Some(ipv4) = ipv6.to_ipv4_mapped() {
+            write!(
                 f,
                 "Address {{services: {}, address: {}, port: {}}}",
-                self.services, addr, self.port
-            ),
-            None => write!(
+                self.services, ipv4, self.port
+            )
+        } else {
+            write!(
                 f,
                 "Address {{services: {}, address: {}, port: {}}}",
                 self.services, ipv6, self.port
-            ),
+            )
         }
     }
 }
@@ -1172,6 +1177,25 @@ mod test {
         );
         let a6 = Address::new(&s6, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a6.socket_addr().unwrap(), s6);
+    }
+
+    #[test]
+    fn address_ipv6_loopback_roundtrip() {
+        let socket = SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::LOCALHOST, 8333, 0, 0));
+        let addr = Address::new(&socket, ServiceFlags::NONE);
+        // Public API round-trip: SocketAddr -> Address -> SocketAddr must be stable.
+        assert_eq!(addr.socket_addr().unwrap(), socket);
+        // Debug must reflect the same IPv6 address, not a bogus IPv4 one.
+        assert!(format!("{:?}", addr).contains("::1"));
+        assert!(!format!("{:?}", addr).contains("0.0.0.1"));
+    }
+
+    #[test]
+    fn address_ipv4_mapped_roundtrip() {
+        let socket = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 8333));
+        let addr = Address::new(&socket, ServiceFlags::NONE);
+        // Real IPv4 addresses are stored as IPv4-mapped IPv6 and must round-trip.
+        assert_eq!(addr.socket_addr().unwrap(), socket);
     }
 
     #[test]
