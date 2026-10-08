@@ -164,7 +164,9 @@ impl U256 {
 
     /// Calculates `self` + `rhs`
     ///
-    /// Returns a tuple of the addition along with a boolean indicating whether an arithmetic
+    /// # Returns
+    ///
+    /// A tuple of the addition along with a boolean indicating whether an arithmetic
     /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn overflowing_add(self, rhs: Self) -> (Self, bool) {
@@ -188,7 +190,9 @@ impl U256 {
 
     /// Calculates `self` - `rhs`
     ///
-    /// Returns a tuple of the subtraction along with a boolean indicating whether an arithmetic
+    /// # Returns
+    ///
+    /// A tuple of the subtraction along with a boolean indicating whether an arithmetic
     /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn overflowing_sub(self, rhs: Self) -> (Self, bool) {
@@ -199,7 +203,9 @@ impl U256 {
 
     /// Calculates the multiplication of `self` and `rhs`.
     ///
-    /// Returns a tuple of the multiplication along with a boolean
+    /// # Returns
+    ///
+    /// A tuple of the multiplication along with a boolean
     /// indicating whether an arithmetic overflow would occur. If an
     /// overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]

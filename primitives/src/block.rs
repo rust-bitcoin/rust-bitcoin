@@ -625,7 +625,9 @@ fn block_weight_wu(transactions: &[Transaction]) -> u64 {
 
 /// Computes the Merkle root for a list of transactions.
 ///
-/// Returns [`None`] if the iterator was empty, or if the transaction list contains
+/// # Returns
+///
+/// [`None`] if the iterator was empty, or if the transaction list contains
 /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
 /// transactions will always be invalid, so there is no harm in us refusing to
 /// compute their merkle roots.
@@ -644,7 +646,9 @@ where
 
 /// Computes the Merkle root of transactions hashed for witness.
 ///
-/// Returns [`None`] if the iterator was empty, or if the transaction list contains
+/// # Returns
+///
+/// [`None`] if the iterator was empty, or if the transaction list contains
 /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
 /// transactions will always be invalid, so there is no harm in us refusing to
 /// compute their merkle roots.
