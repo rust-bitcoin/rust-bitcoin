@@ -35,7 +35,7 @@ sha256t_tag! {
     struct Tag = raw(TEST_MIDSTATE, 64);
 }
 hash_newtype! {
-    /// A concrete SHA256t hash type so we don't have to use generics.
+    /// A concrete `SHA256t` hash type so we don't have to use generics.
     #[derive(Debug)]
     struct TaggedHash(sha256t::Hash<Tag>);
 }

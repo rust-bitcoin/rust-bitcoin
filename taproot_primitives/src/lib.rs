@@ -76,7 +76,7 @@ impl sha256t::Tag for TapLeafTag {
 }
 
 hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapLeaf\".
+    /// Taproot-tagged hash with tag [`TapLeafTag`].
     ///
     /// This is used for computing tapscript script spend hash.
     pub struct TapLeafHash(sha256t::Hash<TapLeafTag>);
@@ -152,7 +152,7 @@ impl sha256t::Tag for TapTweakTag {
 }
 
 hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapTweak\".
+    /// Taproot-tagged hash with tag [`TapTweakTag`].
     ///
     /// This hash type is used while computing the tweaked public key.
     pub struct TapTweakHash(sha256t::Hash<TapTweakTag>);
