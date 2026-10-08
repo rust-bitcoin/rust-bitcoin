@@ -1371,7 +1371,12 @@ pub mod error {
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for MaximumDepthExceededError {}
+    impl std::error::Error for MaximumDepthExceededError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
+        }
+    }
 
     impl fmt::Display for MaximumDepthExceededError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1391,7 +1396,12 @@ pub mod error {
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for CannotDeriveHardenedChildError {}
+    impl std::error::Error for CannotDeriveHardenedChildError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
+        }
+    }
 
     impl fmt::Display for CannotDeriveHardenedChildError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
