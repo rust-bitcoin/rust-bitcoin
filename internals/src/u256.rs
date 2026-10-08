@@ -120,9 +120,7 @@ impl U256 {
 
     /// Calculates quotient and remainder.
     ///
-    /// # Returns
-    ///
-    /// (quotient, remainder)
+    /// Returns (quotient, remainder).
     ///
     /// # Panics
     ///

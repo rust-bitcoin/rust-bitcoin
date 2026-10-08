@@ -64,9 +64,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub trait Read {
     /// Reads bytes from source into `buf`.
     ///
-    /// # Returns
-    ///
-    /// The number of bytes read if successful or an [`Error`] if reading fails.
+    /// Returns the number of bytes read if successful or an [`Error`] if reading fails.
     ///
     /// # Errors
     ///
@@ -107,9 +105,7 @@ pub trait Read {
     ///
     /// Similar to [`std::io::Read::read_to_end`] but with the DOS protection.
     ///
-    /// # Returns
-    ///
-    /// The number of bytes read if successful or an [`Error`] if reading fails.
+    /// Returns the number of bytes read if successful or an [`Error`] if reading fails.
     ///
     /// # Errors
     ///
@@ -153,9 +149,7 @@ impl<R: Read> Take<R> {
     ///
     /// Allocates space in `buf` as needed.
     ///
-    /// # Returns
-    ///
-    /// The number of bytes read if successful or an [`Error`] if reading fails.
+    /// Returns the number of bytes read if successful or an [`Error`] if reading fails.
     ///
     /// # Errors
     ///

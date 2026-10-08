@@ -1065,9 +1065,7 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
 
     /// Serializes to a writer.
     ///
-    /// # Returns
-    ///
-    /// The number of bytes written to the writer.
+    /// Returns the number of bytes written to the writer.
     pub fn encode<W: Write + ?Sized>(&self, writer: &mut W) -> io::Result<usize> {
         self.encode_inner(move |bytes| writer.write_all(bytes))?;
         Ok(self.size())
