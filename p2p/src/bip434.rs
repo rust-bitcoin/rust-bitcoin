@@ -6,7 +6,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::default::Default;
 use core::fmt;
-use core::str::FromStr;
+use core::str::{FromStr, Utf8Error};
 
 use encoding::{ByteVecDecoder, Decode, Decoder2, Encoder2, PrefixedBytesEncoder};
 
@@ -19,33 +19,59 @@ use self::error::{
 ///
 /// Normally, this is "BIPXXX" that defines the feature. For more information, see
 /// [BIP-0434](https://github.com/bitcoin/bips/blob/master/bip-0434.md#feature-message).
+///
+/// BIP-0434 requires the identifier to be between 4 and 80 bytes but only *recommends* that it
+/// contain printable ASCII, so the raw bytes are stored and any identifier of a valid length is
+/// accepted. Use [`FeatureId::to_str`] to view identifiers that happen to be valid UTF-8.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FeatureId {
-    // Guaranteed to always be ASCII.
-    feature: String,
+    feature: Vec<u8>,
 }
 
 impl FeatureId {
-    /// The advertised feature.
-    pub fn as_str(&self) -> &str { &self.feature }
+    /// The minimum length, in bytes, of a [`FeatureId`].
+    pub const MIN_LEN: usize = 4;
+
+    /// The maximum length, in bytes, of a [`FeatureId`].
+    pub const MAX_LEN: usize = 80;
+
+    /// Constructs a [`FeatureId`] from raw bytes.
+    ///
+    /// # Errors
+    ///
+    /// If `feature` is shorter than 4 bytes or longer than 80 bytes.
+    pub fn new(feature: Vec<u8>) -> Result<Self, FeatureIdError> {
+        if feature.len() < Self::MIN_LEN || feature.len() > Self::MAX_LEN {
+            return Err(FeatureIdError::InvalidLength(feature.len()));
+        }
+        Ok(Self { feature })
+    }
+
+    /// The advertised feature as raw bytes.
+    pub fn as_bytes(&self) -> &[u8] { &self.feature }
+
+    /// The advertised feature as a string, if it is valid UTF-8.
+    ///
+    /// BIP-0434 only recommends that the identifier contain printable ASCII, so this returns an
+    /// error for identifiers that are still valid on the wire.
+    ///
+    /// # Errors
+    ///
+    /// If the identifier is not valid UTF-8.
+    pub fn to_str(&self) -> Result<&str, Utf8Error> { core::str::from_utf8(&self.feature) }
 }
 
 impl FromStr for FeatureId {
     type Err = FeatureIdError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if !s.is_ascii() {
-            return Err(FeatureIdError::NotAscii);
-        }
-        if s.len() < 4 || s.len() > 80 {
-            return Err(FeatureIdError::InvalidLength(s.len()));
-        }
-        Ok(Self { feature: s.into() })
-    }
+    fn from_str(s: &str) -> Result<Self, Self::Err> { Self::new(s.as_bytes().to_vec()) }
 }
 
 impl fmt::Display for FeatureId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", self.feature) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // BIP-0434 only recommends printable ASCII, so the identifier may not be valid UTF-8.
+        f.write_str(&String::from_utf8_lossy(&self.feature))
+    }
 }
 
 encoding::encoder_newtype_exact! {
@@ -63,7 +89,7 @@ impl encoding::Encode for FeatureId {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FeatureIdEncoder::new(PrefixedBytesEncoder::new(self.feature.as_bytes()))
+        FeatureIdEncoder::new(PrefixedBytesEncoder::new(&self.feature))
     }
 }
 
@@ -85,10 +111,8 @@ impl encoding::Decoder for FeatureIdDecoder {
 
     fn end(self) -> Result<FeatureId, FeatureIdDecoderError> {
         let feature_id = self.0.end().map_err(FeatureIdDecoderError::Decoder)?;
-        let feature_string = String::from_utf8(feature_id)
-            .map_err(|_| FeatureIdError::NotAscii)
-            .map_err(FeatureIdDecoderError::Malformed)?;
-        Ok(feature_string.parse().map_err(FeatureIdDecoderError::Malformed)?)
+        // BIP-0434 only recommends printable ASCII, so accept any identifier of a valid length.
+        FeatureId::new(feature_id).map_err(FeatureIdDecoderError::Malformed)
     }
 }
 
@@ -240,8 +264,6 @@ pub mod error {
     pub enum FeatureIdError {
         /// Invalid length for [`FeatureId`].
         InvalidLength(usize),
-        /// [`FeatureId`] contains non-ascii characters.
-        NotAscii,
     }
 
     impl From<Infallible> for FeatureIdError {
@@ -254,7 +276,6 @@ pub mod error {
                 Self::InvalidLength(size) => {
                     write!(f, "expected string between 4 and 80 bytes, got {size}.")
                 }
-                Self::NotAscii => write!(f, "feature id must contain only valid ascii."),
             }
         }
     }
@@ -264,7 +285,6 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::InvalidLength(_) => None,
-                Self::NotAscii => None,
             }
         }
     }
@@ -374,5 +394,101 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for FeatureDecoderError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use alloc::string::ToString;
+    use alloc::vec;
+
+    use encoding::{decode_from_slice, encode_to_vec};
+
+    use super::*;
+
+    /// The identifier Bitcoin Core uses in its `test_non_ascii_feature_id_accepted` test.
+    ///
+    /// BIP-0434 requires the `featureid` length to be between 4 and 80 bytes but only *recommends*
+    /// printable ASCII, so this is a valid identifier even though it is not valid UTF-8.
+    const NON_ASCII_ID: &[u8] = b"\x00\xff\x01\x7f";
+
+    #[test]
+    fn feature_id_from_str() {
+        let id = FeatureId::from_str("BIP434").unwrap();
+        assert_eq!(id.as_bytes(), b"BIP434");
+        assert_eq!(id.to_str().unwrap(), "BIP434");
+        assert_eq!(id.to_string(), "BIP434");
+    }
+
+    #[test]
+    fn feature_id_length_boundaries() {
+        for len in [FeatureId::MIN_LEN, FeatureId::MAX_LEN] {
+            let bytes = vec![b'a'; len];
+            let id = FeatureId::new(bytes.clone()).unwrap();
+            assert_eq!(id.as_bytes(), bytes.as_slice());
+            assert_eq!(FeatureId::from_str(core::str::from_utf8(&bytes).unwrap()).unwrap(), id);
+        }
+
+        for len in [0, 1, FeatureId::MIN_LEN - 1, FeatureId::MAX_LEN + 1] {
+            let bytes = vec![b'a'; len];
+            assert_eq!(FeatureId::new(bytes.clone()), Err(FeatureIdError::InvalidLength(len)));
+            assert_eq!(
+                FeatureId::from_str(core::str::from_utf8(&bytes).unwrap()),
+                Err(FeatureIdError::InvalidLength(len))
+            );
+        }
+    }
+
+    #[test]
+    fn feature_id_accepts_non_ascii_bytes() {
+        // Regression test for rejecting non-ASCII identifiers. BIP-0434 says SHOULD, not MUST, so
+        // this must be accepted. Mirrors Bitcoin Core's `test_non_ascii_feature_id_accepted`.
+        let id = FeatureId::new(NON_ASCII_ID.to_vec()).unwrap();
+        assert_eq!(id.as_bytes(), NON_ASCII_ID);
+        // The identifier is valid on the wire but is not valid UTF-8.
+        assert!(id.to_str().is_err());
+    }
+
+    #[test]
+    fn feature_id_accepts_non_ascii_utf8() {
+        // "café" is five bytes and valid UTF-8 but not ASCII.
+        let id = FeatureId::from_str("café").unwrap();
+        assert_eq!(id.as_bytes(), "café".as_bytes());
+        assert_eq!(id.to_str().unwrap(), "café");
+    }
+
+    #[test]
+    fn feature_id_encode_decode_roundtrip() {
+        for bytes in [b"BIP434".to_vec(), NON_ASCII_ID.to_vec()] {
+            let id = FeatureId::new(bytes.clone()).unwrap();
+            let encoded = encode_to_vec(&id);
+            // Compact size length prefix followed by the identifier bytes verbatim.
+            assert_eq!(encoded[0], bytes.len() as u8);
+            assert_eq!(&encoded[1..], bytes.as_slice());
+            assert_eq!(decode_from_slice::<FeatureId>(&encoded).unwrap(), id);
+        }
+    }
+
+    #[test]
+    fn feature_id_decoder_rejects_invalid_length() {
+        for len in [0, 1, FeatureId::MIN_LEN - 1, FeatureId::MAX_LEN + 1] {
+            let mut encoded = vec![len as u8];
+            encoded.extend(vec![b'a'; len]);
+            assert!(
+                decode_from_slice::<FeatureId>(&encoded).is_err(),
+                "identifier of length {len} should not decode"
+            );
+        }
+    }
+
+    #[test]
+    fn feature_message_decode_accepts_non_ascii_id() {
+        let feature = Feature {
+            feature_id: FeatureId::new(NON_ASCII_ID.to_vec()).unwrap(),
+            feature_data: FeatureData::new(vec![0xab, 0xcd]).unwrap(),
+        };
+
+        let encoded = encode_to_vec(&feature);
+        assert_eq!(decode_from_slice::<Feature>(&encoded).unwrap(), feature);
     }
 }
