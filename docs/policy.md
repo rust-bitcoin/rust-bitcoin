@@ -17,6 +17,7 @@ the various PRs over the last few years.
 - [Return `Self`](#return-self)
 - [Errors](#errors)
   - [`From<Infallible>` (P-ERROR-INFALLIBLE)](#frominfallible-p-error-infallible)
+  - [`source` (P-ERROR-SOURCE)](#source-p-error-source)
 - [`expect` messages](#expect-messages)
 - [Rustdocs](#rustdocs)
   - [Links](#links)
@@ -211,6 +212,7 @@ More specifically an error should
 - implement `std::error::Error` if they are public (feature gated on "std").
 - have messages in lower case, except for proper nouns and variable names.
 - implement `From<Infallible>` (more on that below).
+- destructure `self` in `source` when it returns `None`, see [P-ERROR-SOURCE](#source-p-error-source).
 
 ```rust
 /// Documentation for the `Error` type.
@@ -236,6 +238,20 @@ All errors that live in an `error` module (eg, `foo/error.rs`) and appear in a p
 All public error types should implement `From<Infallible>` to allow callers to seamlessly convert an operation that can never fail into one that is structurally designed to handle errors.
 
 [`Infallible`](https://doc.rust-lang.org/std/convert/enum.Infallible.html) is a "temporary" (years long) type system hack which should hopefully be replaced in the future by [a rust language feature](https://github.com/rust-lang/rfcs/blob/master/text/1216-bang-type.md). Implementing `Infallible` on rust-bitcoin errors allows callers to take advantage now and avoid orphan rule issues.
+
+### `source` (P-ERROR-SOURCE)
+
+When `source` returns `None`, destructure `self` first, so that when adding a field later, it fails to compile and nobody forgets to update `source`.
+
+```rust
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { input: _, bits: _ } = self;
+        None
+    }
+}
+```
 
 ## `expect` messages
 
