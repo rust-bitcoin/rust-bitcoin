@@ -211,7 +211,7 @@ More specifically an error should
 - not have `Error` suffix on enum variants.
 - implement `std::error::Error` if they are public (feature gated on "std").
 - have messages in lower case, except for proper nouns and variable names.
-- implement `From<Infallible>` (more on that below).
+- implement `From<Infallible>`, see [P-ERROR-INFALLIBLE](#frominfallible-p-error-infallible).
 - destructure `self` in `source` when it returns `None`, see [P-ERROR-SOURCE](#source-p-error-source).
 
 ```rust
