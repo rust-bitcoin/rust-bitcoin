@@ -445,7 +445,7 @@ impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
             }
             let bits = cmp::min(8 - self.offset, nbits);
             data <<= bits;
-            data |= ((self.buffer[0] << self.offset) >> (8 - bits)) as u64;
+            data |= u64::from((self.buffer[0] << self.offset) >> (8 - bits));
             self.offset += bits;
             nbits -= bits;
         }

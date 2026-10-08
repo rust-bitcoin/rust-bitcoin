@@ -528,7 +528,7 @@ impl TransactionExtPriv for Transaction {
                 1
             } else if witness_program.is_p2wsh() {
                 // Treat the last item of the witness as the witnessScript
-                witness.last().map(WitnessScript::from_bytes).map(|s| s.count_sigops()).unwrap_or(0)
+                witness.last().map(WitnessScript::from_bytes).map_or(0, |s| s.count_sigops())
             } else {
                 0
             }
@@ -656,7 +656,7 @@ where
             (
                 count + 1,
                 weight + prediction.total_weight().to_wu() as usize,
-                with_witnesses + (prediction.witness_size > 0) as usize,
+                with_witnesses + usize::from(prediction.witness_size > 0),
             )
         });
 

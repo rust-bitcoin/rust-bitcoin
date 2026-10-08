@@ -475,17 +475,17 @@ impl NumberOfBlocks {
         chain_tip: crate::BlockHeight,
         utxo_mined_at: Option<crate::BlockHeight>,
     ) -> Result<bool, InvalidHeightError> {
-        match utxo_mined_at {
-            Some(mined_at) => chain_tip
-                .checked_sub(mined_at)
-                .ok_or(InvalidHeightError { chain_tip, utxo_mined_at: mined_at })
-                .map(|diff| u32::from(self.to_count()).saturating_sub(1) <= diff.to_u32()),
-            None => {
-                // We want 0-value relative timelocks to be able to go into transactions in the
-                // mempool if their parent is also in the mempool.
-                Ok(self == Self::ZERO)
-            }
-        }
+        utxo_mined_at.map_or(
+            // We want 0-value relative timelocks to be able to go into transactions in the
+            // mempool if their parent is also in the mempool.
+            Ok(self == Self::ZERO),
+            |mined_at| {
+                chain_tip
+                    .checked_sub(mined_at)
+                    .ok_or(InvalidHeightError { chain_tip, utxo_mined_at: mined_at })
+                    .map(|diff| u32::from(self.to_count()).saturating_sub(1) <= diff.to_u32())
+            },
+        )
     }
 }
 
@@ -625,17 +625,17 @@ impl NumberOf512Seconds {
         chain_tip: crate::BlockMtp,
         utxo_mined_at: Option<crate::BlockMtp>,
     ) -> Result<bool, InvalidTimeError> {
-        match utxo_mined_at {
-            Some(mined_at) => chain_tip
-                .checked_sub(mined_at)
-                .ok_or(InvalidTimeError { chain_tip, utxo_mined_at: mined_at })
-                .map(|diff| self.to_seconds() <= diff.to_u32()),
-            None => {
-                // We want 0-value relative timelocks to be able to go into transactions in the
-                // mempool if their parent is also in the mempool.
-                Ok(self == Self::ZERO)
-            }
-        }
+        utxo_mined_at.map_or(
+            // We want 0-value relative timelocks to be able to go into transactions in the
+            // mempool if their parent is also in the mempool.
+            Ok(self == Self::ZERO),
+            |mined_at| {
+                chain_tip
+                    .checked_sub(mined_at)
+                    .ok_or(InvalidTimeError { chain_tip, utxo_mined_at: mined_at })
+                    .map(|diff| self.to_seconds() <= diff.to_u32())
+            },
+        )
     }
 }
 

@@ -48,7 +48,6 @@ filter_map_next = "warn"
 flat_map_option = "warn"
 float_cmp = "allow" # Bitcoin floats are typically limited to 8 decimal places and we want them exact.
 fn_params_excessive_bools = "warn"
-from_iter_instead_of_collect = "warn"
 if_not_else = "warn"
 ignored_unit_patterns = "warn"
 implicit_clone = "warn"

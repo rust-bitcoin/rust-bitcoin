@@ -57,6 +57,7 @@ pub(crate) const MAX_OP_RETURN_RELAY: usize = 83;
 
 /// The virtual transaction size, as computed by default by bitcoind node.
 pub fn get_virtual_tx_size(weight: i64, n_sigops: i64) -> i64 {
-    (cmp::max(weight, n_sigops * DEFAULT_BYTES_PER_SIGOP as i64) + WITNESS_SCALE_FACTOR as i64 - 1)
+    (cmp::max(weight, n_sigops * i64::from(DEFAULT_BYTES_PER_SIGOP)) + WITNESS_SCALE_FACTOR as i64
+        - 1)
         / WITNESS_SCALE_FACTOR as i64
 }

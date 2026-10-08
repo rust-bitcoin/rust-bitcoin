@@ -845,7 +845,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         common_cache.get_or_insert_with(|| {
             let mut enc_prevouts = sha256::Hash::engine();
             let mut enc_sequences = sha256::Hash::engine();
-            for txin in tx.inputs.iter() {
+            for txin in &tx.inputs {
                 hashes::encode_to_engine(&txin.previous_output, &mut enc_prevouts);
                 hashes::encode_to_engine(&txin.sequence, &mut enc_sequences);
             }
@@ -854,7 +854,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 sequences: sha256::Hash::from_engine(enc_sequences),
                 outputs: {
                     let mut enc = sha256::Hash::engine();
-                    for txout in tx.outputs.iter() {
+                    for txout in &tx.outputs {
                         io::encode_to_writer(txout, &mut enc).unwrap();
                     }
                     sha256::Hash::from_engine(enc)

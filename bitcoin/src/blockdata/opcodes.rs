@@ -387,10 +387,10 @@ crate::internal_macros::define_extension_trait! {
 
                 // 16 opcodes of PushNum class
                 (op, _) if op.to_u8() >= OP_1.to_u8() && op.to_u8() <= OP_16.to_u8() =>
-                    Class::PushNum(1 + self.to_u8() as i32 - OP_1.to_u8() as i32),
+                    Class::PushNum(1 + i32::from(self.to_u8()) - i32::from(OP_1.to_u8())),
 
                 // 76 opcodes of PushBytes class
-                (op, _) if op.to_u8() <= OP_PUSHBYTES_75.to_u8() => Class::PushBytes(self.to_u8() as u32),
+                (op, _) if op.to_u8() <= OP_PUSHBYTES_75.to_u8() => Class::PushBytes(u32::from(self.to_u8())),
 
                 // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
                 (_, _) => Class::Ordinary(Ordinary::with(self)),

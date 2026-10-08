@@ -128,12 +128,9 @@ impl<'a> Instructions<'a> {
         len: PushDataLenLen,
         min_push_len: usize,
     ) -> Option<Result<Instruction<'a>, Error>> {
-        let n = match script::read_push_data_len(&mut self.data, len) {
-            Ok(n) => n,
-            Err(_) => {
-                self.kill();
-                return Some(Err(Error::EarlyEndOfScript));
-            }
+        let Ok(n) = script::read_push_data_len(&mut self.data, len) else {
+            self.kill();
+            return Some(Err(Error::EarlyEndOfScript));
         };
         let n = match usize::try_from(n) {
             Ok(n) => n,
