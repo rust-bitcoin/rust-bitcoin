@@ -233,17 +233,17 @@ impl Params {
     /// The regtest parameters.
     pub const REGTEST: Self = Self {
         network: Network::Regtest,
-        bip16_time: 1333238400,                         // Apr 1 2012
-        bip34_height: BlockHeight::from_u32(100000000), // not activated on regtest
-        bip65_height: BlockHeight::from_u32(1351),
-        bip66_height: BlockHeight::from_u32(1251), // used only in rpc tests
+        bip16_time: 1333238400,                 // Apr 1 2012
+        bip34_height: BlockHeight::from_u32(1), // Always active unless overridden
+        bip65_height: BlockHeight::from_u32(1), // Always active unless overridden
+        bip66_height: BlockHeight::from_u32(1), // Always active unless overridden
         enforce_bip94: false,
         rule_change_activation_threshold: BlockHeightInterval::from_u32(108), // 75%
         miner_confirmation_window: BlockHeightInterval::from_u32(144),
         pow_limit: Target::MAX_ATTAINABLE_REGTEST,
         max_attainable_target: Target::MAX_ATTAINABLE_REGTEST,
-        pow_target_spacing: 10 * 60,            // 10 minutes.
-        pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
+        pow_target_spacing: 10 * 60,       // 10 minutes.
+        pow_target_timespan: 24 * 60 * 60, // one day.
         allow_min_difficulty_blocks: true,
         no_pow_retargeting: true,
     };
