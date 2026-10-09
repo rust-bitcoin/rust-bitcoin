@@ -522,11 +522,14 @@ macro_rules! impl_hex {
                 }
 
                 #[allow(clippy::indexing_slicing)]
-                for byte in self.to_be_bytes() {
-                    let upper_idx = ((byte & 0xf0) >> 4) as usize;
-                    let lower_idx = (byte & 0xf) as usize;
-                    f.write_char($lookup[upper_idx])?;
-                    f.write_char($lookup[lower_idx])?;
+                match $lookup {
+                    lookup =>
+                        for byte in self.to_be_bytes() {
+                            let upper_idx = ((byte & 0xf0) >> 4) as usize;
+                            let lower_idx = (byte & 0xf) as usize;
+                            f.write_char(lookup[upper_idx])?;
+                            f.write_char(lookup[lower_idx])?;
+                        },
                 }
                 Ok(())
             }
