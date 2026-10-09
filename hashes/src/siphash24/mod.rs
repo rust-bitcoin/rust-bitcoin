@@ -248,6 +248,29 @@ mod tests {
     use super::*;
 
     #[test]
+    fn load_int_le_evaluates_arguments_once() {
+        let bytes = [1u8, 2, 3, 4, 5, 6, 7, 8];
+        let mut buf_hits = 0;
+        let mut index_hits = 0;
+        let loaded = unsafe {
+            load_int_le!(
+                {
+                    buf_hits += 1;
+                    &bytes[..]
+                },
+                {
+                    index_hits += 1;
+                    0
+                },
+                u64
+            )
+        };
+        assert_eq!(loaded, u64::from_le_bytes(bytes));
+        assert_eq!(buf_hits, 1);
+        assert_eq!(index_hits, 1);
+    }
+
+    #[test]
     fn siphash_2_4() {
         #[rustfmt::skip]
         let vecs: [[u8; 8]; 64] = [
