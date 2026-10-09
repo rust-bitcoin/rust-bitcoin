@@ -1,6 +1,10 @@
 name: Creusot
 
 on:
+  # run on push to master required for proper functioning of the cache
+  push:
+    branches:
+      - master
   pull_request:
 
 permissions: {}
