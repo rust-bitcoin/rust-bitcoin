@@ -877,6 +877,38 @@ mod tests {
     }
 
     #[test]
+    fn impl_hex_evaluates_lookup_once_per_format() {
+        use core::fmt::Write as _;
+        use core::sync::atomic::{AtomicUsize, Ordering};
+
+        static LOOKUP_HITS: AtomicUsize = AtomicUsize::new(0);
+
+        trait CountingHex {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result;
+        }
+
+        impl_hex!(CountingHex, {
+            LOOKUP_HITS.fetch_add(1, Ordering::Relaxed);
+            ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+        });
+
+        struct Hex(U256);
+
+        impl fmt::Display for Hex {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { CountingHex::fmt(&self.0, f) }
+        }
+
+        struct Sink;
+
+        impl fmt::Write for Sink {
+            fn write_str(&mut self, _: &str) -> fmt::Result { Ok(()) }
+        }
+
+        write!(Sink, "{}", Hex(U256::MAX)).unwrap();
+        assert_eq!(LOOKUP_HITS.load(Ordering::Relaxed), 1);
+    }
+
+    #[test]
     #[cfg(feature = "alloc")]
     fn u256_display() {
         assert_eq!(format!("{}", U256::from(100_u32)), "100",);
