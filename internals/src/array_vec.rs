@@ -364,7 +364,7 @@ macro_rules! with_deep_model {
 }
 
 with_deep_model! {
-impl<T: Copy + PartialEq, const CAP: usize> Eq for ArrayVec<T, CAP> {}
+impl<T: Copy + Eq, const CAP: usize> Eq for ArrayVec<T, CAP> {}
 
 impl<T: Copy + PartialEq, const CAP1: usize, const CAP2: usize> PartialEq<ArrayVec<T, CAP2>>
     for ArrayVec<T, CAP1>
