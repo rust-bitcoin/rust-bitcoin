@@ -66,6 +66,13 @@ internal_macros::define_extension_trait! {
 
         /// Add a single instruction to the script.
         ///
+        /// A data push is serialized exactly as the instruction describes it, i.e. with a push
+        /// opcode and not with a numeric opcode even where one would encode the same bytes. This
+        /// keeps instructions obtained from [`ScriptExt::instructions`] round-trippable, since
+        /// that iterator does not require numeric pushes to be minimal.
+        ///
+        /// [`ScriptExt::instructions`]: crate::script::ScriptExt::instructions
+        ///
         /// # Panics
         ///
         /// The method panics if the instruction is a data push with length greater or equal to
@@ -73,7 +80,7 @@ internal_macros::define_extension_trait! {
         fn push_instruction(&mut self, instruction: Instruction<'_>) {
             match instruction {
                 Instruction::Op(opcode) => self.push_opcode(opcode),
-                Instruction::PushBytes(bytes) => self.push_slice(bytes),
+                Instruction::PushBytes(bytes) => self.push_slice_non_minimal(bytes),
             }
         }
 
