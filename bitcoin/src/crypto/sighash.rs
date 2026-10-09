@@ -113,7 +113,7 @@ impl sha256t::Tag for TapSighashTag {
 }
 
 hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapSighash\".
+    /// Taproot-tagged hash with tag [`TapSighashTag`].
     ///
     /// This hash type is used for computing Taproot signature hash.
     pub struct TapSighash(sha256t::Hash<TapSighashTag>);
