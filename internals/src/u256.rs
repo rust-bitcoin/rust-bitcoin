@@ -128,6 +128,7 @@ impl U256 {
     ///
     /// If `rhs` is zero.
     #[allow(clippy::indexing_slicing)]
+    #[track_caller]
     fn div_rem(self, rhs: Self) -> (Self, Self) {
         let mut sub_copy = self;
         let mut shift_copy = rhs;
@@ -400,6 +401,7 @@ impl<T: Into<u128>> From<T> for U256 {
 
 impl Add for U256 {
     type Output = Self;
+    #[track_caller]
     fn add(self, rhs: Self) -> Self {
         let (res, overflow) = self.overflowing_add(rhs);
         debug_assert!(!overflow, "addition of U256 values overflowed");
@@ -409,6 +411,7 @@ impl Add for U256 {
 
 impl Sub for U256 {
     type Output = Self;
+    #[track_caller]
     fn sub(self, rhs: Self) -> Self {
         let (res, overflow) = self.overflowing_sub(rhs);
         debug_assert!(!overflow, "subtraction of U256 values overflowed");
@@ -418,6 +421,7 @@ impl Sub for U256 {
 
 impl Mul for U256 {
     type Output = Self;
+    #[track_caller]
     fn mul(self, rhs: Self) -> Self {
         let (res, overflow) = self.overflowing_mul(rhs);
         debug_assert!(!overflow, "multiplication of U256 values overflowed");
@@ -427,11 +431,13 @@ impl Mul for U256 {
 
 impl Div for U256 {
     type Output = Self;
+    #[track_caller]
     fn div(self, rhs: Self) -> Self { self.div_rem(rhs).0 }
 }
 
 impl Rem for U256 {
     type Output = Self;
+    #[track_caller]
     fn rem(self, rhs: Self) -> Self { self.div_rem(rhs).1 }
 }
 
