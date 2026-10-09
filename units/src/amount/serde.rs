@@ -362,7 +362,7 @@ pub mod as_btc {
         use core::fmt;
         use core::marker::PhantomData;
 
-        use serde::{de, Deserializer, Serialize, Serializer};
+        use serde::{de, Deserializer, Serializer};
 
         use crate::amount::{Denomination, SignedAmount};
 
@@ -373,7 +373,7 @@ pub mod as_btc {
             A: Into<SignedAmount> + Copy,
         {
             match a.map(Into::into).map(|amt| amt.to_float_in(Denomination::Bitcoin)) {
-                Some(a) => f64::serialize(&a, s),
+                Some(a) => s.serialize_some(&a),
                 None => s.serialize_none(),
             }
         }
@@ -534,7 +534,7 @@ pub mod as_str {
         use core::fmt;
         use core::marker::PhantomData;
 
-        use serde::{de, Deserializer, Serialize, Serializer};
+        use serde::{de, Deserializer, Serializer};
 
         use crate::amount::{Denomination, SignedAmount};
 
@@ -545,7 +545,7 @@ pub mod as_str {
             A: Into<SignedAmount> + Copy,
         {
             match a.map(Into::into).map(|amt| amt.to_string_in(Denomination::Bitcoin)) {
-                Some(a) => str::serialize(&a, s),
+                Some(a) => s.serialize_some(&a),
                 None => s.serialize_none(),
             }
         }

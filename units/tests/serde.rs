@@ -362,6 +362,10 @@ fn serde_amount_as_btc_opt() {
         let v = serde_json::to_string(s).unwrap();
         let w: T = serde_json::from_str(&v).unwrap();
         assert_eq!(w, *s);
+
+        let bytes = bincode::serialize(s).unwrap();
+        let round_trip: T = bincode::deserialize(&bytes).unwrap();
+        assert_eq!(round_trip, *s);
     }
 
     let t: T = serde_json::from_str("{\"amt\": 2.5, \"samt\": -2.5}").unwrap();
@@ -440,6 +444,10 @@ fn serde_amount_as_str_opt() {
         let v = serde_json::to_string(s).unwrap();
         let w: T = serde_json::from_str(&v).unwrap();
         assert_eq!(w, *s);
+
+        let bytes = bincode::serialize(s).unwrap();
+        let round_trip: T = bincode::deserialize(&bytes).unwrap();
+        assert_eq!(round_trip, *s);
     }
 
     let t: T =
