@@ -552,6 +552,17 @@ fn script_buf_collect() {
 }
 
 #[test]
+fn script_buf_collect_non_minimal_push() {
+    // `instructions()` does not enforce push minimality, so `OP_PUSHBYTES_1 0x05` parses fine and
+    // collecting must not rewrite it to `OP_5`. `Extend` picks its code path from the iterator's
+    // upper size bound, which for `Instructions` is the number of bytes left, so exercise both.
+    for hex in ["0105", "0105616161616161"] {
+        let script = ScriptBuf::from_hex_no_length_prefix(hex).unwrap();
+        assert_eq!(script.instructions().collect::<Result<ScriptBuf, _>>().unwrap(), script);
+    }
+}
+
+#[test]
 fn script_p2pk() {
     assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
         "21021aeaf2f8638a129a3156fbe7e5ef635226b0bafd495ff03afe2c843d7e3a4b51ac"
