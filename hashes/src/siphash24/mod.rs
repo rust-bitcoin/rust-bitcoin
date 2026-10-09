@@ -44,12 +44,16 @@ macro_rules! compress {
 /// Unsafe because: unchecked indexing at `i..i+size_of(int_ty)`.
 macro_rules! load_int_le {
     ($buf:expr, $i:expr, $int_ty:ident) => {{
-        debug_assert!($i + mem::size_of::<$int_ty>() <= $buf.len());
-        $int_ty::from_le_bytes(
-            $buf.get_unchecked($i..($i + mem::size_of::<$int_ty>()))
-                .try_into()
-                .expect("len is correctly computed using size_of"),
-        )
+        match ($buf, $i) {
+            (buf, i) => {
+                debug_assert!(i + mem::size_of::<$int_ty>() <= buf.len());
+                $int_ty::from_le_bytes(
+                    buf.get_unchecked(i..(i + mem::size_of::<$int_ty>()))
+                        .try_into()
+                        .expect("len is correctly computed using size_of"),
+                )
+            }
+        }
     }};
 }
 
