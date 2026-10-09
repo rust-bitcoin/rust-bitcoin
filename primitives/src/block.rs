@@ -2346,9 +2346,11 @@ mod tests {
         assert!(std::error::Error::source(&err_second).is_some());
     }
 
-    #[test]
     #[cfg(feature = "alloc")]
+    #[test]
+    #[cfg_attr(miri, ignore)]
     fn block_decoder_rejects_aggregate_weight_over_limit() {
+        // Allocating ~1 MB of script_sig data blows up Miri's runtime; see #6982.
         fn large_transaction(tag: u8) -> Transaction {
             Transaction {
                 version: crate::transaction::Version::ONE,
