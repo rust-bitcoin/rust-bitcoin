@@ -7,6 +7,7 @@ use hex::hex;
 use super::*;
 use crate::crypto::key::{FullPublicKey, LegacyPublicKey, XOnlyPublicKey};
 use crate::encoding::{decode_from_slice, encode_to_vec};
+use crate::opcodes::OpcodeExt as _;
 use crate::prelude::Vec;
 use crate::script::borrowed::{ScriptPubKeyExt as _, ScriptPubKeyExtPriv as _, TapScriptExt as _};
 use crate::script::owned::ScriptSigBufExt as _;
@@ -1033,4 +1034,90 @@ fn instruction_indices_nth_extended() {
     // skips 2nd, returns 3rd
     let pos_skip = script.instruction_indices().skip(2).next().unwrap().unwrap().0;
     assert_eq!(pos_skip, 3, "skip(2).next() returned wrong position");
+}
+
+/// The `OP_SUCCESSx` opcodes: all those classified as such in a tapscript.
+fn op_success_opcodes() -> Vec<u8> {
+    (0..=255u8)
+        .filter(|&b| {
+            Opcode::from(b).classify(opcodes::ClassifyContext::TapScript)
+                == opcodes::Class::SuccessOp
+        })
+        .collect()
+}
+
+fn is_immediately_valid(bytes: &[u8]) -> Result<bool, Error> {
+    TapScript::from_bytes(bytes).is_immediately_valid()
+}
+
+// The cases below follow the "opsuccess" spenders in Bitcoin Core's `feature_taproot.py`.
+#[test]
+fn tapscript_is_immediately_valid_every_opcode() {
+    let ops = op_success_opcodes();
+    assert_eq!(ops.len(), 87);
+
+    for op in ops {
+        // Bare, and in an unexecuted branch.
+        assert_eq!(is_immediately_valid(&[op]), Ok(true), "bare {op:#04x}");
+        assert_eq!(
+            is_immediately_valid(&[OP_PUSHBYTES_0.to_u8(), OP_IF.to_u8(), op, OP_ENDIF.to_u8()]),
+            Ok(true),
+            "unexecuted if {op:#04x}"
+        );
+        // After a failing OP_RETURN.
+        assert_eq!(is_immediately_valid(&[OP_RETURN.to_u8(), op]), Ok(true), "return {op:#04x}");
+        // A truncated push after it is ignored.
+        assert_eq!(
+            is_immediately_valid(&[op, OP_PUSHDATA1.to_u8()]),
+            Ok(true),
+            "undecodable {op:#04x}"
+        );
+        // A truncated push before it is an error: the push swallows the opcode.
+        assert_eq!(
+            is_immediately_valid(&[OP_PUSHDATA1.to_u8(), OP_2.to_u8(), op]),
+            Err(Error::EarlyEndOfScript),
+            "undecodable bypassed {op:#04x}"
+        );
+        // An oversized push is not checked by the scan.
+        let mut big = vec![OP_PUSHDATA2.to_u8(), 0x09, 0x02];
+        big.extend([0u8; 521]);
+        big.extend([OP_DROP.to_u8(), op]);
+        assert_eq!(is_immediately_valid(&big), Ok(true), "bigpush {op:#04x}");
+        // A deep stack is not checked by the scan.
+        let mut many = vec![OP_PUSHBYTES_0.to_u8(); 1001];
+        many.push(op);
+        assert_eq!(is_immediately_valid(&many), Ok(true), "1001push {op:#04x}");
+    }
+}
+
+#[test]
+fn tapscript_is_immediately_valid_other_opcodes() {
+    let ops = op_success_opcodes();
+    for b in 0..=255u8 {
+        if ops.contains(&b) {
+            continue;
+        }
+        let mut bytes = vec![OP_RETURN.to_u8(), b];
+        bytes.extend([OP_NOP.to_u8(); 75]);
+        let res = is_immediately_valid(&bytes);
+        // OP_PUSHDATA1/2/4 read a length from the NOPs and run past the end.
+        let runs_past_end = matches!(b, 0x4c..=0x4e);
+        if runs_past_end {
+            assert_eq!(res, Err(Error::EarlyEndOfScript), "opcode {b:#04x}");
+        } else {
+            assert_eq!(res, Ok(false), "opcode {b:#04x}");
+        }
+    }
+}
+
+#[test]
+fn tapscript_is_immediately_valid_in_push_data() {
+    // 0x50 as push data is not an opcode.
+    assert_eq!(is_immediately_valid(&[OP_PUSHBYTES_1.to_u8(), 0x50]), Ok(false));
+    assert_eq!(is_immediately_valid(&[OP_PUSHDATA1.to_u8(), 1, 0x50]), Ok(false));
+    // Non-minimal pushes are accepted.
+    assert_eq!(is_immediately_valid(&[OP_PUSHBYTES_1.to_u8(), 0x01]), Ok(false));
+    // An OP_SUCCESSx after the push counts.
+    assert_eq!(is_immediately_valid(&[OP_PUSHBYTES_1.to_u8(), 0x50, 0x50]), Ok(true));
+    assert_eq!(is_immediately_valid(&[]), Ok(false));
 }

@@ -190,6 +190,35 @@ crate::internal_macros::define_extension_trait! {
             TapLeafHash::from_script(self, LeafVersion::TapScript)
         }
 
+        /// Checks whether this tapscript is valid without being executed, by scanning it for
+        /// `OP_SUCCESSx` as Bitcoin Core does.
+        ///
+        /// Under leaf version `0xc0`, a script is immediately valid if it holds a reachable
+        /// `OP_SUCCESSx`, one that parsing the script meets as an opcode rather than as push data.
+        /// Consensus then accepts it whatever else it holds, even a failing `OP_VERIFY` or
+        /// `OP_RETURN` before it. Check a script supplied by a counterparty before committing to a
+        /// leaf built on it.
+        ///
+        /// Push data is skipped, pushes need not be minimal, and nothing after the first
+        /// `OP_SUCCESSx` is read. `Ok(false)` means that only execution can tell whether the script
+        /// is valid.
+        ///
+        /// # Errors
+        ///
+        /// [`script::Error::EarlyEndOfScript`] if a push runs past the end of the script before any
+        /// `OP_SUCCESSx`. The script is then invalid: Bitcoin Core's scan stops there with
+        /// `SCRIPT_ERR_BAD_OPCODE`, before any `OP_SUCCESSx` could make it valid.
+        fn is_immediately_valid(&self) -> Result<bool, script::Error> {
+            for instruction in self.instructions() {
+                if let Instruction::Op(op) = instruction? {
+                    if op.classify(opcodes::ClassifyContext::TapScript) == opcodes::Class::SuccessOp {
+                        return Ok(true);
+                    }
+                }
+            }
+            Ok(false)
+        }
+
         /// Computes P2TR output with a given internal key and a single script spending path equal to
         /// the current script, assuming that the script is a Tapscript.
         fn to_p2tr<K: Into<UntweakedPublicKey>>(
