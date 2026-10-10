@@ -181,17 +181,15 @@ pub mod serde_details {
         type Value = [u8; N];
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("a bytestring")
+            write!(formatter, "a sequence of {} bytes", N)
         }
 
         fn visit_bytes<E>(self, v: &[u8]) -> core::result::Result<Self::Value, E>
         where
             E: de::Error,
         {
-            let bytes = <[u8; N]>::try_from(v).map_err(|_| {
-                // from_slice only errors on incorrect length
-                E::invalid_length(v.len(), &stringify!(N))
-            })?;
+            // `try_from` only errors on incorrect length.
+            let bytes = <[u8; N]>::try_from(v).map_err(|_| E::invalid_length(v.len(), &self))?;
 
             Ok(bytes)
         }
@@ -228,6 +226,16 @@ mod tests {
         let ser = serde_json::to_string(&tc).unwrap();
         let got = serde_json::from_str::<Txid>(&ser).unwrap();
         assert_eq!(got, tc);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_non_human_readable_wrong_length() {
+        use alloc::string::ToString as _;
+
+        let ser = bincode::serialize(&[0u8; 31].as_slice()).unwrap();
+        let err = bincode::deserialize::<Txid>(&ser).unwrap_err();
+        assert!(err.to_string().contains(" 32 "));
     }
 
     #[test]
