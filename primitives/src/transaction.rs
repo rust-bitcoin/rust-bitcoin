@@ -359,7 +359,6 @@ pub(crate) trait TxIdentifier: AsRef<[u8]> {}
 impl TxIdentifier for Txid {}
 impl TxIdentifier for Wtxid {}
 
-// Duplicated in `bitcoin`.
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
 #[cfg(feature = "alloc")]
 const SEGWIT_MARKER: u8 = 0x00;
