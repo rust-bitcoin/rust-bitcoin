@@ -339,6 +339,13 @@ impl<T> Encode for Script<T> {
     fn encoder(&self) -> Self::Encoder<'_> {
         ScriptEncoder::new(PrefixedBytesEncoder::new(self.as_bytes()))
     }
+
+    const MIN_ENCODED_LEN: usize = 1;
+
+    #[inline]
+    fn encoded_tail_len<'e>(&'e self) -> usize where Self::Encoder<'e>: encoding::ExactSizeEncoder {
+        PrefixedBytesEncoder::encoded_tail_len(self.len())
+    }
 }
 
 encoding::encoder_newtype_exact! {
