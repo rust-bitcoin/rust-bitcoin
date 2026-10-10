@@ -27,6 +27,7 @@ use core::fmt;
 
 #[cfg(feature = "alloc")]
 use super::ParseAmountError;
+use crate::{Amount, SignedAmount};
 
 #[cfg(feature = "alloc")]
 struct DisplayFullError(ParseAmountError);
@@ -53,6 +54,28 @@ impl fmt::Display for DisplayFullError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
+/// Amount types accepted by [`as_sat`], [`as_btc`] and [`as_str`].
+pub trait AmountOps: TryFrom<SignedAmount> + Into<SignedAmount> + Copy + sealed::AmountOps {}
+
+impl AmountOps for Amount {}
+impl AmountOps for SignedAmount {}
+
+mod sealed {
+    use crate::{Amount, SignedAmount};
+
+    pub trait AmountOps {
+        const IS_SIGNED: bool;
+    }
+
+    impl AmountOps for Amount {
+        const IS_SIGNED: bool = false;
+    }
+
+    impl AmountOps for SignedAmount {
+        const IS_SIGNED: bool = true;
+    }
+}
+
 pub mod as_sat {
     //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as real numbers denominated in satoshi.
     //!
@@ -66,23 +89,16 @@ pub mod as_sat {
 
     use serde::{Deserializer, Serialize, Serializer};
 
+    use super::AmountOps;
     use crate::SignedAmount;
-
-    fn is_signed<T: TryFrom<SignedAmount>>() -> bool { T::try_from(-SignedAmount::ONE_SAT).is_ok() }
-
-    #[test]
-    fn is_signed_correct() {
-        assert!(!is_signed::<crate::Amount>());
-        assert!(is_signed::<crate::SignedAmount>());
-    }
 
     #[inline]
     pub fn serialize<A, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error>
     where
-        A: Into<SignedAmount> + TryFrom<SignedAmount> + Copy,
+        A: AmountOps,
     {
         let sat = (*a).into().to_sat();
-        if is_signed::<A>() {
+        if A::IS_SIGNED {
             i64::serialize(&sat, s)
         } else {
             u64::serialize(&(sat as u64), s)
@@ -92,11 +108,10 @@ pub mod as_sat {
     #[inline]
     pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<A, D::Error>
     where
-        A: TryFrom<SignedAmount>,
-        <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+        A: AmountOps,
     {
-        fn expecting<T: TryFrom<SignedAmount>>() -> &'static str {
-            if is_signed::<T>() {
+        fn expecting<T: AmountOps>() -> &'static str {
+            if T::IS_SIGNED {
                 "an integer between -2100000000000000 and 2100000000000000 inclusive"
             } else {
                 "an integer between 0 and 2100000000000000 inclusive"
@@ -108,7 +123,7 @@ pub mod as_sat {
 
         impl<'de, T> serde::de::Visitor<'de> for Visitor<T>
         where
-            T: TryFrom<SignedAmount>,
+            T: AmountOps,
         {
             type Value = T;
 
@@ -119,7 +134,7 @@ pub mod as_sat {
             fn visit_i64<E: serde::de::Error>(self, value: i64) -> Result<Self::Value, E> {
                 fn range_error<T, E1, E2: serde::de::Error>(value: i64) -> impl FnOnce(E1) -> E2
                 where
-                    T: TryFrom<SignedAmount>,
+                    T: AmountOps,
                 {
                     move |_| {
                         let unexpected = serde::de::Unexpected::Signed(value);
@@ -136,7 +151,7 @@ pub mod as_sat {
             fn visit_u64<E: serde::de::Error>(self, value: u64) -> Result<Self::Value, E> {
                 fn range_error<T, E1, E2: serde::de::Error>(value: u64) -> impl FnOnce(E1) -> E2
                 where
-                    T: TryFrom<SignedAmount>,
+                    T: AmountOps,
                 {
                     move |_| {
                         let unexpected = serde::de::Unexpected::Unsigned(value);
@@ -151,7 +166,7 @@ pub mod as_sat {
                     .map_err(range_error::<T, _, _>(value))
             }
         }
-        if is_signed::<A>() {
+        if A::IS_SIGNED {
             d.deserialize_i64(Visitor(PhantomData))
         } else {
             d.deserialize_u64(Visitor(PhantomData))
@@ -169,17 +184,17 @@ pub mod as_sat {
 
         use serde::{de, Deserializer, Serialize, Serializer};
 
-        use super::is_signed;
+        use crate::amount::serde::AmountOps;
         use crate::SignedAmount;
 
         #[inline]
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<A, S: Serializer>(a: &Option<A>, s: S) -> Result<S::Ok, S::Error>
         where
-            A: Into<SignedAmount> + TryFrom<SignedAmount> + Copy,
+            A: AmountOps,
         {
             let sat = a.map(Into::into).map(SignedAmount::to_sat);
-            if is_signed::<A>() {
+            if A::IS_SIGNED {
                 sat.serialize(s)
             } else {
                 sat.map(|sat| sat as u64).serialize(s)
@@ -188,11 +203,10 @@ pub mod as_sat {
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Option<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>,
-            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+            A: AmountOps,
         {
-            fn expecting<T: TryFrom<SignedAmount>>() -> &'static str {
-                if is_signed::<T>() {
+            fn expecting<T: AmountOps>() -> &'static str {
+                if T::IS_SIGNED {
                     "an optional integer between -2100000000000000 and 2100000000000000 inclusive"
                 } else {
                     "an optional integer between 0 and 2100000000000000 inclusive"
@@ -203,8 +217,7 @@ pub mod as_sat {
 
             impl<'de, X> de::Visitor<'de> for VisitOptAmt<X>
             where
-                X: TryFrom<SignedAmount>,
-                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+                X: AmountOps,
             {
                 type Value = Option<X>;
 
@@ -249,16 +262,16 @@ pub mod as_sat {
         use serde::de::{self, SeqAccess};
         use serde::{Deserialize, Deserializer, Serializer};
 
-        use super::is_signed;
+        use crate::amount::serde::AmountOps;
         use crate::SignedAmount;
 
         #[inline]
         pub fn serialize<A, S: Serializer>(a: &[A], s: S) -> Result<S::Ok, S::Error>
         where
-            A: Into<SignedAmount> + TryFrom<SignedAmount> + Copy,
+            A: AmountOps,
         {
             let sats = a.iter().map(|&amount| amount.into()).map(SignedAmount::to_sat);
-            if is_signed::<A>() {
+            if A::IS_SIGNED {
                 s.collect_seq(sats)
             } else {
                 s.collect_seq(sats.map(|sat| sat as u64))
@@ -267,11 +280,10 @@ pub mod as_sat {
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Vec<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>,
-            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+            A: AmountOps,
         {
-            fn expecting<T: TryFrom<SignedAmount>>() -> &'static str {
-                if is_signed::<T>() {
+            fn expecting<T: AmountOps>() -> &'static str {
+                if T::IS_SIGNED {
                     "an sequence of integers between -2100000000000000 and 2100000000000000 inclusive"
                 } else {
                     "an sequence of integers between 0 and 2100000000000000 inclusive"
@@ -282,8 +294,7 @@ pub mod as_sat {
 
             impl<'de, X> de::Visitor<'de> for VisitVec<X>
             where
-                X: TryFrom<SignedAmount>,
-                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+                X: AmountOps,
             {
                 type Value = Vec<X>;
 
@@ -297,9 +308,7 @@ pub mod as_sat {
                 {
                     #[derive(Deserialize)]
                     #[serde(transparent)]
-                    struct Wrapper<T: TryFrom<SignedAmount>>(#[serde(with = "super")] T)
-                    where
-                        T::Error: core::fmt::Display;
+                    struct Wrapper<T: AmountOps>(#[serde(with = "super")] T);
 
                     let mut out = Vec::with_capacity(internals::serde::cautious_size_hint::<X>(
                         seq.size_hint(),
@@ -327,13 +336,13 @@ pub mod as_btc {
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use super::DisplayFullError;
+    use super::{AmountOps, DisplayFullError};
     use crate::amount::{Denomination, SignedAmount};
 
     #[inline]
     pub fn serialize<A, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error>
     where
-        A: Into<SignedAmount> + Copy,
+        A: AmountOps,
     {
         let amount: SignedAmount = (*a).into();
         f64::serialize(&amount.to_float_in(Denomination::Bitcoin), s)
@@ -342,8 +351,8 @@ pub mod as_btc {
     #[inline]
     pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<A, D::Error>
     where
-        A: TryFrom<SignedAmount>,
-        <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+        A: AmountOps,
+        A::Error: core::fmt::Display,
     {
         let btc = f64::deserialize(d)?;
         let amount = SignedAmount::from_btc(btc)
@@ -364,13 +373,14 @@ pub mod as_btc {
 
         use serde::{de, Deserializer, Serialize, Serializer};
 
-        use crate::amount::{Denomination, SignedAmount};
+        use crate::amount::serde::AmountOps;
+        use crate::amount::Denomination;
 
         #[inline]
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<A, S: Serializer>(a: &Option<A>, s: S) -> Result<S::Ok, S::Error>
         where
-            A: Into<SignedAmount> + Copy,
+            A: AmountOps,
         {
             match a.map(Into::into).map(|amt| amt.to_float_in(Denomination::Bitcoin)) {
                 Some(a) => f64::serialize(&a, s),
@@ -380,15 +390,15 @@ pub mod as_btc {
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Option<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>,
-            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+            A: AmountOps,
+            A::Error: core::fmt::Display,
         {
             struct VisitOptAmt<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitOptAmt<X>
             where
-                X: TryFrom<SignedAmount>,
-                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+                X: AmountOps,
+                X::Error: core::fmt::Display,
             {
                 type Value = Option<X>;
 
@@ -432,12 +442,13 @@ pub mod as_btc {
         use serde::de::{self, SeqAccess};
         use serde::{Deserialize, Deserializer, Serializer};
 
+        use crate::amount::serde::AmountOps;
         use crate::amount::{Denomination, SignedAmount};
 
         #[inline]
         pub fn serialize<A, S: Serializer>(a: &[A], s: S) -> Result<S::Ok, S::Error>
         where
-            A: Into<SignedAmount> + Copy,
+            A: AmountOps,
         {
             s.collect_seq(a.iter().map(|amount| {
                 let signed_amount: SignedAmount = (*amount).into();
@@ -447,15 +458,15 @@ pub mod as_btc {
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Vec<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>,
-            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+            A: AmountOps,
+            A::Error: core::fmt::Display,
         {
             struct VisitVec<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitVec<X>
             where
-                X: TryFrom<SignedAmount>,
-                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+                X: AmountOps,
+                X::Error: core::fmt::Display,
             {
                 type Value = Vec<X>;
 
@@ -499,13 +510,13 @@ pub mod as_str {
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use super::DisplayFullError;
+    use super::{AmountOps, DisplayFullError};
     use crate::amount::{Denomination, SignedAmount};
 
     #[inline]
     pub fn serialize<A, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error>
     where
-        A: Into<SignedAmount> + Copy,
+        A: AmountOps,
     {
         let amount: SignedAmount = (*a).into();
         str::serialize(&amount.to_string_in(Denomination::Bitcoin), s)
@@ -514,8 +525,8 @@ pub mod as_str {
     #[inline]
     pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<A, D::Error>
     where
-        A: TryFrom<SignedAmount>,
-        <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+        A: AmountOps,
+        A::Error: core::fmt::Display,
     {
         let btc = String::deserialize(d)?;
         let amount = SignedAmount::from_str_in(&btc, Denomination::Bitcoin)
@@ -536,13 +547,14 @@ pub mod as_str {
 
         use serde::{de, Deserializer, Serialize, Serializer};
 
-        use crate::amount::{Denomination, SignedAmount};
+        use crate::amount::serde::AmountOps;
+        use crate::amount::Denomination;
 
         #[inline]
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<A, S: Serializer>(a: &Option<A>, s: S) -> Result<S::Ok, S::Error>
         where
-            A: Into<SignedAmount> + Copy,
+            A: AmountOps,
         {
             match a.map(Into::into).map(|amt| amt.to_string_in(Denomination::Bitcoin)) {
                 Some(a) => str::serialize(&a, s),
@@ -552,15 +564,15 @@ pub mod as_str {
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Option<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>,
-            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+            A: AmountOps,
+            A::Error: core::fmt::Display,
         {
             struct VisitOptAmt<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitOptAmt<X>
             where
-                X: TryFrom<SignedAmount>,
-                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+                X: AmountOps,
+                X::Error: core::fmt::Display,
             {
                 type Value = Option<X>;
 
@@ -604,12 +616,13 @@ pub mod as_str {
         use serde::de::{self, SeqAccess};
         use serde::{Deserialize, Deserializer, Serializer};
 
+        use crate::amount::serde::AmountOps;
         use crate::amount::{Denomination, SignedAmount};
 
         #[inline]
         pub fn serialize<A, S: Serializer>(a: &[A], s: S) -> Result<S::Ok, S::Error>
         where
-            A: Into<SignedAmount> + Copy,
+            A: AmountOps,
         {
             s.collect_seq(a.iter().map(|amount| {
                 let signed_amount: SignedAmount = (*amount).into();
@@ -619,15 +632,15 @@ pub mod as_str {
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Vec<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>,
-            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+            A: AmountOps,
+            A::Error: core::fmt::Display,
         {
             struct VisitVec<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitVec<X>
             where
-                X: TryFrom<SignedAmount>,
-                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
+                X: AmountOps,
+                X::Error: core::fmt::Display,
             {
                 type Value = Vec<X>;
 
