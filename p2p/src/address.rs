@@ -1360,6 +1360,13 @@ mod test {
     }
 
     #[test]
+    fn addrv2message_unknown_empty_address_roundtrip() {
+        let raw = hex!("010a0000000000000000");
+        let addresses: AddrV2Payload = encoding::decode_from_slice(&raw).unwrap();
+        assert_eq!(encoding::encode_to_vec(&addresses), raw);
+    }
+
+    #[test]
     fn addrv2_to_ipaddr_ipv4() {
         let addr = AddrV2::Ipv4(Ipv4Addr::new(192, 168, 1, 1));
         let ip_addr = IpAddr::try_from(addr).unwrap();
