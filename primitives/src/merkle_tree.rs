@@ -223,8 +223,7 @@ mod tests {
     fn tx_merkle_node_single_leaf() {
         let (leaf, node) = make_leaf_node(1);
         let root = TxMerkleNode::calculate_root([leaf]);
-        assert!(root.is_some(), "Root should exist for a single leaf");
-        assert_eq!(root.unwrap(), node, "Root should equal the leaf node");
+        assert_eq!(root, Some(node));
     }
 
     #[test]
@@ -234,11 +233,7 @@ mod tests {
         let combined = node1.combine(&node2);
 
         let root = TxMerkleNode::calculate_root([leaf1, leaf2]);
-        assert_eq!(
-            root.unwrap(),
-            combined,
-            "Root of two leaves should equal combine of the two leaf nodes"
-        );
+        assert_eq!(root, Some(combined));
     }
 
     #[test]
@@ -246,15 +241,12 @@ mod tests {
         let leaf = Txid::from_byte_array([3; 32]);
         // Duplicate transaction list should be rejected (CVE 2012‑2459).
         let root = TxMerkleNode::calculate_root([leaf, leaf]);
-        assert!(root.is_none(), "Duplicate leaves should return None");
+        assert_eq!(root, None);
     }
 
     #[test]
     fn tx_merkle_node_empty() {
-        assert!(
-            TxMerkleNode::calculate_root([].into_iter()).is_none(),
-            "Empty iterator should return None"
-        );
+        assert_eq!(TxMerkleNode::calculate_root([]), None);
     }
 
     #[test]
@@ -330,75 +322,17 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
-    fn merkle_root_batched() {
-        use alloc::vec::Vec;
-
-        // copy of `MerkleNode::calculate_root` (stack-based) implementation to test against the new batched approach
-        fn stack_based_root<I: Iterator<Item = Txid>>(iter: I) -> Option<TxMerkleNode> {
-            let mut stack = Vec::<(usize, TxMerkleNode)>::with_capacity(32);
-
-            for (mut n, leaf) in iter.enumerate() {
-                stack.push((0, TxMerkleNode::from_leaf(leaf)));
-
-                while n & 1 == 1 {
-                    let right = stack.pop().unwrap();
-                    let left = stack.pop().unwrap();
-                    if left.1 == right.1 {
-                        return None;
-                    }
-                    debug_assert_eq!(left.0, right.0);
-                    stack.push((left.0 + 1, left.1.combine(&right.1)));
-                    n >>= 1;
-                }
-            }
-
-            while stack.len() > 1 {
-                let mut right = stack.pop().unwrap();
-                let left = stack.pop().unwrap();
-                while right.0 != left.0 {
-                    assert!(right.0 < left.0);
-                    right = (right.0 + 1, right.1.combine(&right.1)); // combine with self
-                }
-                stack.push((left.0 + 1, left.1.combine(&right.1)));
-            }
-
-            stack.pop().map(|(_, h)| h)
-        }
-
-        fn make_leaves(count: usize) -> Vec<Txid> {
-            (0..count as u32)
-                .map(|i| {
-                    let mut buf = [0u8; 32];
-                    buf[..4].copy_from_slice(&i.to_le_bytes());
-                    Txid::from_byte_array(buf)
-                })
-                .collect()
-        }
-
-        // test odd and even count
-        for size in [32, 33] {
-            let leaves = make_leaves(size);
-            let got = TxMerkleNode::calculate_root(leaves.iter().copied());
-            let expected = stack_based_root(leaves.iter().copied());
-            assert_eq!(got, expected);
-        }
-    }
-
-    #[test]
     fn witness_merkle_node_single_leaf() {
         let leaf = Wtxid::from_byte_array([1; 32]);
         let root = WitnessMerkleNode::calculate_root([leaf]);
-        assert!(root.is_some(), "Root should exist for a single witness leaf");
-        let node = WitnessMerkleNode::from_leaf(leaf);
-        assert_eq!(root.unwrap(), node, "Root should equal the leaf node");
+        assert_eq!(root, Some(WitnessMerkleNode::from_leaf(leaf)));
     }
 
     #[test]
     fn witness_merkle_node_duplicate_leaves() {
         let leaf = Wtxid::from_byte_array([2; 32]);
         let root = WitnessMerkleNode::calculate_root([leaf, leaf]);
-        assert!(root.is_none(), "Duplicate witness leaves should return None");
+        assert_eq!(root, None);
     }
 
     // The tests below exercise the default trait `MerkleNode::calculate_root`
@@ -465,6 +399,18 @@ mod tests {
 
     #[test]
     fn calculate_root_seven_leaves_unbalanced() { assert_roots_match(&[1, 2, 3, 4, 5, 6, 7]); }
+
+    #[test]
+    fn calculate_root_thirty_two_leaves() {
+        let leaves: [u8; 32] = core::array::from_fn(|i| i as u8);
+        assert_roots_match(&leaves);
+    }
+
+    #[test]
+    fn calculate_root_thirty_three_leaves_unbalanced() {
+        let leaves: [u8; 33] = core::array::from_fn(|i| i as u8);
+        assert_roots_match(&leaves);
+    }
 
     #[test]
     fn calculate_root_correct_root_value() {

@@ -211,7 +211,6 @@ mod tests {
     #[cfg(feature = "serde")]
     fn dummy_test_case() -> Txid { DUMMY_TXID_HEX_STR.parse::<Txid>().unwrap() }
 
-    #[cfg(feature = "alloc")]
     fn ab_test_case() -> (Txid, &'static str) {
         let mut a = [0xab; 32];
         a[0] = 0xff; // Just so we can see which way the array is printing.
@@ -239,9 +238,8 @@ mod tests {
         assert_eq!(got, tc);
     }
 
+    // Debug printing works with and without the "hex" feature.
     #[test]
-    // This is solely to test that we can debug print WITH and WITHOUT "hex" so its ok to require "alloc".
-    #[cfg(feature = "alloc")]
     fn debug() {
         let (tc, want) = ab_test_case();
         let got = alloc::format!("{:?}", tc);
@@ -264,7 +262,7 @@ mod tests {
     }
 
     macro_rules! byte_array_roundtrip_test {
-        ($($name:ident, $ty:ident, $len:expr, $byte:expr $(, $check:ident)?);* $(;)?) => {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr);* $(;)?) => {
             $(
                 #[test]
                 fn $name() {
@@ -272,10 +270,7 @@ mod tests {
                     let value = $ty::from_byte_array(bytes);
 
                     assert_eq!(value.to_byte_array(), bytes);
-                    $(
-                        let _ = stringify!($check);
-                        assert_eq!(value.as_byte_array(), &bytes);
-                    )?
+                    assert_eq!(value.as_byte_array(), &bytes);
                 }
             )*
         }
@@ -284,14 +279,14 @@ mod tests {
     #[rustfmt::skip]
     byte_array_roundtrip_test! {
         txid_byte_array_roundtrip, Txid, 32, 0x12;
-        ntxid_byte_array_roundtrip, Ntxid, 32, 0x13, as_byte_array;
-        wtxid_byte_array_roundtrip, Wtxid, 32, 0x14, as_byte_array;
+        ntxid_byte_array_roundtrip, Ntxid, 32, 0x13;
+        wtxid_byte_array_roundtrip, Wtxid, 32, 0x14;
         block_hash_byte_array_roundtrip, BlockHash, 32, 0x15;
         tx_merkle_node_byte_array_roundtrip, TxMerkleNode, 32, 0x16;
         witness_merkle_node_byte_array_roundtrip, WitnessMerkleNode, 32, 0x17;
-        witness_commitment_byte_array_roundtrip, WitnessCommitment, 32, 0x18, as_byte_array;
-        script_hash_byte_array_roundtrip, ScriptHash, 20, 0x19, as_byte_array;
-        wscript_hash_byte_array_roundtrip, WScriptHash, 32, 0x1a, as_byte_array;
+        witness_commitment_byte_array_roundtrip, WitnessCommitment, 32, 0x18;
+        script_hash_byte_array_roundtrip, ScriptHash, 20, 0x19;
+        wscript_hash_byte_array_roundtrip, WScriptHash, 32, 0x1a;
     }
 
     macro_rules! hex_roundtrip_test_display {
@@ -354,7 +349,9 @@ mod tests {
 
     #[rustfmt::skip]
     hex_roundtrip_test_lower_hex! {
+        txid_lower_hex_roundtrip, Txid, 32, 0x34;
         ntxid_lower_hex_roundtrip, Ntxid, 32, 0x1c;
+        wtxid_lower_hex_roundtrip, Wtxid, 32, 0x35;
         block_hash_lower_hex_roundtrip, BlockHash, 32, 0x1d;
         tx_merkle_node_lower_hex_roundtrip, TxMerkleNode, 32, 0x1e;
         witness_merkle_node_lower_hex_roundtrip, WitnessMerkleNode, 32, 0x1f;
