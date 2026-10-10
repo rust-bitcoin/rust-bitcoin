@@ -17,10 +17,11 @@ use hashes::{sha256d, HashEngine};
 use internals::array_vec::ArrayVec;
 
 #[doc(no_inline)]
-pub use self::error::TxMerkleNodeDecoderError;
+pub use self::error::{TxMerkleNodeDecoderError, WitnessMerkleNodeDecoderError};
 #[doc(inline)]
 pub use crate::hash_types::{
     TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeEncoder, WitnessMerkleNode,
+    WitnessMerkleNodeDecoder, WitnessMerkleNodeEncoder,
 };
 use crate::hash_types::{Txid, Wtxid};
 use crate::transaction::TxIdentifier;
@@ -202,7 +203,7 @@ impl MerkleNode for WitnessMerkleNode {
 /// Error types for the merkle tree module.
 pub mod error {
     #[doc(inline)]
-    pub use crate::hash_types::TxMerkleNodeDecoderError;
+    pub use crate::hash_types::{TxMerkleNodeDecoderError, WitnessMerkleNodeDecoderError};
 }
 
 #[cfg(test)]

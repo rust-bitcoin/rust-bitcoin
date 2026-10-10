@@ -16,12 +16,12 @@
 
 #[rustfmt::skip]
 #[doc(inline)]
-pub use primitives::merkle_tree::{TxMerkleNodeDecoder, TxMerkleNodeEncoder, TxMerkleNode, WitnessMerkleNode};
+pub use primitives::merkle_tree::{TxMerkleNodeDecoder, TxMerkleNodeEncoder, TxMerkleNode, WitnessMerkleNode, WitnessMerkleNodeDecoder, WitnessMerkleNodeEncoder};
 #[doc(no_inline)]
-pub use self::error::TxMerkleNodeDecoderError;
+pub use self::error::{TxMerkleNodeDecoderError, WitnessMerkleNodeDecoderError};
 
 /// Error types for the merkle tree module.
 pub mod error {
     #[doc(inline)]
-    pub use primitives::merkle_tree::TxMerkleNodeDecoderError;
+    pub use primitives::merkle_tree::{TxMerkleNodeDecoderError, WitnessMerkleNodeDecoderError};
 }

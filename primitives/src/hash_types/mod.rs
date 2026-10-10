@@ -24,7 +24,7 @@ pub use self::{
     txid::{Txid},
     wtxid::Wtxid,
     witness_commitment::WitnessCommitment,
-    witness_merkle_node::WitnessMerkleNode,
+    witness_merkle_node::{WitnessMerkleNode, WitnessMerkleNodeEncoder, WitnessMerkleNodeDecoder, WitnessMerkleNodeDecoderError},
     witness_script_hash::WScriptHash,
 };
 #[cfg(feature = "alloc")]
