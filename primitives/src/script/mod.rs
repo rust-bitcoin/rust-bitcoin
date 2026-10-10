@@ -104,7 +104,7 @@ pub type WitnessScript = Script<WitnessScriptTag>;
 
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
-/// The maximum allowed redeem script size of the witness script.
+/// The maximum allowed size of a witness script.
 pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
 
 /// The P2A program which is given by 0x4e73.

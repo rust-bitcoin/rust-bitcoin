@@ -38,18 +38,18 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
     /// The hash (TXID or WTXID) of a transaction in the tree.
     type Leaf: TxIdentifier;
 
-    /// Convert a hash to a leaf node of the tree.
+    /// Converts a hash to a leaf node of the tree.
     fn from_leaf(leaf: Self::Leaf) -> Self;
-    /// Combine two nodes to get a single node. The final node of a tree is called the "root".
+    /// Combines two nodes to get a single node. The final node of a tree is called the "root".
     #[must_use]
     fn combine(&self, other: &Self) -> Self;
 
-    /// Given an iterator of leaves, compute the Merkle root.
+    /// Computes the Merkle root from an iterator of leaves.
     ///
     /// Returns [`None`] if the iterator was empty, or if the transaction list contains
-    /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
+    /// consecutive duplicates which would trigger CVE-2012-2459. Blocks with duplicate
     /// transactions will always be invalid, so there is no harm in us refusing to
-    /// compute their merkle roots.
+    /// compute their Merkle roots.
     ///
     /// Also returns [`None`] if the `alloc` feature is disabled and `iter` has more than
     /// 32,767 transactions.
@@ -78,7 +78,7 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
                     if left.1 == right.1 {
                         // Reject duplicate trees since they are guaranteed-invalid (Bitcoin does
                         // not allow duplicate transactions in block) but can be used to confuse
-                        // nodes about legitimate blocks. See CVE 2012-2459 and the block comment
+                        // nodes about legitimate blocks. See CVE-2012-2459 and the block comment
                         // below.
                         return None;
                     }
@@ -90,7 +90,7 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
             // ...then, deal with incomplete trees. Bitcoin does a weird thing in
             // which it doubles-up nodes of the tree to fill out the tree, rather
             // than treating incomplete branches specially. This makes this tree
-            // construction vulnerable to collisions (see CVE 2012-2459).
+            // construction vulnerable to collisions (see CVE-2012-2459).
             //
             // (It is also vulnerable to collisions because it does not distinguish
             // between internal nodes and transactions, but collisions of this
@@ -123,7 +123,7 @@ fn calculate_root_batched(mut nodes: Vec<[u8; 32]>) -> Option<[u8; 32]> {
     }
 
     while nodes.len() > 1 {
-        // check consecutive duplicates which would trigger CVE 2012-245
+        // check consecutive duplicates which would trigger CVE-2012-2459
         for pair in nodes.chunks_exact(2) {
             if pair[0] == pair[1] {
                 return None;
@@ -199,7 +199,7 @@ impl MerkleNode for WitnessMerkleNode {
     }
 }
 
-/// Error types for the merkle tree module.
+/// Error types for the Merkle tree module.
 pub mod error {
     #[doc(inline)]
     pub use crate::hash_types::TxMerkleNodeDecoderError;
@@ -244,7 +244,7 @@ mod tests {
     #[test]
     fn tx_merkle_node_duplicate_leaves() {
         let leaf = Txid::from_byte_array([3; 32]);
-        // Duplicate transaction list should be rejected (CVE 2012‑2459).
+        // Duplicate transaction list should be rejected (CVE-2012-2459).
         let root = TxMerkleNode::calculate_root([leaf, leaf]);
         assert!(root.is_none(), "Duplicate leaves should return None");
     }

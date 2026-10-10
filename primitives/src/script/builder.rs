@@ -6,7 +6,7 @@ use super::{PushBytes, Script, ScriptBuf};
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
 
-/// An Object which can be used to construct a script piece by piece.
+/// An object which can be used to construct a script piece by piece.
 ///
 /// # Panics
 ///
@@ -33,7 +33,7 @@ use crate::prelude::Vec;
 pub struct Builder<T>(ScriptBuf<T>);
 
 impl<T> Builder<T> {
-    /// Constructs a new empty script.
+    /// Constructs a new builder for an empty script.
     #[inline]
     pub const fn new() -> Self { Self(ScriptBuf::new()) }
 
@@ -75,7 +75,7 @@ impl<T> Builder<T> {
     /// Converts the [`Builder`] into [`ScriptBuf`].
     pub fn into_script(self) -> ScriptBuf<T> { self.0 }
 
-    /// Returns the internal script
+    /// Returns the internal script.
     pub fn as_script(&self) -> &Script<T> { &self.0 }
 }
 

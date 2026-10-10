@@ -164,10 +164,6 @@ pub use crate::hash_types::{Ntxid, Txid, Wtxid};
 /// on their representation as a `u32`, which is not a semantically meaningful
 /// order, and therefore the ordering on [`Transaction`] itself is not semantically
 /// meaningful either.
-///
-/// The ordering is, however, consistent with the ordering present in this library
-/// before this change, so users should not notice any breakage (here) when
-/// transitioning from 0.29 to 0.30.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg(feature = "alloc")]
 pub struct Transaction {
@@ -195,14 +191,14 @@ impl Transaction {
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
     /// This function is needed only for legacy (pre-Segwit or P2SH-wrapped segwit version 0)
-    /// applications. This method clears the `script_sig` field of each input, which in Segwit
-    /// transactions is already empty, so for Segwit transactions the ntxid will be equal to the
-    /// txid, and you should simply use the latter.
+    /// applications. This method clears the `script_sig` and `witness` fields of each input. The
+    /// `script_sig` in Segwit transactions is already empty, so for Segwit transactions the ntxid
+    /// will be equal to the txid, and you should simply use the latter.
     ///
     /// This gives a way to identify a transaction that is "the same" as another in the sense of
     /// having the same inputs and outputs.
     ///
-    /// A coinbase `script_sig` is not a signature and may contain a BIP-34 height commitment, so
+    /// A coinbase `script_sig` is not a signature and may contain a BIP-0034 height commitment, so
     /// for a coinbase transaction the ntxid is equal to the txid.
     #[doc(alias = "ntxid")]
     pub fn compute_ntxid(&self) -> Ntxid {
@@ -514,6 +510,18 @@ encoding::encoder_newtype_exact! {
 }
 
 /// The decoder for the [`Transaction`] type.
+///
+/// As well as checking the encoding, the decoder rejects some transactions that cannot be valid
+/// in a block. Decoding fails if the transaction:
+///
+/// * Has no outputs.
+/// * Is heavier than the maximum block weight.
+/// * Has more than one input and any of them spends the null (coinbase) prevout.
+/// * Is a coinbase transaction with a `script_sig` shorter than 2 or longer than 100 bytes.
+/// * Spends the same outpoint more than once.
+/// * Has outputs whose total value exceeds [`Amount::MAX_MONEY`].
+/// * Has inputs and uses the SegWit serialization but all of its witnesses are empty. Zero-input
+///   transactions use SegWit serialization to avoid ambiguity (see [`Transaction`]).
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone)]
 pub struct TransactionDecoder {
@@ -848,10 +856,13 @@ pub struct TxIn {
     /// The script which pushes values on the stack which will cause
     /// the referenced output's script to be accepted.
     pub script_sig: ScriptSigBuf,
-    /// The sequence number, which suggests to miners which of two
-    /// conflicting transactions should be preferred, or 0xFFFFFFFF
-    /// to ignore this feature. This is generally never used since
-    /// the miner behavior cannot be enforced.
+    /// The sequence number.
+    ///
+    /// Used to enable the transaction lock time, to encode a relative lock time ([BIP-0068])
+    /// and to signal replaceability ([BIP-0125]).
+    ///
+    /// [BIP-0068]: <https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki>
+    /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
     pub sequence: Sequence,
     /// Witness data: an array of byte-arrays.
     /// Note that this field is *not* (de)serialized with the rest of the [`TxIn`] in
@@ -2467,7 +2478,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn compute_ntxid_preserves_coinbase_script_sig() {
         let mut tx_in = TxIn::EMPTY_COINBASE;
-        // BIP-34 height 840001.
+        // BIP-0034 height 840001.
         tx_in.script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x41, 0xd1, 0x0c]);
 
         let first = Transaction {
@@ -2478,7 +2489,7 @@ mod tests {
         };
 
         let mut second = first.clone();
-        // BIP-34 height 840002.
+        // BIP-0034 height 840002.
         second.inputs[0].script_sig = ScriptSigBuf::from_bytes(vec![0x03, 0x42, 0xd1, 0x0c]);
 
         assert_ne!(first.compute_txid(), second.compute_txid());

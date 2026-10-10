@@ -2,7 +2,7 @@
 
 //! A witness.
 //!
-//! This module contains the [`Witness`] struct and related methods to operate on it
+//! This module contains the [`Witness`] struct and related methods to operate on it.
 //!
 //! # Examples
 //!
@@ -98,7 +98,7 @@ const MAX_WITNESS_SIZE: usize = 4_000_000;
 /// For serialization and deserialization performance it is stored internally as a single [`Vec`],
 /// saving some allocations.
 ///
-/// [SegWit upgrade]: <https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki>
+/// [SegWit upgrade]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Witness {
     /// Contains the witness [`Vec<Vec<u8>>`] serialization.
@@ -136,7 +136,8 @@ impl Witness {
     /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     ///
     /// # Examples
-    /// ```
+    ///
+    /// ```rust
     /// use bitcoin_primitives::witness::Witness;
     ///
     /// let mut witness = Witness::from_slice(&[b"A", b"B", b"C", b"D"]);
@@ -175,7 +176,7 @@ impl Witness {
     #[inline]
     pub fn is_empty(&self) -> bool { self.witness_elements == 0 }
 
-    /// Returns a struct implementing [`Iterator`].
+    /// Returns an iterator over the witness elements.
     #[must_use = "iterators are lazy and do nothing unless consumed"]
     #[inline]
     pub fn iter(&self) -> Iter<'_> {
@@ -187,10 +188,6 @@ impl Witness {
     pub const fn len(&self) -> usize { self.witness_elements }
 
     /// Returns the number of bytes this witness contributes to a transaction's total size.
-    ///
-    /// # Panics
-    ///
-    /// If the size calculation overflows.
     ///
     /// # Examples
     ///
@@ -276,7 +273,8 @@ impl Witness {
     /// Returns [`None`] if the requested index is beyond the witness's elements.
     ///
     /// # Examples
-    /// ```
+    ///
+    /// ```rust
     /// use bitcoin_primitives::witness::Witness;
     ///
     /// let mut witness = Witness::new();
