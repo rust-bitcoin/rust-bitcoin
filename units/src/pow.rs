@@ -558,6 +558,15 @@ mod tests {
     }
 
     #[test]
+    fn u256_from_hex_rejects_sign_at_split() {
+        // 33 hex digits, so the low 32 digit half starts with the sign.
+        assert!(Target::from_unprefixed_hex("1+0000000000000000000000000000000").is_err());
+        assert!(Target::from_unprefixed_hex("++0000000000000000000000000000000").is_err());
+        // A single leading sign is allowed.
+        assert!(Target::from_unprefixed_hex("+10000000000000000000000000000000").is_ok());
+    }
+
+    #[test]
     fn u256_from_hex_32_characters_long() {
         let hex = "a69b455cd41bb662a69b4555deadbeef";
         let want = U256::new(0x00, 0xA69B_455C_D41B_B662_A69B_4555_DEAD_BEEF);

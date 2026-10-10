@@ -642,6 +642,8 @@ impl core::str::FromStr for U256 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut result = Self::ZERO;
 
+        let s = s.strip_prefix('+').unwrap_or(s);
+
         if s.is_empty() {
             return Err(ParseU256Error::Empty);
         }
@@ -649,7 +651,10 @@ impl core::str::FromStr for U256 {
         for chunk in s.as_bytes().rchunks(38).rev() {
             let chunk_str = core::str::from_utf8(chunk).map_err(ParseU256Error::InvalidEncoding)?;
 
-            let val: u128 = chunk_str.parse().map_err(ParseU256Error::InvalidDigit)?;
+            // Per std, u128::from_str can accept a leading + sign,
+            // but that is not valid u256 syntax.
+            let digits = if chunk_str.starts_with('+') { "+" } else { chunk_str };
+            let val: u128 = digits.parse().map_err(ParseU256Error::InvalidDigit)?;
 
             // Shift decimals and add chunk
             let (res, carry1) = result.overflowing_mul(POW10_38.into());
@@ -1441,5 +1446,13 @@ mod tests {
         assert_eq!((U256::MAX >> (256 - 32)).to_f64(), 4_294_967_295.0_f64);
         assert_eq!((U256::MAX >> (256 - 16)).to_f64(), 65535.0_f64);
         assert_eq!((U256::MAX >> (256 - 8)).to_f64(), 255.0_f64);
+    }
+
+    #[test]
+    fn u256_from_str_rejects_sign_at_chunk_boundary() {
+        assert_eq!("+7".parse::<U256>(), Ok(U256::from(7_u32)));
+        assert!("++7".parse::<U256>().is_err());
+        // With 39 digits, the second 38 digit chunk starts with the sign.
+        assert!("1+0000000000000000000000000000000000000".parse::<U256>().is_err());
     }
 }
