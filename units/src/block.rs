@@ -488,6 +488,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<BlockHeight> for BlockHeight {
         type Output = BlockHeightInterval;
 
+        #[track_caller]
         fn sub(self, rhs: BlockHeight) -> Self::Output {
             let interval = self.to_u32() - rhs.to_u32();
             BlockHeightInterval::from_u32(interval)
@@ -498,6 +499,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<BlockHeightInterval> for BlockHeight {
         type Output = BlockHeight;
 
+        #[track_caller]
         fn add(self, rhs: BlockHeightInterval) -> Self::Output {
             let height = self.to_u32() + rhs.to_u32();
             BlockHeight::from_u32(height)
@@ -508,6 +510,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<BlockHeightInterval> for BlockHeight {
         type Output = BlockHeight;
 
+        #[track_caller]
         fn sub(self, rhs: BlockHeightInterval) -> Self::Output {
             let height = self.to_u32() - rhs.to_u32();
             BlockHeight::from_u32(height)
@@ -518,6 +521,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<BlockHeightInterval> for BlockHeightInterval {
         type Output = BlockHeightInterval;
 
+        #[track_caller]
         fn add(self, rhs: BlockHeightInterval) -> Self::Output {
             let height = self.to_u32() + rhs.to_u32();
             BlockHeightInterval::from_u32(height)
@@ -528,6 +532,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<BlockHeightInterval> for BlockHeightInterval {
         type Output = BlockHeightInterval;
 
+        #[track_caller]
         fn sub(self, rhs: BlockHeightInterval) -> Self::Output {
             let height = self.to_u32() - rhs.to_u32();
             BlockHeightInterval::from_u32(height)
@@ -538,6 +543,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<BlockMtp> for BlockMtp {
         type Output = BlockMtpInterval;
 
+        #[track_caller]
         fn sub(self, rhs: BlockMtp) -> Self::Output {
             let interval = self.to_u32() - rhs.to_u32();
             BlockMtpInterval::from_u32(interval)
@@ -548,6 +554,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<BlockMtpInterval> for BlockMtp {
         type Output = BlockMtp;
 
+        #[track_caller]
         fn add(self, rhs: BlockMtpInterval) -> Self::Output {
             let height = self.to_u32() + rhs.to_u32();
             BlockMtp::from_u32(height)
@@ -558,6 +565,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<BlockMtpInterval> for BlockMtp {
         type Output = BlockMtp;
 
+        #[track_caller]
         fn sub(self, rhs: BlockMtpInterval) -> Self::Output {
             let height = self.to_u32() - rhs.to_u32();
             BlockMtp::from_u32(height)
@@ -568,6 +576,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<BlockMtpInterval> for BlockMtpInterval {
         type Output = BlockMtpInterval;
 
+        #[track_caller]
         fn add(self, rhs: BlockMtpInterval) -> Self::Output {
             let height = self.to_u32() + rhs.to_u32();
             BlockMtpInterval::from_u32(height)
@@ -578,6 +587,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<BlockMtpInterval> for BlockMtpInterval {
         type Output = BlockMtpInterval;
 
+        #[track_caller]
         fn sub(self, rhs: BlockMtpInterval) -> Self::Output {
             let height = self.to_u32() - rhs.to_u32();
             BlockMtpInterval::from_u32(height)

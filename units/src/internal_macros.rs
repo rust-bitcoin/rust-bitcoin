@@ -13,6 +13,8 @@
 /// - `Add<&$other_ty> for $ty`
 /// - `Add<&$other_ty> for &$ty`
 ///
+/// Attributes on the `fn` are copied to all four impls.
+///
 /// # Limitations
 ///
 /// You must specify `$other_ty` and you may not use `Self`. So e.g. you need
@@ -25,6 +27,7 @@ macro_rules! impl_op_for_references {
         $(where ($($bounds:tt)*))?
         {
             type Output = $($main_output:ty)*;
+            $(#[$attr:meta])*
             fn $op:ident($($main_args:tt)*) -> Self::Output {
                 $($main_impl:tt)*
             }
@@ -35,6 +38,7 @@ macro_rules! impl_op_for_references {
         {
             type Output = $($main_output)*;
             #[inline]
+            $(#[$attr])*
             fn $op($($main_args)*) -> Self::Output {
                 $($main_impl)*
             }
@@ -45,6 +49,7 @@ macro_rules! impl_op_for_references {
         {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
             #[inline]
+            $(#[$attr])*
             fn $op(self, rhs: $other_ty) -> Self::Output {
                 (*self).$op(rhs)
             }
@@ -55,6 +60,7 @@ macro_rules! impl_op_for_references {
         {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
             #[inline]
+            $(#[$attr])*
             fn $op(self, rhs: &$other_ty) -> Self::Output {
                 self.$op(*rhs)
             }
@@ -65,6 +71,7 @@ macro_rules! impl_op_for_references {
         {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
             #[inline]
+            $(#[$attr])*
             fn $op(self, rhs: &$other_ty) -> Self::Output {
                 (*self).$op(*rhs)
             }
@@ -78,11 +85,13 @@ macro_rules! impl_add_assign {
     ($ty:ident) => {
         impl core::ops::AddAssign<$ty> for $ty {
             #[inline]
+            #[track_caller]
             fn add_assign(&mut self, rhs: $ty) { *self = *self + rhs }
         }
 
         impl core::ops::AddAssign<&$ty> for $ty {
             #[inline]
+            #[track_caller]
             fn add_assign(&mut self, rhs: &$ty) { *self = *self + *rhs }
         }
     };
@@ -162,11 +171,13 @@ macro_rules! impl_sub_assign {
     ($ty:ident) => {
         impl core::ops::SubAssign<$ty> for $ty {
             #[inline]
+            #[track_caller]
             fn sub_assign(&mut self, rhs: $ty) { *self = *self - rhs }
         }
 
         impl core::ops::SubAssign<&$ty> for $ty {
             #[inline]
+            #[track_caller]
             fn sub_assign(&mut self, rhs: &$ty) { *self = *self - *rhs }
         }
     };

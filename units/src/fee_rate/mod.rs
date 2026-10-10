@@ -260,12 +260,14 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<FeeRate> for FeeRate {
         type Output = FeeRate;
 
+        #[track_caller]
         fn add(self, rhs: FeeRate) -> Self::Output { FeeRate::from_sat_per_mvb(self.to_sat_per_mvb() + rhs.to_sat_per_mvb()) }
     }
 
     impl ops::Sub<FeeRate> for FeeRate {
         type Output = FeeRate;
 
+        #[track_caller]
         fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate::from_sat_per_mvb(self.to_sat_per_mvb() - rhs.to_sat_per_mvb()) }
     }
 
