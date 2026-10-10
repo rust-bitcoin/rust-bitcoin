@@ -50,6 +50,7 @@ mod builder;
 mod instruction;
 mod owned;
 mod push_bytes;
+mod script_code;
 #[cfg(test)]
 mod tests;
 pub mod witness_version;
@@ -67,6 +68,7 @@ pub use self::{
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{ScriptBufExt, ScriptPubKeyBufExt, ScriptSigBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesExt, PushBytesErrorReport},
+    script_code::P2wpkhScriptCode
 };
 #[doc(inline)]
 pub use addresses::witness_program;
@@ -78,7 +80,7 @@ pub use primitives::script::{
     ScriptEncoder, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag,
     ScriptSig, ScriptSigBuf, ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf,
     SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash, WitnessScript,
-    WitnessScriptBuf, WitnessScriptTag,
+    WitnessScriptBuf, WitnessScriptTag, ScriptCode, ScriptCodeTag,
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
@@ -90,23 +92,13 @@ pub use self::error::{
 };
 pub(crate) use self::owned::ScriptBufExtPriv;
 
-/// Constructs a new [`WitnessScriptBuf`] containing the script code used for spending a P2WPKH output.
+/// Constructs a new [`P2wpkhScriptCode`] containing the script code used for spending a P2WPKH output.
 ///
 /// The `scriptCode` is described in [BIP-0143].
 ///
-/// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
-/// should not be used as one. It is a special template defined in BIP-0143 which is used
-/// in place of a witness script for purposes of sighash computation.
-///
 /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> WitnessScriptBuf {
-    Builder::new()
-        .push_opcode(OP_DUP)
-        .push_opcode(OP_HASH160)
-        .push_slice(wpkh)
-        .push_opcode(OP_EQUALVERIFY)
-        .push_opcode(OP_CHECKSIG)
-        .into_script()
+pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> P2wpkhScriptCode {
+    P2wpkhScriptCode::new_p2wpkh(wpkh)
 }
 
 /// Encodes an integer in script(minimal CScriptNum) format.
