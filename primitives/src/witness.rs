@@ -1127,17 +1127,13 @@ pub mod error {
 }
 
 #[cfg(test)]
-mod test {
-    #[cfg(feature = "alloc")]
+mod tests {
     use alloc::string::ToString;
-    #[cfg(feature = "alloc")]
     use alloc::{format, vec};
     #[cfg(feature = "std")]
     use std::error::Error as _;
 
-    use encoding::check_encode;
-    #[cfg(feature = "alloc")]
-    use encoding::{Decode as _, Decoder as _};
+    use encoding::{check_encode, Decode as _, Decoder as _};
 
     use super::*;
 
@@ -1388,7 +1384,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn oversized_element_does_not_compare_equal_to_different_stack() {
         let oversized = vec![0u8; MAX_WITNESS_ITEM_SIZE + 1];
         let witness = Witness::from_slice(&[oversized]);
@@ -1592,7 +1587,6 @@ mod test {
         assert_eq!(&got, &want);
     }
 
-    #[cfg(feature = "alloc")]
     fn witness_test_case() -> (Witness, Vec<u8>) {
         let bytes1 = [1u8];
         let bytes2 = [2u8, 3];
@@ -1613,7 +1607,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_witness_one_single_call() {
         let (want, encoded) = witness_test_case();
 
@@ -1627,7 +1620,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     #[allow(clippy::many_single_char_names)]
     fn decode_witness_many_calls() {
         let (want, encoded) = witness_test_case();
@@ -1656,7 +1648,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_max_serialized_size() {
         let element_len = MAX_WITNESS_SIZE
             - crate::compact_size_encode(1usize).as_slice().len()
@@ -1674,7 +1665,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_length_prefix_error() {
         let mut encoded = Vec::new();
         encoded.extend_from_slice(crate::compact_size_encode(1usize).as_slice());
@@ -1693,7 +1683,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_empty_witness() {
         // Witness with 0 elements.
         let encoded = vec![0x00];
@@ -1708,7 +1697,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_single_element() {
         // Witness with 1 element containing [0xAB, 0xCD].
         let encoded = vec![0x01, 0x02, 0xAB, 0xCD];
@@ -1723,7 +1711,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_empty_element() {
         // Witness with 1 element that is empty (0 bytes).
         let encoded = vec![0x01, 0x00];
@@ -1738,7 +1725,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_multiple_empty_elements() {
         // Witness with 3 empty elements.
         let encoded = vec![0x03, 0x00, 0x00, 0x00];
@@ -1755,7 +1741,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_incomplete_witness_count() {
         // 3-byte compact size but only provide 2 bytes.
         let encoded = vec![0xFD, 0x03];
@@ -1769,7 +1754,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_incomplete_element_length() {
         // Witness count = 1, but element length is incomplete.
         let encoded = vec![0x01, 0xFD, 0x05]; // Element length should be 3 bytes.
@@ -1783,7 +1767,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_incomplete_element_data() {
         // Witness count = 1, element length = 5, but only 3 bytes of data provided.
         let encoded = vec![0x01, 0x05, 0xAA, 0xBB, 0xCC];
@@ -1797,7 +1780,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decoder_read_limit() {
         let mut decoder = Witness::decoder();
         // witness_count_decoder is CompactSize: needs 1 byte.
@@ -1827,7 +1809,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decoder_end_without_witness_count_errors() {
         let err = WitnessDecoder::new().end().unwrap_err();
         assert!(matches!(
@@ -1842,7 +1823,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decoder_unexpected_eof_error() {
         let mut decoder = WitnessDecoder::new();
         let mut slice = [0x01].as_slice(); // witness element count = 1.
@@ -1856,7 +1836,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn decode_buffer_resizing() {
         // Create a witness with elements larger than initial 128-byte allocation.
         let large_element = vec![0xFF; 500];
@@ -1877,14 +1856,12 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn iter_next_none_if_cursor_decode_fails() {
         let witness = Witness { content: vec![], witness_elements: 1, indices_start: 0 };
         assert!(witness.iter().next().is_none());
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn iter_next_none_if_element_len_too_big() {
         // Element length = 4_000_001 which is larger than MAX_VEC_SIZE (4_000_000).
         let mut content = vec![0xFE];
@@ -1897,7 +1874,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn witness_debug() {
         let witness = Witness::from_slice(&[&[0xAAu8][..]]);
         let s = format!("{:?}", witness);
@@ -1919,7 +1895,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn oversized_public_witness_size_matches_encoding_length() {
         // Public constructors can hold an oversized item even though Iter::next() rejects it.
         // size() must not silently omit bytes that Encode will still serialize.
@@ -1930,7 +1905,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn witness_encoder_len_matches_encoding_length() {
         use encoding::{Encode as _, ExactSizeEncoder as _};
 
@@ -2030,7 +2004,6 @@ mod test {
         let _ = decode_unchecked(&mut slice);
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
     fn dos_protection() {
         let element_len = MAX_WITNESS_SIZE
@@ -2051,7 +2024,6 @@ mod test {
         assert!(dec.content.capacity() < 100_000);
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
     fn element_length_limit_applies_to_every_element() {
         // 4_000_001, which exceeds `MAX_WITNESS_ITEM_SIZE` but is below the default 32MB compact
@@ -2073,7 +2045,6 @@ mod test {
         assert!(dec.push_bytes(&mut encoded.as_slice()).is_err());
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
     fn decode_rejects_witness_over_limit_due_to_aggregate_data() {
         let element_len = MAX_WITNESS_ITEM_SIZE / 2 + 1;
@@ -2099,7 +2070,6 @@ mod test {
         );
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
     fn decode_rejects_witness_over_limit_due_to_prefix_overhead() {
         let count = MAX_WITNESS_SIZE;
