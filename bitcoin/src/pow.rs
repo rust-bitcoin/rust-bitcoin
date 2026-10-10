@@ -19,7 +19,9 @@ use crate::network::Params;
 #[doc(inline)]
 pub use primitives::pow::{error, CompactTarget, CompactTargetEncoder, CompactTargetDecoder, Target, Work};
 #[doc(no_inline)]
-pub use primitives::pow::{ParseTargetError, ParseWorkError};
+pub use primitives::pow::{
+    InvalidCompactTargetError, ParseTargetError, ParseWorkError, ZeroConversionError,
+};
 
 #[doc(no_inline)]
 pub use self::error::CompactTargetDecoderError;
@@ -217,7 +219,8 @@ internal_macros::define_extension_trait! {
 ///
 /// # Panics
 ///
-/// If we are on testnet/regtest and `new_block_timestamp` is `None`.
+/// If we are on testnet/regtest and `new_block_timestamp` is `None`, or if the `bits` of the
+/// epoch boundary header is negative or overflows (such a header belongs to an invalid chain).
 ///
 /// [`GetNextWorkRequired`]: <https://github.com/bitcoin/bitcoin/blob/830583eb9d07e054c54a177907a98153ab3e29ae/src/pow.cpp#L13>
 pub fn next_target_after<F, E>(
@@ -269,7 +272,8 @@ where
         let height_first = current_height.saturating_sub(back_step);
         let block_first = get_block_header_by_height(height_first)?;
 
-        Ok(CompactTarget::from_header_difficulty_adjustment(block_first, current_header, params))
+        Ok(CompactTarget::from_header_difficulty_adjustment(block_first, current_header, params)
+            .unwrap())
     }
 }
 
@@ -285,10 +289,10 @@ internal_macros::define_extension_trait! {
         ///
         /// ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
         ///
-        /// Given the previous Target, represented as a [`CompactTarget`], the difficulty is adjusted
-        /// by taking the timespan between them, and multiplying the current [`CompactTarget`] by a factor
-        /// of the net timespan and expected timespan. The [`CompactTarget`] may not adjust by more than
-        /// a factor of 4, or adjust beyond the maximum threshold for the network.
+        /// Given the previous [`Target`], the difficulty is adjusted by taking the timespan
+        /// between them, and multiplying the previous [`Target`] by a factor of the net timespan
+        /// and expected timespan. The [`CompactTarget`] may not adjust by more than a factor of 4,
+        /// or adjust beyond the maximum threshold for the network.
         ///
         /// # Note
         ///
@@ -306,22 +310,21 @@ internal_macros::define_extension_trait! {
         ///
         /// The expected [`CompactTarget`] recalculation.
         fn from_next_work_required(
-            last: CompactTarget,
+            last: Target,
             timespan: i64,
             params: impl AsRef<Params>,
         ) -> Self {
             let params = params.as_ref();
             if params.no_pow_retargeting {
-                return last;
+                return last.to_compact_lossy();
             }
             // Comments relate to the `pow.cpp` file from Core.
             // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
             let min_timespan = params.pow_target_timespan >> 2; // Lines 56/57
             let max_timespan = params.pow_target_timespan << 2; // Lines 58/59
             let actual_timespan = timespan.clamp(min_timespan.into(), max_timespan.into());
-            let prev_target: Target = last.into();
-            let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
-            let retarget = prev_target.to_inner(); // bnNew
+            let maximum_retarget = last.max_transition_threshold(params); // bnPowLimit
+            let retarget = last.to_inner(); // bnNew
             let (retarget, _) = retarget.mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"));
             let retarget = retarget.div(params.pow_target_timespan.into());
             let retarget = Target::from_inner(retarget);
@@ -349,11 +352,15 @@ internal_macros::define_extension_trait! {
         /// # Returns
         ///
         /// The expected [`CompactTarget`] recalculation.
+        ///
+        /// # Errors
+        ///
+        /// If the `bits` of the relevant header is negative or overflows.
         fn from_header_difficulty_adjustment(
             last_epoch_boundary: Header,
             current: Header,
             params: impl AsRef<Params>,
-        ) -> Self {
+        ) -> Result<CompactTarget, InvalidCompactTargetError> {
             let timespan = i64::from(current.time.to_u32()) - i64::from(last_epoch_boundary.time.to_u32());
 
             // Special difficulty rule for testnet4.
@@ -365,7 +372,8 @@ internal_macros::define_extension_trait! {
                 current.bits
             };
 
-            CompactTarget::from_next_work_required(bits, timespan, params)
+            let last = Target::from_compact(bits)?;
+            Ok(CompactTarget::from_next_work_required(last, timespan, params))
         }
     }
 }
@@ -433,7 +441,8 @@ mod tests {
         let start_time: i64 = 1598918400; // Genesis block unix time
         let end_time: i64 = 1599332177; // Block 2015 unix time
         let timespan = end_time - start_time; // Faster than expected
-        let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let starting_target = Target::from_compact(starting_bits).unwrap();
+        let adjustment = CompactTarget::from_next_work_required(starting_target, timespan, &params);
         let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -445,7 +454,8 @@ mod tests {
         let start_time: i64 = 1599332844; // Block 2016 unix time
         let end_time: i64 = 1600591200; // Block 4031 unix time
         let timespan = end_time - start_time; // Slower than expected
-        let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let starting_target = Target::from_compact(starting_bits).unwrap();
+        let adjustment = CompactTarget::from_next_work_required(starting_target, timespan, &params);
         let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -468,7 +478,7 @@ mod tests {
             nonce: epoch_start.nonce,
         };
         let adjustment =
-            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params).unwrap();
         let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -500,7 +510,7 @@ mod tests {
             nonce: 0,
         };
         let adjustment =
-            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params).unwrap();
         let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -510,9 +520,9 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503403001);
         let timespan = params.pow_target_timespan / 5;
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), params);
-        let want =
-            Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
+        let starting_target = Target::from_compact(starting_bits).unwrap();
+        let got = CompactTarget::from_next_work_required(starting_target, timespan.into(), params);
+        let want = starting_target.min_transition_threshold().to_compact_lossy();
         assert_eq!(got, want);
     }
 
@@ -521,9 +531,9 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503403001);
         let timespan: i64 = -i64::from(params.pow_target_timespan);
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan, params);
-        let want =
-            Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
+        let starting_target = Target::from_compact(starting_bits).unwrap();
+        let got = CompactTarget::from_next_work_required(starting_target, timespan, params);
+        let want = starting_target.min_transition_threshold().to_compact_lossy();
         assert_eq!(got, want);
     }
 
@@ -532,9 +542,9 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(403403001); // High difficulty for Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
-        let want =
-            Target::from_compact(starting_bits).max_transition_threshold(params).to_compact_lossy();
+        let starting_target = Target::from_compact(starting_bits).unwrap();
+        let got = CompactTarget::from_next_work_required(starting_target, timespan.into(), &params);
+        let want = starting_target.max_transition_threshold(params).to_compact_lossy();
         assert_eq!(got, want);
     }
 
@@ -543,7 +553,8 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
+        let starting_target = Target::from_compact(starting_bits).unwrap();
+        let got = CompactTarget::from_next_work_required(starting_target, timespan.into(), &params);
         let want = params.max_attainable_target.to_compact_lossy();
         assert_eq!(got, want);
     }
@@ -581,7 +592,8 @@ mod tests {
             epoch_start,
             current,
             &Params::MAINNET,
-        );
+        )
+        .unwrap();
         assert_eq!(mainnet_result, bits_end);
 
         // Test testnet4 (enforce_bip94 = true): should use epoch_start.bits
@@ -589,7 +601,8 @@ mod tests {
             epoch_start,
             current,
             &Params::TESTNET4,
-        );
+        )
+        .unwrap();
         assert_eq!(testnet_result, bits_start);
     }
 
@@ -609,16 +622,19 @@ mod tests {
         assert_eq!(Target::MAX.difficulty_float(&params), 1.0_f64);
         assert_eq!(
             Target::from_compact(CompactTarget::from_consensus(0x1c00ffff_u32))
+                .unwrap()
                 .difficulty_float(&params),
             256.0_f64
         );
         assert_eq!(
             Target::from_compact(CompactTarget::from_consensus(0x1b00ffff_u32))
+                .unwrap()
                 .difficulty_float(&params),
             65536.0_f64
         );
         assert_eq!(
             Target::from_compact(CompactTarget::from_consensus(0x1a00f3a2_u32))
+                .unwrap()
                 .difficulty_float(&params),
             17628585.065897066_f64
         );
@@ -627,8 +643,8 @@ mod tests {
     #[test]
     fn roundtrip_target_work() {
         let target = u32_to_target(0xdeadbeef_u32);
-        let work = target.to_work();
-        let back = work.to_target();
+        let work = target.to_work().unwrap();
+        let back = work.to_target().unwrap();
         assert_eq!(back, target)
     }
 
