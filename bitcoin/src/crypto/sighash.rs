@@ -24,12 +24,14 @@ use io::Write;
 
 use crate::opcodes::all::OP_CODESEPARATOR;
 use crate::prelude::{Borrow, BorrowMut};
-use crate::script::{Instruction, ScriptExt as _, ScriptHashableTag};
+use crate::script::{Instruction, ScriptCodeTag, ScriptExt as _, ScriptHashableTag};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
+#[cfg(doc)]
+use crate::ScriptPubKey;
 use crate::{
-    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript,
+    transaction, Amount, Sequence, TapScript, Transaction, TxOut, ScriptCode
 };
 
 #[rustfmt::skip]            // Keep public re-exports separate.
@@ -565,7 +567,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// [`std::io::Write`] trait.
     ///
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
-    /// [`WitnessScript::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
+    /// [`ScriptPubKey::p2wpkh_script_code`], for p2wsh use the witness script, prepared as
+    /// described in [`ScriptCode`] if it contains `OP_CODESEPARATOR` instructions. (Also see
     /// [`Self::p2wpkh_signature_hash`] and [`SighashCache::p2wsh_signature_hash`].)
     ///
     /// In order to sign, the data written by this function must be hashed using a double SHA256
@@ -575,10 +578,11 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         mut writer: W,
         input_index: usize,
-        script_code: &WitnessScript,
+        script_code: impl AsRef<ScriptCode>,
         amount: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), SigningDataError<transaction::InputsIndexError>> {
+        let script_code = script_code.as_ref();
         let zero_hash = [0; 32];
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -653,12 +657,15 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Computes the BIP-0143 sighash to spend a p2wsh transaction for any flag type.
     ///
-    /// `witness_script` is the script that goes into the [`Witness`],
-    /// not the one that goes into `script_pubkey` of a [`TxOut`].
+    /// `script_code` is the prepared P2WSH script code derived from the witness script,
+    /// the script that goes into the [`Witness`], not the `script_pubkey` of a [`TxOut`].
+    ///
+    /// The caller must prepare `script_code` as described in [`ScriptCode`].
+    /// This function keeps all remaining `OP_CODESEPARATOR` instructions.
     pub fn p2wsh_signature_hash(
         &mut self,
         input_index: usize,
-        witness_script: &WitnessScript,
+        script_code: impl AsRef<ScriptCode>,
         amount: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
@@ -666,7 +673,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         self.segwit_v0_encode_signing_data_to(
             &mut enc,
             input_index,
-            witness_script,
+            script_code,
             amount,
             sighash_type,
         )
@@ -687,8 +694,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// # Warning
     ///
-    /// - The caller must remove everything up to and including the last
-    ///   **executed** `OP_CODESEPARATOR` before the signature check.
+    /// - The caller must prepare `script_code` as described in [`ScriptCode`].
     ///   This function removes all remaining `OP_CODESEPARATOR` instructions
     ///   when encoding `script_code`.
     /// - Does NOT handle the sighash single bug (see "Return type" section)
@@ -697,13 +703,14 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<W: Write, T: ScriptHashableTag>(
+    pub fn legacy_encode_signing_data_to<W: Write>(
         &self,
         mut writer: W,
         input_index: usize,
-        script_code: &crate::script::Script<T>,
+        script_code: impl AsRef<ScriptCode>,
         sighash_type: EcdsaSighashType,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
+        let script_code = script_code.as_ref();
         // Validate input_index.
         if let Err(e) = self.tx.borrow().tx_in(input_index) {
             return EncodeSigningDataResult::WriteResult(Err(SigningDataError::Sighash(e)));
@@ -721,11 +728,11 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             return EncodeSigningDataResult::SighashSingleBug;
         }
 
-        fn encode_signing_data_to_inner<W: Write, T: ScriptHashableTag>(
+        fn encode_signing_data_to_inner<W: Write>(
             self_: &Transaction,
             mut writer: W,
             input_index: usize,
-            script_code: &crate::script::Script<T>,
+            script_code: &ScriptCode,
             sighash_type: EcdsaSighashType,
         ) -> Result<(), io::Error> {
             let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -744,8 +751,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     if n == input_index {
                         legacy_encode_script_code_to(script_code, &mut writer)?;
                     } else {
-                        // TODO: Use ScriptCode instead of ScriptPubKey once it exists (see #6079)
-                        io::encode_to_writer(ScriptPubKey::new(), &mut writer)?;
+                        io::encode_to_writer(ScriptCode::new(), &mut writer)?;
                     }
                     if n != input_index
                         && (sighash == EcdsaSighashType::Single
@@ -816,10 +822,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// See [`Self::legacy_encode_signing_data_to`] for the requirements on
     /// `script_code` and the handling of `OP_CODESEPARATOR`.
-    pub fn legacy_signature_hash<T: ScriptHashableTag>(
+    pub fn legacy_signature_hash(
         &self,
         input_index: usize,
-        script_code: &crate::script::Script<T>,
+        script_code: impl AsRef<ScriptCode>,
         sighash_type: EcdsaSighashType,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
@@ -956,8 +962,8 @@ fn is_invalid_use_of_sighash_single(
     sighash.is_single() && input_index >= outputs_len
 }
 
-fn legacy_encode_script_code_to<W: Write, T: ScriptHashableTag>(
-    script_code: &crate::script::Script<T>,
+fn legacy_encode_script_code_to<W: Write>(
+    script_code: &ScriptCode,
     writer: &mut W,
 ) -> Result<(), io::Error> {
     let bytes = script_code.as_bytes();
@@ -985,7 +991,7 @@ fn legacy_encode_script_code_to<W: Write, T: ScriptHashableTag>(
     let mut instructions = script_code.instruction_indices();
 
     loop {
-        let offset = bytes.len() - instructions.as_script::<T>().len();
+        let offset = bytes.len() - instructions.as_script::<ScriptCodeTag>().len();
         match instructions.next() {
             Some(Ok((index, Instruction::Op(OP_CODESEPARATOR)))) => {
                 writer.write_all(&bytes[start..index])?;
@@ -1436,7 +1442,7 @@ mod tests {
 
     #[test]
     fn legacy_script_code_separator() {
-        let script_code = ScriptPubKey::from_bytes(&[0xab, 0x4c, 0x01, 0xab, 0xab]);
+        let script_code = ScriptCode::from_bytes(&[0xab, 0x4c, 0x01, 0xab, 0xab]);
         let mut encoded = Vec::new();
         legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
         assert_eq!(encoded, [0x03, 0x4c, 0x01, 0xab]);
@@ -1444,7 +1450,7 @@ mod tests {
 
     #[test]
     fn legacy_script_code_incomplete_push() {
-        let script_code = ScriptPubKey::from_bytes(&[0xab, 0x4c, 0x02, 0xab]);
+        let script_code = ScriptCode::from_bytes(&[0xab, 0x4c, 0x02, 0xab]);
         let mut encoded = Vec::new();
         legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
         assert_eq!(encoded, [0x03, 0x4c, 0x02]);
@@ -1907,6 +1913,48 @@ mod tests {
             &hex::decode_to_vec("de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83")
                 .unwrap()[..],
         );
+    }
+
+    #[test]
+    fn bip143_p2wsh_separator() {
+        // Source: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wsh
+        let tx = decode_from_slice::<Transaction>(&hex!(
+            "0100000002fe3dc9208094f3ffd12645477b3dc56f60ec4fa8e6f5d67c565d1c6b9216b36e00000000\
+             00ffffffff0815cf020f013ed6cf91d29f4202e8a58726b1ac6c79da47c23d1bee0a6925f800000000\
+             00ffffffff0100f2052a010000001976a914a30741f8145e5acadf23f751864167f32e0963f788ac00000000"
+        ))
+        .unwrap();
+        let witness_script = hex!(
+            "21026dccc749adc2a9d0d89497ac511f760f45c47dc5ed9cf352a58ac706453880aeadab\
+             210255a9626aebf5e29c0e6538428ba0d1dcf6ca98ffdf086aa8ced5e0d0215ea465ac"
+        );
+        let amount = Amount::from_sat(4_900_000_000).unwrap();
+        let mut cache = SighashCache::new(&tx);
+
+        for (script_code, expected) in [
+            // At CHECKSIGVERIFY, OP_CODESEPARATOR has not executed and must be kept.
+            (
+                ScriptCode::from_bytes(&witness_script),
+                "82dde6e4f1e94d02c2b7ad03d2115d691f48d064e9d52f58194a6637e4194391",
+            ),
+            // At CHECKSIG, the caller removes the prefix through OP_CODESEPARATOR at byte 35.
+            (
+                ScriptCode::from_bytes(&witness_script[36..]),
+                "fef7bd749cce710c5c052bd796df1af0d935e59cea63736268bcbe2d2134fc47",
+            ),
+        ] {
+            let mut enc = SegwitV0Sighash::engine();
+            cache
+                .segwit_v0_encode_signing_data_to(
+                    &mut enc,
+                    1,
+                    script_code,
+                    amount,
+                    EcdsaSighashType::Single,
+                )
+                .unwrap();
+            assert_eq!(SegwitV0Sighash::from_engine(enc), expected.parse().unwrap());
+        }
     }
 
     // Note, if you are looking at the test vectors in BIP-0143 and wondering why there is a `cf`
