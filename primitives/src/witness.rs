@@ -135,6 +135,12 @@ impl Witness {
 
     /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     ///
+    /// # Panics
+    ///
+    /// Panics if the starting offset of the last element within encoded bytes exceeds `u32::MAX`. When
+    /// the sum of the lengths of the elements before the last one, including their length prefixes,
+    /// is larger than that maximum.
+    ///
     /// # Examples
     /// ```
     /// use bitcoin_primitives::witness::Witness;
@@ -144,6 +150,7 @@ impl Witness {
     /// assert_eq!(witness.get(0), Some(b"A".as_slice()));
     /// assert_eq!(witness.get(3), Some(b"D".as_slice()));
     /// ```
+    #[track_caller]
     pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
         let witness_elements = slice.len();
         let index_size = witness_elements * 4;
@@ -220,6 +227,10 @@ impl Witness {
 
     /// Pushes a new element on the witness, requires an allocation.
     ///
+    /// # Panics
+    ///
+    /// Panics if the witness would've held more than `u32::MAX` bytes of elements after the push.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -236,11 +247,13 @@ impl Witness {
     /// assert_eq!(witness.last(), Some(witness_script.as_slice()));
     /// ```
     #[inline]
+    #[track_caller]
     pub fn push<T: AsRef<[u8]>>(&mut self, new_element: T) {
         self.push_slice(new_element.as_ref());
     }
 
     /// Pushes a new element slice onto the witness stack.
+    #[track_caller]
     fn push_slice(&mut self, new_element: &[u8]) {
         self.witness_elements += 1;
         let previous_content_end = self.indices_start;
@@ -346,8 +359,8 @@ impl Witness {
 }
 
 /// Correctness Requirements: value must always fit within u32
-// This is duplicated in `bitcoin::blockdata::witness`, if you change it please do so over there also.
 #[inline]
+#[track_caller]
 fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value: usize) {
     let start = start_of_indices + index * 4;
     let end = start + 4;
