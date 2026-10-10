@@ -274,9 +274,7 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
 
     /// Removes the last element, returning it.
     ///
-    /// # Returns
-    ///
-    /// None if the `ArrayVec` is empty.
+    /// Returns None if the `ArrayVec` is empty.
     #[cfg_attr(creusot, ensures(self@.len() == 0 ==> result == None))]
     #[cfg_attr(creusot, ensures(self@.len() == 0 ==> (^self) == (*self)))]
     #[cfg_attr(creusot, ensures(self@.len() > 0 ==> result == Some(self@[self@.len() - 1])))]
