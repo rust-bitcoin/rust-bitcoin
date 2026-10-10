@@ -31,7 +31,7 @@ use crate::witness::Witness;
 #[cfg(doc)]
 use crate::ScriptPubKey;
 use crate::{
-    transaction, Amount, Sequence, TapScript, Transaction, TxOut, WitnessScript, ScriptCode
+    transaction, Amount, Sequence, TapScript, Transaction, TxOut, ScriptCode
 };
 
 #[rustfmt::skip]            // Keep public re-exports separate.
@@ -656,12 +656,12 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Computes the BIP-0143 sighash to spend a p2wsh transaction for any flag type.
     ///
-    /// `witness_script` is the script that goes into the [`Witness`],
-    /// not the one that goes into `script_pubkey` of a [`TxOut`].
+    /// `script_code` is the prepared P2WSH script code derived from the witness script,
+    /// the script that goes into the [`Witness`], not the `script_pubkey` of a [`TxOut`].
     pub fn p2wsh_signature_hash(
         &mut self,
         input_index: usize,
-        witness_script: &WitnessScript,
+        script_code: impl AsRef<ScriptCode>,
         amount: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
@@ -669,7 +669,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         self.segwit_v0_encode_signing_data_to(
             &mut enc,
             input_index,
-            witness_script,
+            script_code,
             amount,
             sighash_type,
         )
