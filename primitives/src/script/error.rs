@@ -25,7 +25,9 @@ impl From<Infallible> for ScriptBufDecoderError {
 
 impl fmt::Display for ScriptBufDecoderError {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write_err!(f, "decoder error"; self.0) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "failed to decode script"; self.0)
+    }
 }
 
 #[cfg(feature = "std")]
