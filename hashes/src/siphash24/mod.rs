@@ -44,12 +44,16 @@ macro_rules! compress {
 /// Unsafe because: unchecked indexing at `i..i+size_of(int_ty)`.
 macro_rules! load_int_le {
     ($buf:expr, $i:expr, $int_ty:ident) => {{
-        debug_assert!($i + mem::size_of::<$int_ty>() <= $buf.len());
-        $int_ty::from_le_bytes(
-            $buf.get_unchecked($i..($i + mem::size_of::<$int_ty>()))
-                .try_into()
-                .expect("len is correctly computed using size_of"),
-        )
+        match ($buf, $i) {
+            (buf, i) => {
+                debug_assert!(i + mem::size_of::<$int_ty>() <= buf.len());
+                $int_ty::from_le_bytes(
+                    buf.get_unchecked(i..(i + mem::size_of::<$int_ty>()))
+                        .try_into()
+                        .expect("len is correctly computed using size_of"),
+                )
+            }
+        }
     }};
 }
 
@@ -242,6 +246,29 @@ unsafe fn u8to64_le(buf: &[u8], start: usize, len: usize) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn load_int_le_evaluates_arguments_once() {
+        let bytes = [1u8, 2, 3, 4, 5, 6, 7, 8];
+        let mut buf_hits = 0;
+        let mut index_hits = 0;
+        let loaded = unsafe {
+            load_int_le!(
+                {
+                    buf_hits += 1;
+                    &bytes[..]
+                },
+                {
+                    index_hits += 1;
+                    0
+                },
+                u64
+            )
+        };
+        assert_eq!(loaded, u64::from_le_bytes(bytes));
+        assert_eq!(buf_hits, 1);
+        assert_eq!(index_hits, 1);
+    }
 
     #[test]
     fn siphash_2_4() {
