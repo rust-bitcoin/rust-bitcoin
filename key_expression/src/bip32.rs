@@ -2153,6 +2153,27 @@ mod tests {
     }
 
     #[test]
+    fn vector_4() {
+        // Tests the retention of leading zeros, see btcsuite/btcutil#172.
+        let seed = hex!("3ddd5602285899a946114506157c7997e5444528f3003f6134712147db19b678");
+
+        // m
+        test_path(NetworkKind::Main, &seed, &"m".parse().unwrap(),
+                  "xprv9s21ZrQH143K48vGoLGRPxgo2JNkJ3J3fqkirQC2zVdk5Dgd5w14S7fRDyHH4dWNHUgkvsvNDCkvAwcSHNAQwhwgNMgZhLtQC63zxwhQmRv",
+                  "xpub661MyMwAqRbcGczjuMoRm6dXaLDEhW1u34gKenbeYqAix21mdUKJyuyu5F1rzYGVxyL6tmgBUAEPrEz92mBXjByMRiJdba9wpnN37RLLAXa");
+
+        // m/0h
+        test_path(NetworkKind::Main, &seed, &"m/0h".parse().unwrap(),
+                  "xprv9vB7xEWwNp9kh1wQRfCCQMnZUEG21LpbR9NPCNN1dwhiZkjjeGRnaALmPXCX7SgjFTiCTT6bXes17boXtjq3xLpcDjzEuGLQBM5ohqkao9G",
+                  "xpub69AUMk3qDBi3uW1sXgjCmVjJ2G6WQoYSnNHyzkmdCHEhSZ4tBok37xfFEqHd2AddP56Tqp4o56AePAgCjYdvpW2PU2jbUPFKsav5ut6Ch1m");
+
+        // m/0h/1h
+        test_path(NetworkKind::Main, &seed, &"m/0h/1h".parse().unwrap(),
+                  "xprv9xJocDuwtYCMNAo3Zw76WENQeAS6WGXQ55RCy7tDJ8oALr4FWkuVoHJeHVAcAqiZLE7Je3vZJHxspZdFHfnBEjHqU5hG1Jaj32dVoS6XLT1",
+                  "xpub6BJA1jSqiukeaesWfxe6sNK9CCGaujFFSJLomWHprUL9DePQ4JDkM5d88n49sMGJxrhpjazuXYWdMf17C9T5XnxkopaeS7jGk1GyyVziaMt");
+    }
+
+    #[test]
     fn reject_xpriv_with_non_zero_byte_at_index_45() {
         let mut xpriv = base58::decode_check("xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9").unwrap();
 
