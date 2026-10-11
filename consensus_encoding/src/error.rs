@@ -8,7 +8,7 @@
 use core::convert::Infallible;
 use core::fmt;
 
-use internals::write_err;
+use internals::{write_err, write_err_unchecked_source};
 
 #[cfg(doc)]
 use crate::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
@@ -73,8 +73,8 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
-            Self::Unconsumed(ref e) => write_err!(f, "unconsumed"; e),
+            Self::Parse(ref e) => write_err_unchecked_source!(f, "error parsing encoded object"; e),
+            Self::Unconsumed(ref e) => write_err_unchecked_source!(f, "unconsumed"; e),
         }
     }
 }
@@ -278,7 +278,7 @@ where
 
         match self.0 {
             E::LengthPrefixDecode(ref e) => write_err!(f, "vec decoder error"; e),
-            E::Item(ref e) => write_err!(f, "vec decoder error"; e),
+            E::Item(ref e) => write_err_unchecked_source!(f, "vec decoder error"; e),
             E::UnexpectedEof(ref e) => write_err!(f, "vec decoder error"; e),
         }
     }
@@ -352,7 +352,7 @@ impl<ParseErr: fmt::Display> fmt::Display for FromHexError<ParseErr> {
         match self.0 {
             FromHexErrorInner::OddLength(ref e) => write_err!(f, "odd length string"; e),
             FromHexErrorInner::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
-            FromHexErrorInner::Decode(ref e) => write_err!(f, "decode error"; e),
+            FromHexErrorInner::Decode(ref e) => write_err_unchecked_source!(f, "decode error"; e),
         }
     }
 }
@@ -397,7 +397,7 @@ macro_rules! define_decoder_n_error {
         {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 match self {
-                    $(Self::$err_wrap(ref e) => write_err!(f, $err_msg; e),)*
+                    $(Self::$err_wrap(ref e) => write_err_unchecked_source!(f, $err_msg; e),)*
                 }
             }
         }
