@@ -65,18 +65,33 @@ where
     pub fn new(iter: impl IntoIterator<IntoIter = I>) -> Self {
         // Protect against poorly implemented iterators.
         let mut iter = iter.into_iter().fuse();
-        // Advance past any leading empty encoders so that the first call to
-        // `current_chunk` satisfies the `Encoder` contract that it must return
-        // non-empty bytes or the encoder must be `Done`.
-        let state = loop {
-            match iter.next() {
-                Some(enc) if !enc.current_chunk().is_empty() =>
-                    break EncoderState::Encoding { current: enc, remaining: iter },
-                Some(_) => {}
-                None => break EncoderState::Done,
-            }
+        let state = match iter.next() {
+            Some(enc) => EncoderState::Encoding { current: enc, remaining: iter },
+            None => EncoderState::Done,
         };
-        Self { state }
+        let mut this = Self { state };
+        this.skip_empty();
+        this
+    }
+
+    fn skip_empty(&mut self) {
+        let EncoderState::Encoding { current, remaining } = &mut self.state else {
+            return;
+        };
+
+        loop {
+            if !current.current_chunk().is_empty() {
+                return;
+            }
+            if current.advance().has_finished() {
+                if let Some(next) = remaining.next() {
+                    *current = next;
+                } else {
+                    self.state = EncoderState::Done;
+                    return;
+                }
+            }
+        }
     }
 }
 

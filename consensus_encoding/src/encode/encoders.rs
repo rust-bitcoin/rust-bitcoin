@@ -224,33 +224,58 @@ macro_rules! define_encoder_n {
             }
         }
 
+        impl<$($enc_ty: Encoder,)*> $name<$($enc_ty,)*> {
+            #[inline]
+            fn skip_empty(&mut self) {
+                $(
+                    if self.cur_idx == $enc_idx {
+                        if self.$enc_field.current_chunk().is_empty() {
+                            self.cur_idx += 1;
+                        } else {
+                            return;
+                        }
+                    }
+                )*
+            }
+        }
+
         impl<$($enc_ty: Encoder,)*> Encoder for $name<$($enc_ty,)*> {
             #[inline]
             fn current_chunk(&self) -> &[u8] {
                 match self.cur_idx {
                     $($enc_idx => self.$enc_field.current_chunk(),)*
-                    _ => unreachable!("index never reaches this value"),
+                    _ => &[],
                 }
             }
 
             #[inline]
             fn advance(&mut self) -> EncoderStatus {
-                match self.cur_idx {
-                    $(
-                        $enc_idx => {
-                            // For the last encoder, just pass through
-                            if $enc_idx == $idx_limit - 1 {
-                                return self.$enc_field.advance()
-                            }
-                            // For all others, return EncoderStatus::HasMore, or increment to next encoder
-                            if self.$enc_field.advance().has_finished() {
-                                self.cur_idx += 1;
-                            }
-                            EncoderStatus::HasMore
+                $(
+                    if self.cur_idx == $enc_idx {
+                        if self.$enc_field.current_chunk().is_empty() {
+                            self.cur_idx += 1;
+                            self.skip_empty();
+                            return if self.cur_idx == $idx_limit {
+                                EncoderStatus::Finished
+                            } else {
+                                EncoderStatus::HasMore
+                            };
                         }
-                    )*
-                    _ => EncoderStatus::Finished,
-                }
+                        if self.$enc_field.advance().has_more()
+                            && !self.$enc_field.current_chunk().is_empty()
+                        {
+                            return EncoderStatus::HasMore;
+                        }
+                        self.cur_idx += 1;
+                        self.skip_empty();
+                        return if self.cur_idx == $idx_limit {
+                            EncoderStatus::Finished
+                        } else {
+                            EncoderStatus::HasMore
+                        };
+                    }
+                )*
+                EncoderStatus::Finished
             }
         }
 

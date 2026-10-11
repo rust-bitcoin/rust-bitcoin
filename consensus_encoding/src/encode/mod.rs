@@ -79,8 +79,9 @@ pub trait Encoder {
     /// Yields the current encoded byte slice.
     ///
     /// Will always return the same value until [`Self::advance`] is called.
-    /// May return an empty slice, however implementors should avoid returning empty slices unless
-    /// the encoded type is truly empty.
+    /// May return an empty slice, however implementors MUST NOT return an empty slice unless the
+    /// encoded type is truly empty. Once an empty slice is returned, callers may assume that no
+    /// more data will be yielded even after further calls to [`Self::advance`].
     fn current_chunk(&self) -> &[u8];
 
     /// Moves the encoder to its next state.
