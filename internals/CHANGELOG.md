@@ -88,7 +88,10 @@ Split this crate out from the [rust-bitcoin](https://github.com/rust-bitcoin/rus
 For previous development history see the original
 [CHANGELOG](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/CHANGELOG.md) file.
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.5.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.8.0...HEAD
+[0.8.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.7.0...bitcoin-internals-0.8.0
+[0.7.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.6.0...bitcoin-internals-0.7.0
+[0.6.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.5.0...bitcoin-internals-0.6.0
 [0.5.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.4.2...bitcoin-internals-0.5.0
 [0.4.2]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.4.1...bitcoin-internals-0.4.2
 [0.4.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/internals-0.4.0...bitcoin-internals-0.4.1
