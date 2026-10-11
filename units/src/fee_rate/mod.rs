@@ -212,6 +212,33 @@ impl FeeRate {
         Some(Self::from_sat_per_mvb(sat_mvb))
     }
 
+    /// Saturating integer multiplication.
+    ///
+    /// Computes `self * rhs`, saturating at [`FeeRate::MAX`] instead of overflowing.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_mul(self, rhs: u64) -> Self {
+        Self::from_sat_per_mvb(self.to_sat_per_mvb().saturating_mul(rhs))
+    }
+
+    /// Saturating integer addition.
+    ///
+    /// Computes `self + rhs`, saturating at [`FeeRate::MAX`] instead of overflowing.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_add(self, rhs: Self) -> Self {
+        Self::from_sat_per_mvb(self.to_sat_per_mvb().saturating_add(rhs.to_sat_per_mvb()))
+    }
+
+    /// Saturating integer subtraction.
+    ///
+    /// Computes `self - rhs`, saturating at [`FeeRate::MIN`] instead of overflowing.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_sub(self, rhs: Self) -> Self {
+        Self::from_sat_per_mvb(self.to_sat_per_mvb().saturating_sub(rhs.to_sat_per_mvb()))
+    }
+
     /// Calculates the fee by multiplying this fee rate by weight.
     ///
     /// Computes the absolute fee amount for a given [`Weight`] at this fee rate. When the resulting
@@ -507,6 +534,28 @@ mod tests {
 
         let fee_rate = TEN.checked_div(0);
         assert!(fee_rate.is_none());
+    }
+
+    #[test]
+    fn saturating_mul() {
+        assert_eq!(TEN.saturating_mul(10), ONE_HUNDRED);
+        assert_eq!(TEN.saturating_mul(0), FeeRate::ZERO);
+        assert_eq!(FeeRate::MAX.saturating_mul(2), FeeRate::MAX);
+        assert_eq!(TEN.saturating_mul(u64::MAX), FeeRate::MAX);
+    }
+
+    #[test]
+    fn saturating_add() {
+        assert_eq!(ONE.saturating_add(TWO), THREE);
+        assert_eq!(FeeRate::MAX.saturating_add(ONE), FeeRate::MAX);
+        assert_eq!(FeeRate::ZERO.saturating_add(FeeRate::ZERO), FeeRate::ZERO);
+    }
+
+    #[test]
+    fn saturating_sub() {
+        assert_eq!(THREE.saturating_sub(TWO), ONE);
+        assert_eq!(FeeRate::ZERO.saturating_sub(ONE), FeeRate::ZERO);
+        assert_eq!(ONE.saturating_sub(THREE), FeeRate::ZERO);
     }
 
     #[test]
