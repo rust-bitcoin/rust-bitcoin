@@ -18,7 +18,7 @@ use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafHashExt as _, TapNodeHash};
-use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, ToU64 as _, WitnessScriptBuf};
+use crate::{internal_macros, Amount, FeeRate, P2wpkhScriptCode, ScriptPubKeyBuf, ToU64 as _};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
@@ -150,12 +150,8 @@ internal_macros::define_extension_trait! {
         /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
         /// for a P2WPKH output. The `scriptCode` is described in [BIP-0143].
         ///
-        /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
-        /// should not be used as one. It is a special template defined in BIP 143 which is used
-        /// in place of a witness script for purposes of sighash computation.
-        ///
         /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-        fn p2wpkh_script_code(&self) -> Option<WitnessScriptBuf>
+        fn p2wpkh_script_code(&self) -> Option<P2wpkhScriptCode>
         where T: ScriptHashableTag
         {
             if self.is_p2wpkh() {

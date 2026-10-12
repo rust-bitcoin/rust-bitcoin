@@ -16,6 +16,7 @@ mod sealed {
     impl Sealed for super::SignetBlockScriptTag {}
     impl Sealed for super::TapScriptTag {}
     impl Sealed for super::WitnessScriptTag {}
+    impl Sealed for super::ScriptCodeTag {}
 }
 
 /// A P2SH redeem script.
@@ -47,3 +48,8 @@ impl Tag for TapScriptTag {}
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum WitnessScriptTag {}
 impl Tag for WitnessScriptTag {}
+
+/// A script code (scriptCode) used in sighash computation.
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub enum ScriptCodeTag {}
+impl Tag for ScriptCodeTag {}

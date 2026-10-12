@@ -1034,3 +1034,23 @@ fn instruction_indices_nth_extended() {
     let pos_skip = script.instruction_indices().skip(2).next().unwrap().unwrap().0;
     assert_eq!(pos_skip, 3, "skip(2).next() returned wrong position");
 }
+
+#[test]
+fn p2wpkh_script_code() {
+    let wpkh = WPubkeyHash::from_byte_array(
+        hex!("1d0f172a0ecb48aee1be1f2687d2963ae33f71a1"),
+    );
+    let owned = P2wpkhScriptCode::new_p2wpkh(wpkh);
+    let script_code: &ScriptCode = &owned;
+
+    assert_eq!(
+        script_code.as_bytes(),
+        &hex!("76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac"),
+    );
+
+    // Check that encoding includes the CompactSize prefix.
+    assert_eq!(
+        encode_to_vec(script_code),
+        hex!("1976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac"),
+    );
+}

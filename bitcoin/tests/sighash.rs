@@ -5,7 +5,7 @@
 use bitcoin::sighash::{
     EcdsaSighashType, LegacySighash, Prevouts, SighashCache, TapSighash, TapSighashType,
 };
-use bitcoin::{Amount, ScriptPubKeyBuf, Transaction, TxOut};
+use bitcoin::{Amount, ScriptCode, ScriptPubKeyBuf, Transaction, TxOut};
 
 #[test]
 fn legacy_sighash() {
@@ -31,6 +31,17 @@ fn legacy_sighash() {
             .legacy_signature_hash(
                 input_index,
                 &script,
+                EcdsaSighashType::from_consensus(hash_type as u32),
+            )
+            .unwrap();
+
+        assert_eq!(got, want);
+
+        let script_code = ScriptCode::from_bytes(script.as_bytes());
+        let got = cache
+            .legacy_signature_hash(
+                input_index,
+                script_code,
                 EcdsaSighashType::from_consensus(hash_type as u32),
             )
             .unwrap();
