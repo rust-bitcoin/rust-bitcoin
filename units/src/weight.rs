@@ -180,6 +180,33 @@ impl Weight {
         Some(Self::from_wu(wu))
     }
 
+    /// Saturating addition.
+    ///
+    /// Computes `self + rhs`, saturating at [`Weight::MAX`] instead of overflowing.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_add(self, rhs: Self) -> Self {
+        Self::from_wu(self.to_wu().saturating_add(rhs.to_wu()))
+    }
+
+    /// Saturating subtraction.
+    ///
+    /// Computes `self - rhs`, saturating at [`Weight::MIN`] instead of overflowing.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_sub(self, rhs: Self) -> Self {
+        Self::from_wu(self.to_wu().saturating_sub(rhs.to_wu()))
+    }
+
+    /// Saturating multiplication.
+    ///
+    /// Computes `self * rhs`, saturating at [`Weight::MAX`] instead of overflowing.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_mul(self, rhs: u64) -> Self {
+        Self::from_wu(self.to_wu().saturating_mul(rhs))
+    }
+
     /// Checked fee rate multiplication.
     ///
     /// Computes the absolute fee amount for a given [`FeeRate`] at this weight. When the resulting
@@ -489,6 +516,28 @@ mod tests {
 
     #[test]
     fn checked_div_overflows() { assert!(TWO.checked_div(0).is_none()) }
+
+    #[test]
+    fn saturating_add() {
+        assert_eq!(ONE.saturating_add(ONE), TWO);
+        assert_eq!(Weight::ZERO.saturating_add(Weight::ZERO), Weight::ZERO);
+        assert_eq!(Weight::MAX.saturating_add(ONE), Weight::MAX);
+    }
+
+    #[test]
+    fn saturating_sub() {
+        assert_eq!(TWO.saturating_sub(ONE), ONE);
+        assert_eq!(Weight::ZERO.saturating_sub(ONE), Weight::ZERO);
+        assert_eq!(ONE.saturating_sub(TWO), Weight::ZERO);
+    }
+
+    #[test]
+    fn saturating_mul() {
+        assert_eq!(TWO.saturating_mul(2), FOUR);
+        assert_eq!(TWO.saturating_mul(0), Weight::ZERO);
+        assert_eq!(Weight::MAX.saturating_mul(2), Weight::MAX);
+        assert_eq!(TWO.saturating_mul(u64::MAX), Weight::MAX);
+    }
 
     #[test]
     #[allow(clippy::op_ref)]
