@@ -845,9 +845,7 @@ impl Address {
 
     /// Gets the address type of the [`Address`].
     ///
-    /// # Returns
-    ///
-    /// None if unknown, non-standard or related to the future witness version.
+    /// Returns None if unknown, non-standard or related to the future witness version.
     #[inline]
     pub fn address_type(&self) -> Option<AddressType> {
         match *self.inner() {

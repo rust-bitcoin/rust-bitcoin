@@ -69,9 +69,7 @@ impl TaprootMerkleBranch {
 
     /// Serializes to a writer.
     ///
-    /// # Returns
-    ///
-    /// The number of bytes written to the writer.
+    /// Returns the number of bytes written to the writer.
     pub fn encode<Write: io::Write + ?Sized>(&self, writer: &mut Write) -> io::Result<usize> {
         let bytes = self.as_bytes();
         writer.write_all(bytes)?;

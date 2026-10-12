@@ -369,9 +369,7 @@ pub trait TapTweak {
     ///  * c is the commitment data
     ///  * G is the generator point
     ///
-    /// # Returns
-    ///
-    /// The tweaked key, with the required parity.
+    /// Returns the tweaked key, with the required parity.
     ///
     /// [`Keypair`]: crypto::Keypair
     fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> Self::TweakedAux;
@@ -397,9 +395,7 @@ impl TapTweak for UntweakedPublicKey {
     ///  * c is the commitment data
     ///  * G is the generator point
     ///
-    /// # Returns
-    ///
-    /// The tweaked key and its parity.
+    /// Returns the tweaked key and its parity.
     fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedPublicKey {
         let tweak = TapTweakHash::from_key_and_merkle_root(*self, merkle_root).to_scalar();
         let output_key = self.add_tweak(&tweak).expect("Tap tweak failed");
@@ -424,9 +420,7 @@ impl TapTweak for UntweakedKeypair {
     /// a Taproot key which can [provably only be spent via
     /// keyspend](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-23).
     ///
-    /// # Returns
-    ///
-    /// The tweaked keypair.
+    /// Returns the tweaked keypair.
     fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
         let pubkey = XOnlyPublicKey::from_keypair(self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();

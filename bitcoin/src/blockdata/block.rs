@@ -83,9 +83,7 @@ internal_macros::define_extension_trait! {
 pub trait BlockCheckedExt: sealed::Sealed {
     /// Constructs a new [`Block`].
     ///
-    /// # Returns
-    ///
-    /// Return the block if it is valid, `None` if not. See [`Block::validate`].
+    /// Returns the block if it is valid, `None` if not. See [`Block::validate`].
     fn new_checked(
         header: Header,
         transactions: Vec<Transaction>,

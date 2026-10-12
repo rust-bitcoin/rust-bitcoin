@@ -72,9 +72,7 @@ impl TaprootMerkleBranchBuf {
 
     /// Serializes to a writer.
     ///
-    /// # Returns
-    ///
-    /// The number of bytes written to the writer.
+    /// Returns the number of bytes written to the writer.
     pub fn encode<Write: io::Write + ?Sized>(&self, writer: &mut Write) -> io::Result<usize> {
         for hash in self {
             writer.write_all(hash.as_ref())?;

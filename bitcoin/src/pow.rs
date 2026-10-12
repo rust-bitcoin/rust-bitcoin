@@ -163,8 +163,6 @@ internal_macros::define_extension_trait! {
         /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
         /// adjustment period.
         ///
-        /// # Returns
-        ///
         /// In line with Bitcoin Core this function may return a target value of zero.
         fn min_transition_threshold(&self) -> Self {
             Self::from_inner(self.to_inner() >> 2)
@@ -302,9 +300,7 @@ internal_macros::define_extension_trait! {
         ///
         /// To calculate the timespan, users should first convert their u32 timestamps to i64s before subtracting them
         ///
-        /// # Returns
-        ///
-        /// The expected [`CompactTarget`] recalculation.
+        /// Returns the expected [`CompactTarget`] recalculation.
         fn from_next_work_required(
             last: CompactTarget,
             timespan: i64,
@@ -346,9 +342,7 @@ internal_macros::define_extension_trait! {
         /// one would pass the header for Block 2015 as `current` and the header for Block 0 as
         /// `last_epoch_boundary`.
         ///
-        /// # Returns
-        ///
-        /// The expected [`CompactTarget`] recalculation.
+        /// Returns the expected [`CompactTarget`] recalculation.
         fn from_header_difficulty_adjustment(
             last_epoch_boundary: Header,
             current: Header,

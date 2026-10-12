@@ -401,8 +401,6 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_PUSHNUM_16` are covered.
         ///
-        /// # Returns
-        ///
         /// Returns `None` if `self` is not a PUSHNUM.
         #[inline]
         #[must_use]

@@ -40,7 +40,9 @@ impl WitnessMerkleNode {
 
     /// Given an iterator of leaves, compute the Merkle root.
     ///
-    /// Returns [`None`] if the iterator was empty, or if the transaction list contains
+    /// # Returns
+    ///
+    /// [`None`] if the iterator was empty, or if the transaction list contains
     /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
     /// transactions will always be invalid, so there is no harm in us refusing to
     /// compute their merkle roots.
