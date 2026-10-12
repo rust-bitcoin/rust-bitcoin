@@ -5,19 +5,19 @@
 use core::fmt;
 use core::mem::MaybeUninit;
 
-pub use error::CapacityExceededError;
-pub use safety_boundary::ArrayVec;
 #[cfg(creusot)]
 use creusot_std::prelude::*;
+pub use error::CapacityExceededError;
+pub use safety_boundary::ArrayVec;
 
 /// Limits the scope of `unsafe` auditing.
 // New trait impls and fns that don't need to access internals should go below the module, not
 // inside it!
 mod safety_boundary {
+    use core::mem::MaybeUninit;
+
     #[cfg(creusot)]
     use creusot_std::prelude::*;
-
-    use core::mem::MaybeUninit;
 
     /// A growable contiguous collection backed by array.
     #[derive(Copy)]
@@ -63,7 +63,9 @@ mod safety_boundary {
         pub const fn as_slice(&self) -> &[T] {
             // SAFETY: self.len is chosen such that everything is initialized up to len
             unsafe {
-                if self.len > CAP { core::hint::unreachable_unchecked() }
+                if self.len > CAP {
+                    core::hint::unreachable_unchecked()
+                }
                 super::slice_assume_init_ref(self.data.split_at(self.len).0)
             }
         }
@@ -80,7 +82,9 @@ mod safety_boundary {
         pub fn as_mut_slice(&mut self) -> &mut [T] {
             // SAFETY: self.len is chosen such that everything is initialized up to len
             unsafe {
-                if self.len > CAP { core::hint::unreachable_unchecked() }
+                if self.len > CAP {
+                    core::hint::unreachable_unchecked()
+                }
                 super::slice_assume_init_mut(self.data.split_at_mut(self.len).0)
             }
         }
@@ -115,16 +119,12 @@ mod safety_boundary {
         #[cfg(creusot)]
         #[logic(inline)]
         #[ensures(inv(self) ==> result.len() == CAP@)]
-        pub fn buf_view(self) -> Seq<MaybeUninit<T>> {
-            self.data.view()
-        }
+        pub fn buf_view(self) -> Seq<MaybeUninit<T>> { self.data.view() }
 
         #[cfg(creusot)]
         #[logic]
         #[ensures(inv(self) ==> result <= CAP@)]
-        pub fn len_view(self) -> Int {
-            self.len.view()
-        }
+        pub fn len_view(self) -> Int { self.len.view() }
     }
 
     #[cfg(creusot)]
@@ -299,9 +299,7 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
     #[cfg_attr(creusot, requires(slice@.len() <= CAP@ - self@.len()))]
     #[cfg_attr(creusot, ensures((^self)@ == (*self)@.concat(slice@)))]
     pub fn extend_from_slice(&mut self, slice: &[T]) {
-        let dst = self.spare_capacity_mut()
-            .get_mut(..slice.len())
-            .expect("buffer overflow");
+        let dst = self.spare_capacity_mut().get_mut(..slice.len()).expect("buffer overflow");
         write_copy_of_slice(dst, slice);
         let old_len = self.len();
         unsafe { self.set_len(old_len + slice.len()) }
@@ -432,6 +430,7 @@ impl<T: Copy + core::hash::Hash, const CAP: usize> core::hash::Hash for ArrayVec
 /// Error types for `ArrayVec`.
 pub mod error {
     use core::fmt;
+
     #[cfg(creusot)]
     use creusot_std::prelude::*;
     #[cfg(creusot)]
@@ -464,9 +463,7 @@ pub mod error {
         type DeepModelTy = Self;
 
         #[logic]
-        fn deep_model(self) -> Self::DeepModelTy {
-            self
-        }
+        fn deep_model(self) -> Self::DeepModelTy { self }
     }
 }
 

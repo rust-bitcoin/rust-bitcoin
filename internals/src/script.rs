@@ -69,16 +69,12 @@ impl PushDataLenLen {
 
 impl Ord for PushDataLenLen {
     #[cfg_attr(creusot, ensures(result == (*self).deep_model().cmp_log((*other).deep_model())))]
-    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        self.to_usize().cmp(&other.to_usize())
-    }
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering { self.to_usize().cmp(&other.to_usize()) }
 }
 
 impl PartialOrd for PushDataLenLen {
     #[cfg_attr(creusot, ensures(result == (*self).deep_model().partial_cmp_log((*other).deep_model())))]
-    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> { Some(self.cmp(other)) }
 }
 
 #[cfg(creusot)]
@@ -100,9 +96,7 @@ impl DeepModel for PushDataLenLen {
     type DeepModelTy = Int;
 
     #[logic(open, inline)]
-    fn deep_model(self) -> Self::DeepModelTy {
-        self.view()
-    }
+    fn deep_model(self) -> Self::DeepModelTy { self.view() }
 }
 
 /// Indicates that we tried to read more bytes from the script than available.

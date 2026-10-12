@@ -57,7 +57,7 @@ pub trait SliceExt {
     ///
     /// Returns `None` if the slice is shorter than `ARRAY_LEN`
     #[allow(clippy::type_complexity)] // it's not really complex and redefining would make it
-                                      // harder to understand
+    // harder to understand
     #[cfg_attr(creusot, ensures(match result {
         Some((arr, remainder)) => arr@ == self.view2().subsequence(0, ARRAY_LEN@) && remainder@ == self.view2().subsequence(ARRAY_LEN@, self.view2().len()),
         None => ARRAY_LEN@ > self.view2().len(),
@@ -70,7 +70,7 @@ pub trait SliceExt {
     ///
     /// Returns `None` if the slice is shorter than `ARRAY_LEN`
     #[allow(clippy::type_complexity)] // it's not really complex and redefining would make it
-                                      // harder to understand
+    // harder to understand
     #[cfg_attr(creusot, ensures(match result {
         Some((remainder, arr)) => arr@ == self.view2().subsequence(self.view2().len() - ARRAY_LEN@, self.view2().len()) && remainder@ == self.view2().subsequence(0, self.view2().len() - ARRAY_LEN@),
         None => ARRAY_LEN@ > self.view2().len(),
@@ -85,9 +85,7 @@ impl<T> SliceExt for [T] {
 
     #[cfg(creusot)]
     #[logic(open, inline)]
-    fn view2(self) -> Seq<Self::Item> {
-        <Self as View>::view(self)
-    }
+    fn view2(self) -> Seq<Self::Item> { <Self as View>::view(self) }
 
     // Sadly, creusot doesn't support pointer casts yet, so we can't prove this
     #[cfg_attr(creusot, trusted)]
