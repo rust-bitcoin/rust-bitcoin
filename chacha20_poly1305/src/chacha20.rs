@@ -4,6 +4,8 @@
 
 use core::ops::BitXor;
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+mod avx2;
 #[cfg(all(target_arch = "aarch64", target_endian = "little", target_feature = "neon"))]
 mod neon;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -356,19 +358,40 @@ impl ChaCha20 {
             chunks.into_remainder()
         };
 
-        // Consume as many 4-block groups as possible, then fall back to
+        // On x86, consume as many 8-block groups as possible with AVX2 when it
+        // is available, then 4-block groups with SSE2, before falling back to
         // single-block processing.
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-        #[cfg(target_feature = "sse2")]
         let remaining_buffer = {
-            let mut chunks = remaining_buffer.chunks_exact_mut(4 * CHACHA_BLOCKSIZE);
-            for chunk in &mut chunks {
-                if let Ok(chunk) = <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
-                    sse2::apply_4_blocks(chunk, &self.key, &self.nonce, self.block_count);
-                    self.block_count += 4;
+            let remaining_buffer = if avx2_available() {
+                let mut chunks = remaining_buffer.chunks_exact_mut(8 * CHACHA_BLOCKSIZE);
+                for chunk in &mut chunks {
+                    if let Ok(chunk) = <&mut [u8; 8 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
+                        // SAFETY: `avx2_available` guarantees AVX2 support.
+                        unsafe {
+                            avx2::apply_8_blocks(chunk, &self.key, &self.nonce, self.block_count);
+                        }
+                        self.block_count += 8;
+                    }
                 }
-            }
-            chunks.into_remainder()
+                chunks.into_remainder()
+            } else {
+                remaining_buffer
+            };
+
+            #[cfg(target_feature = "sse2")]
+            let remaining_buffer = {
+                let mut chunks = remaining_buffer.chunks_exact_mut(4 * CHACHA_BLOCKSIZE);
+                for chunk in &mut chunks {
+                    if let Ok(chunk) = <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
+                        sse2::apply_4_blocks(chunk, &self.key, &self.nonce, self.block_count);
+                        self.block_count += 4;
+                    }
+                }
+                chunks.into_remainder()
+            };
+
+            remaining_buffer
         };
 
         // Process full blocks.
@@ -409,6 +432,26 @@ impl ChaCha20 {
     pub fn block(&mut self, block: u32) {
         self.block_count = block;
         self.seek_offset_bytes = 0;
+    }
+}
+
+/// Use AVX2 if possible
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[inline]
+fn avx2_available() -> bool {
+    #[cfg(target_feature = "avx2")]
+    {
+        true
+    }
+    #[cfg(not(target_feature = "avx2"))]
+    #[cfg(feature = "std")]
+    {
+        std::is_x86_feature_detected!("avx2")
+    }
+    #[cfg(not(target_feature = "avx2"))]
+    #[cfg(not(feature = "std"))]
+    {
+        false
     }
 }
 
