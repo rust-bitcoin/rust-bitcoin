@@ -88,7 +88,7 @@ const TX_IN_BASE_WEIGHT: Weight =
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TxIn`] type.
     pub trait TxInExt impl for TxIn {
-        /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
+        /// Returns `true` if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
         /// [`Transaction`].
         ///
         /// `nLockTime` is enabled if *any* input enables it. See [`Transaction::is_lock_time_enabled`]
@@ -303,7 +303,7 @@ pub trait TransactionExt: sealed::Sealed {
     /// the RBF signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
     fn is_explicitly_rbf(&self) -> bool;
 
-    /// Returns true if this [`Transaction`]'s absolute timelock is satisfied at `height`/`time`.
+    /// Returns `true` if this [`Transaction`]'s absolute timelock is satisfied at `height`/`time`.
     ///
     /// # Returns
     ///

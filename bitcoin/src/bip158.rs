@@ -91,7 +91,7 @@ impl BlockFilter {
     /// Computes the canonical hash for the given filter.
     pub fn filter_hash(&self) -> sha256d::Hash { sha256d::Hash::hash(&self.content) }
 
-    /// Returns true if any query matches against this [`BlockFilter`].
+    /// Returns `true` if any query matches against this [`BlockFilter`].
     pub fn match_any<I>(&self, block_hash: BlockHash, query: I) -> Result<bool, Error>
     where
         I: Iterator,
@@ -101,7 +101,7 @@ impl BlockFilter {
         filter_reader.match_any(&mut self.content.as_slice(), query)
     }
 
-    /// Returns true if all queries match against this [`BlockFilter`].
+    /// Returns `true` if all queries match against this [`BlockFilter`].
     pub fn match_all<I>(&self, block_hash: BlockHash, query: I) -> Result<bool, Error>
     where
         I: Iterator,
@@ -180,7 +180,7 @@ impl BlockFilterReader {
         Self { reader: GcsFilterReader::new(k0, k1, M, P) }
     }
 
-    /// Returns true if any query matches against this [`BlockFilterReader`].
+    /// Returns `true` if any query matches against this [`BlockFilterReader`].
     pub fn match_any<I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
         I: Iterator,
@@ -190,7 +190,7 @@ impl BlockFilterReader {
         self.reader.match_any(reader, query)
     }
 
-    /// Returns true if all queries match against this [`BlockFilterReader`].
+    /// Returns `true` if all queries match against this [`BlockFilterReader`].
     pub fn match_all<I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
         I: Iterator,
@@ -213,7 +213,7 @@ impl GcsFilterReader {
         Self { filter: GcsFilter::new(k0, k1, p), m }
     }
 
-    /// Returns true if any query matches against this [`GcsFilterReader`].
+    /// Returns `true` if any query matches against this [`GcsFilterReader`].
     pub fn match_any<I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
         I: Iterator,
@@ -257,7 +257,7 @@ impl GcsFilterReader {
         Ok(false)
     }
 
-    /// Returns true if all queries match against this [`GcsFilterReader`].
+    /// Returns `true` if all queries match against this [`GcsFilterReader`].
     pub fn match_all<I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
         I: Iterator,

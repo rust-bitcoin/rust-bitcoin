@@ -63,7 +63,7 @@ impl U256 {
 
     fn is_zero(&self) -> bool { self.0 == 0 && self.1 == 0 }
 
-    /// Returns true if `self` is equal to [`U256::MAX`].
+    /// Returns `true` if `self` is equal to [`U256::MAX`].
     pub fn is_max(&self) -> bool { self.0 == u128::MAX && self.1 == u128::MAX }
 
     /// Returns the low 32 bits.

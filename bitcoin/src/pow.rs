@@ -50,7 +50,7 @@ impl WorkExt for Work {
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Target`] type.
     pub trait TargetExt impl for Target {
-        /// Returns true if block hash is less than or equal to this [`Target`].
+        /// Returns `true` if block hash is less than or equal to this [`Target`].
         ///
         /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
         /// to the target.
@@ -271,7 +271,7 @@ where
     }
 }
 
-/// Returns true if `height` ends the difficulty period.
+/// Returns `true` if `height` ends the difficulty period.
 fn is_retarget_height(height: BlockHeight, adjustment_interval: u32) -> bool {
     height.to_u32() % adjustment_interval == 0
 }

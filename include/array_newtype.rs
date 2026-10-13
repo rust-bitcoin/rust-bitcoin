@@ -188,7 +188,7 @@ macro_rules! impl_array_newtype {
             #[inline]
             pub fn len(&self) -> usize { $len }
 
-            /// Returns whether the object, as an array, is empty. Always false.
+            /// Returns whether the object, as an array, is empty. Always `false`.
             #[inline]
             pub fn is_empty(&self) -> bool { false }
         }

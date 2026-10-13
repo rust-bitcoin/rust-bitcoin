@@ -186,21 +186,22 @@ impl LockTime {
         }
     }
 
-    /// Returns true if both lock times use the same unit i.e., both height based or both time based.
+    /// Returns `true` if both lock times use the same unit i.e., both height based or both time
+    /// based.
     #[inline]
     pub const fn is_same_unit(self, other: Self) -> bool {
         matches!((self, other), (Self::Blocks(_), Self::Blocks(_)) | (Self::Time(_), Self::Time(_)))
     }
 
-    /// Returns true if this lock time value is in units of blocks.
+    /// Returns `true` if this lock time value is in units of blocks.
     #[inline]
     pub const fn is_block_count(self) -> bool { matches!(self, Self::Blocks(_)) }
 
-    /// Returns true if this lock time value is in units of time.
+    /// Returns `true` if this lock time value is in units of time.
     #[inline]
     pub const fn is_block_time(self) -> bool { !self.is_block_count() }
 
-    /// Returns true if this [`relative::LockTime`] is satisfied by the given chain state.
+    /// Returns `true` if this [`relative::LockTime`] is satisfied by the given chain state.
     ///
     /// If this function returns true then an output with this locktime can be spent in the next
     /// block.
@@ -233,7 +234,7 @@ impl LockTime {
         }
     }
 
-    /// Returns true if an output with this locktime can be spent in the next block.
+    /// Returns `true` if an output with this locktime can be spent in the next block.
     ///
     /// # Arguments
     ///
@@ -258,7 +259,7 @@ impl LockTime {
         }
     }
 
-    /// Returns true if an output with this locktime can be spent in the next block.
+    /// Returns `true` if an output with this locktime can be spent in the next block.
     ///
     /// # Arguments
     ///
@@ -283,7 +284,7 @@ impl LockTime {
         }
     }
 
-    /// Returns true if satisfaction of `other` lock time implies satisfaction of this
+    /// Returns `true` if satisfaction of `other` lock time implies satisfaction of this
     /// [`relative::LockTime`].
     ///
     /// A lock time can only be satisfied by n blocks being mined or n seconds passing. If you have
@@ -322,7 +323,8 @@ impl LockTime {
         }
     }
 
-    /// Returns true if satisfaction of the sequence number implies satisfaction of this lock time.
+    /// Returns `true` if satisfaction of the sequence number implies satisfaction of this lock
+    /// time.
     ///
     /// When deciding whether an instance of `<n> CHECKSEQUENCEVERIFY` will pass, this
     /// method can be used by parsing `n` as a [`LockTime`] and calling this method
@@ -456,7 +458,7 @@ impl NumberOfBlocks {
         Ok(Self::from_count(block_count))
     }
 
-    /// Returns true if an output locked by a block count can be spent in the next block.
+    /// Returns `true` if an output locked by a block count can be spent in the next block.
     ///
     /// `chain_tip` can be any height from the block prior to `utxo_mined_at` onwards i.e., we
     /// support a pair of parent/child transactions going into the mempool at the same time.
@@ -609,7 +611,7 @@ impl NumberOf512Seconds {
         Ok(Self::from_512_second_intervals(block_count))
     }
 
-    /// Returns true if an output locked by time can be spent in the next block.
+    /// Returns `true` if an output locked by time can be spent in the next block.
     ///
     /// # Arguments
     ///
