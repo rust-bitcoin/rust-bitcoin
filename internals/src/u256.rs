@@ -165,8 +165,8 @@ impl U256 {
     ///
     /// # Returns
     ///
-    /// A tuple of the addition along with a boolean indicating whether an arithmetic
-    /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
+    /// The sum of `self` and `rhs`, along with a boolean indicating whether an arithmetic
+    /// overflow occurred. If an overflow occurred, the wrapped sum is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn overflowing_add(self, rhs: Self) -> (Self, bool) {
         let mut ret = Self::ZERO;
@@ -191,8 +191,8 @@ impl U256 {
     ///
     /// # Returns
     ///
-    /// A tuple of the subtraction along with a boolean indicating whether an arithmetic
-    /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
+    /// The difference of `self` and `rhs`, along with a boolean indicating whether an arithmetic
+    /// overflow occurred. If an overflow occurred, the wrapped difference is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn overflowing_sub(self, rhs: Self) -> (Self, bool) {
         let ret = self.wrapping_add(!rhs).wrapping_add(Self::ONE);
@@ -204,9 +204,8 @@ impl U256 {
     ///
     /// # Returns
     ///
-    /// A tuple of the multiplication along with a boolean
-    /// indicating whether an arithmetic overflow would occur. If an
-    /// overflow would have occurred then the wrapped value is returned.
+    /// The product of `self` and `rhs`, along with a boolean indicating whether an arithmetic
+    /// overflow occurred. If an overflow occurred, the wrapped product is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         let mut ret = Self::ZERO;
