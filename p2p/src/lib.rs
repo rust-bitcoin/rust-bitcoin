@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Rust Bitcoin Peer to Peer Message Types
+//! # Rust Bitcoin Peer to Peer Message Types
 
 #![no_std]
 // Coding conventions.
