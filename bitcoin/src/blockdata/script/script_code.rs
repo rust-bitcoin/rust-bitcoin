@@ -2,6 +2,9 @@
 
 use core::ops::Deref;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use crate::key::WPubkeyHash;
 use crate::script::ScriptCode;
 
@@ -46,5 +49,16 @@ impl Deref for P2wpkhScriptCode {
     
     fn deref(&self) -> &Self::Target {
         self.as_script()
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for P2wpkhScriptCode {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let hash: [u8; 20] = u.arbitrary()?;
+        let wpkh = WPubkeyHash::from_byte_array(hash);
+
+        Ok(Self::new_p2wpkh(wpkh))
     }
 }
