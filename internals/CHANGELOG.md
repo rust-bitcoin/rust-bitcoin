@@ -2,7 +2,14 @@
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-12
+
+- Add `track_caller` to `U256` ops [#7000](https://github.com/rust-bitcoin/rust-bitcoin/pull/7000)
+- Restore `T: Eq` in `ArrayVec` `Eq` impl [#7002](https://github.com/rust-bitcoin/rust-bitcoin/pull/7002)
+
 ## [0.8.0] - 2026-10-08
+
+This release introduced a bug in [#7002](https://github.com/rust-bitcoin/rust-bitcoin/pull/7002) - yanking.
 
 - Start formally proving parts of the crate with Creusot [#6942](https://github.com/rust-bitcoin/rust-bitcoin/pull/6934)
 - Sanitize `serde` size hints before allocating [#6919](https://github.com/rust-bitcoin/rust-bitcoin/pull/6919)
@@ -88,7 +95,11 @@ Split this crate out from the [rust-bitcoin](https://github.com/rust-bitcoin/rus
 For previous development history see the original
 [CHANGELOG](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/CHANGELOG.md) file.
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.5.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.8.1...HEAD
+[0.8.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.8.0...bitcoin-internals-0.8.1
+[0.8.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.7.0...bitcoin-internals-0.8.0
+[0.7.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.6.0...bitcoin-internals-0.7.0
+[0.6.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.5.0...bitcoin-internals-0.6.0
 [0.5.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.4.2...bitcoin-internals-0.5.0
 [0.4.2]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.4.1...bitcoin-internals-0.4.2
 [0.4.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/internals-0.4.0...bitcoin-internals-0.4.1
