@@ -368,7 +368,7 @@ impl PushBytes {
     #[inline]
     pub fn len(&self) -> usize { self.as_bytes().len() }
 
-    /// Returns true if the buffer contains zero bytes.
+    /// Returns `true` if the buffer contains zero bytes.
     #[inline]
     pub fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
 }
@@ -382,7 +382,7 @@ impl PushBytesBuf {
     #[inline]
     pub fn capacity(&self) -> usize { self.inner().capacity() }
 
-    /// Returns true if the buffer contains zero bytes.
+    /// Returns `true` if the buffer contains zero bytes.
     #[inline]
     pub fn is_empty(&self) -> bool { self.inner().is_empty() }
 }

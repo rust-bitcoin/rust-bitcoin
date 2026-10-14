@@ -1267,7 +1267,7 @@ impl Version {
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Returns true if this transaction version number is considered standard.
+    /// Returns `true` if this transaction version number is considered standard.
     ///
     /// The behavior of this method matches whatever Bitcoin Core considers standard at the time
     /// of the release and may change in future versions to accommodate new standard versions.

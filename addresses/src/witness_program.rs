@@ -137,20 +137,20 @@ impl WitnessProgram {
             .expect("witness programs are always smaller than max size of PushBytes")
     }
 
-    /// Returns true if this witness program is for a P2WPKH output.
+    /// Returns `true` if this witness program is for a P2WPKH output.
     pub fn is_p2wpkh(&self) -> bool {
         self.version == WitnessVersion::V0 && self.program.len() == 20
     }
 
-    /// Returns true if this witness program is for a P2WSH output.
+    /// Returns `true` if this witness program is for a P2WSH output.
     pub fn is_p2wsh(&self) -> bool {
         self.version == WitnessVersion::V0 && self.program.len() == 32
     }
 
-    /// Returns true if this witness program is for a P2TR output.
+    /// Returns `true` if this witness program is for a P2TR output.
     pub fn is_p2tr(&self) -> bool { self.version == WitnessVersion::V1 && self.program.len() == 32 }
 
-    /// Returns true if this witness program is for a P2A output.
+    /// Returns `true` if this witness program is for a P2A output.
     pub fn is_p2a(&self) -> bool {
         self.version == WitnessVersion::V1 && self.program == P2A_PROGRAM
     }

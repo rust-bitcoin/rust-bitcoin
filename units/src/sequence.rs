@@ -103,7 +103,7 @@ impl Sequence {
     #[inline]
     pub fn is_final(self) -> bool { !self.enables_absolute_lock_time() }
 
-    /// Returns true if the transaction opted-in to BIP-0125 replace-by-fee.
+    /// Returns `true` if the transaction opted-in to BIP-0125 replace-by-fee.
     ///
     /// Replace by fee is signaled by the sequence being less than 0xfffffffe which is checked by
     /// this method. Note, this is the highest "non-final" value (see [`Sequence::is_final`]).

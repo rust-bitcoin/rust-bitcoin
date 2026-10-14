@@ -243,7 +243,8 @@ impl LockTime {
         Ok(Self::Seconds(time))
     }
 
-    /// Returns true if both lock times use the same unit i.e., both height based or both time based.
+    /// Returns `true` if both lock times use the same unit i.e., both height based or both time
+    /// based.
     #[inline]
     pub const fn is_same_unit(self, other: Self) -> bool {
         matches!(
@@ -252,15 +253,15 @@ impl LockTime {
         )
     }
 
-    /// Returns true if this lock time value is a block height.
+    /// Returns `true` if this lock time value is a block height.
     #[inline]
     pub const fn is_block_height(self) -> bool { matches!(self, Self::Blocks(_)) }
 
-    /// Returns true if this lock time value is a block time (UNIX timestamp).
+    /// Returns `true` if this lock time value is a block time (UNIX timestamp).
     #[inline]
     pub const fn is_block_time(self) -> bool { !self.is_block_height() }
 
-    /// Returns true if this timelock constraint is satisfied by the respective `height`/`time`.
+    /// Returns `true` if this timelock constraint is satisfied by the respective `height`/`time`.
     ///
     /// If `self` is a blockheight based lock then it is checked against `height` and if `self` is a
     /// blocktime based lock it is checked against `time`.
@@ -300,7 +301,7 @@ impl LockTime {
         }
     }
 
-    /// Returns true if a transaction with this locktime can be spent in the next block.
+    /// Returns `true` if a transaction with this locktime can be spent in the next block.
     ///
     /// If `height` is the current block height of the chain then a transaction with this locktime
     /// can be broadcast for inclusion in the next block.
@@ -317,7 +318,7 @@ impl LockTime {
         }
     }
 
-    /// Returns true if a transaction with this locktime can be included in the next block.
+    /// Returns `true` if a transaction with this locktime can be included in the next block.
     ///
     /// # Errors
     ///
@@ -330,7 +331,7 @@ impl LockTime {
         }
     }
 
-    /// Returns true if satisfaction of `other` lock time implies satisfaction of this
+    /// Returns `true` if satisfaction of `other` lock time implies satisfaction of this
     /// [`absolute::LockTime`].
     ///
     /// A lock time can only be satisfied by n blocks being mined or n seconds passing. If you have
@@ -577,7 +578,7 @@ impl Height {
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Returns true if a transaction with this locktime can be included in the next block.
+    /// Returns `true` if a transaction with this locktime can be included in the next block.
     ///
     /// `self` is value of the [`LockTime`] and if `height` is the current chain tip then
     /// a transaction with this lock can be broadcast for inclusion in the next block.
@@ -721,7 +722,7 @@ impl MedianTimePast {
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Returns true if a transaction with this locktime can be included in the next block.
+    /// Returns `true` if a transaction with this locktime can be included in the next block.
     ///
     /// `self` is the value of the [`LockTime`] and if `time` is the median time past of the block
     /// at the chain tip then a transaction with this lock can be broadcast for inclusion in the
@@ -774,11 +775,11 @@ impl<'de> Deserialize<'de> for MedianTimePast {
     }
 }
 
-/// Returns true if `n` is a block height i.e., less than 500,000,000.
+/// Returns `true` if `n` is a block height i.e., less than 500,000,000.
 #[inline]
 pub const fn is_block_height(n: u32) -> bool { n < LOCK_TIME_THRESHOLD }
 
-/// Returns true if `n` is a UNIX timestamp i.e., greater than or equal to 500,000,000.
+/// Returns `true` if `n` is a UNIX timestamp i.e., greater than or equal to 500,000,000.
 #[inline]
 pub const fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
 

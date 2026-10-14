@@ -136,16 +136,16 @@ impl OutOfRangeError {
         }
     }
 
-    /// Returns true if the type that was attempted to be parsed is signed (`SignedAmount`).
+    /// Returns `true` if the type that was attempted to be parsed is signed (`SignedAmount`).
     ///
     /// This can be used to hint to users to enter non-negative values specifically.
     pub fn is_signed(&self) -> bool { self.is_signed }
 
-    /// Returns true if the input value was larger than the maximum allowed value.
+    /// Returns `true` if the input value was larger than the maximum allowed value.
     #[inline]
     pub fn is_above_max(&self) -> bool { self.is_greater_than_max }
 
-    /// Returns true if the input value was smaller than the minimum allowed value.
+    /// Returns `true` if the input value was smaller than the minimum allowed value.
     #[inline]
     pub fn is_below_min(&self) -> bool { !self.is_greater_than_max }
 

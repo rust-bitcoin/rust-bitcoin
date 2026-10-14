@@ -845,7 +845,7 @@ impl Address {
 
     /// Gets the address type of the [`Address`].
     ///
-    /// Returns None if unknown, non-standard or related to the future witness version.
+    /// Returns `None` if unknown, non-standard or related to the future witness version.
     #[inline]
     pub fn address_type(&self) -> Option<AddressType> {
         match *self.inner() {
@@ -993,7 +993,7 @@ impl Address {
     #[cfg(feature = "alloc")]
     pub fn to_qr_uri(self) -> String { format!("bitcoin:{:#}", self) }
 
-    /// Returns true if the given pubkey is directly related to the address payload.
+    /// Returns `true` if the given pubkey is directly related to the address payload.
     ///
     /// This is determined by directly comparing the address payload with either the
     /// hash of the given public key or the SegWit redeem hash generated from the
@@ -1008,7 +1008,7 @@ impl Address {
             || (*segwit_redeem_hash(pubkey_hash).as_byte_array() == *payload)
     }
 
-    /// Returns true if the supplied xonly public key can be used to derive the address.
+    /// Returns `true` if the supplied xonly public key can be used to derive the address.
     ///
     /// This will only work for Taproot addresses. The Public Key is
     /// assumed to have already been tweaked.
@@ -1016,7 +1016,7 @@ impl Address {
         xonly_pubkey.serialize().0 == *self.payload_as_bytes()
     }
 
-    /// Returns true if the address creates a particular script
+    /// Returns `true` if the address creates a particular script
     /// This function doesn't make any allocations.
     #[cfg(feature = "alloc")]
     pub fn matches_script_pubkey(&self, script: &ScriptPubKey) -> bool {

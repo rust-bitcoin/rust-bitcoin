@@ -497,7 +497,7 @@ impl TaprootBuilder {
 
     /// Constructs a new [`TaprootSpendInfo`] with the given internal key.
     ///
-    /// Returns the unmodified builder as Err if the builder is not finalizable.
+    /// Returns the unmodified builder as `Err` if the builder is not finalizable.
     /// See also [`TaprootBuilder::is_finalizable`]
     pub fn finalize<K: Into<XOnlyPublicKey>>(
         mut self,

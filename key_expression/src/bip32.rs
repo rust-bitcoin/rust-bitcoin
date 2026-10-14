@@ -671,7 +671,7 @@ impl RelativeDerivationPath {
         new_path
     }
 
-    /// Returns the derivation path as a vector of raw BIP-0032 u32 child numbers.
+    /// Returns the derivation path as a vector of raw BIP-0032 `u32` child numbers.
     /// Unhardened elements are copied as is.
     /// 0x80000000 is added to the hardened elements.
     ///
