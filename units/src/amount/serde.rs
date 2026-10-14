@@ -28,6 +28,7 @@ use core::fmt;
 #[cfg(feature = "alloc")]
 use super::ParseAmountError;
 use crate::{Amount, SignedAmount};
+use sealed::Token;
 
 #[cfg(feature = "alloc")]
 struct DisplayFullError(ParseAmountError);
@@ -60,20 +61,29 @@ pub trait AmountOps: TryFrom<SignedAmount> + Into<SignedAmount> + Copy + sealed:
 impl AmountOps for Amount {}
 impl AmountOps for SignedAmount {}
 
+#[allow(private_interfaces)]
 mod sealed {
     use crate::{Amount, SignedAmount};
 
     pub trait AmountOps {
-        const IS_SIGNED: bool;
+        #[doc(hidden)]
+        fn is_signed(token: Token) -> bool;
     }
 
     impl AmountOps for Amount {
-        const IS_SIGNED: bool = false;
+        fn is_signed(_: Token) -> bool {
+            false
+        }
     }
 
     impl AmountOps for SignedAmount {
-        const IS_SIGNED: bool = true;
+        fn is_signed(_: Token) -> bool {
+            true
+        }
     }
+
+    #[doc(hidden)]
+    pub(super) struct Token;
 }
 
 pub mod as_sat {
@@ -98,7 +108,7 @@ pub mod as_sat {
         A: AmountOps,
     {
         let sat = (*a).into().to_sat();
-        if A::IS_SIGNED {
+        if A::is_signed(super::Token) {
             i64::serialize(&sat, s)
         } else {
             u64::serialize(&(sat as u64), s)
@@ -111,7 +121,7 @@ pub mod as_sat {
         A: AmountOps,
     {
         fn expecting<T: AmountOps>() -> &'static str {
-            if T::IS_SIGNED {
+            if T::is_signed(super::Token) {
                 "an integer between -2100000000000000 and 2100000000000000 inclusive"
             } else {
                 "an integer between 0 and 2100000000000000 inclusive"
@@ -166,7 +176,7 @@ pub mod as_sat {
                     .map_err(range_error::<T, _, _>(value))
             }
         }
-        if A::IS_SIGNED {
+        if A::is_signed(super::Token) {
             d.deserialize_i64(Visitor(PhantomData))
         } else {
             d.deserialize_u64(Visitor(PhantomData))
@@ -194,7 +204,7 @@ pub mod as_sat {
             A: AmountOps,
         {
             let sat = a.map(Into::into).map(SignedAmount::to_sat);
-            if A::IS_SIGNED {
+            if A::is_signed(super::super::Token) {
                 sat.serialize(s)
             } else {
                 sat.map(|sat| sat as u64).serialize(s)
@@ -206,7 +216,7 @@ pub mod as_sat {
             A: AmountOps,
         {
             fn expecting<T: AmountOps>() -> &'static str {
-                if T::IS_SIGNED {
+                if T::is_signed(super::super::Token) {
                     "an optional integer between -2100000000000000 and 2100000000000000 inclusive"
                 } else {
                     "an optional integer between 0 and 2100000000000000 inclusive"
@@ -271,7 +281,7 @@ pub mod as_sat {
             A: AmountOps,
         {
             let sats = a.iter().map(|&amount| amount.into()).map(SignedAmount::to_sat);
-            if A::IS_SIGNED {
+            if A::is_signed(super::super::Token) {
                 s.collect_seq(sats)
             } else {
                 s.collect_seq(sats.map(|sat| sat as u64))
@@ -283,7 +293,7 @@ pub mod as_sat {
             A: AmountOps,
         {
             fn expecting<T: AmountOps>() -> &'static str {
-                if T::IS_SIGNED {
+                if T::is_signed(super::super::Token) {
                     "an sequence of integers between -2100000000000000 and 2100000000000000 inclusive"
                 } else {
                     "an sequence of integers between 0 and 2100000000000000 inclusive"
