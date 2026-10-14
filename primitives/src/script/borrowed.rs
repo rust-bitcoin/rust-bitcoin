@@ -26,7 +26,7 @@ use crate::{ScriptPubKey, WitnessScript};
 crate::transparent_newtype! {
     /// Bitcoin script slice.
     ///
-    /// *[See also the `bitcoin::script` module](super).*
+    /// *[See also the `script` module](super).*
     ///
     /// [`Script`] is a script slice, the most primitive script type. It's usually seen in its borrowed
     /// form `&Script`. It is always encoded as a series of bytes representing the opcodes and data
@@ -47,8 +47,9 @@ crate::transparent_newtype! {
     ///
     /// Slicing is similar to how `str` works: some ranges may be incorrect and indexing by
     /// `usize` is not supported. However, as opposed to `std`, we have no way of checking
-    /// correctness without causing linear complexity so there are **no panics on invalid
-    /// ranges!** If you supply an invalid range, you'll get a garbled script.
+    /// correctness without causing linear complexity so there are **no panics on ranges that
+    /// are not at an instruction boundary!** If you supply such a range, you'll get a garbled
+    /// script. As with slices, a range that is out of bounds does panic.
     ///
     /// The range is considered valid if it's at a boundary of instruction. Care must be taken
     /// especially with push operations because you could get a reference to arbitrary
@@ -82,10 +83,10 @@ crate::transparent_newtype! {
     pub struct Script<T>(PhantomData<T>, [u8]);
 
     impl<T> Script<T> {
-        /// Treat byte slice as [`Script`].
+        /// Treats a byte slice as a [`Script`].
         pub const fn from_bytes(bytes: &_) -> &Self;
 
-        /// Treat mutable byte slice as [`Script`].
+        /// Treats a mutable byte slice as a [`Script`].
         pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
 
         pub(crate) fn from_boxed_bytes(bytes: Box<_>) -> Box<Self>;
@@ -145,7 +146,9 @@ impl<T> Script<T> {
     /// Consensus encodes the script as lower-case hex.
     ///
     /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
-    /// `to_hex_string_no_length_prefix`.
+    /// [`to_hex_string_no_length_prefix`].
+    ///
+    /// [`to_hex_string_no_length_prefix`]: Self::to_hex_string_no_length_prefix
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     pub fn to_hex_string_prefixed(&self) -> String {
@@ -158,7 +161,9 @@ impl<T> Script<T> {
     /// Encodes the script as lower-case hex.
     ///
     /// This is **not** consensus encoding. The returned hex string will not include the length
-    /// prefix. See `to_hex_string_prefixed`.
+    /// prefix. See [`to_hex_string_prefixed`].
+    ///
+    /// [`to_hex_string_prefixed`]: Self::to_hex_string_prefixed
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     pub fn to_hex_string_no_length_prefix(&self) -> String {
@@ -296,7 +301,7 @@ impl ScriptPubKey {
             && self.as_bytes()[2..] == P2A_PROGRAM
     }
 
-    /// Check if this is a consensus-valid `OP_RETURN` output.
+    /// Checks whether this is a consensus-valid `OP_RETURN` output.
     ///
     /// To validate if the `OP_RETURN` obeys Bitcoin Core's current standardness policy, use
     /// `bitcoin::ScriptPubKeyExt::is_standard_op_return()` instead.

@@ -87,118 +87,118 @@ macro_rules! all_opcodes {
 }
 
 all_opcodes! {
-    OP_1NEGATE => 0x4f, "Push the array `0x81` onto the stack.";
-    OP_1 => 0x51, "Push the array `0x01` onto the stack.";
-    OP_2 => 0x52, "Push the array `0x02` onto the stack.";
-    OP_3 => 0x53, "Push the array `0x03` onto the stack.";
-    OP_4 => 0x54, "Push the array `0x04` onto the stack.";
-    OP_5 => 0x55, "Push the array `0x05` onto the stack.";
-    OP_6 => 0x56, "Push the array `0x06` onto the stack.";
-    OP_7 => 0x57, "Push the array `0x07` onto the stack.";
-    OP_8 => 0x58, "Push the array `0x08` onto the stack.";
-    OP_9 => 0x59, "Push the array `0x09` onto the stack.";
-    OP_10 => 0x5a, "Push the array `0x0a` onto the stack.";
-    OP_11 => 0x5b, "Push the array `0x0b` onto the stack.";
-    OP_12 => 0x5c, "Push the array `0x0c` onto the stack.";
-    OP_13 => 0x5d, "Push the array `0x0d` onto the stack.";
-    OP_14 => 0x5e, "Push the array `0x0e` onto the stack.";
-    OP_15 => 0x5f, "Push the array `0x0f` onto the stack.";
-    OP_16 => 0x60, "Push the array `0x10` onto the stack.";
+    OP_1NEGATE => 0x4f, "Pushes the array `0x81` onto the stack.";
+    OP_1 => 0x51, "Pushes the array `0x01` onto the stack.";
+    OP_2 => 0x52, "Pushes the array `0x02` onto the stack.";
+    OP_3 => 0x53, "Pushes the array `0x03` onto the stack.";
+    OP_4 => 0x54, "Pushes the array `0x04` onto the stack.";
+    OP_5 => 0x55, "Pushes the array `0x05` onto the stack.";
+    OP_6 => 0x56, "Pushes the array `0x06` onto the stack.";
+    OP_7 => 0x57, "Pushes the array `0x07` onto the stack.";
+    OP_8 => 0x58, "Pushes the array `0x08` onto the stack.";
+    OP_9 => 0x59, "Pushes the array `0x09` onto the stack.";
+    OP_10 => 0x5a, "Pushes the array `0x0a` onto the stack.";
+    OP_11 => 0x5b, "Pushes the array `0x0b` onto the stack.";
+    OP_12 => 0x5c, "Pushes the array `0x0c` onto the stack.";
+    OP_13 => 0x5d, "Pushes the array `0x0d` onto the stack.";
+    OP_14 => 0x5e, "Pushes the array `0x0e` onto the stack.";
+    OP_15 => 0x5f, "Pushes the array `0x0f` onto the stack.";
+    OP_16 => 0x60, "Pushes the array `0x10` onto the stack.";
     OP_NOP => 0x61, "Does nothing.";
-    OP_IF => 0x63, "Pop and execute the next statements if a nonzero element was popped.";
-    OP_NOTIF => 0x64, "Pop and execute the next statements if a zero element was popped.";
-    OP_ELSE => 0x67, "Execute statements if those after the previous `OP_IF` were not, and vice-versa. \
+    OP_IF => 0x63, "Pops and executes the next statements if a nonzero element was popped.";
+    OP_NOTIF => 0x64, "Pops and executes the next statements if a zero element was popped.";
+    OP_ELSE => 0x67, "Executes statements if those after the previous `OP_IF` were not, and vice-versa. \
              If there is no previous `OP_IF`, this acts as a RETURN.";
-    OP_ENDIF => 0x68, "Pop and execute the next statements if a zero element was popped.";
-    OP_VERIFY => 0x69, "If the top value is zero or the stack is empty, fail; otherwise, pop the stack.";
-    OP_RETURN => 0x6a, "Fail the script immediately. (Must be executed.).";
-    OP_TOALTSTACK => 0x6b, "Pop one element from the main stack onto the alt stack.";
-    OP_FROMALTSTACK => 0x6c, "Pop one element from the alt stack onto the main stack.";
+    OP_ENDIF => 0x68, "Ends an `OP_IF` or `OP_NOTIF` block.";
+    OP_VERIFY => 0x69, "Fails if the top value is zero or the stack is empty, otherwise pops the stack.";
+    OP_RETURN => 0x6a, "Fails the script immediately (must be executed).";
+    OP_TOALTSTACK => 0x6b, "Pops one element from the main stack onto the alt stack.";
+    OP_FROMALTSTACK => 0x6c, "Pops one element from the alt stack onto the main stack.";
     OP_2DROP => 0x6d, "Drops the top two stack items.";
     OP_2DUP => 0x6e, "Duplicates the top two stack items as `AB` -> `ABAB`.";
     OP_3DUP => 0x6f, "Duplicates the top three stack items as `ABC` -> `ABCABC`.";
     OP_2OVER => 0x70, "Duplicates the third and fourth items from the top of the stack.";
     OP_2ROT => 0x71, "Moves the two stack items four spaces back to the front, as `xxxxAB` -> `ABxxxx`.";
     OP_2SWAP => 0x72, "Swaps the top two pairs, as `ABCD` -> `CDAB`.";
-    OP_IFDUP => 0x73, "Duplicate the top stack element unless it is zero.";
-    OP_DEPTH => 0x74, "Push the current number of stack items onto the stack.";
+    OP_IFDUP => 0x73, "Duplicates the top stack element unless it is zero.";
+    OP_DEPTH => 0x74, "Pushes the current number of stack items onto the stack.";
     OP_DROP => 0x75, "Drops the top stack item.";
     OP_DUP => 0x76, "Duplicates the top stack item.";
     OP_NIP => 0x77, "Drops the second-to-top stack item.";
     OP_OVER => 0x78, "Copies the second-to-top stack item, as `xA` -> `AxA`.";
-    OP_PICK => 0x79, "Pop the top stack element as N. Copy the Nth stack element to the top.";
-    OP_ROLL => 0x7a, "Pop the top stack element as N. Move the Nth stack element to the top.";
-    OP_ROT => 0x7b, "Rotate the top three stack items, as `[top next1 next2]` -> `[next2 top next1]`.";
-    OP_SWAP => 0x7c, "Swap the top two stack items.";
-    OP_TUCK => 0x7d, "Copy the top stack item to before the second item, as `[top next]` -> `[top next top]`.";
+    OP_PICK => 0x79, "Pops the top stack element as N. Copies the Nth stack element to the top.";
+    OP_ROLL => 0x7a, "Pops the top stack element as N. Moves the Nth stack element to the top.";
+    OP_ROT => 0x7b, "Rotates the top three stack items, as `[top next1 next2]` -> `[next2 top next1]`.";
+    OP_SWAP => 0x7c, "Swaps the top two stack items.";
+    OP_TUCK => 0x7d, "Copies the top stack item to before the second item, as `[top next]` -> `[top next top]`.";
     OP_SIZE => 0x82, "Pushes the length of the top stack item onto the stack.";
     OP_EQUAL => 0x87, "Pushes 1 if the inputs are exactly equal, 0 otherwise.";
     OP_EQUALVERIFY => 0x88, "Returns success if the inputs are exactly equal, failure otherwise.";
-    OP_1ADD => 0x8b, "Increment the top stack element in place.";
-    OP_1SUB => 0x8c, "Decrement the top stack element in place.";
-    OP_NEGATE => 0x8f, "Multiply the top stack item by -1 in place.";
-    OP_ABS => 0x90, "Absolute value the top stack item in place.";
-    OP_NOT => 0x91, "Map 0 to 1 and everything else to 0, in place.";
-    OP_0NOTEQUAL => 0x92, "Map 0 to 0 and everything else to 1, in place.";
-    OP_ADD => 0x93, "Pop two stack items and push their sum.";
-    OP_SUB => 0x94, "Pop two stack items and push the second minus the top.";
-    OP_BOOLAND => 0x9a, "Pop the top two stack items and push 1 if both are nonzero, else push 0.";
-    OP_BOOLOR => 0x9b, "Pop the top two stack items and push 1 if either is nonzero, else push 0.";
-    OP_NUMEQUAL => 0x9c, "Pop the top two stack items and push 1 if both are numerically equal, else push 0.";
-    OP_NUMEQUALVERIFY => 0x9d, "Pop the top two stack items and return success if both are numerically equal, else return failure.";
-    OP_NUMNOTEQUAL => 0x9e, "Pop the top two stack items and push 0 if both are numerically equal, else push 1.";
-    OP_LESSTHAN  => 0x9f, "Pop the top two items; push 1 if the second is less than the top, 0 otherwise.";
-    OP_GREATERTHAN  => 0xa0, "Pop the top two items; push 1 if the second is greater than the top, 0 otherwise.";
-    OP_LESSTHANOREQUAL  => 0xa1, "Pop the top two items; push 1 if the second is <= the top, 0 otherwise.";
-    OP_GREATERTHANOREQUAL  => 0xa2, "Pop the top two items; push 1 if the second is >= the top, 0 otherwise.";
-    OP_MIN => 0xa3, "Pop the top two items; push the smaller.";
-    OP_MAX => 0xa4, "Pop the top two items; push the larger.";
-    OP_WITHIN => 0xa5, "Pop the top three items; if the top is >= the second and < the third, push 1, otherwise push 0.";
-    OP_RIPEMD160 => 0xa6, "Pop the top stack item and push its RIPEMD160 hash.";
-    OP_SHA1 => 0xa7, "Pop the top stack item and push its SHA1 hash.";
-    OP_SHA256 => 0xa8, "Pop the top stack item and push its SHA256 hash.";
-    OP_HASH160 => 0xa9, "Pop the top stack item and push its RIPEMD(SHA256) hash.";
-    OP_HASH256 => 0xaa, "Pop the top stack item and push its SHA256(SHA256) hash.";
-    OP_CODESEPARATOR => 0xab, "Ignore this and everything preceding when deciding what to sign when signature-checking.";
-    OP_CHECKSIG => 0xac, "<https://en.bitcoin.it/wiki/OP_CHECKSIG> pushing 1/0 for success/failure.";
-    OP_CHECKSIGVERIFY => 0xad, "<https://en.bitcoin.it/wiki/OP_CHECKSIG> returning success/failure.";
-    OP_CHECKMULTISIG => 0xae, "Pop N, N pubkeys, M, M signatures, a dummy (due to bug in reference code), \
-                      and verify that all M signatures are valid. Push 1 for 'all valid', 0 otherwise.";
-    OP_CHECKMULTISIGVERIFY => 0xaf, "Like the above but return success/failure.";
-    OP_CHECKSIGADD => 0xba, "`OP_CHECKSIGADD` post tapscript.";
+    OP_1ADD => 0x8b, "Increments the top stack element in place.";
+    OP_1SUB => 0x8c, "Decrements the top stack element in place.";
+    OP_NEGATE => 0x8f, "Multiplies the top stack item by -1 in place.";
+    OP_ABS => 0x90, "Replaces the top stack item with its absolute value, in place.";
+    OP_NOT => 0x91, "Maps 0 to 1 and everything else to 0, in place.";
+    OP_0NOTEQUAL => 0x92, "Maps 0 to 0 and everything else to 1, in place.";
+    OP_ADD => 0x93, "Pops two stack items and pushes their sum.";
+    OP_SUB => 0x94, "Pops two stack items and pushes the second minus the top.";
+    OP_BOOLAND => 0x9a, "Pops the top two stack items and pushes 1 if both are nonzero, else pushes 0.";
+    OP_BOOLOR => 0x9b, "Pops the top two stack items and pushes 1 if either is nonzero, else pushes 0.";
+    OP_NUMEQUAL => 0x9c, "Pops the top two stack items and pushes 1 if both are numerically equal, else pushes 0.";
+    OP_NUMEQUALVERIFY => 0x9d, "Pops the top two stack items and returns success if both are numerically equal, else returns failure.";
+    OP_NUMNOTEQUAL => 0x9e, "Pops the top two stack items and pushes 0 if both are numerically equal, else pushes 1.";
+    OP_LESSTHAN  => 0x9f, "Pops the top two items; pushes 1 if the second is less than the top, 0 otherwise.";
+    OP_GREATERTHAN  => 0xa0, "Pops the top two items; pushes 1 if the second is greater than the top, 0 otherwise.";
+    OP_LESSTHANOREQUAL  => 0xa1, "Pops the top two items; pushes 1 if the second is <= the top, 0 otherwise.";
+    OP_GREATERTHANOREQUAL  => 0xa2, "Pops the top two items; pushes 1 if the second is >= the top, 0 otherwise.";
+    OP_MIN => 0xa3, "Pops the top two items; pushes the smaller.";
+    OP_MAX => 0xa4, "Pops the top two items; pushes the larger.";
+    OP_WITHIN => 0xa5, "Pops the top three items; if the third is >= the second and < the top, pushes 1, otherwise pushes 0.";
+    OP_RIPEMD160 => 0xa6, "Pops the top stack item and pushes its RIPEMD160 hash.";
+    OP_SHA1 => 0xa7, "Pops the top stack item and pushes its SHA1 hash.";
+    OP_SHA256 => 0xa8, "Pops the top stack item and pushes its SHA256 hash.";
+    OP_HASH160 => 0xa9, "Pops the top stack item and pushes its RIPEMD160(SHA256) hash.";
+    OP_HASH256 => 0xaa, "Pops the top stack item and pushes its SHA256(SHA256) hash.";
+    OP_CODESEPARATOR => 0xab, "Ignores this and everything preceding when deciding what to sign when signature-checking.";
+    OP_CHECKSIG => 0xac, "Pops a public key and a signature and pushes 1 for a successful check or 0 for a failed check. Invalid encodings may fail the script.";
+    OP_CHECKSIGVERIFY => 0xad, "Same as `OP_CHECKSIG` followed by `OP_VERIFY`.";
+    OP_CHECKMULTISIG => 0xae, "Pops N, N pubkeys, M, M signatures, a dummy (due to bug in reference code), \
+                      and verifies that all M signatures are valid. Pushes 1 for 'all valid', 0 otherwise.";
+    OP_CHECKMULTISIGVERIFY => 0xaf, "Same as `OP_CHECKMULTISIG` followed by `OP_VERIFY`.";
+    OP_CHECKSIGADD => 0xba, "Pops a public key, a number `n` and a signature in tapscript; pushes `n + 1` for a successful check or `n` for an empty signature. Invalid inputs fail the script. Unknown public key types accept any nonempty signature.";
 }
 
-/// Read the following byte as a length, and read the following
+/// Reads the following byte as a length, and reads the following
 /// bytes as a push of that length.
 #[cfg(feature = "alloc")]
 pub(crate) const OP_PUSHDATA1: u8 = 0x4c;
 
-/// Read the following 2 bytes as a little-endian length, and read the following
+/// Reads the following 2 bytes as a little-endian length, and reads the following
 /// bytes as a push of that length.
 #[cfg(feature = "alloc")]
 pub(crate) const OP_PUSHDATA2: u8 = 0x4d;
 
-/// Read the following 4 bytes as a little-endian length, and read the following
+/// Reads the following 4 bytes as a little-endian length, and reads the following
 /// bytes as a push of that length.
 #[cfg(any(feature = "alloc", test))]
 pub(crate) const OP_PUSHDATA4: u8 = 0x4e;
 
-/// Push an empty array onto the stack.
+/// Pushes an empty array onto the stack.
 pub(crate) const OP_PUSHBYTES_0: Opcode = Opcode::from_u8(0x00);
 
-/// Push the next 2 bytes as an array onto the stack.
+/// Pushes the next 2 bytes as an array onto the stack.
 #[cfg(feature = "alloc")]
 pub(crate) const OP_PUSHBYTES_2: Opcode = Opcode::from_u8(0x02);
 
-/// Push the next 20 bytes as an array onto the stack.
+/// Pushes the next 20 bytes as an array onto the stack.
 #[cfg(feature = "alloc")]
 pub(crate) const OP_PUSHBYTES_20: Opcode = Opcode::from_u8(0x14);
 
-/// Push the next 32 bytes as an array onto the stack.
+/// Pushes the next 32 bytes as an array onto the stack.
 #[cfg(feature = "alloc")]
 pub(crate) const OP_PUSHBYTES_32: Opcode = Opcode::from_u8(0x20);
 
-/// Format a byte as a script opcode.
+/// Formats a byte as a script opcode.
 #[cfg(feature = "alloc")]
 pub(crate) fn fmt_opcode(op: u8, f: &mut fmt::Formatter) -> fmt::Result {
     match op {

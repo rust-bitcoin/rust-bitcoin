@@ -10,6 +10,17 @@
 //! This crate can be used in a no-std environment but a lot of the functionality requires an
 //! allocator i.e., requires the `alloc` feature to be enabled.
 //!
+//! ## Features
+//!
+//! * `std` (default) - turns on `std` integration, mainly the `std::error::Error` trait. Implies
+//!   `alloc`.
+//! * `alloc` - turns on the types that require an allocator, such as `Transaction`, `Block`,
+//!   `Witness` and the script types.
+//! * `hex` (default) - turns on parsing and formatting types as hex strings.
+//! * `serde` - causes the crate to depend on `serde` and provide support for serializing and
+//!   deserializing its types. Implies `alloc` and `hex`.
+//! * `arbitrary` - causes the crate to depend on `arbitrary` and implement the `Arbitrary` trait.
+//!
 //! ### serde
 //!
 //! The consensus encodable types ([`Block`], [`block::Header`], [`Transaction`], [`TxIn`], and
@@ -28,6 +39,11 @@
 //! }
 //! # }
 //! ```
+//!
+//! ## MSRV
+//!
+//! This crate supports Rust 1.74, however some of its dependencies may not do so or may require
+//! pinning. Similarly, some features may require newer Rust version (implicitly or explicitly).
 //!
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin/rust-bitcoin>
 
