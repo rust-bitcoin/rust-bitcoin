@@ -104,9 +104,8 @@ impl MerkleBlock {
         Self { header: *header, txn: pmt }
     }
 
-    /// Extracts the matching txid's represented by this partial Merkle tree
-    /// and their respective indices within the partial tree.
-    /// returns Ok(()) on success, or error in case of failure
+    /// Extracts matching txids and their zero-based indices in the block's transaction list.
+    /// Verifies the computed Merkle root against the block header.
     ///
     /// # Errors
     ///
@@ -259,9 +258,8 @@ impl PartialMerkleTree {
         pmt
     }
 
-    /// Extracts the matching txid's represented by this partial Merkle tree
-    /// and their respective indices within the partial tree.
-    /// returns the Merkle root
+    /// Extracts matching txids and their zero-based indices in the block's transaction list.
+    /// Returns the Merkle root computed from the partial tree.
     ///
     /// # Errors
     ///
