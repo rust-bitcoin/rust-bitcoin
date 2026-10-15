@@ -32,7 +32,7 @@ impl P2wpkhScriptCode {
         Self(bytes)
     }
 
-    /// Borrows the script code without modifyign or copying its bytes.
+    /// Borrows the script code without modifying or copying its bytes.
     pub fn as_script(&self) -> &ScriptCode {
         ScriptCode::from_bytes(&self.0)
     }

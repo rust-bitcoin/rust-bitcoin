@@ -106,7 +106,7 @@ pub type WitnessScript = Script<WitnessScriptTag>;
 ///
 /// Used for legacy and Segwit v0 signature hashing. The `AsRef` implementations on
 /// [`WitnessScript`], [`RedeemScript`], [`ScriptPubKey`], and their owned `Buf` variants
-/// borrow the script bytes without modifying them.
+/// borrow the entire script.
 ///
 /// # `OP_CODESEPARATOR`
 ///
@@ -222,7 +222,7 @@ impl TryFrom<&WitnessScript> for WScriptHash {
     }
 }
 
-/// Borrows `WitnessScript` as `ScriptCode` without modifying its bytes.
+/// Borrows the entire witness script as `ScriptCode`.
 impl AsRef<ScriptCode> for WitnessScript {
     fn as_ref(&self) -> &ScriptCode {
         ScriptCode::from_bytes(self.as_bytes())
@@ -237,7 +237,7 @@ impl AsRef<ScriptCode> for WitnessScriptBuf {
     }
 }
 
-/// Borrows `RedeemScript` as `ScriptCode` without modifying its bytes.
+/// Borrows the entire redeem script as `ScriptCode`.
 impl AsRef<ScriptCode> for RedeemScript {
     fn as_ref(&self) -> &ScriptCode {
         ScriptCode::from_bytes(self.as_bytes())
@@ -251,7 +251,7 @@ impl AsRef<ScriptCode> for RedeemScriptBuf {
     }
 }
 
-/// Borrows `ScriptPubKey` as `ScriptCode` without modifying its bytes.
+/// Borrows the entire script pubkey as `ScriptCode`.
 impl AsRef<ScriptCode> for ScriptPubKey {
     fn as_ref(&self) -> &ScriptCode {
         ScriptCode::from_bytes(self.as_bytes())
