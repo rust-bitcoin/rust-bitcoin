@@ -20,7 +20,7 @@ use core::{cmp, fmt};
 #[cfg(feature = "encoding")]
 use encoding::{
     ArrayEncoder, BytesEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder2, Encoder3,
-    Encoder6, EncoderStatus, PrefixedSliceEncoder, VecDecoder,
+    Encoder6, IterEncoder, PrefixedSliceEncoder, VecDecoder,
 };
 use hashes::{sha256d, Hash};
 use io::{Read, Write};
@@ -1518,57 +1518,48 @@ impl encoding::Encode for TxIn {
     }
 }
 
+/// An iterator that yields [`WitnessEncoder`]s for each transaction input.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+struct WitnessIter<'e> {
+    inputs: core::slice::Iter<'e, TxIn>,
+}
+
+#[cfg(feature = "encoding")]
+impl<'e> Iterator for WitnessIter<'e> {
+    type Item = WitnessEncoder<'e>;
+
+    fn next(&mut self) -> Option<WitnessEncoder<'e>> {
+        self.inputs.next().map(|input| input.witness.encoder())
+    }
+}
+
 /// Encodes the witnesses from a list of inputs.
 #[cfg(feature = "encoding")]
 #[derive(Debug, Clone)]
-pub struct WitnessesEncoder<'e> {
-    inputs: &'e [TxIn],
-    /// Encoder for the current witness being encoded.
-    cur_enc: Option<WitnessEncoder<'e>>,
-}
+pub struct WitnessesEncoder<'e>(IterEncoder<WitnessIter<'e>>);
 
 #[cfg(feature = "encoding")]
 impl<'e> WitnessesEncoder<'e> {
     /// Constructs a new encoder for all witnesses in a list of transaction inputs.
     pub fn new(inputs: &'e [TxIn]) -> Self {
-        Self { inputs, cur_enc: inputs.first().map(|input| input.witness.encoder()) }
+        Self(IterEncoder::new(WitnessIter { inputs: inputs.iter() }))
     }
 }
 
 #[cfg(feature = "encoding")]
 impl encoding::Encoder for WitnessesEncoder<'_> {
     #[inline]
-    fn current_chunk(&self) -> &[u8] {
-        self.cur_enc.as_ref().map(WitnessEncoder::current_chunk).unwrap_or_default()
-    }
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
     #[inline]
-    fn advance(&mut self) -> EncoderStatus {
-        let Some(cur) = self.cur_enc.as_mut() else {
-            return EncoderStatus::Finished;
-        };
+    fn advance(&mut self) -> encoding::EncoderStatus { self.0.advance() }
+}
 
-        loop {
-            // On subsequent calls, attempt to advance the current encoder and return
-            // success if this succeeds.
-            if cur.advance().has_more() {
-                return EncoderStatus::HasMore;
-            }
-            // self.inputs guaranteed to be non-empty if cur_enc is non-None.
-            self.inputs = &self.inputs[1..];
-
-            // If advancing the current encoder failed, attempt to move to the next encoder.
-            if let Some(input) = self.inputs.first() {
-                *cur = input.witness.encoder();
-                if !cur.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.cur_enc = None; // shortcut the next call to advance()
-                return EncoderStatus::Finished;
-            }
-        }
-    }
+#[cfg(feature = "encoding")]
+impl encoding::ExactSizeEncoder for WitnessesEncoder<'_> {
+    #[inline]
+    fn len(&self) -> usize { self.0.len() }
 }
 
 #[cfg(feature = "encoding")]
@@ -1746,7 +1737,7 @@ type TransactionEncoderInner<'e> = Encoder6<
 >;
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Transaction`] type.
     #[derive(Debug, Clone)]
     pub struct TransactionEncoder<'e>(TransactionEncoderInner<'e>);
