@@ -147,7 +147,7 @@ impl Params {
         bip65_height: BlockHeight::from_u32(388381), // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
         bip66_height: BlockHeight::from_u32(363725), // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
         enforce_bip94: false,
-        rule_change_activation_threshold: BlockHeightInterval::from_u32(1916), // 95%
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(1815), // 90%
         miner_confirmation_window: BlockHeightInterval::from_u32(2016),
         pow_limit: Target::MAX_ATTAINABLE_MAINNET,
         max_attainable_target: Target::MAX_ATTAINABLE_MAINNET,
@@ -220,7 +220,7 @@ impl Params {
         bip65_height: BlockHeight::from_u32(1),
         bip66_height: BlockHeight::from_u32(1),
         enforce_bip94: false,
-        rule_change_activation_threshold: BlockHeightInterval::from_u32(1916), // 95%
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(1815), // 90%
         miner_confirmation_window: BlockHeightInterval::from_u32(2016),
         pow_limit: Target::MAX_ATTAINABLE_SIGNET,
         max_attainable_target: Target::MAX_ATTAINABLE_SIGNET,
