@@ -50,7 +50,7 @@ pub use self::{
     builder::Builder,
     owned::{ScriptBuf, ScriptBufDecoder},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesErrorReport},
-    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag, ScriptCodeTag},
+    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TaprootLeafTag, TapScriptTag, WitnessScriptTag, ScriptCodeTag},
 };
 #[doc(no_inline)]
 pub use self::error::{
@@ -91,9 +91,15 @@ pub type SignetBlockScriptBuf = ScriptBuf<SignetBlockScriptTag>;
 pub type SignetBlockScript = Script<SignetBlockScriptTag>;
 
 /// A Segwit v1 Taproot script.
+pub type TaprootLeafScriptBuf = ScriptBuf<TaprootLeafTag>;
+
+/// A reference to a Segwit v1 Taproot leaf script of any version.
+pub type TaprootLeafScript = Script<TaprootLeafTag>;
+
+/// A Segwit v1 Taproot script.
 pub type TapScriptBuf = ScriptBuf<TapScriptTag>;
 
-/// A reference to a Segwit v1 Taproot script.
+/// A reference to a Segwit v1 Taproot leaf script of version 0xc0, the Tapscript.
 pub type TapScript = Script<TapScriptTag>;
 
 /// A Segwit v0 witness script.
@@ -219,6 +225,24 @@ impl TryFrom<&WitnessScript> for WScriptHash {
     #[inline]
     fn try_from(witness_script: &WitnessScript) -> Result<Self, Self::Error> {
         Self::from_script(witness_script)
+    }
+}
+
+impl AsRef<TaprootLeafScript> for TapScript {
+    fn as_ref(&self) -> &TaprootLeafScript {
+        TaprootLeafScript::from_bytes(self.as_bytes())
+    }
+}
+
+impl AsRef<TaprootLeafScript> for TapScriptBuf {
+    fn as_ref(&self) -> &TaprootLeafScript {
+        TaprootLeafScript::from_bytes(self.as_bytes())
+    }
+}
+
+impl From<TapScriptBuf> for TaprootLeafScriptBuf {
+    fn from(value: TapScriptBuf) -> Self {
+        Self::from_bytes(value.into_bytes())
     }
 }
 

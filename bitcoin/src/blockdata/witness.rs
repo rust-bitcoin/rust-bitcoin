@@ -7,7 +7,7 @@
 use crate::crypto::ecdsa;
 use crate::crypto::key::{FullPublicKey, SerializedXOnlyPublicKey};
 use crate::taproot::{self, ControlBlock, LeafScript, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX};
-use crate::{internal_macros, TapScript, WitnessScript};
+use crate::{internal_macros, TaprootLeafScript, WitnessScript};
 
 type BorrowedControlBlock<'a> = ControlBlock<&'a TaprootMerkleBranch, &'a SerializedXOnlyPublicKey>;
 
@@ -56,8 +56,8 @@ internal_macros::define_extension_trait! {
         }
 
         /// Finishes constructing the P2TR script spend witness by pushing the required items.
-        fn push_p2tr_script_spend(&mut self, script: &TapScript, control_block: &ControlBlock<impl AsRef<TaprootMerkleBranch>>, annex: Option<&[u8]>) {
-            self.push(script.as_bytes());
+        fn push_p2tr_script_spend(&mut self, script: impl AsRef<TaprootLeafScript>, control_block: &ControlBlock<impl AsRef<TaprootMerkleBranch>>, annex: Option<&[u8]>) {
+            self.push(script.as_ref().as_bytes());
             self.push(&*control_block.encode_to_arrayvec());
             if let Some(annex) = annex {
                 self.push(annex);
@@ -71,19 +71,6 @@ internal_macros::define_extension_trait! {
             self.push(signature.serialize())
         }
 
-        /// Returns the leaf script if this witness is a Taproot script spend.
-        ///
-        /// **Deprecated** since this does not return the leaf version. Code that
-        /// assumes a leaf version may be subtly broken once a new Tapscript version
-        /// is deployed.
-        #[deprecated(since = "TBD", note = "use taproot_leaf_script instead")]
-        fn tapscript(&self) -> Option<&TapScript> {
-            match P2TrSpend::from_witness(self) {
-                Some(P2TrSpend::Script { leaf_script, .. }) => Some(leaf_script),
-                _ => None,
-            }
-        }
-
         /// Returns the leaf script and version if this witness is a Taproot script spend.
         ///
         /// This method does not include the control block or annex; to obtain those, call
@@ -95,7 +82,7 @@ internal_macros::define_extension_trait! {
         /// to have a Taproot-shaped witness).
         /// See [BIP-0341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki),
         /// in particular footnote 7, for more information.
-        fn taproot_leaf_script(&self) -> Option<LeafScript<&TapScript>> {
+        fn taproot_leaf_script(&self) -> Option<LeafScript<&TaprootLeafScript>> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { leaf_script, control_block, .. }) => {
                     Some(LeafScript { version: control_block.leaf_version, script: leaf_script, })
@@ -152,7 +139,7 @@ enum P2TrSpend<'a> {
         annex: Option<&'a [u8]>,
     },
     Script {
-        leaf_script: &'a TapScript,
+        leaf_script: &'a TaprootLeafScript,
         control_block: BorrowedControlBlock<'a>,
         annex: Option<&'a [u8]>,
     },
@@ -195,7 +182,7 @@ impl<'a> P2TrSpend<'a> {
                 let control_block = witness.get_back(1).expect("len > 1");
                 let control_block = BorrowedControlBlock::decode_borrowed(control_block).ok()?;
                 let spend = P2TrSpend::Script {
-                    leaf_script: TapScript::from_bytes(witness.get_back(2).expect("len > 2")),
+                    leaf_script: TaprootLeafScript::from_bytes(witness.get_back(2).expect("len > 2")),
                     control_block,
                     annex: witness.last(),
                 };
@@ -205,7 +192,7 @@ impl<'a> P2TrSpend<'a> {
                 let control_block = witness.last().expect("len > 0");
                 let control_block = BorrowedControlBlock::decode_borrowed(control_block).ok()?;
                 let spend = P2TrSpend::Script {
-                    leaf_script: TapScript::from_bytes(witness.get_back(1).expect("len > 1")),
+                    leaf_script: TaprootLeafScript::from_bytes(witness.get_back(1).expect("len > 1")),
                     control_block,
                     annex: None,
                 };
@@ -290,22 +277,6 @@ mod test {
     }
 
     #[test]
-    fn get_tapscript() {
-        let tapscript = hex!("deadbeef");
-        let control_block =
-            hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
-
-        let witness = Witness::from([tapscript.as_slice(), &control_block]);
-        let witness_annex = Witness::from([tapscript.as_slice(), &control_block, &annex]);
-
-        // With or without annex, the tapscript should be returned.
-        assert_eq!(witness.tapscript(), Some(TapScript::from_bytes(&tapscript[..])));
-        assert_eq!(witness_annex.tapscript(), Some(TapScript::from_bytes(&tapscript[..])));
-    }
-
-    #[test]
     fn get_taproot_leaf_script() {
         let tapscript = hex!("deadbeef");
         let control_block =
@@ -318,26 +289,12 @@ mod test {
 
         let expected_leaf_script = LeafScript {
             version: LeafVersion::TapScript,
-            script: TapScript::from_bytes(&tapscript),
+            script: TaprootLeafScript::from_bytes(&tapscript),
         };
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_leaf_script().unwrap(), expected_leaf_script);
         assert_eq!(witness_annex.taproot_leaf_script().unwrap(), expected_leaf_script);
-    }
-
-    #[test]
-    fn get_tapscript_from_keypath() {
-        let signature = hex!("deadbeef");
-        // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
-
-        let witness = Witness::from([signature]);
-        let witness_annex = Witness::from([signature.as_slice(), &annex]);
-
-        // With or without annex, no tapscript should be returned.
-        assert_eq!(witness.tapscript(), None);
-        assert_eq!(witness_annex.tapscript(), None);
     }
 
     #[test]

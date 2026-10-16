@@ -771,6 +771,14 @@ fn decoder_full_read_limit() {
 }
 
 #[test]
+fn tapscript_to_leaf_script() {
+    const BYTES: &[u8] = &[1, 2, 3];
+    let tapscript = TapScriptBuf::from(BYTES.to_vec());
+    let leaf_script = TaprootLeafScriptBuf::from(tapscript);
+    assert_eq!(leaf_script.as_bytes(), BYTES);
+}
+
+#[test]
 fn witness_to_signet_script() {
     let bytes = vec![0x51, 0x52, 0x53];
     let witness = WitnessScriptBuf::from(bytes.clone());
