@@ -14,14 +14,16 @@ pub use primitives::script::{PushBytes, PushBytesBuf, PushBytesErrorReport};
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`PushBytes`] type.
     pub trait PushBytesExt impl for PushBytes {
-        /// Decodes an integer in script(minimal CScriptNum) format.
+        /// Decodes a minimally encoded script integer using at most four bytes.
+        ///
+        /// The signed-magnitude encoding supports values in the range `[-2^31 + 1, 2^31 - 1]`.
         ///
         /// This code is based on the
         /// [`CScriptNum` constructor in Bitcoin Core](https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.h#L245)
         ///
         /// # Errors
         ///
-        /// * [`ScriptIntError::NumericOverflow`] if result is not in range [-2^39 +1...2^39 -1].
+        /// * [`ScriptIntError::NumericOverflow`] if the encoding is longer than four bytes.
         /// * [`ScriptIntError::NonMinimal`] if encoding is non-minimal.
         fn read_scriptint(&self) -> Result<i32, ScriptIntError> {
             // Cast is safe, since the function already checks for byte length > 4
@@ -29,26 +31,20 @@ crate::internal_macros::define_extension_trait! {
             Ok(i32::try_from(ret).expect("4 bytes or less fits in an i32"))
         }
 
-        /// Decodes an integer in script(minimal CScriptNum) format.
+        /// Decodes a minimally encoded script integer using at most five bytes.
         ///
         /// This is suitable to read input values for CHECKLOCKTIMEVERIFY instructions.
         ///
-        /// Notice that this fails on overflow: the result is the same as in bitcoind, that only 4-byte
-        /// signed-magnitude values may be read as numbers. They can be added or subtracted (and a long
-        /// time ago, multiplied and divided), and this may result in numbers which can't be written out
-        /// in 4 bytes or less. This is ok! The number just can't be read as a number again. This is a
-        /// bit crazy and subtle, but it makes sense: you can load 32-bit numbers and do anything with
-        /// them, which back when mult/div was allowed, could result in up to a 64-bit number. We don't
-        /// want overflow since that's surprising --- and we don't want numbers that don't fit in 64
-        /// bits (for efficiency on modern processors). This function will return any value up to 40
-        /// bits in length. This is basically a ranged type implementation.
+        /// Unlike [`Self::read_scriptint`], this accepts signed-magnitude encodings of up to five
+        /// bytes, supporting values in the range `[-2^39 + 1, 2^39 - 1]`. The extra byte allows
+        /// positive lock times that require more than 31 bits.
         ///
         /// This code is based on the
         /// [`CScriptNum` constructor in Bitcoin Core](https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.h#L245)
         ///
         /// # Errors
         ///
-        /// * [`ScriptIntError::NumericOverflow`] if result is not in range [-2^39 +1...2^39 -1].
+        /// * [`ScriptIntError::NumericOverflow`] if the encoding is longer than five bytes.
         /// * [`ScriptIntError::NonMinimal`] if encoding is non-minimal.
         fn read_cltv_scriptint(&self) -> Result<i64, ScriptIntError> {
             read_scriptint_internal(self, 5)
@@ -92,11 +88,12 @@ mod sealed {
     impl Sealed for super::PushBytes {}
 }
 
-/// Possible errors that can arise from [`PushBytes::read_scriptint`].
+/// Possible errors that can arise from [`PushBytes::read_scriptint`] or
+/// [`PushBytes::read_cltv_scriptint`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ScriptIntError {
-    /// The result is not in range [-2^31 +1...2^31 -1].
+    /// The encoding exceeds the byte-length limit of the decoding method.
     NumericOverflow,
     /// The resulting encoding is non-minimal.
     NonMinimal,
