@@ -242,7 +242,9 @@ where
             let pow_limit = params.max_attainable_target.to_compact_lossy();
 
             // if (pblock->GetBlockTime() > pindexLast->GetBlockTime() + params.nPowTargetSpacing*2)
-            if new_block_timestamp > current_header.time.to_u32() + params.pow_target_spacing * 2 {
+            if u64::from(new_block_timestamp)
+                > u64::from(current_header.time.to_u32()) + u64::from(params.pow_target_spacing) * 2
+            {
                 Ok(pow_limit)
             } else {
                 let mut header = current_header;
