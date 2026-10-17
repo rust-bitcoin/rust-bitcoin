@@ -799,4 +799,34 @@ mod tests {
         // Should return the real_target from the walked-back header
         assert_eq!(got, want);
     }
+
+    // The min difficulty check must not overflow when the current header's time is close to
+    // `u32::MAX`.
+    #[test]
+    fn next_target_testnet_min_difficulty_time_near_max() {
+        let params = Params::TESTNET3;
+        let want = CompactTarget::from_consensus(0x1c00_ffff);
+
+        let header = Header {
+            version: crate::block::Version::from_consensus(0x2000_0000),
+            prev_blockhash: BlockHash::from_byte_array([1u8; 32]),
+            merkle_root: crate::TxMerkleNode::from_byte_array([2u8; 32]),
+            time: 0xFFFF_FF00.into(),
+            bits: want,
+            nonce: 0,
+        };
+
+        fn fetch_header(_height: BlockHeight) -> Result<Header, core::convert::Infallible> {
+            unreachable!("fetcher should not be called when bits are not pow_limit");
+        }
+
+        let height = BlockHeight::from_u32(100); // non-retarget height
+
+        // New block timestamp is less than 20 minutes after the current header.
+        let new_block_timestamp = Some(u32::MAX);
+
+        let got = next_target_after(header, height, &params, new_block_timestamp, fetch_header)
+            .expect("failed to calculate next target");
+        assert_eq!(got, want);
+    }
 }
