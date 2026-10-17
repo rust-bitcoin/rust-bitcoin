@@ -1874,6 +1874,12 @@ mod tests {
     }
 
     #[test]
+    fn cast_to_usize_accepts_max_vec_size() {
+        assert_eq!(cast_to_usize_if_valid(4_000_000), Some(4_000_000));
+        assert_eq!(cast_to_usize_if_valid(4_000_001), None);
+    }
+
+    #[test]
     fn witness_debug() {
         let witness = Witness::from_slice(&[&[0xAAu8][..]]);
         let s = format!("{:?}", witness);
