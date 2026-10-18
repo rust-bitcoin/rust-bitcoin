@@ -6,6 +6,7 @@
 #![allow(clippy::many_single_char_names)]
 
 #[cfg(target_arch = "aarch64")]
+#[cfg(target_endian = "little")]
 #[cfg(any(feature = "cpufeatures", feature = "std"))]
 mod arm_sha2;
 
@@ -27,6 +28,7 @@ use super::{HashEngine, Midstate, BLOCK_SIZE};
 
 #[cfg(feature = "cpufeatures")]
 #[cfg(target_arch = "aarch64")]
+#[cfg(target_endian = "little")]
 // cpufeatures crate internally uses deprecated `u8::max_value()`.
 // See: https://docs.rs/cpufeatures/0.2.17/src/cpufeatures/lib.rs.html#161
 #[allow(deprecated)]
@@ -327,6 +329,7 @@ impl HashEngine {
 
         #[cfg(feature = "std")]
         #[cfg(target_arch = "aarch64")]
+        #[cfg(target_endian = "little")]
         {
             if std::arch::is_aarch64_feature_detected!("sha2") {
                 unsafe { arm_sha2::process_blocks(state, blocks) };
@@ -336,6 +339,7 @@ impl HashEngine {
 
         #[cfg(feature = "cpufeatures")]
         #[cfg(target_arch = "aarch64")]
+        #[cfg(target_endian = "little")]
         {
             if cpuid_sha256_aarch64::get() {
                 unsafe { arm_sha2::process_blocks(state, blocks) };
@@ -386,6 +390,7 @@ impl HashEngine {
         // 2-way ARM SHA2
         #[cfg(feature = "std")]
         #[cfg(target_arch = "aarch64")]
+        #[cfg(target_endian = "little")]
         {
             if std::arch::is_aarch64_feature_detected!("sha2") {
                 while count - i >= 2 {
@@ -399,6 +404,7 @@ impl HashEngine {
 
         #[cfg(feature = "cpufeatures")]
         #[cfg(target_arch = "aarch64")]
+        #[cfg(target_endian = "little")]
         {
             if cpuid_sha256_aarch64::get() {
                 while count - i >= 2 {

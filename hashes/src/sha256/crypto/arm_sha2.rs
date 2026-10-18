@@ -66,7 +66,9 @@ pub(super) unsafe fn process_blocks(state: &mut [u32; 8], blocks: &[u8]) {
         msg2 = vld1q_u32(blocks.as_ptr().add(block_offset + 32).cast::<u32>());
         msg3 = vld1q_u32(blocks.as_ptr().add(block_offset + 48).cast::<u32>());
 
-        // Reverse for little endian
+        // Reverse for little endian. This module is only compiled for
+        // little-endian targets; on big-endian targets `vld1q_u32` already
+        // yields the correct big-endian message words.
         msg0 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(msg0)));
         msg1 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(msg1)));
         msg2 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(msg2)));
