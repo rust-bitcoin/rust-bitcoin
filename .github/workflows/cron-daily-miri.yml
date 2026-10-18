@@ -26,7 +26,7 @@ jobs:
         id: read_toolchain
         run: echo "nightly_version=$(cargo metadata --format-version 1 | jq -r '.metadata.rbmt.toolchains.nightly')" >> $GITHUB_OUTPUT
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # v1
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
           toolchain: ${{ steps.read_toolchain.outputs.nightly_version }}
           components: miri
