@@ -129,10 +129,10 @@ impl ExactSizeEncoder for CompactSizeEncoder {
 /// Decodes a compact size encoded integer as a length prefix.
 ///
 /// The decoded value is returned as a `usize` and is bounded by a configurable limit (default:
-/// 4,000,000). This limit is a denial-of-service protection: a malicious peer can send a compact
-/// size value up to 2^64-1, and without a limit check the caller might attempt to allocate an
-/// enormous buffer based on that value. [`CompactSizeDecoder`] prevents this by rejecting values
-/// that exceed the limit before returning them to the caller.
+/// 32 MB, or 33,554,432 bytes). This limit is a denial-of-service protection: a malicious peer can
+/// send a compact size value up to 2^64-1, and without a limit check the caller might attempt to
+/// allocate an enormous buffer based on that value. [`CompactSizeDecoder`] prevents this by
+/// rejecting values that exceed the limit before returning them to the caller.
 ///
 /// If you are decoding an arbitrary `u64` integer that is genuinely not a length prefix, use
 /// [`CompactSizeU64Decoder`] instead.
