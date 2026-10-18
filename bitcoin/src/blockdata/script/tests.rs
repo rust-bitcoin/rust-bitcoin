@@ -1038,16 +1038,11 @@ fn instruction_indices_nth_extended() {
 
 #[test]
 fn p2wpkh_script_code() {
-    let wpkh = WPubkeyHash::from_byte_array(
-        hex!("1d0f172a0ecb48aee1be1f2687d2963ae33f71a1"),
-    );
+    let wpkh = WPubkeyHash::from_byte_array(hex!("1d0f172a0ecb48aee1be1f2687d2963ae33f71a1"));
     let owned = P2wpkhScriptCode::new_p2wpkh(wpkh);
     let script_code: &ScriptCode = &owned;
 
-    assert_eq!(
-        script_code.as_bytes(),
-        &hex!("76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac"),
-    );
+    assert_eq!(script_code.as_bytes(), &hex!("76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac"),);
 
     // Check that encoding includes the CompactSize prefix.
     assert_eq!(

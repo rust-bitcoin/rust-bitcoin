@@ -6,11 +6,8 @@ use core::ops::Deref;
 use arbitrary::{Arbitrary, Unstructured};
 
 use crate::key::WPubkeyHash;
+use crate::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160, OP_PUSHBYTES_20};
 use crate::script::ScriptCode;
-
-use crate::opcodes::all::{
-    OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160, OP_PUSHBYTES_20,
-};
 const P2WPKH_SCRIPT_CODE_LEN: usize = 25;
 
 /// Owned script code used for P2WPKH sighash computation.
@@ -33,23 +30,17 @@ impl P2wpkhScriptCode {
     }
 
     /// Borrows the script code without modifying or copying its bytes.
-    pub fn as_script(&self) -> &ScriptCode {
-        ScriptCode::from_bytes(&self.0)
-    }
+    pub fn as_script(&self) -> &ScriptCode { ScriptCode::from_bytes(&self.0) }
 }
 
 impl AsRef<ScriptCode> for P2wpkhScriptCode {
-    fn as_ref(&self) -> &ScriptCode {
-        self.as_script()
-    }
+    fn as_ref(&self) -> &ScriptCode { self.as_script() }
 }
 
 impl Deref for P2wpkhScriptCode {
     type Target = ScriptCode;
-    
-    fn deref(&self) -> &Self::Target {
-        self.as_script()
-    }
+
+    fn deref(&self) -> &Self::Target { self.as_script() }
 }
 
 #[cfg(feature = "arbitrary")]

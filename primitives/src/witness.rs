@@ -1071,8 +1071,7 @@ pub mod error {
             match self.0 {
                 E::LengthPrefixDecode(ref e) =>
                     write_err!(f, "failed to decode witness length prefix"; e),
-                E::UnexpectedEof(ref e) =>
-                    write_err!(f, "failed to decode witness"; e),
+                E::UnexpectedEof(ref e) => write_err!(f, "failed to decode witness"; e),
                 E::WitnessTooLarge(size) => write!(
                     f,
                     "serialized witness size of {} bytes exceeds the maximum of {}",

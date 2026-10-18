@@ -30,9 +30,7 @@ use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
 #[cfg(doc)]
 use crate::ScriptPubKey;
-use crate::{
-    transaction, Amount, Sequence, TapScript, Transaction, TxOut, ScriptCode
-};
+use crate::{transaction, Amount, ScriptCode, Sequence, TapScript, Transaction, TxOut};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -1397,7 +1395,8 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::Io(error) => write_err!(f, "failed to write sighash data"; error),
-                Self::Sighash(error) => write_err_unchecked_source!(f, "failed to compute sighash data"; error),
+                Self::Sighash(error) =>
+                    write_err_unchecked_source!(f, "failed to compute sighash data"; error),
             }
         }
     }

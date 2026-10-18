@@ -24,7 +24,7 @@ pub trait ErrorExt: std::error::Error + 'static {
 
 #[doc(hidden)]
 #[cfg(feature = "std")]
-impl<T: std::error::Error + 'static> ErrorExt for T { }
+impl<T: std::error::Error + 'static> ErrorExt for T {}
 
 /// Formats error.
 ///
