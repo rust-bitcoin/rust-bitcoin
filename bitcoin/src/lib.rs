@@ -142,10 +142,10 @@ pub use primitives::{
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     script::{
-        RedeemScript, RedeemScriptBuf, RedeemScriptTag, ScriptHashableTag, ScriptPubKey,
-        ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, SignetBlockScript,
-        SignetBlockScriptBuf, SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag,
-        WitnessScript, WitnessScriptBuf, WitnessScriptTag, ScriptCode, ScriptCodeTag,
+        RedeemScript, RedeemScriptBuf, RedeemScriptTag, ScriptCode, ScriptCodeTag,
+        ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf,
+        ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf, SignetBlockScriptTag, Tag,
+        TapScript, TapScriptBuf, TapScriptTag, WitnessScript, WitnessScriptBuf, WitnessScriptTag,
     },
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,
@@ -202,9 +202,9 @@ pub use crate::{
     blockdata::opcodes::{self, Opcode},
     blockdata::script::witness_program::{self, WitnessProgram},
     blockdata::script::witness_version::{self, WitnessVersion},
+    blockdata::script::P2wpkhScriptCode,
     // These modules also re-export all the respective `primitives` types.
     blockdata::{block, constants, fee_rate, locktime, script, transaction, weight, witness},
-    blockdata::script::P2wpkhScriptCode,
 };
 
 #[rustfmt::skip]

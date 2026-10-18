@@ -41,10 +41,7 @@ fn main() {
     // And so does `from_hex_prefixed`.
     assert!(ScriptPubKeyBuf::from_hex_prefixed(&hex_lower_hex_trait).is_err());
     // But we provide an explicit constructor that does not.
-    assert_eq!(
-        ScriptPubKeyBuf::from_hex_no_length_prefix(&hex_lower_hex_trait).unwrap(),
-        script
-    );
+    assert_eq!(ScriptPubKeyBuf::from_hex_no_length_prefix(&hex_lower_hex_trait).unwrap(), script);
 
     // This is consensus encoding i.e., includes the length prefix.
     let hex_inherent = script.to_hex_string_prefixed(); // Defined in `ScriptExt`.

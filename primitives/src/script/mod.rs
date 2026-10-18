@@ -224,9 +224,7 @@ impl TryFrom<&WitnessScript> for WScriptHash {
 
 /// Borrows the entire witness script as `ScriptCode`.
 impl AsRef<ScriptCode> for WitnessScript {
-    fn as_ref(&self) -> &ScriptCode {
-        ScriptCode::from_bytes(self.as_bytes())
-    }
+    fn as_ref(&self) -> &ScriptCode { ScriptCode::from_bytes(self.as_bytes()) }
 }
 
 impl AsRef<ScriptCode> for WitnessScriptBuf {
@@ -239,9 +237,7 @@ impl AsRef<ScriptCode> for WitnessScriptBuf {
 
 /// Borrows the entire redeem script as `ScriptCode`.
 impl AsRef<ScriptCode> for RedeemScript {
-    fn as_ref(&self) -> &ScriptCode {
-        ScriptCode::from_bytes(self.as_bytes())
-    }
+    fn as_ref(&self) -> &ScriptCode { ScriptCode::from_bytes(self.as_bytes()) }
 }
 
 impl AsRef<ScriptCode> for RedeemScriptBuf {
@@ -253,9 +249,7 @@ impl AsRef<ScriptCode> for RedeemScriptBuf {
 
 /// Borrows the entire script pubkey as `ScriptCode`.
 impl AsRef<ScriptCode> for ScriptPubKey {
-    fn as_ref(&self) -> &ScriptCode {
-        ScriptCode::from_bytes(self.as_bytes())
-    }
+    fn as_ref(&self) -> &ScriptCode { ScriptCode::from_bytes(self.as_bytes()) }
 }
 
 impl AsRef<ScriptCode> for ScriptPubKeyBuf {

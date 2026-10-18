@@ -77,10 +77,10 @@ pub use primitives::script::ScriptBufDecoderError;
 #[doc(inline)]
 pub use primitives::script::{
     RedeemScript, RedeemScriptBuf, RedeemScriptTag, Script, ScriptBuf, ScriptBufDecoder,
-    ScriptEncoder, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag,
-    ScriptSig, ScriptSigBuf, ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf,
-    SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash, WitnessScript,
-    WitnessScriptBuf, WitnessScriptTag, ScriptCode, ScriptCodeTag,
+    ScriptCode, ScriptCodeTag, ScriptEncoder, ScriptHash, ScriptHashableTag, ScriptPubKey,
+    ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, SignetBlockScript,
+    SignetBlockScriptBuf, SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag,
+    WScriptHash, WitnessScript, WitnessScriptBuf, WitnessScriptTag,
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;

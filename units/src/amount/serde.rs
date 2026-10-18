@@ -25,10 +25,11 @@
 #[cfg(feature = "alloc")]
 use core::fmt;
 
+use sealed::Token;
+
 #[cfg(feature = "alloc")]
 use super::ParseAmountError;
 use crate::{Amount, SignedAmount};
-use sealed::Token;
 
 #[cfg(feature = "alloc")]
 struct DisplayFullError(ParseAmountError);
@@ -71,15 +72,11 @@ mod sealed {
     }
 
     impl AmountOps for Amount {
-        fn is_signed(_: Token) -> bool {
-            false
-        }
+        fn is_signed(_: Token) -> bool { false }
     }
 
     impl AmountOps for SignedAmount {
-        fn is_signed(_: Token) -> bool {
-            true
-        }
+        fn is_signed(_: Token) -> bool { true }
     }
 
     #[doc(hidden)]
