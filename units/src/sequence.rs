@@ -166,11 +166,10 @@ impl Sequence {
     /// Constructs a new relative lock-time from seconds, converting the seconds into 512 second
     /// interval with floor division.
     ///
-    /// Will return an error if the input cannot be encoded in 16 bits.
-    ///
     /// # Errors
     ///
-    /// Will return an error if `seconds` cannot be encoded in 16 bits. See
+    /// Will return an error if the number of 512-second intervals after rounding down exceeds
+    /// `u16::MAX`, i.e., if `seconds` is greater than 33,554,431. See
     /// [`NumberOf512Seconds::from_seconds_floor`].
     #[inline]
     pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
@@ -181,11 +180,10 @@ impl Sequence {
     /// Constructs a new relative lock-time from seconds, converting the seconds into 512 second
     /// interval with ceiling division.
     ///
-    /// Will return an error if the input cannot be encoded in 16 bits.
-    ///
     /// # Errors
     ///
-    /// Will return an error if `seconds` cannot be encoded in 16 bits. See
+    /// Will return an error if the number of 512-second intervals after rounding up exceeds
+    /// `u16::MAX`, i.e., if `seconds` is greater than 33,553,920. See
     /// [`NumberOf512Seconds::from_seconds_ceil`].
     #[inline]
     pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
