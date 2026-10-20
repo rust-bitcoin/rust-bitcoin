@@ -522,6 +522,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         input_index: usize,
         prevouts: &Prevouts<T>,
+        annex: Option<Annex>,
         sighash_type: TapSighashType,
     ) -> Result<TapSighash, TaprootError> {
         let mut enc = sha256t::Hash::<TapSighashTag>::engine();
@@ -529,7 +530,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             &mut enc,
             input_index,
             prevouts,
-            None,
+            annex,
             None,
             sighash_type,
         )
@@ -540,13 +541,15 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Computes the BIP-0341 sighash for a script spend.
     ///
-    /// Assumes the default `OP_CODESEPARATOR` position of `0xFFFFFFFF`. Custom values can be
-    /// provided through the more fine-grained API of [`SighashCache::taproot_encode_signing_data_to`].
+    /// `code_separator_pos` is the opcode position of the last executed `OP_CODESEPARATOR`, or
+    /// `None` if no `OP_CODESEPARATOR` was executed. `None` and `Some(0xFFFFFFFF)` are equivalent.
     pub fn taproot_script_spend_signature_hash<S: Into<TapLeafHash>, T: Borrow<TxOut>>(
         &mut self,
         input_index: usize,
         prevouts: &Prevouts<T>,
+        annex: Option<Annex>,
         leaf_hash: S,
+        code_separator_pos: Option<u32>,
         sighash_type: TapSighashType,
     ) -> Result<TapSighash, TaprootError> {
         let mut enc = sha256t::Hash::<TapSighashTag>::engine();
@@ -554,8 +557,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             &mut enc,
             input_index,
             prevouts,
-            None,
-            Some((leaf_hash.into(), 0xFFFFFFFF)),
+            annex,
+            Some((leaf_hash.into(), code_separator_pos.unwrap_or(0xFFFFFFFF))),
             sighash_type,
         )
         .map_err(SigningDataError::unwrap_sighash)?;

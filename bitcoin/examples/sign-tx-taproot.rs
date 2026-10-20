@@ -61,7 +61,7 @@ fn main() {
 
     let mut sighasher = SighashCache::new(&mut unsigned_tx);
     let sighash = sighasher
-        .taproot_key_spend_signature_hash(input_index, &prevouts, sighash_type)
+        .taproot_key_spend_signature_hash(input_index, &prevouts, None, sighash_type)
         .expect("failed to construct sighash");
 
     // Sign the sighash and update the witness stack.
