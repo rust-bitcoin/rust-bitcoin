@@ -449,6 +449,86 @@ fn non_minimal_scriptints() {
 }
 
 #[test]
+fn timelock_scriptint_round_trip() {
+    let test_vectors = [
+        0,
+        1,
+        -1,
+        127,
+        -127,
+        128,
+        -128,
+        (1 << 31) - 1,
+        1 << 31,
+        -(1 << 31),
+        i64::from(u32::MAX),
+        -i64::from(u32::MAX),
+        (1 << 39) - 1,
+        -((1 << 39) - 1),
+    ];
+    for n in test_vectors {
+        let mut buf = [0u8; 8];
+        let len = write_scriptint(&mut buf, n);
+        let bytes = <&PushBytes>::try_from(&buf[..len]).unwrap();
+        assert_eq!(bytes.read_cltv_scriptint(), Ok(n));
+        assert_eq!(bytes.read_cltv_scriptint_non_minimal(), Ok(n));
+        if len > 4 {
+            assert_eq!(bytes.read_scriptint(), Err(ScriptIntError::NumericOverflow));
+            assert_eq!(
+                read_scriptint_non_minimal(bytes.as_bytes()),
+                Err(ScriptIntError::NumericOverflow)
+            );
+        }
+    }
+
+    // The CSV disable flag requires a fifth byte to keep the value positive.
+    let bytes = <[_; 5] as AsRef<PushBytes>>::as_ref(&[0x00, 0x00, 0x00, 0x80, 0x00]);
+    assert_eq!(bytes.read_cltv_scriptint(), Ok(2_147_483_648));
+    assert_eq!(bytes.read_cltv_scriptint_non_minimal(), Ok(2_147_483_648));
+}
+
+#[test]
+fn non_minimal_timelock_scriptints() {
+    let test_vectors: &[(&[u8], i64)] = &[
+        (&[0x00; 5], 0),
+        (&[0x00, 0x00, 0x00, 0x00, 0x80], 0),
+        (&[0x01, 0x00, 0x00, 0x00, 0x00], 1),
+        (&[0x01, 0x00, 0x00, 0x00, 0x80], -1),
+        (&[0x80, 0x00, 0x00, 0x00, 0x00], 128),
+        (&[0x80, 0x00, 0x00, 0x00, 0x80], -128),
+        (&[0xff, 0xff, 0xff, 0x7f, 0x00], 2_147_483_647),
+        (&[0xff, 0xff, 0xff, 0x7f, 0x80], -2_147_483_647),
+    ];
+    for &(encoded, n) in test_vectors {
+        let bytes = <&PushBytes>::try_from(encoded).unwrap();
+        assert_eq!(bytes.read_cltv_scriptint_non_minimal(), Ok(n));
+        assert_eq!(bytes.read_cltv_scriptint(), Err(ScriptIntError::NonMinimal));
+        assert_eq!(bytes.read_scriptint(), Err(ScriptIntError::NumericOverflow));
+        assert_eq!(read_scriptint_non_minimal(encoded), Err(ScriptIntError::NumericOverflow));
+    }
+
+    // Redundant zero and sign bytes are allowed at every length up to five bytes.
+    for len in 1..=5 {
+        let mut buf = [0u8; 5];
+        for last in [0x00, 0x80] {
+            buf[len - 1] = last;
+            let bytes = <&PushBytes>::try_from(&buf[..len]).unwrap();
+            assert_eq!(bytes.read_cltv_scriptint_non_minimal(), Ok(0));
+            assert_eq!(bytes.read_cltv_scriptint(), Err(ScriptIntError::NonMinimal));
+        }
+    }
+}
+
+#[test]
+fn timelock_scriptint_overflow() {
+    for encoded in [&[0x00; 6][..], &[0xff; 6][..], &[0x00; 9][..]] {
+        let bytes = <&PushBytes>::try_from(encoded).unwrap();
+        assert_eq!(bytes.read_cltv_scriptint(), Err(ScriptIntError::NumericOverflow));
+        assert_eq!(bytes.read_cltv_scriptint_non_minimal(), Err(ScriptIntError::NumericOverflow));
+    }
+}
+
+#[test]
 fn script_hashes() {
     let script = RedeemScriptBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap();
     assert_eq!(
