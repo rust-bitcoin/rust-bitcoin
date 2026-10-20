@@ -1725,10 +1725,28 @@ mod tests {
         let mut sighash_cache = SighashCache::new(&tx);
 
         let hash = sighash_cache
-            .taproot_signature_hash(input_index, &prevouts, annex, leaf_hash, sighash_type)
+            .taproot_signature_hash(input_index, &prevouts, annex.clone(), leaf_hash, sighash_type)
             .unwrap();
         let expected = hex::decode_to_vec(expected_hash).unwrap();
         assert_eq!(expected, hash.to_byte_array());
+
+        let spend_hash = match leaf_hash {
+            Some((leaf_hash, _)) => sighash_cache.taproot_script_spend_signature_hash(
+                input_index,
+                &prevouts,
+                annex,
+                leaf_hash,
+                None,
+                sighash_type,
+            ),
+            None => sighash_cache.taproot_key_spend_signature_hash(
+                input_index,
+                &prevouts,
+                annex,
+                sighash_type,
+            ),
+        };
+        assert_eq!(spend_hash.unwrap(), hash);
     }
 
     #[test]
