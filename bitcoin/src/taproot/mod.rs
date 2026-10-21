@@ -137,6 +137,67 @@ impl From<TapLeafHash> for TapNodeHash {
     fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_byte_array(leaf.to_byte_array()) }
 }
 
+#[cfg(feature = "encoding")]
+impl encoding::Encode for TapLeafHash {
+    type Encoder<'e> = TapLeafHashEncoder<'e>;
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        TapLeafHashEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_byte_array()
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for TapLeafHash {
+    type Decoder = TapLeafHashDecoder;
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TapLeafHash`] type.
+    #[derive(Debug, Clone)]
+    pub struct TapLeafHashEncoder<'e>(encoding::ArrayEncoder<32>);
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`TapLeafHash`] type.
+    #[derive(Debug, Clone)]
+    pub struct TapLeafHashDecoder(encoding::ArrayDecoder<32>);
+
+    /// Constructs a new [`TapLeafHash`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<TapLeafHash, TapLeafHashDecoderError> {
+        let array = result.map_err(TapLeafHashDecoderError)?;
+        Ok(TapLeafHash::from_byte_array(array))
+    }
+}
+
+/// An error consensus decoding an `TapLeafHash`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TapLeafHashDecoderError(pub(super) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for TapLeafHashDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for TapLeafHashDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "tapleaf hash decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for TapLeafHashDecoderError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// Maximum depth of a taproot tree script spend path.
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
 pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
