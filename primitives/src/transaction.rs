@@ -2358,6 +2358,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg_attr(miri, ignore)]
     fn reject_transaction_exceeding_maximum_block_weight() {
         let script_len = 600_000usize;
         let mut tx_bytes = Vec::new();
@@ -2417,6 +2418,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg_attr(miri, ignore)]
     fn accept_transaction_at_maximum_block_weight() {
         // A base size of 1,000,000 bytes gives a weight of exactly MAX_BLOCK_WEIGHT, which the
         // `weight > MAX_BLOCK_WEIGHT` boundary in `end` must accept rather than reject.
