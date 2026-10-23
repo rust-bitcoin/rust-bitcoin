@@ -9,6 +9,7 @@ use alloc::borrow::Cow;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::convert::Infallible;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -140,6 +141,32 @@ impl encoding::Decode for VersionMessage {
     type Decoder = VersionMessageDecoder;
 }
 
+/// Decodes the optional `relay` byte, per BIP-0037. A missing byte decodes as `true`.
+#[derive(Debug, Default, Clone)]
+struct RelayDecoder(Option<bool>);
+
+impl encoding::Decoder for RelayDecoder {
+    type Output = bool;
+    type Error = Infallible;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
+        if self.0.is_none() {
+            match bytes.split_first() {
+                Some((relay, rest)) => {
+                    self.0 = Some(*relay != 0);
+                    *bytes = rest;
+                }
+                None => return Ok(encoding::DecoderStatus::NeedsMore),
+            }
+        }
+        Ok(encoding::DecoderStatus::Ready)
+    }
+
+    fn end(self) -> Result<bool, Infallible> { Ok(self.0.unwrap_or(true)) }
+
+    fn read_limit(&self) -> usize { usize::from(self.0.is_none()) }
+}
+
 type VersionMessageInnerDecoder = encoding::Decoder2<
     encoding::Decoder3<
         crate::ProtocolVersionDecoder,
@@ -152,7 +179,7 @@ type VersionMessageInnerDecoder = encoding::Decoder2<
         encoding::ArrayDecoder<8>,
         UserAgentDecoder,
         encoding::ArrayDecoder<4>,
-        encoding::ArrayDecoder<1>,
+        RelayDecoder,
     >,
 >;
 
@@ -180,7 +207,7 @@ crate::decoder_newtype! {
             nonce: u64::from_le_bytes(nonce),
             user_agent,
             start_height: i32::from_le_bytes(start_height),
-            relay: relay[0] != 0,
+            relay,
         })
     }
 }
