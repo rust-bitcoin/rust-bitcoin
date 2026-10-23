@@ -865,10 +865,12 @@ mod tests {
 
     use super::*;
 
+    // This message is from my satoshi node, morning of May 27 2014
+    const SATOSHI_VERSION_MSG: [u8; 102] = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001");
+
     #[test]
     fn version_message_test() {
-        // This message is from my satoshi node, morning of May 27 2014
-        let from_sat = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001");
+        let from_sat = SATOSHI_VERSION_MSG;
 
         let decode: Result<VersionMessage, _> = encoding::decode_from_slice(&from_sat);
         assert!(decode.is_ok());
@@ -893,6 +895,20 @@ mod tests {
         assert!(real_decode.relay);
 
         assert_eq!(encoding::encode_to_vec(&real_decode), from_sat);
+    }
+
+    #[test]
+    fn version_message_relay_byte_optional() {
+        // the original message was written when the relay byte was not optional, now it is.
+        let without_relay = &SATOSHI_VERSION_MSG[..SATOSHI_VERSION_MSG.len() - 1];
+        let decode: VersionMessage = encoding::decode_from_slice(without_relay).unwrap();
+        assert!(decode.relay);
+        assert_eq!(decode.start_height, 302_892);
+
+        let mut relay_false = SATOSHI_VERSION_MSG;
+        relay_false[SATOSHI_VERSION_MSG.len() - 1] = 0;
+        let decode: VersionMessage = encoding::decode_from_slice(&relay_false).unwrap();
+        assert!(!decode.relay);
     }
 
     #[test]
