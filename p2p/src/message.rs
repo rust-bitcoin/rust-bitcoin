@@ -1285,10 +1285,18 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        let before = bytes.len();
-        let result = self.inner.push_bytes(bytes)?;
-        self.bytes_consumed += before - bytes.len();
-        Ok(result)
+        let limit = self
+            .payload_len
+            .map_or(bytes.len(), |expected| (expected - self.bytes_consumed).min(bytes.len()));
+        let mut payload = &bytes[..limit];
+        let status = self.inner.push_bytes(&mut payload)?;
+        let consumed = limit - payload.len();
+        self.bytes_consumed += consumed;
+        *bytes = &bytes[consumed..];
+        if self.payload_len == Some(self.bytes_consumed) {
+            return Ok(encoding::DecoderStatus::Ready);
+        }
+        Ok(status)
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
