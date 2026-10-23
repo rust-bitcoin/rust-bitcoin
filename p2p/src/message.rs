@@ -2358,7 +2358,7 @@ mod test {
         CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders,
         GetCFilters,
     };
-    use crate::message_network::{Alert, Reject, RejectReason, VersionMessage};
+    use crate::message_network::{Alert, Reject, RejectReason, UserAgent, VersionMessage};
     use crate::{ProtocolVersion, ServiceFlags};
 
     fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
@@ -2765,6 +2765,35 @@ mod test {
         } else {
             panic!("wrong message type");
         }
+    }
+
+    #[test]
+    fn deserialize_version_without_relay_byte_in_stream() {
+        let addr = Address::new(&([127, 0, 0, 1], 8333).into(), ServiceFlags::NONE);
+        let version = VersionMessage::new(
+            ProtocolVersion(70015),
+            ServiceFlags::NONE,
+            0,
+            addr.clone(),
+            addr,
+            0,
+            UserAgent::from_nonstandard(&"/test/"),
+            0,
+        );
+        let mut payload = encoding::encode_to_vec(&version);
+        payload.pop(); // relay byte
+
+        let version = NetworkMessage::Unknown { command: "version".parse().unwrap(), payload };
+        let mut stream = encoding::encode_to_vec(&V1NetworkMessage::new(Magic::BITCOIN, version));
+        let verack =
+            encoding::encode_to_vec(&V1NetworkMessage::new(Magic::BITCOIN, NetworkMessage::Verack));
+        stream.extend_from_slice(&verack);
+
+        let mut bytes = stream.as_slice();
+        // The verack is meant to be left over, we expect no bytes are stolen from it.
+        let msg: V1NetworkMessage = encoding::decode_from_slice_unbounded(&mut bytes).unwrap();
+        assert!(matches!(msg.payload(), NetworkMessage::Version(v) if v.relay));
+        assert_eq!(bytes, verack);
     }
 
     #[test]
