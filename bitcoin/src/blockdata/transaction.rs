@@ -68,7 +68,7 @@ internal_macros::define_extension_trait! {
         /// Constructs a new [`OutPoint`].
         #[inline]
         #[deprecated(since = "TBD", note = "use struct initialization syntax instead")]
-        #[allow(clippy::new-ret-no-self)]
+        #[allow(clippy::new_ret_no_self)]
         fn new(txid: Txid, vout: u32) -> Self { OutPoint { txid, vout } }
 
         /// Checks if an `OutPoint` is "null".
