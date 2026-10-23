@@ -1647,6 +1647,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn decode_max_serialized_size() {
         let element_len = MAX_WITNESS_SIZE
             - crate::compact_size_encode(1usize).as_slice().len()
@@ -2051,6 +2052,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn decode_rejects_witness_over_limit_due_to_aggregate_data() {
         let element_len = MAX_WITNESS_ITEM_SIZE / 2 + 1;
 
@@ -2076,6 +2078,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn decode_rejects_witness_over_limit_due_to_prefix_overhead() {
         let count = MAX_WITNESS_SIZE;
         let mut encoded = Vec::new();

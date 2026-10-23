@@ -2211,6 +2211,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg_attr(miri, ignore)]
     fn block_rejects_oversized_trailing_coinbase_witness_item() {
         let reserved = [11u8; 32];
         let mut txin = crate::TxIn::EMPTY_COINBASE;
