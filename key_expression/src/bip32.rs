@@ -831,6 +831,18 @@ impl Xpriv {
     /// * [`XprivDecodeError::InvalidPrivateKeyPrefix`] if the private key bytes don't start with zero.
     /// * [`XprivDecodeError::Secp256k1`] if the private key bytes are not a valid secp secret key.
     pub fn decode(data: &[u8]) -> Result<Self, XprivDecodeError> {
+        let data: &[u8; 78] = data.try_into().map_err(|_| {
+            XprivDecodeError::Xkey(XkeyDecodeError::WrongExtendedKeyLength(data.len()))
+        })?;
+        Self::from_byte_array(data)
+    }
+
+    /// Decodes an extended private key from its 78-byte BIP-0032 encoding.
+    ///
+    /// # Errors
+    ///
+    /// Same as [`Xpriv::decode`], except that the length is checked by the type system.
+    pub fn from_byte_array(data: &[u8; 78]) -> Result<Self, XprivDecodeError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data).map_err(XprivDecodeError::Xkey)?;
 
@@ -992,6 +1004,18 @@ impl Xpub {
     /// * [`XpubDecodeError::UnknownVersion`] if the decoded network value is not main or testnet.
     /// * [`XpubDecodeError::Secp256k1`] if the public key bytes are not a valid secp public key.
     pub fn decode(data: &[u8]) -> Result<Self, XpubDecodeError> {
+        let data: &[u8; 78] = data.try_into().map_err(|_| {
+            XpubDecodeError::Xkey(XkeyDecodeError::WrongExtendedKeyLength(data.len()))
+        })?;
+        Self::from_byte_array(data)
+    }
+
+    /// Decodes an extended public key from its 78-byte BIP-0032 encoding.
+    ///
+    /// # Errors
+    ///
+    /// Same as [`Xpub::decode`], except that the length is checked by the type system.
+    pub fn from_byte_array(data: &[u8; 78]) -> Result<Self, XpubDecodeError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data).map_err(XpubDecodeError::Xkey)?;
 
@@ -1105,15 +1129,11 @@ impl Common {
     ///
     /// # Errors
     ///
-    /// * [`XkeyDecodeError::WrongExtendedKeyLength`] if the data is not the correct length.
     /// * [`XkeyDecodeError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
     ///   fingerprint is non-zero.
     /// * [`XkeyDecodeError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
     ///   non-zero.
-    fn decode(data: &[u8]) -> Result<Self, XkeyDecodeError> {
-        let data: &[u8; 78] =
-            data.try_into().map_err(|_| XkeyDecodeError::WrongExtendedKeyLength(data.len()))?;
-
+    fn decode(data: &[u8; 78]) -> Result<Self, XkeyDecodeError> {
         let (&network, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();
         let (&parent_fingerprint, data) = data.split_array::<4, 69>();
@@ -2196,6 +2216,52 @@ mod tests {
         match result {
             Err(XprivDecodeError::InvalidPrivateKeyPrefix) => {}
             _ => panic!("Expected InvalidPrivateKeyPrefix error, got {:?}", result),
+        }
+    }
+
+    #[test]
+    fn decode_matches_from_byte_array() {
+        let xpriv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi".parse::<Xpriv>().unwrap();
+        let xpub = Xpub::from_xpriv(&xpriv);
+
+        assert_eq!(Xpriv::decode(&xpriv.encode()), Ok(xpriv));
+        assert_eq!(Xpriv::from_byte_array(&xpriv.encode()), Ok(xpriv));
+        assert_eq!(Xpub::decode(&xpub.encode()), Ok(xpub));
+        assert_eq!(Xpub::from_byte_array(&xpub.encode()), Ok(xpub));
+    }
+
+    #[test]
+    fn reject_decode_with_wrong_length() {
+        for len in [0usize, 77, 79] {
+            let data = vec![0u8; len];
+
+            assert_eq!(
+                Xpriv::decode(&data),
+                Err(XprivDecodeError::Xkey(XkeyDecodeError::WrongExtendedKeyLength(len)))
+            );
+            assert_eq!(
+                Xpub::decode(&data),
+                Err(XpubDecodeError::Xkey(XkeyDecodeError::WrongExtendedKeyLength(len)))
+            );
+        }
+    }
+
+    #[test]
+    fn reject_base58_payload_with_wrong_length() {
+        for len in [0usize, 77, 79] {
+            let encoded = base58::Base58CkString::encode(&vec![0u8; len]).unwrap();
+
+            match encoded.as_str().parse::<Xpriv>() {
+                Err(ParseXprivError::InvalidBase58PayloadLength(e)) =>
+                    assert_eq!(e.invalid_base58_payload_length(), len),
+                result => panic!("Expected InvalidBase58PayloadLength error, got {:?}", result),
+            }
+
+            match encoded.as_str().parse::<Xpub>() {
+                Err(ParseXpubError::InvalidBase58PayloadLength(e)) =>
+                    assert_eq!(e.invalid_base58_payload_length(), len),
+                result => panic!("Expected InvalidBase58PayloadLength error, got {:?}", result),
+            }
         }
     }
 
