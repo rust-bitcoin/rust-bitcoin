@@ -189,6 +189,12 @@ macro_rules! impl_write {
             }
 
             #[inline]
+            fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
+                crate::HashEngine::input(self, buf);
+                Ok(())
+            }
+
+            #[inline]
             fn flush(&mut self) -> std::io::Result<()> {
                 $flush_fn(self)
             }
