@@ -24,6 +24,12 @@ macro_rules! impl_write {
                 $write_fn(self, buf)}
 
             #[inline]
+            fn write_all(&mut self, buf: &[u8]) -> crate::Result<()> {
+                hashes::HashEngine::input(self, buf);
+                Ok(())
+            }
+
+            #[inline]
             fn flush(&mut self) -> crate::Result<()> {
                 $flush_fn(self)
             }
