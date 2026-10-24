@@ -383,24 +383,23 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<SignedAmount> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::amount::tests::{res, sat, sres, ssat};
     use crate::result::NumOpError;
 
     #[test]
     fn sum_amounts() {
-        let amounts =
-            [Amount::from_sat_u32(100), Amount::from_sat_u32(200), Amount::from_sat_u32(300)];
+        let amounts = [sat(100), sat(200), sat(300)];
 
         let sum: NumOpResult<Amount> = amounts.into_iter().sum();
-        assert_eq!(sum, NumOpResult::Valid(Amount::from_sat_u32(600)));
+        assert_eq!(sum, res(600));
     }
 
     #[test]
     fn sum_amounts_with_references() {
-        let amounts =
-            [Amount::from_sat_u32(100), Amount::from_sat_u32(200), Amount::from_sat_u32(300)];
+        let amounts = [sat(100), sat(200), sat(300)];
 
         let sum: NumOpResult<Amount> = amounts.iter().sum();
-        assert_eq!(sum, NumOpResult::Valid(Amount::from_sat_u32(600)));
+        assert_eq!(sum, res(600));
     }
 
     #[test]
@@ -420,37 +419,29 @@ mod tests {
 
     #[test]
     fn sum_amount_results() {
-        let amounts = [
-            NumOpResult::Valid(Amount::from_sat_u32(100)),
-            NumOpResult::Valid(Amount::from_sat_u32(200)),
-            NumOpResult::Valid(Amount::from_sat_u32(300)),
-        ];
+        let amounts = [res(100), res(200), res(300)];
 
         let sum: NumOpResult<Amount> = amounts.into_iter().sum();
-        assert_eq!(sum, NumOpResult::Valid(Amount::from_sat_u32(600)));
+        assert_eq!(sum, res(600));
     }
 
     #[test]
     fn sum_amount_results_with_references() {
-        let amounts = [
-            NumOpResult::Valid(Amount::from_sat_u32(100)),
-            NumOpResult::Valid(Amount::from_sat_u32(200)),
-            NumOpResult::Valid(Amount::from_sat_u32(300)),
-        ];
+        let amounts = [res(100), res(200), res(300)];
 
         let sum: NumOpResult<Amount> = amounts.iter().sum();
-        assert_eq!(sum, NumOpResult::Valid(Amount::from_sat_u32(600)));
+        assert_eq!(sum, res(600));
     }
 
     #[test]
     fn sum_amount_with_error_propagation() {
         let amounts = [
-            NumOpResult::Valid(Amount::from_sat_u32(100)),
+            res(100),
             NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
                 op: MathOp::Add,
                 is_negative: false,
             })),
-            NumOpResult::Valid(Amount::from_sat_u32(200)),
+            res(200),
         ];
 
         let sum: NumOpResult<Amount> = amounts.into_iter().sum();
@@ -459,61 +450,45 @@ mod tests {
 
     #[test]
     fn sum_signed_amounts() {
-        let amounts = [
-            SignedAmount::from_sat_i32(100),
-            SignedAmount::from_sat_i32(-50),
-            SignedAmount::from_sat_i32(200),
-        ];
+        let amounts = [ssat(100), ssat(-50), ssat(200)];
 
         let sum: NumOpResult<SignedAmount> = amounts.into_iter().sum();
-        assert_eq!(sum, NumOpResult::Valid(SignedAmount::from_sat_i32(250)));
+        assert_eq!(sum, sres(250));
     }
 
     #[test]
     fn sum_signed_amounts_with_references() {
-        let amounts = [
-            SignedAmount::from_sat_i32(100),
-            SignedAmount::from_sat_i32(-50),
-            SignedAmount::from_sat_i32(200),
-        ];
+        let amounts = [ssat(100), ssat(-50), ssat(200)];
 
         let sum: NumOpResult<SignedAmount> = amounts.iter().sum();
-        assert_eq!(sum, NumOpResult::Valid(SignedAmount::from_sat_i32(250)));
+        assert_eq!(sum, sres(250));
     }
 
     #[test]
     fn sum_signed_amount_results() {
-        let amounts = [
-            NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
-            NumOpResult::Valid(SignedAmount::from_sat_i32(-50)),
-            NumOpResult::Valid(SignedAmount::from_sat_i32(200)),
-        ];
+        let amounts = [sres(100), sres(-50), sres(200)];
 
         let sum: NumOpResult<SignedAmount> = amounts.into_iter().sum();
-        assert_eq!(sum, NumOpResult::Valid(SignedAmount::from_sat_i32(250)));
+        assert_eq!(sum, sres(250));
     }
 
     #[test]
     fn sum_signed_amount_results_with_references() {
-        let amounts = [
-            NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
-            NumOpResult::Valid(SignedAmount::from_sat_i32(-50)),
-            NumOpResult::Valid(SignedAmount::from_sat_i32(200)),
-        ];
+        let amounts = [sres(100), sres(-50), sres(200)];
 
         let sum: NumOpResult<SignedAmount> = amounts.iter().sum();
-        assert_eq!(sum, NumOpResult::Valid(SignedAmount::from_sat_i32(250)));
+        assert_eq!(sum, sres(250));
     }
 
     #[test]
     fn sum_signed_amount_with_error_propagation() {
         let amounts = [
-            NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
+            sres(100),
             NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
                 op: MathOp::Add,
                 is_negative: false,
             })),
-            NumOpResult::Valid(SignedAmount::from_sat_i32(200)),
+            sres(200),
         ];
 
         let sum: NumOpResult<SignedAmount> = amounts.into_iter().sum();
@@ -522,146 +497,146 @@ mod tests {
 
     #[test]
     fn op_assign_amount() {
-        let sat = Amount::from_sat_u32(50);
+        let amount = sat(50);
 
-        let mut res = sat + sat;
-        res += Amount::from_sat_u32(50);
-        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(150)));
+        let mut result = amount + amount;
+        result += sat(50);
+        assert_eq!(result, res(150));
 
         let add_err = NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
             op: MathOp::Add,
             is_negative: false,
         }));
-        res += add_err; // Add an error result
-        assert_eq!(res, add_err);
+        result += add_err; // Add an error result
+        assert_eq!(result, add_err);
 
-        let mut res = sat + sat;
-        res -= Amount::from_sat_u32(20);
-        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(80)));
+        let mut result = amount + amount;
+        result -= sat(20);
+        assert_eq!(result, res(80));
 
         let sub_err = NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
             op: MathOp::Sub,
             is_negative: true,
         }));
-        res -= sub_err; // Subtract an error result
-        assert_eq!(res, sub_err);
+        result -= sub_err; // Subtract an error result
+        assert_eq!(result, sub_err);
     }
 
     #[test]
     fn op_assign_signed_amount() {
-        let ssat = SignedAmount::from_sat_i32(50);
+        let amount = ssat(50);
 
-        let mut res = ssat + ssat;
-        res += SignedAmount::from_sat_i32(-30);
-        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(70)));
+        let mut result = amount + amount;
+        result += ssat(-30);
+        assert_eq!(result, sres(70));
 
         let add_err = NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
             op: MathOp::Add,
             is_negative: false,
         }));
-        res += add_err; // Add an error result
-        assert_eq!(res, add_err);
+        result += add_err; // Add an error result
+        assert_eq!(result, add_err);
 
-        let mut res = ssat + ssat;
-        res -= SignedAmount::from_sat_i32(25);
-        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(75)));
+        let mut result = amount + amount;
+        result -= ssat(25);
+        assert_eq!(result, sres(75));
 
         let sub_err = NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
             op: MathOp::Sub,
             is_negative: true,
         }));
-        res -= sub_err; // Subtract an error result
-        assert_eq!(res, sub_err);
+        result -= sub_err; // Subtract an error result
+        assert_eq!(result, sub_err);
     }
 
     #[test]
     fn rem_assign_amount() {
-        let sat = Amount::from_sat_u32(50);
-        let mut res = sat + sat;
-        res %= 30_u64;
-        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(10)));
+        let amount = sat(50);
+        let mut result = amount + amount;
+        result %= 30_u64;
+        assert_eq!(result, res(10));
 
-        res %= &4_u64;
-        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(2)));
+        result %= &4_u64;
+        assert_eq!(result, res(2));
 
-        res %= 0_u64;
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
+        result %= 0_u64;
+        assert_eq!(result, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
 
-        res %= 5_u64;
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
+        result %= 5_u64;
+        assert_eq!(result, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
     }
 
     #[test]
     fn rem_assign_nz_amount() {
         fn nz(x: u64) -> NonZeroU64 { NonZeroU64::new(x).unwrap() }
 
-        let mut res = Amount::from_sat_u32(100);
-        res %= nz(30_u64);
-        assert_eq!(res, Amount::from_sat_u32(10));
+        let mut amount = sat(100);
+        amount %= nz(30_u64);
+        assert_eq!(amount, sat(10));
 
-        res %= &nz(4_u64);
-        assert_eq!(res, Amount::from_sat_u32(2));
+        amount %= &nz(4_u64);
+        assert_eq!(amount, sat(2));
 
-        res %= nz(5_u64);
-        assert_eq!(res, Amount::from_sat_u32(2));
+        amount %= nz(5_u64);
+        assert_eq!(amount, sat(2));
     }
 
     #[test]
     fn rem_assign_signed_amount() {
-        let ssat = SignedAmount::from_sat_i32(-50);
+        let amount = ssat(-50);
 
-        let mut res = ssat + ssat;
-        res %= 30_i64;
-        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-10)));
+        let mut result = amount + amount;
+        result %= 30_i64;
+        assert_eq!(result, sres(-10));
 
-        res %= &4_i64;
-        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-2)));
+        result %= &4_i64;
+        assert_eq!(result, sres(-2));
 
-        res %= 0_i64;
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
+        result %= 0_i64;
+        assert_eq!(result, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
 
-        res %= 5_i64;
-        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
+        result %= 5_i64;
+        assert_eq!(result, NumOpResult::Error(NumOpError::while_doing(MathErrorKind::RemByZero)));
     }
 
     #[test]
     fn rem_assign_nz_signed_amount() {
         fn nz(x: i64) -> NonZeroI64 { NonZeroI64::new(x).unwrap() }
 
-        let mut res = SignedAmount::from_sat_i32(-100);
-        res %= nz(30_i64);
-        assert_eq!(res, SignedAmount::from_sat_i32(-10));
+        let mut amount = ssat(-100);
+        amount %= nz(30_i64);
+        assert_eq!(amount, ssat(-10));
 
-        res %= &nz(4_i64);
-        assert_eq!(res, SignedAmount::from_sat_i32(-2));
+        amount %= &nz(4_i64);
+        assert_eq!(amount, ssat(-2));
 
-        res %= nz(5_i64);
-        assert_eq!(res, SignedAmount::from_sat_i32(-2));
+        amount %= nz(5_i64);
+        assert_eq!(amount, ssat(-2));
     }
 
     #[test]
     fn div_assign_amount_nonzero() {
-        let mut amount = Amount::from_sat_u32(100);
+        let mut amount = sat(100);
         amount /= NonZeroU64::new(12).unwrap();
-        assert_eq!(amount, Amount::from_sat_u32(8));
+        assert_eq!(amount, sat(8));
 
         // Division truncates towards zero.
         amount /= NonZeroU64::new(10).unwrap();
         assert_eq!(amount, Amount::ZERO);
 
-        let mut res = amount + Amount::from_sat_u32(100);
-        res /= NonZeroU64::new(4).unwrap();
-        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(25)));
+        let mut result = amount + sat(100);
+        result /= NonZeroU64::new(4).unwrap();
+        assert_eq!(result, res(25));
 
         // An error result stays an error, keeping the original operation.
-        let mut res: NumOpResult<Amount> =
+        let mut result: NumOpResult<Amount> =
             NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
                 op: MathOp::Add,
                 is_negative: false,
             }));
-        res /= NonZeroU64::new(2).unwrap();
+        result /= NonZeroU64::new(2).unwrap();
         assert_eq!(
-            res,
+            result,
             NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
                 op: MathOp::Add,
                 is_negative: false
@@ -671,29 +646,29 @@ mod tests {
 
     #[test]
     fn div_assign_signed_amount_nonzero() {
-        let mut ssat = SignedAmount::from_sat_i32(-100);
-        ssat /= NonZeroI64::new(4).unwrap();
-        assert_eq!(ssat, SignedAmount::from_sat_i32(-25));
+        let mut amount = ssat(-100);
+        amount /= NonZeroI64::new(4).unwrap();
+        assert_eq!(amount, ssat(-25));
 
-        ssat /= &NonZeroI64::new(-5).unwrap();
-        assert_eq!(ssat, SignedAmount::from_sat_i32(5));
+        amount /= &NonZeroI64::new(-5).unwrap();
+        assert_eq!(amount, ssat(5));
 
         // Division truncates towards zero.
-        ssat /= NonZeroI64::new(-10).unwrap();
-        assert_eq!(ssat, SignedAmount::ZERO);
+        amount /= NonZeroI64::new(-10).unwrap();
+        assert_eq!(amount, SignedAmount::ZERO);
 
-        let mut res = ssat - SignedAmount::from_sat_i32(100);
-        res /= NonZeroI64::new(4).unwrap();
-        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(-25)));
+        let mut result = amount - ssat(100);
+        result /= NonZeroI64::new(4).unwrap();
+        assert_eq!(result, sres(-25));
 
-        let mut res: NumOpResult<SignedAmount> =
+        let mut result: NumOpResult<SignedAmount> =
             NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
                 op: MathOp::Sub,
                 is_negative: true,
             }));
-        res /= NonZeroI64::new(2).unwrap();
+        result /= NonZeroI64::new(2).unwrap();
         assert_eq!(
-            res,
+            result,
             NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
                 op: MathOp::Sub,
                 is_negative: true
@@ -703,30 +678,30 @@ mod tests {
 
     #[test]
     fn op_assign_amount_error() {
-        let mut res: NumOpResult<Amount> =
+        let mut result: NumOpResult<Amount> =
             NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
                 op: MathOp::Mul,
                 is_negative: false,
             }));
-        let orig_res = res;
+        let orig_res = result;
 
         // All assign ops to an error should preserve the error
-        res += Amount::from_sat_u32(10);
-        assert_eq!(res, orig_res);
+        result += sat(10);
+        assert_eq!(result, orig_res);
 
-        res += NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+        result += NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
             op: MathOp::Sub,
             is_negative: true,
         }));
-        assert_eq!(res, orig_res);
+        assert_eq!(result, orig_res);
 
-        res -= Amount::from_sat_u32(10);
-        assert_eq!(res, orig_res);
+        result -= sat(10);
+        assert_eq!(result, orig_res);
 
-        res -= NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+        result -= NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
             op: MathOp::Add,
             is_negative: false,
         }));
-        assert_eq!(res, orig_res);
+        assert_eq!(result, orig_res);
     }
 }
