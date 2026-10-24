@@ -1061,13 +1061,13 @@ enum NetworkMessageDecoderInner {
     /// Unknown message — must buffer since type is unknown at compile time.
     Unknown {
         command: CommandString,
-        remaining: usize,
+        remaining: Option<usize>,
         buffer: Vec<u8>,
     },
 }
 
 impl NetworkMessageDecoderInner {
-    fn new(command: CommandString, payload_len: usize) -> Self {
+    fn new(command: CommandString, payload_len: Option<usize>) -> Self {
         use encoding::Decode as _;
         match command.as_ref() {
             "version" => Self::Version(message_network::VersionMessage::decoder()),
@@ -1106,7 +1106,7 @@ impl NetworkMessageDecoderInner {
             _ => Self::Unknown {
                 command,
                 remaining: payload_len,
-                buffer: Vec::with_capacity(payload_len),
+                buffer: Vec::with_capacity(payload_len.unwrap_or(0)),
             },
         }
     }
@@ -1151,7 +1151,12 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::SendTxRcnCl(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Feature(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Empty(_) => Ok(encoding::DecoderStatus::Ready),
-            Self::Unknown { remaining, buffer, .. } => {
+            Self::Unknown { remaining: None, buffer, .. } => {
+                buffer.extend_from_slice(bytes);
+                *bytes = &[];
+                Ok(encoding::DecoderStatus::NeedsMore)
+            }
+            Self::Unknown { remaining: Some(remaining), buffer, .. } => {
                 let copy_len = bytes.len().min(*remaining);
                 let (to_copy, rest) = bytes.split_at(copy_len);
                 buffer.extend_from_slice(to_copy);
@@ -1212,7 +1217,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
                 _ => Err(err),
             },
             Self::Unknown { command, buffer, remaining } => {
-                if remaining != 0 {
+                if matches!(remaining, Some(remaining) if remaining != 0) {
                     return Err(err);
                 }
                 Ok(NetworkMessage::Unknown { command, payload: buffer })
@@ -1253,7 +1258,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::SendTxRcnCl(d) => d.read_limit(),
             Self::Feature(d) => d.read_limit(),
             Self::Empty(_) => 0,
-            Self::Unknown { remaining, .. } => *remaining,
+            Self::Unknown { remaining, .. } => remaining.unwrap_or(usize::MAX),
         }
     }
 }
@@ -1268,7 +1273,7 @@ struct NetworkMessageDecoder {
 impl NetworkMessageDecoder {
     fn new(command: CommandString, payload_len: usize) -> Self {
         Self {
-            inner: NetworkMessageDecoderInner::new(command, payload_len),
+            inner: NetworkMessageDecoderInner::new(command, Some(payload_len)),
             payload_len: Some(payload_len),
             bytes_consumed: 0,
         }
@@ -1715,21 +1720,7 @@ impl V2NetworkMessageDecoder {
 
     /// Creates a payload decoder from a command string (for short ID == 0).
     fn payload_decoder_from_command(command: CommandString) -> NetworkMessageDecoder {
-        use encoding::Decode as _;
-        use NetworkMessageDecoderInner as E;
-
-        NetworkMessageDecoder::from_inner(match command.as_ref() {
-            "version" => E::Version(message_network::VersionMessage::decoder()),
-            "verack" | "sendheaders" | "getaddr" | "wtxidrelay" | "sendaddrv2" => E::Empty(command),
-            "alert" => E::Alert(message_network::Alert::decoder()),
-            "reject" => E::Reject(message_network::Reject::decoder()),
-            "sendtxrcncl" => E::SendTxRcnCl(SendTxRcnCl::decoder()),
-            _ => E::Unknown {
-                command,
-                remaining: 0, // no payload length, buffer all bytes until end().
-                buffer: Vec::new(),
-            },
-        })
+        NetworkMessageDecoder::from_inner(NetworkMessageDecoderInner::new(command, None))
     }
 }
 
@@ -2515,6 +2506,13 @@ mod test {
             let v2_encoded = encoding::encode_to_vec(&v2_msg);
             let v2_decoded = encoding::decode_from_slice::<V2NetworkMessage>(&v2_encoded).unwrap();
             assert_eq!(v2_decoded, v2_msg);
+
+            let mut v2_full_command = vec![0u8];
+            v2_full_command.extend(encoding::encode_to_vec(&msg.command()));
+            v2_full_command.extend(encoding::encode_to_vec(msg));
+            let v2_decoded =
+                encoding::decode_from_slice::<V2NetworkMessage>(&v2_full_command).unwrap();
+            assert_eq!(v2_decoded, v2_msg);
         }
     }
 
@@ -2675,6 +2673,22 @@ mod test {
 
         let preimage = V2NetworkMessage::new(NetworkMessage::GetAddr);
         assert_eq!(preimage, msg);
+    }
+
+    #[test]
+    fn deserialize_v2_unknown_with_payload() {
+        let msg = encoding::decode_from_slice::<V2NetworkMessage>(&[
+            0x00, 0x66, 0x6f, 0x6f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+            0x02, 0x03,
+        ])
+        .unwrap();
+
+        let preimage = V2NetworkMessage::new(NetworkMessage::Unknown {
+            command: CommandString::try_from("foo").unwrap(),
+            payload: vec![0x01, 0x02, 0x03],
+        });
+        assert_eq!(preimage, msg);
+        assert_eq!(encoding::encode_to_vec(&preimage), encoding::encode_to_vec(&msg));
     }
 
     #[test]
