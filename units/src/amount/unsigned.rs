@@ -641,6 +641,7 @@ impl TryFrom<SignedAmount> for Amount {
     fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }
 }
 
+/*
 #[cfg(feature = "encoding")]
 impl encoding::Encode for Amount {
     type Encoder<'e> = AmountEncoder<'e>;
@@ -651,7 +652,14 @@ impl encoding::Encode for Amount {
             self.to_sat().to_le_bytes(),
         ))
     }
+
+    const MIN_ENCODED_LEN: usize = 8;
+
+    fn encoded_tail_len(&self) -> usize {
+        0
+    }
 }
+*/
 
 #[cfg(feature = "encoding")]
 impl encoding::Decode for Amount {
@@ -659,10 +667,12 @@ impl encoding::Decode for Amount {
 }
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Amount`] type.
-    #[derive(Debug, Clone)]
-    pub struct AmountEncoder<'e>(encoding::ArrayEncoder<8>);
+encoding::impl_encode_le_uint! {
+    impl Encode for Amount {
+        type Encoder<'_> = AmountEncoder<'_>;
+
+        using |amt: &Amount| amt.to_sat();
+    }
 }
 
 #[cfg(feature = "encoding")]
