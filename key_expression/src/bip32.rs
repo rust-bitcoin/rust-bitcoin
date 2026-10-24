@@ -830,7 +830,7 @@ impl Xpriv {
     /// * [`XprivDecodeError::UnknownVersion`] if the decoded network value is not main or testnet.
     /// * [`XprivDecodeError::InvalidPrivateKeyPrefix`] if the private key bytes don't start with zero.
     /// * [`XprivDecodeError::Secp256k1`] if the private key bytes are not a valid secp secret key.
-    pub fn decode(data: &[u8]) -> Result<Self, XprivDecodeError> {
+    pub fn decode(data: &[u8; 78]) -> Result<Self, XprivDecodeError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data).map_err(XprivDecodeError::Xkey)?;
 
@@ -991,7 +991,7 @@ impl Xpub {
     /// * [`XpubDecodeError::Xkey`] if the common xkey fields are invalid.
     /// * [`XpubDecodeError::UnknownVersion`] if the decoded network value is not main or testnet.
     /// * [`XpubDecodeError::Secp256k1`] if the public key bytes are not a valid secp public key.
-    pub fn decode(data: &[u8]) -> Result<Self, XpubDecodeError> {
+    pub fn decode(data: &[u8; 78]) -> Result<Self, XpubDecodeError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data).map_err(XpubDecodeError::Xkey)?;
 
@@ -1047,13 +1047,11 @@ impl FromStr for Xpriv {
     type Err = ParseXprivError;
 
     fn from_str(inp: &str) -> Result<Self, ParseXprivError> {
-        let data = base58::decode_check(inp)?;
-
-        if data.len() != 78 {
-            return Err(ParseXprivError::InvalidBase58PayloadLength(
-                InvalidBase58PayloadLengthError { length: data.len() },
-            ));
-        }
+        let data: [u8; 78] = base58::decode_check(inp)?.try_into().map_err(|data: Vec<u8>| {
+            ParseXprivError::InvalidBase58PayloadLength(InvalidBase58PayloadLengthError {
+                length: data.len(),
+            })
+        })?;
 
         Self::decode(&data).map_err(ParseXprivError::Decode)
     }
@@ -1069,13 +1067,11 @@ impl FromStr for Xpub {
     type Err = ParseXpubError;
 
     fn from_str(inp: &str) -> Result<Self, ParseXpubError> {
-        let data = base58::decode_check(inp)?;
-
-        if data.len() != 78 {
-            return Err(ParseXpubError::InvalidBase58PayloadLength(
-                InvalidBase58PayloadLengthError { length: data.len() },
-            ));
-        }
+        let data: [u8; 78] = base58::decode_check(inp)?.try_into().map_err(|data: Vec<u8>| {
+            ParseXpubError::InvalidBase58PayloadLength(InvalidBase58PayloadLengthError {
+                length: data.len(),
+            })
+        })?;
 
         Self::decode(&data).map_err(ParseXpubError::Decode)
     }
@@ -1105,15 +1101,11 @@ impl Common {
     ///
     /// # Errors
     ///
-    /// * [`XkeyDecodeError::WrongExtendedKeyLength`] if the data is not the correct length.
     /// * [`XkeyDecodeError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
     ///   fingerprint is non-zero.
     /// * [`XkeyDecodeError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
     ///   non-zero.
-    fn decode(data: &[u8]) -> Result<Self, XkeyDecodeError> {
-        let data: &[u8; 78] =
-            data.try_into().map_err(|_| XkeyDecodeError::WrongExtendedKeyLength(data.len()))?;
-
+    fn decode(data: &[u8; 78]) -> Result<Self, XkeyDecodeError> {
         let (&network, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();
         let (&parent_fingerprint, data) = data.split_array::<4, 69>();
@@ -1152,8 +1144,6 @@ pub mod error {
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum XkeyDecodeError {
-        /// Encoded extended key data has wrong length
-        WrongExtendedKeyLength(usize),
         /// Non-zero parent fingerprint for a master key (depth 0)
         NonZeroParentFingerprintForMasterKey,
         /// Non-zero child number for a master key (depth 0)
@@ -1168,7 +1158,6 @@ pub mod error {
     impl std::error::Error for XkeyDecodeError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::WrongExtendedKeyLength(_) => None,
                 Self::NonZeroParentFingerprintForMasterKey => None,
                 Self::NonZeroChildNumberForMasterKey => None,
             }
@@ -1178,8 +1167,6 @@ pub mod error {
     impl fmt::Display for XkeyDecodeError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::WrongExtendedKeyLength(ref len) =>
-                    write!(f, "encoded extended key data has wrong length {}", len),
                 Self::NonZeroParentFingerprintForMasterKey =>
                     f.write_str("non-zero parent fingerprint in master key"),
                 Self::NonZeroChildNumberForMasterKey =>
@@ -2185,7 +2172,7 @@ mod tests {
 
     #[test]
     fn reject_xpriv_with_non_zero_byte_at_index_45() {
-        let mut xpriv = base58::decode_check("xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9").unwrap();
+        let mut xpriv: [u8; 78] = base58::decode_check("xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9").unwrap().try_into().unwrap();
 
         // Modify byte at index 45 to be non-zero (e.g., 1)
         xpriv[45] = 1;
@@ -2196,6 +2183,25 @@ mod tests {
         match result {
             Err(XprivDecodeError::InvalidPrivateKeyPrefix) => {}
             _ => panic!("Expected InvalidPrivateKeyPrefix error, got {:?}", result),
+        }
+    }
+
+    #[test]
+    fn reject_base58_payload_with_wrong_length() {
+        for len in [0usize, 77, 79] {
+            let encoded = base58::Base58CkString::encode(&vec![0u8; len]).unwrap();
+
+            match encoded.as_str().parse::<Xpriv>() {
+                Err(ParseXprivError::InvalidBase58PayloadLength(e)) =>
+                    assert_eq!(e.invalid_base58_payload_length(), len),
+                result => panic!("Expected InvalidBase58PayloadLength error, got {:?}", result),
+            }
+
+            match encoded.as_str().parse::<Xpub>() {
+                Err(ParseXpubError::InvalidBase58PayloadLength(e)) =>
+                    assert_eq!(e.invalid_base58_payload_length(), len),
+                result => panic!("Expected InvalidBase58PayloadLength error, got {:?}", result),
+            }
         }
     }
 
