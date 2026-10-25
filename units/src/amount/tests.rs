@@ -25,15 +25,19 @@ fn denom_err(e: ParseDenominationError) -> ParseError {
     ParseError(ParseErrorInner::Denomination(e))
 }
 
+/// Constructs an [`Amount`] from `sat` satoshis, panicking if out of range.
 #[track_caller]
 pub(super) fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
 
+/// Constructs a [`SignedAmount`] from `ssat` satoshis, panicking if out of range.
 #[track_caller]
 pub(super) fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
+/// Wraps [`sat`] in a valid [`NumOpResult`], panicking if out of range.
 #[track_caller]
 pub(super) fn res(n_sat: u64) -> NumOpResult<Amount> { NumOpResult::from(sat(n_sat)) }
 
+/// Wraps [`ssat`] in a valid [`NumOpResult`], panicking if out of range.
 #[track_caller]
 pub(super) fn sres(n_sat: i64) -> NumOpResult<SignedAmount> { NumOpResult::from(ssat(n_sat)) }
 
