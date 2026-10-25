@@ -2,9 +2,8 @@
 
 //! Bitcoin blocks.
 //!
-//! A block is a bundle of transactions with a proof-of-work attached,
-//! which commits to an earlier block to form the blockchain. This
-//! module describes structures and functions needed to describe
+//! A block is a bundle of transactions with a proof-of-work attached, which commits to an earlier
+//! block to form the blockchain. This module describes structures and functions needed to describe
 //! these blocks and the blockchain.
 //!
 //! # Examples
@@ -646,13 +645,12 @@ fn block_weight_wu(transactions: &[Transaction]) -> u64 {
 ///
 /// # Returns
 ///
-/// [`None`] if the iterator was empty, or if the transaction list contains
-/// consecutive duplicates which would trigger CVE-2012-2459. Blocks with duplicate
-/// transactions will always be invalid, so there is no harm in us refusing to
-/// compute their Merkle roots.
+/// [`None`] if the iterator was empty, or if the transaction list contains consecutive duplicates
+/// which would trigger CVE-2012-2459. Blocks with duplicate transactions will always be invalid, so
+/// there is no harm in us refusing to compute their Merkle roots.
 ///
-/// Unless you are certain your transaction list is nonempty and has no duplicates,
-/// you should not unwrap the [`Option`] returned by this method!
+/// Unless you are certain your transaction list is nonempty and has no duplicates, you should not
+/// unwrap the [`Option`] returned by this method!
 #[cfg(feature = "alloc")]
 pub fn compute_merkle_root<T>(transactions: T) -> Option<TxMerkleNode>
 where
@@ -667,13 +665,12 @@ where
 ///
 /// # Returns
 ///
-/// [`None`] if the iterator was empty, or if the transaction list contains
-/// consecutive duplicates which would trigger CVE-2012-2459. Blocks with duplicate
-/// transactions will always be invalid, so there is no harm in us refusing to
-/// compute their Merkle roots.
+/// [`None`] if the iterator was empty, or if the transaction list contains consecutive duplicates
+/// which would trigger CVE-2012-2459. Blocks with duplicate transactions will always be invalid, so
+/// there is no harm in us refusing to compute their Merkle roots.
 ///
-/// Unless you are certain your transaction list is nonempty and has no duplicates,
-/// you should not unwrap the [`Option`] returned by this method!
+/// Unless you are certain your transaction list is nonempty and has no duplicates, you should not
+/// unwrap the [`Option`] returned by this method!
 #[cfg(feature = "alloc")]
 pub fn compute_witness_root<T>(transactions: T) -> Option<WitnessMerkleNode>
 where
@@ -707,8 +704,8 @@ fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCom
 
 /// Bitcoin block header.
 ///
-/// Contains all the block's information except the actual transactions, but
-/// including a root of a [Merkle tree] committing to all transactions in the block.
+/// Contains all the block's information except the actual transactions, but including a root of a
+/// [Merkle tree] committing to all transactions in the block.
 ///
 /// [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
 ///
