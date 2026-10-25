@@ -2506,6 +2506,13 @@ mod test {
             let v2_encoded = encoding::encode_to_vec(&v2_msg);
             let v2_decoded = encoding::decode_from_slice::<V2NetworkMessage>(&v2_encoded).unwrap();
             assert_eq!(v2_decoded, v2_msg);
+
+            let mut v2_full_command = vec![0u8];
+            v2_full_command.extend(encoding::encode_to_vec(&msg.command()));
+            v2_full_command.extend(encoding::encode_to_vec(msg));
+            let v2_decoded =
+                encoding::decode_from_slice::<V2NetworkMessage>(&v2_full_command).unwrap();
+            assert_eq!(v2_decoded, v2_msg);
         }
     }
 
@@ -2666,6 +2673,22 @@ mod test {
 
         let preimage = V2NetworkMessage::new(NetworkMessage::GetAddr);
         assert_eq!(preimage, msg);
+    }
+
+    #[test]
+    fn deserialize_v2_unknown_with_payload() {
+        let msg = encoding::decode_from_slice::<V2NetworkMessage>(&[
+            0x00, 0x66, 0x6f, 0x6f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+            0x02, 0x03,
+        ])
+        .unwrap();
+
+        let preimage = V2NetworkMessage::new(NetworkMessage::Unknown {
+            command: CommandString::try_from("foo").unwrap(),
+            payload: vec![0x01, 0x02, 0x03],
+        });
+        assert_eq!(preimage, msg);
+        assert_eq!(encoding::encode_to_vec(&preimage), encoding::encode_to_vec(&msg));
     }
 
     #[test]
