@@ -25,17 +25,21 @@ fn denom_err(e: ParseDenominationError) -> ParseError {
     ParseError(ParseErrorInner::Denomination(e))
 }
 
+/// Constructs an [`Amount`] from `sat` satoshis, panicking if out of range.
 #[track_caller]
-fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
+pub(super) fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
 
+/// Constructs a [`SignedAmount`] from `ssat` satoshis, panicking if out of range.
 #[track_caller]
-fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
+pub(super) fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
+/// Wraps [`sat`] in a valid [`NumOpResult`], panicking if out of range.
 #[track_caller]
-fn res(n_sat: u64) -> NumOpResult<Amount> { NumOpResult::from(sat(n_sat)) }
+pub(super) fn res(n_sat: u64) -> NumOpResult<Amount> { NumOpResult::from(sat(n_sat)) }
 
+/// Wraps [`ssat`] in a valid [`NumOpResult`], panicking if out of range.
 #[track_caller]
-fn sres(n_sat: i64) -> NumOpResult<SignedAmount> { NumOpResult::from(ssat(n_sat)) }
+pub(super) fn sres(n_sat: i64) -> NumOpResult<SignedAmount> { NumOpResult::from(ssat(n_sat)) }
 
 #[test]
 fn sanity_check() {
@@ -54,7 +58,7 @@ fn sanity_check() {
         assert!(Amount::from_float_in(-100_f64, Denomination::Bitcoin).is_err());
     }
 
-    let result = NumOpResult::Valid(sat(123));
+    let result = res(123);
     assert_eq!(Some(sat(123)), result.ok());
     assert!(result.is_valid());
     assert!(!result.is_error());
@@ -252,35 +256,35 @@ fn neg() {
 
 #[test]
 fn add() {
-    assert!(sat(0) + sat(0) == sat(0).into());
-    assert!(sat(127) + sat(179) == sat(306).into());
+    assert!(sat(0) + sat(0) == res(0));
+    assert!(sat(127) + sat(179) == res(306));
 
-    assert!(ssat(0) + ssat(0) == ssat(0).into());
-    assert!(ssat(127) + ssat(179) == ssat(306).into());
-    assert!(ssat(-127) + ssat(179) == ssat(52).into());
-    assert!(ssat(127) + ssat(-179) == ssat(-52).into());
-    assert!(ssat(-127) + ssat(-179) == ssat(-306).into());
+    assert!(ssat(0) + ssat(0) == sres(0));
+    assert!(ssat(127) + ssat(179) == sres(306));
+    assert!(ssat(-127) + ssat(179) == sres(52));
+    assert!(ssat(127) + ssat(-179) == sres(-52));
+    assert!(ssat(-127) + ssat(-179) == sres(-306));
 
     // Implemented using generic impl.
-    assert!(res(127) + sat(179) == sat(306).into());
-    assert!(sres(127) + ssat(179) == ssat(306).into());
+    assert!(res(127) + sat(179) == res(306));
+    assert!(sres(127) + ssat(179) == sres(306));
 }
 
 #[test]
 fn sub() {
-    assert!(sat(0) - sat(0) == sat(0).into());
-    assert!(sat(179) - sat(127) == sat(52).into());
+    assert!(sat(0) - sat(0) == res(0));
+    assert!(sat(179) - sat(127) == res(52));
     assert!((sat(127) - sat(179)).is_error());
 
-    assert!(ssat(0) - ssat(0) == ssat(0).into());
-    assert!(ssat(127) - ssat(179) == ssat(-52).into());
-    assert!(ssat(-127) - ssat(179) == ssat(-306).into());
-    assert!(ssat(127) - ssat(-179) == ssat(306).into());
-    assert!(ssat(-127) - ssat(-179) == ssat(52).into());
+    assert!(ssat(0) - ssat(0) == sres(0));
+    assert!(ssat(127) - ssat(179) == sres(-52));
+    assert!(ssat(-127) - ssat(179) == sres(-306));
+    assert!(ssat(127) - ssat(-179) == sres(306));
+    assert!(ssat(-127) - ssat(-179) == sres(52));
 
     // Implemented using generic impl.
-    assert!(res(179) - sat(127) == sat(52).into());
-    assert!(sres(179) - ssat(127) == ssat(52).into());
+    assert!(res(179) - sat(127) == res(52));
+    assert!(sres(179) - ssat(127) == sres(52));
 }
 
 #[test]
@@ -1040,9 +1044,9 @@ fn to_string_with_denomination_from_str_roundtrip() {
 #[test]
 fn sum_amounts() {
     let empty: [NumOpResult<Amount>; 0] = [];
-    assert_eq!(empty.into_iter().sum::<NumOpResult<_>>(), NumOpResult::Valid(Amount::ZERO));
+    assert_eq!(empty.into_iter().sum::<NumOpResult<_>>(), res(0));
     let empty: [NumOpResult<SignedAmount>; 0] = [];
-    assert_eq!(empty.into_iter().sum::<NumOpResult<_>>(), NumOpResult::Valid(SignedAmount::ZERO));
+    assert_eq!(empty.into_iter().sum::<NumOpResult<_>>(), sres(0));
 
     let amounts = [sat(42), sat(1337), sat(21)];
     let sum = amounts.into_iter().map(NumOpResult::from).sum::<NumOpResult<Amount>>().unwrap();
@@ -1151,17 +1155,15 @@ fn add_sub_combos() {
 
     // Checks lhs op rhs for all amount and `NumOpResult` combos.
     macro_rules! check_res {
-        ($($amount:ident, $op:tt, $lhs:literal, $rhs:literal, $ans:literal);* $(;)?) => {
+        ($($sat:ident, $res:ident, $op:tt, $lhs:literal, $rhs:literal, $ans:literal);* $(;)?) => {
             $(
-                let amt = |sat| $amount::from_sat(sat).unwrap();
+                let sat_lhs = $sat($lhs);
+                let sat_rhs = $sat($rhs);
 
-                let sat_lhs = amt($lhs);
-                let sat_rhs = amt($rhs);
+                let res_lhs = $res($lhs);
+                let res_rhs = $res($rhs);
 
-                let res_lhs = NumOpResult::from(sat_lhs);
-                let res_rhs = NumOpResult::from(sat_rhs);
-
-                let ans = NumOpResult::from(amt($ans));
+                let ans = $res($ans);
 
                 check_ref! {
                     sat_lhs $op sat_rhs = ans;
@@ -1177,8 +1179,8 @@ fn add_sub_combos() {
     macro_rules! check_op {
         ($($lhs:literal $op:tt $rhs:literal = $ans:literal);* $(;)?) => {
             $(
-                check_res!(Amount, $op, $lhs, $rhs, $ans);
-                check_res!(SignedAmount, $op, $lhs, $rhs, $ans);
+                check_res!(sat, res, $op, $lhs, $rhs, $ans);
+                check_res!(ssat, sres, $op, $lhs, $rhs, $ans);
             )*
         }
     }
@@ -1212,10 +1214,7 @@ fn signed_addition() {
     assert_eq!(ssat(-307) + ssat(461), sres(154));
     assert_eq!(ssat(307) + ssat(-461), sres(-154));
     assert_eq!(ssat(-307) + ssat(-461), sres(-768));
-    assert_eq!(
-        SignedAmount::MAX_MONEY + -SignedAmount::MAX_MONEY,
-        NumOpResult::from(SignedAmount::ZERO)
-    );
+    assert_eq!(SignedAmount::MAX_MONEY + -SignedAmount::MAX_MONEY, sres(0));
 }
 
 #[test]
