@@ -147,6 +147,8 @@ mod prelude {
     pub use alloc::sync;
 }
 
+// If alloc is disabled we still want to re-export the script hashes so
+// no-alloc users can get at them from the same path as alloc users.
 #[cfg(not(feature = "alloc"))]
 pub mod script {
     //! Bitcoin scripts.
