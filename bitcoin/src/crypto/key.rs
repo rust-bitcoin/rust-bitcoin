@@ -10,6 +10,8 @@ use crate::{script, P2wpkhScriptCode};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity};
+#[cfg(feature = "serde")]
+pub use crypto::key::x_only_serde;
 #[doc(no_inline)]
 pub use crypto::key::{
     FromSliceError, FromWifError, InvalidAddressVersionError, InvalidWifCompressionFlagError,
