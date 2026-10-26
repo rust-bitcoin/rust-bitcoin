@@ -45,6 +45,12 @@
 //! This crate supports Rust 1.74, however some of its dependencies may not do so or may require
 //! pinning. Similarly, some features may require newer Rust version (implicitly or explicitly).
 //!
+//! ## Policy
+//!
+//! Our MSRV policy is to only bump MSRV to the one that is available on the latest Debian stable
+//! and is at least two years old. However, we will try to be even more conservative when practical
+//! given this crate is very widely used.
+//!
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin/rust-bitcoin>
 
 #![no_std]
