@@ -1397,9 +1397,9 @@ pub mod error {
         CoinbaseScriptSigTooSmall(usize),
         /// Coinbase scriptSig is too large (must be at most 100 bytes).
         CoinbaseScriptSigTooLarge(usize),
-        /// Transaction has duplicate inputs (this check prevents CVE-2018-17144 ).
+        /// Transaction has duplicate inputs (this check prevents CVE-2018-17144).
         DuplicateInput(OutPoint),
-        /// Sum of output values exceeds `MAX_MONEY`
+        /// Sum of output values exceeds `MAX_MONEY`.
         OutputValueSumTooLarge(u64),
         /// Transaction has no outputs.
         NoOutputs,
