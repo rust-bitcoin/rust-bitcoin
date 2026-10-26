@@ -1694,6 +1694,20 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "serde")]
+    fn hidden_node_serde_roundtrip() {
+        let known = NodeInfo::new_leaf_with_ver(TapScriptBuf::new(), LeafVersion::TapScript);
+        let hidden = NodeInfo::new_hidden_node(TapNodeHash::assume_hidden([42; 32]));
+        let tree = NodeInfo::combine(known, hidden).unwrap();
+
+        let json = serde_json::to_string(&tree).unwrap();
+        let restored: NodeInfo = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(restored.node_hash(), tree.node_hash());
+        assert!(restored.leaf_nodes().eq(tree.leaf_nodes()));
+    }
+
+    #[test]
     fn taptree_builder() {
         let internal_key = "93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51"
             .parse::<UntweakedPublicKey>()
