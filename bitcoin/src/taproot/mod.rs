@@ -895,12 +895,12 @@ pub struct LeafNode {
 }
 
 impl LeafNode {
-    /// Constructs a new [`ScriptLeaf`] from `script` and `ver` and no Merkle branch.
+    /// Constructs a new [`LeafNode`] from `script` and `ver` and no Merkle branch.
     pub fn new_script(script: TapScriptBuf, ver: LeafVersion) -> Self {
         Self { leaf: TapLeaf::Script(script, ver), merkle_branch: Default::default() }
     }
 
-    /// Constructs a new [`ScriptLeaf`] from `hash` and no Merkle branch.
+    /// Constructs a new [`LeafNode`] from `hash` and no Merkle branch.
     pub fn new_hidden(hash: TapNodeHash) -> Self {
         Self { leaf: TapLeaf::Hidden(hash), merkle_branch: Default::default() }
     }
@@ -912,7 +912,7 @@ impl LeafNode {
         u8::try_from(self.merkle_branch().len()).expect("depth is guaranteed to fit in a u8")
     }
 
-    /// Computes a leaf hash for this [`ScriptLeaf`] if the leaf is known.
+    /// Computes a leaf hash for this [`LeafNode`] if the leaf is known.
     ///
     /// This [`TapLeafHash`] is useful while signing Taproot script spends.
     ///
@@ -924,7 +924,7 @@ impl LeafNode {
         Some(TapLeafHash::from_script(script, ver))
     }
 
-    /// Computes the [`TapNodeHash`] for this [`ScriptLeaf`]. This returns the
+    /// Computes the [`TapNodeHash`] for this [`LeafNode`]. This returns the
     /// leaf hash if the leaf is known and the hidden node hash if the leaf is
     /// hidden.
     /// See also, [`LeafNode::leaf_hash`].
@@ -949,7 +949,7 @@ impl LeafNode {
     #[inline]
     pub fn merkle_branch(&self) -> &TaprootMerkleBranch { &self.merkle_branch }
 
-    /// Returns a reference to the leaf of this [`ScriptLeaf`].
+    /// Returns a reference to the leaf of this [`LeafNode`].
     #[inline]
     pub fn leaf(&self) -> &TapLeaf { &self.leaf }
 }
