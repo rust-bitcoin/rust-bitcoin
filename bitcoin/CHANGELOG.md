@@ -1,5 +1,9 @@
 # unreleased
 
+# 0.32.103 - 2026-08-08
+
+- Backport: Fix witness commitment check (BIP-141) [#6250](https://github.com/rust-bitcoin/rust-bitcoin/pull/6703)
+
 # 0.32.102 - 2026-07-06
 
 - Backport: Make `SendCmpct` idempotent [#6525](https://github.com/rust-bitcoin/rust-bitcoin/pull/6525)
