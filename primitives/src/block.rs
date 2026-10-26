@@ -947,10 +947,10 @@ impl From<&Header> for BlockHash {
 pub struct Version(i32);
 
 impl Version {
-    /// The original Bitcoin Block v1.
+    /// The original Bitcoin block v1.
     pub const ONE: Self = Self(1);
 
-    /// BIP-0034 Block v2.
+    /// BIP-0034 block v2.
     pub const TWO: Self = Self(2);
 
     /// BIP-0009 compatible version number that does not signal for any softforks.
