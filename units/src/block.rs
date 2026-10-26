@@ -402,6 +402,8 @@ impl_u32_wrapper! {
     /// MTP abstraction. For locktimes please see [`locktime::relative::NumberOf512Seconds`].
     ///
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
+    ///
+    /// [`locktime::relative::NumberOf512Seconds`]: crate::locktime::relative::NumberOf512Seconds
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct BlockMtpInterval(u32);
 }
