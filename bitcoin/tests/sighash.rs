@@ -127,6 +127,7 @@ fn bip_341_sighash_tests() {
     #[derive(serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct KpsInputSpendingIntermediary {
+        #[serde(with = "bitcoin::key::x_only_serde::without_parity")]
         internal_pubkey: XOnlyPublicKey,
         tweaked_privkey: SecretKey,
         sig_msg: String,

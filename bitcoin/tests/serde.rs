@@ -23,7 +23,7 @@ use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, Xpriv, Xpub};
 use bitcoin::locktime::{absolute, relative};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
-use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
+use bitcoin::taproot::{self, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
     ecdsa, hex, Address, AddressParams, LegacyPublicKey, OutPoint, ScriptSigBuf, TapScriptBuf,
@@ -147,16 +147,6 @@ fn serde_regression_ecdsa_sig() {
 
     let got = serialize(&sig).unwrap();
     let want = include_bytes!("data/serde/ecdsa_sig_bincode") as &[_];
-    assert_eq!(got, want)
-}
-
-#[test]
-fn serde_regression_control_block() {
-    let s = include_str!("data/serde/control_block_hex");
-    let block = ControlBlock::decode(&hex::decode_to_vec(s.trim()).unwrap()).unwrap();
-
-    let got = serialize(&block).unwrap();
-    let want = include_bytes!("data/serde/control_block_bincode") as &[_];
     assert_eq!(got, want)
 }
 

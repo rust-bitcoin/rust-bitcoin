@@ -985,7 +985,6 @@ impl<'leaf> ScriptLeaf<'leaf> {
 
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ControlBlock<Branch = TaprootMerkleBranchBuf, Key = UntweakedPublicKey>
 where
     Branch: ?Sized,

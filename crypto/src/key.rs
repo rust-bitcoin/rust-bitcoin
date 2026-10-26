@@ -216,15 +216,10 @@ mod private_key {
 }
 
 mod tweaked_public_key {
-    #[cfg(feature = "serde")]
-    use serde::{Deserialize, Serialize};
-
     use super::{TweakedKeypair, XOnlyPublicKey};
 
     /// Tweaked BIP-0340 X-coord-only public key.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-    #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct TweakedPublicKey(XOnlyPublicKey);
 
     impl TweakedPublicKey {
