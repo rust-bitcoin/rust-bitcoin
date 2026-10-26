@@ -736,7 +736,7 @@ impl Eq for NodeInfo {}
 impl NodeInfo {
     /// Constructs a new [`NodeInfo`] with omitted/hidden info.
     pub fn new_hidden_node(hash: TapNodeHash) -> Self {
-        Self { hash, leaves: vec![], has_hidden_nodes: true }
+        Self { hash, leaves: vec![LeafNode::new_hidden(hash)], has_hidden_nodes: true }
     }
 
     /// Constructs a new leaf [`NodeInfo`] with given [`TapScriptBuf`] and [`LeafVersion`].
