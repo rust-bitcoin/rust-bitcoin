@@ -66,17 +66,14 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "arbitrary")]
+pub extern crate arbitrary;
+pub extern crate encoding;
+#[cfg(feature = "hex")]
+pub extern crate hex;
 #[cfg(feature = "serde")]
 #[macro_use]
 pub extern crate serde;
-
-#[cfg(feature = "arbitrary")]
-pub extern crate arbitrary;
-
-pub extern crate encoding;
-
-#[cfg(feature = "hex")]
-pub extern crate hex;
 
 #[doc(hidden)]
 pub mod _export {
