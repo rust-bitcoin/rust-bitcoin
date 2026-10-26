@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Basic (numeric) types used by the Rust Bitcoin ecosystem.
+//! # Rust Bitcoin Unit Types
+//!
+//! Numeric data types that are used throughout the [`rust-bitcoin`] ecosystem.
 //!
 //! This crate contains basic types that have minimal requirements on the platform they run on.
 //! Specifically, they do not require an allocator and they do not require `usize` to be at least
@@ -54,6 +56,7 @@
 //!
 //! [`bitcoin`]: https://docs.rs/bitcoin
 //! [`bitcoin-primitives`]: https://docs.rs/bitcoin-primitives
+//! [`rust-bitcoin`]: <https://github.com/rust-bitcoin/rust-bitcoin>
 
 #![no_std]
 // Coding conventions.
