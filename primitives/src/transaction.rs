@@ -183,9 +183,9 @@ impl Transaction {
 
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
-    /// This function is needed only for legacy (pre-Segwit or P2SH-wrapped segwit version 0)
+    /// This function is needed only for legacy (pre-SegWit or P2SH-wrapped SegWit version 0)
     /// applications. This method clears the `script_sig` and `witness` fields of each input. The
-    /// `script_sig` in Segwit transactions is already empty, so for Segwit transactions the ntxid
+    /// `script_sig` in SegWit transactions is already empty, so for SegWit transactions the ntxid
     /// will be equal to the txid, and you should simply use the latter.
     ///
     /// This gives a way to identify a transaction that is "the same" as another in the sense of
@@ -361,7 +361,7 @@ pub(crate) const MAX_BLOCK_WEIGHT: Weight = Weight::from_wu(4_000_000);
 
 /// Computes the consensus weight of a transaction.
 ///
-/// Weight is `4 * base_size + witness_overhead`, where the base size excludes the segwit marker,
+/// Weight is `4 * base_size + witness_overhead`, where the base size excludes the SegWit marker,
 /// flag and witness data, all of which contribute a weight of one.
 #[cfg(feature = "alloc")]
 pub(crate) fn transaction_weight(tx: &Transaction) -> Weight {
@@ -759,11 +759,11 @@ enum TransactionDecoderState {
     Version(VersionDecoder),
     /// Decoding the transaction inputs.
     Inputs(Version, Attempt, VecDecoder<TxIn>),
-    /// Decoding the segwit flag.
+    /// Decoding the SegWit flag.
     SegwitFlag(Version),
     /// Decoding the transaction outputs.
     Outputs(Version, Vec<TxIn>, IsSegwit, VecDecoder<TxOut>),
-    /// Decoding the segwit transaction witnesses.
+    /// Decoding the SegWit transaction witnesses.
     Witnesses(Version, Vec<TxIn>, Vec<TxOut>, Iteration, WitnessDecoder),
     /// Decoding the transaction lock time.
     LockTime(Version, Vec<TxIn>, Vec<TxOut>, LockTimeDecoder),
@@ -784,13 +784,13 @@ enum Attempt {
     Second,
 }
 
-/// Boolean used to track whether or not this transaction uses segwit encoding.
+/// Boolean used to track whether or not this transaction uses SegWit encoding.
 #[cfg(feature = "alloc")]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum IsSegwit {
-    /// Yes so uses segwit encoding.
+    /// Yes so uses SegWit encoding.
     Yes,
-    /// No segwit flag, marker, or witnesses.
+    /// No SegWit flag, marker, or witnesses.
     No,
 }
 
@@ -1376,7 +1376,7 @@ pub mod error {
     pub(super) enum TransactionDecoderErrorInner {
         /// Error while decoding the `version`.
         Version(VersionDecoderError),
-        /// We only support segwit flag value 0x01.
+        /// We only support SegWit flag value 0x01.
         UnsupportedSegwitFlag(u8),
         /// Error while decoding the `inputs`.
         Inputs(encoding::VecDecoderError<TxInDecoderError>),
@@ -1384,7 +1384,7 @@ pub mod error {
         Outputs(encoding::VecDecoderError<TxOutDecoderError>),
         /// Error while decoding one of the witnesses.
         Witness(WitnessDecoderError),
-        /// Non-empty Segwit transaction with no witnesses.
+        /// Non-empty SegWit transaction with no witnesses.
         NoWitnesses,
         /// Error while decoding the `lock_time`.
         LockTime(LockTimeDecoderError),
@@ -1421,12 +1421,12 @@ pub mod error {
             match self.0 {
                 E::Version(ref e) => write_err!(f, "transaction decoder error"; e),
                 E::UnsupportedSegwitFlag(v) => {
-                    write!(f, "we only support segwit flag value 0x01: {}", v)
+                    write!(f, "we only support SegWit flag value 0x01: {}", v)
                 }
                 E::Inputs(ref e) => write_err!(f, "transaction decoder error"; e),
                 E::Outputs(ref e) => write_err!(f, "transaction decoder error"; e),
                 E::Witness(ref e) => write_err!(f, "transaction decoder error"; e),
-                E::NoWitnesses => write!(f, "non-empty Segwit transaction with no witnesses"),
+                E::NoWitnesses => write!(f, "non-empty SegWit transaction with no witnesses"),
                 E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
                 E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
                 E::NullPrevoutInNonCoinbase(index) =>
