@@ -34,8 +34,7 @@
 //! assert!(coinbase.is_coinbase());
 //!
 //! let transactions = vec![coinbase];
-//! let merkle_root =
-//!     block::compute_merkle_root(&transactions).ok_or(InvalidBlockError::NoTransactions)?;
+//! let merkle_root = block::compute_merkle_root(&transactions).expect("tx list is valid");
 //!
 //! let header = Header {
 //!     version: Version::TWO,
@@ -279,7 +278,7 @@ impl Block<Unchecked> {
     /// #     }
     /// # }
     /// let transactions = vec![coinbase];
-    /// let root = block::compute_merkle_root(&transactions).unwrap();
+    /// let root = block::compute_merkle_root(&transactions).expect("tx list is valid");
     ///
     /// let block = Block::new_unchecked(header_with(root), transactions.clone());
     /// assert_eq!(block.validate()?.transactions().len(), 1);
@@ -369,7 +368,7 @@ impl Block<Unchecked> {
     /// #     }],
     /// #     outputs: vec![TxOut { amount: Amount::ZERO, script_pubkey: ScriptPubKeyBuf::new() }],
     /// # };
-    /// # let merkle_root = block::compute_merkle_root(&[coinbase.clone()]).expect("one transaction");
+    /// # let merkle_root = block::compute_merkle_root(&[coinbase.clone()]).expect("tx list is valid");
     /// # let header = Header {
     /// #     version: Version::TWO,
     /// #     prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
