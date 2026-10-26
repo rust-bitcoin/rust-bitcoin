@@ -220,7 +220,8 @@ impl Transaction {
     ///
     /// Hashes the transaction **excluding** the SegWit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-SegWit transactions which do not have any SegWit data,
-    /// this will be equal to [`Transaction::compute_wtxid()`].
+    /// this will be equal to [`Transaction::compute_wtxid()`], except for zero-input transactions,
+    /// which always use the SegWit serialization.
     #[doc(alias = "txid")]
     #[inline]
     pub fn compute_txid(&self) -> Txid {
@@ -232,7 +233,8 @@ impl Transaction {
     ///
     /// Hashes the transaction **including** all SegWit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-SegWit transactions which do not have any SegWit data,
-    /// this will be equal to [`Transaction::compute_txid()`].
+    /// this will be equal to [`Transaction::compute_txid()`], except for zero-input transactions,
+    /// which always use the SegWit serialization.
     #[doc(alias = "wtxid")]
     #[inline]
     pub fn compute_wtxid(&self) -> Wtxid {
@@ -256,8 +258,9 @@ impl Transaction {
     ///
     /// The first transaction in the block distributes the mining reward and is called the coinbase
     /// transaction. It is impossible to check if the transaction is first in the block, so this
-    /// function checks the structure of the transaction instead - the previous output must be
-    /// all-zeros (creates satoshis "out of thin air").
+    /// function checks the structure of the transaction instead - there must be exactly one input
+    /// and its previous output must be [`OutPoint::COINBASE_PREVOUT`] (creates satoshis "out of
+    /// thin air").
     #[inline]
     #[doc(alias = "is_coin_base")] // method previously had this name
     pub fn is_coinbase(&self) -> bool {
@@ -361,8 +364,8 @@ pub(crate) const MAX_BLOCK_WEIGHT: Weight = Weight::from_wu(4_000_000);
 
 /// Computes the consensus weight of a transaction.
 ///
-/// Weight is `4 * base_size + witness_overhead`, where the base size excludes the SegWit marker,
-/// flag and witness data, all of which contribute a weight of one.
+/// Weight is `4 * base_size + witness_size`, where the base size excludes the SegWit marker, flag
+/// and witness data, all of which contribute a weight of one per byte.
 #[cfg(feature = "alloc")]
 pub(crate) fn transaction_weight(tx: &Transaction) -> Weight {
     let compact = |n: usize| crate::compact_size_encode(n).as_slice().len();
@@ -399,7 +402,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     use hashes::HashEngine as _;
 
     let mut enc = sha256d::Hash::engine();
-    enc.input(&tx.version.0.to_le_bytes()); // Same as `encode::emit_i32`.
+    enc.input(&tx.version.0.to_le_bytes()); // Same as `Encode for Version`.
 
     if uses_segwit_serialization {
         // BIP-0141 (SegWit) transaction serialization also includes marker and flag.
@@ -855,10 +858,10 @@ pub struct TxIn {
     /// [BIP-0068]: <https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki>
     /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
     pub sequence: Sequence,
-    /// Witness data: an array of byte-arrays.
+    /// Witness data.
+    ///
     /// Note that this field is *not* (de)serialized with the rest of the [`TxIn`] in
     /// [`Encode`]/[`Decode`], as it is (de)serialized at the end of the full [`Transaction`].
-    /// It *is* (de)serialized with the rest of the [`TxIn`] in other (de)serialization routines.
     ///
     /// [`Encode`]: encoding::Encode
     /// [`Decode`]: encoding::Decode
@@ -1134,7 +1137,7 @@ impl Serialize for OutPoint {
             let mut state = serializer.serialize_struct("OutPoint", 2)?;
             // serializing as an array was found in the past to break for some serializers so we use
             // a slice instead. This causes 8 bytes to be prepended for the length (even though this
-            // is a bit silly because know the length).
+            // is a bit silly because we know the length).
             state.serialize_field("txid", self.txid.as_byte_array().as_slice())?;
             state.serialize_field("vout", &self.vout.to_le_bytes())?;
             state.end()
