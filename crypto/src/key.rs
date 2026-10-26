@@ -57,6 +57,9 @@ mod x_only_public_key {
     /// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
     ///
     /// This type also holds the parity of the full public key.
+    ///
+    /// This type does not implement `serde` traits, since the x-only encoding does not include
+    /// the parity. Use one of the modules in `key::x_only_serde` instead.
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct XOnlyPublicKey {
         inner: secp256k1::XOnlyPublicKey,
@@ -216,15 +219,10 @@ mod private_key {
 }
 
 mod tweaked_public_key {
-    #[cfg(feature = "serde")]
-    use serde::{Deserialize, Serialize};
-
     use super::{TweakedKeypair, XOnlyPublicKey};
 
     /// Tweaked BIP-0340 X-coord-only public key.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-    #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct TweakedPublicKey(XOnlyPublicKey);
 
     impl TweakedPublicKey {
@@ -1301,26 +1299,145 @@ impl<'de> serde::Deserialize<'de> for WifKey {
     }
 }
 
-// XOnlyPublicKey should serialize/deserialize identically to the inner type.
 #[cfg(feature = "serde")]
-impl serde::Serialize for XOnlyPublicKey {
-    #[inline]
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        <secp256k1::XOnlyPublicKey as serde::Serialize>::serialize(&self.to_inner(), serializer)
-    }
-}
+pub mod x_only_serde {
+    //! Serde serialization and deserialization support for x-only public keys.
+    //!
+    //! An [`XOnlyPublicKey`] holds the parity of its full public key, but the standard 32-byte
+    //! x-only encoding cannot represent it. Since there is not a default way to serialize an x-only
+    //! public key that also round-trips, [`XOnlyPublicKey`] does not implement `Serialize` or
+    //! `Deserialize` and it's up to the user to decide whether the parity should be retained.
+    //!
+    //! The provided modules can be used as follows:
+    //!
+    //! ```
+    //! # #[cfg(feature = "hex")] {
+    //! use bitcoin_crypto::key::XOnlyPublicKey;
+    //! use serde::{Deserialize, Serialize};
+    //!
+    //! #[derive(Serialize, Deserialize)]
+    //! pub struct Foo {
+    //!     #[serde(with = "bitcoin_crypto::key::x_only_serde::with_parity")]
+    //!     pub key: XOnlyPublicKey,
+    //!     #[serde(with = "bitcoin_crypto::key::x_only_serde::without_parity::opt")]
+    //!     pub maybe_key: Option<XOnlyPublicKey>,
+    //! }
+    //! # }
+    //! ```
+    //!
+    //! [`XOnlyPublicKey`]: super::XOnlyPublicKey
 
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for XOnlyPublicKey {
-    #[inline]
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self::from_secp(secp256k1::XOnlyPublicKey::deserialize(deserializer)?, Parity::Even))
+    #![allow(clippy::missing_errors_doc)] // Errors are on serde fn impls
+
+    #[cfg(feature = "hex")]
+    pub mod with_parity {
+        //! Serialize and deserialize [`XOnlyPublicKey`] including its parity.
+        //!
+        //! The key is encoded identically to a [`FullPublicKey`], so this format round-trips.
+        //!
+        //! Use with `#[serde(with = "bitcoin_crypto::key::x_only_serde::with_parity")]`.
+
+        use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+        use crate::key::{FullPublicKey, XOnlyPublicKey};
+
+        /// Serializes `key` as a [`FullPublicKey`] using its parity.
+        #[inline]
+        pub fn serialize<S: Serializer>(key: &XOnlyPublicKey, s: S) -> Result<S::Ok, S::Error> {
+            key.to_public_key().serialize(s)
+        }
+
+        /// Deserializes a [`FullPublicKey`] into an [`XOnlyPublicKey`] retaining its parity.
+        #[inline]
+        pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<XOnlyPublicKey, D::Error> {
+            FullPublicKey::deserialize(d).map(XOnlyPublicKey::from)
+        }
+
+        pub mod opt {
+            //! Serialize and deserialize [`Option<XOnlyPublicKey>`] including its parity.
+            //!
+            //! Use with `#[serde(with = "bitcoin_crypto::key::x_only_serde::with_parity::opt")]`.
+
+            use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+            use crate::key::{FullPublicKey, XOnlyPublicKey};
+
+            /// Serializes `key` as an optional [`FullPublicKey`] using its parity.
+            #[inline]
+            #[allow(clippy::ref_option)] // API forced by serde.
+            pub fn serialize<S: Serializer>(
+                key: &Option<XOnlyPublicKey>,
+                s: S,
+            ) -> Result<S::Ok, S::Error> {
+                key.map(XOnlyPublicKey::to_public_key).serialize(s)
+            }
+
+            /// Deserializes an optional [`FullPublicKey`] into an [`XOnlyPublicKey`] retaining its
+            /// parity.
+            #[inline]
+            pub fn deserialize<'d, D: Deserializer<'d>>(
+                d: D,
+            ) -> Result<Option<XOnlyPublicKey>, D::Error> {
+                Option::<FullPublicKey>::deserialize(d).map(|key| key.map(XOnlyPublicKey::from))
+            }
+        }
+    }
+
+    pub mod without_parity {
+        //! Serialize and deserialize [`XOnlyPublicKey`] without its parity.
+        //!
+        //! The key is encoded identically to a [`secp256k1::XOnlyPublicKey`]. This format does not
+        //! round-trip for keys with odd parity; deserialized keys always have even parity.
+        //!
+        //! Use with `#[serde(with = "bitcoin_crypto::key::x_only_serde::without_parity")]`.
+
+        use secp256k1::Parity;
+        use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+        use crate::key::XOnlyPublicKey;
+
+        /// Serializes the x-coordinate of `key`, discarding its parity.
+        #[inline]
+        pub fn serialize<S: Serializer>(key: &XOnlyPublicKey, s: S) -> Result<S::Ok, S::Error> {
+            <secp256k1::XOnlyPublicKey as Serialize>::serialize(&key.to_inner(), s)
+        }
+
+        /// Deserializes an x-coordinate into an [`XOnlyPublicKey`] with even parity.
+        #[inline]
+        pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<XOnlyPublicKey, D::Error> {
+            secp256k1::XOnlyPublicKey::deserialize(d)
+                .map(|key| XOnlyPublicKey::from_secp(key, Parity::Even))
+        }
+
+        pub mod opt {
+            //! Serialize and deserialize [`Option<XOnlyPublicKey>`] without its parity.
+            //!
+            //! Use with `#[serde(with = "bitcoin_crypto::key::x_only_serde::without_parity::opt")]`.
+
+            use secp256k1::Parity;
+            use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+            use crate::key::XOnlyPublicKey;
+
+            /// Serializes the x-coordinate of an optional `key`, discarding its parity.
+            #[inline]
+            #[allow(clippy::ref_option)] // API forced by serde.
+            pub fn serialize<S: Serializer>(
+                key: &Option<XOnlyPublicKey>,
+                s: S,
+            ) -> Result<S::Ok, S::Error> {
+                key.map(XOnlyPublicKey::to_inner).serialize(s)
+            }
+
+            /// Deserializes an optional x-coordinate into an [`XOnlyPublicKey`] with even parity.
+            #[inline]
+            pub fn deserialize<'d, D: Deserializer<'d>>(
+                d: D,
+            ) -> Result<Option<XOnlyPublicKey>, D::Error> {
+                Option::<secp256k1::XOnlyPublicKey>::deserialize(d)
+                    .map(|key| key.map(|key| XOnlyPublicKey::from_secp(key, Parity::Even)))
+            }
+        }
     }
 }
 
