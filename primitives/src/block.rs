@@ -140,9 +140,9 @@ pub struct Block<V = Unchecked>
 where
     V: Validation,
 {
-    /// The block header
+    /// The block header.
     header: Header,
-    /// List of transactions contained in the block
+    /// List of transactions contained in the block.
     transactions: Vec<Transaction>,
     /// Cached witness root if it's been computed.
     witness_root: Option<WitnessMerkleNode>,
