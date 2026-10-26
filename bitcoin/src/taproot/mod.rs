@@ -639,6 +639,7 @@ impl TryFrom<NodeInfo> for TapTree {
 ///
 /// Returned by [`TapTree::script_leaves`]. [`TapTree`] does not allow hidden nodes,
 /// so this iterator is guaranteed to yield all known leaves.
+#[derive(Clone, Debug)]
 pub struct ScriptLeaves<'tree> {
     leaf_iter: LeafNodes<'tree>,
 }
@@ -665,6 +666,7 @@ impl DoubleEndedIterator for ScriptLeaves<'_> {
 /// Iterator for a Taproot script tree, operating in DFS order yielding [`LeafNode`].
 ///
 /// Returned by [`NodeInfo::leaf_nodes`]. This can potentially yield hidden nodes.
+#[derive(Clone, Debug)]
 pub struct LeafNodes<'a> {
     leaf_iter: core::slice::Iter<'a, LeafNode>,
 }
@@ -957,27 +959,27 @@ impl LeafNode {
 /// Script leaf node in a Taproot tree along with the Merkle proof to get this node.
 /// Returned by [`TapTree::script_leaves`]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ScriptLeaf<'leaf> {
+pub struct ScriptLeaf<'tree> {
     /// The version of the script leaf.
     version: LeafVersion,
     /// The script.
-    script: &'leaf TapScript,
+    script: &'tree TapScript,
     /// The Merkle proof (hashing partners) to get this node.
-    merkle_branch: &'leaf TaprootMerkleBranch,
+    merkle_branch: &'tree TaprootMerkleBranch,
 }
 
-impl<'leaf> ScriptLeaf<'leaf> {
+impl<'tree> ScriptLeaf<'tree> {
     /// Obtains the version of the script leaf.
     pub fn version(&self) -> LeafVersion { self.version }
 
     /// Obtains a reference to the script inside the leaf.
-    pub fn script(&self) -> &TapScript { self.script }
+    pub fn script(&self) -> &'tree TapScript { self.script }
 
     /// Obtains a reference to the Merkle proof of the leaf.
-    pub fn merkle_branch(&self) -> &TaprootMerkleBranch { self.merkle_branch }
+    pub fn merkle_branch(&self) -> &'tree TaprootMerkleBranch { self.merkle_branch }
 
     /// Obtains a script leaf from the leaf node if the leaf is not hidden.
-    pub fn from_leaf_node(leaf_node: &'leaf LeafNode) -> Option<Self> {
+    pub fn from_leaf_node(leaf_node: &'tree LeafNode) -> Option<Self> {
         let (script, ver) = leaf_node.leaf.as_script()?;
         Some(Self { version: ver, script, merkle_branch: &leaf_node.merkle_branch })
     }
