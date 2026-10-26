@@ -57,6 +57,9 @@ mod x_only_public_key {
     /// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
     ///
     /// This type also holds the parity of the full public key.
+    ///
+    /// This type does not implement `serde` traits, since the x-only encoding does not include
+    /// the parity. Use one of the modules in `key::x_only_serde` instead.
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct XOnlyPublicKey {
         inner: secp256k1::XOnlyPublicKey,
@@ -1296,18 +1299,6 @@ impl<'de> serde::Deserialize<'de> for WifKey {
     }
 }
 
-// XOnlyPublicKey should serialize/deserialize identically to the inner type.
-#[cfg(feature = "serde")]
-impl serde::Serialize for XOnlyPublicKey {
-    #[inline]
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        <secp256k1::XOnlyPublicKey as serde::Serialize>::serialize(&self.to_inner(), serializer)
-    }
-}
-
 #[cfg(feature = "serde")]
 pub mod x_only_serde {
     //! Serde serialization and deserialization support for x-only public keys.
@@ -1447,17 +1438,6 @@ pub mod x_only_serde {
                     .map(|key| key.map(|key| XOnlyPublicKey::from_secp(key, Parity::Even)))
             }
         }
-     }
- }
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for XOnlyPublicKey {
-    #[inline]
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self::from_secp(secp256k1::XOnlyPublicKey::deserialize(deserializer)?, Parity::Even))
     }
 }
 
