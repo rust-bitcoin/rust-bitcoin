@@ -932,7 +932,8 @@ impl Xpub {
             depth: self
                 .depth
                 .checked_add(1)
-                .ok_or(DeriveXpubError::MaximumDepthExceeded(MaximumDepthExceededError {}))?,
+                .ok_or(MaximumDepthExceededError {})
+                .map_err(DeriveXpubError::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(),
             child_number,
             public_key: tweaked,
@@ -1050,9 +1051,8 @@ impl FromStr for Xpriv {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
-            return Err(ParseXprivError::InvalidBase58PayloadLength(
-                InvalidBase58PayloadLengthError { length: data.len() },
-            ));
+            return Err(InvalidBase58PayloadLengthError { length: data.len() })
+                .map_err(ParseXprivError::InvalidBase58PayloadLength);
         }
 
         Self::decode(&data).map_err(ParseXprivError::Decode)
@@ -1072,9 +1072,8 @@ impl FromStr for Xpub {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
-            return Err(ParseXpubError::InvalidBase58PayloadLength(
-                InvalidBase58PayloadLengthError { length: data.len() },
-            ));
+            return Err(InvalidBase58PayloadLengthError { length: data.len() })
+                .map_err(ParseXpubError::InvalidBase58PayloadLength);
         }
 
         Self::decode(&data).map_err(ParseXpubError::Decode)
