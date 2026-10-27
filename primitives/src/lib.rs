@@ -61,7 +61,6 @@ extern crate alloc;
 extern crate std;
 
 #[cfg(feature = "serde")]
-#[macro_use]
 pub extern crate serde;
 
 #[cfg(feature = "arbitrary")]
