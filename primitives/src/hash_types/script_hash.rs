@@ -80,9 +80,8 @@ impl ScriptHash {
         T: ScriptHashableTag,
     {
         if redeem_script.len() > MAX_REDEEM_SCRIPT_SIZE {
-            return Err(RedeemScriptError::Size(RedeemScriptSizeError {
-                size: redeem_script.len(),
-            }));
+            return Err(RedeemScriptSizeError { size: redeem_script.len() })
+                .map_err(RedeemScriptError::Size);
         }
         match redeem_script.witness_version() {
             None | Some(WitnessVersion::V0) => {}
