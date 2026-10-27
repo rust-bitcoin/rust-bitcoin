@@ -738,7 +738,7 @@ impl Eq for NodeInfo {}
 impl NodeInfo {
     /// Constructs a new [`NodeInfo`] with omitted/hidden info.
     pub fn new_hidden_node(hash: TapNodeHash) -> Self {
-        Self { hash, leaves: vec![], has_hidden_nodes: true }
+        Self { hash, leaves: vec![LeafNode::new_hidden(hash)], has_hidden_nodes: true }
     }
 
     /// Constructs a new leaf [`NodeInfo`] with given [`TapScriptBuf`] and [`LeafVersion`].
@@ -1692,6 +1692,20 @@ mod test {
             assert!(ctrl_block
                 .verify_taproot_commitment(output_key.to_x_only_public_key(), &ver_script.0))
         }
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn hidden_node_serde_roundtrip() {
+        let known = NodeInfo::new_leaf_with_ver(TapScriptBuf::new(), LeafVersion::TapScript);
+        let hidden = NodeInfo::new_hidden_node(TapNodeHash::assume_hidden([42; 32]));
+        let tree = NodeInfo::combine(known, hidden).unwrap();
+
+        let json = serde_json::to_string(&tree).unwrap();
+        let restored: NodeInfo = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(restored.node_hash(), tree.node_hash());
+        assert!(restored.leaf_nodes().eq(tree.leaf_nodes()));
     }
 
     #[test]
