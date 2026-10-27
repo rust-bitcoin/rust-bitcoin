@@ -1052,7 +1052,7 @@ fn sum_amounts() {
     let sum = amounts.into_iter().map(NumOpResult::from).sum::<NumOpResult<Amount>>().unwrap();
     assert_eq!(sum, sat(1400));
 
-    let amounts = [Amount::MAX_MONEY, sat(1337), sat(21)];
+    let amounts = [Amount::MAX, sat(1337), sat(21)];
     assert!(amounts.into_iter().map(NumOpResult::from).sum::<NumOpResult<Amount>>().is_error());
 
     let amounts = [SignedAmount::MIN, ssat(-1), ssat(21)];
@@ -1198,7 +1198,7 @@ fn unsigned_addition() {
     assert_eq!(sat(0) + sat(307), res(307));
     assert_eq!(sat(307) + sat(0), res(307));
     assert_eq!(sat(307) + sat(461), res(768));
-    assert_eq!(sat(0) + Amount::MAX_MONEY, NumOpResult::from(Amount::MAX_MONEY));
+    assert_eq!(sat(0) + Amount::MAX, NumOpResult::from(Amount::MAX));
 }
 
 #[test]
@@ -1207,14 +1207,14 @@ fn signed_addition() {
     assert_eq!(ssat(0) + ssat(307), sres(307));
     assert_eq!(ssat(307) + ssat(0), sres(307));
     assert_eq!(ssat(307) + ssat(461), sres(768));
-    assert_eq!(ssat(0) + SignedAmount::MAX_MONEY, NumOpResult::from(SignedAmount::MAX_MONEY));
+    assert_eq!(ssat(0) + SignedAmount::MAX, NumOpResult::from(SignedAmount::MAX));
 
     assert_eq!(ssat(0) + ssat(-307), sres(-307));
     assert_eq!(ssat(-307) + ssat(0), sres(-307));
     assert_eq!(ssat(-307) + ssat(461), sres(154));
     assert_eq!(ssat(307) + ssat(-461), sres(-154));
     assert_eq!(ssat(-307) + ssat(-461), sres(-768));
-    assert_eq!(SignedAmount::MAX_MONEY + -SignedAmount::MAX_MONEY, sres(0));
+    assert_eq!(SignedAmount::MAX + -SignedAmount::MAX, sres(0));
 }
 
 #[test]
@@ -1230,7 +1230,7 @@ fn signed_subtraction() {
     assert_eq!(ssat(0) - ssat(307), sres(-307));
     assert_eq!(ssat(307) - ssat(0), sres(307));
     assert_eq!(ssat(307) - ssat(461), sres(-154));
-    assert_eq!(ssat(0) - SignedAmount::MAX_MONEY, NumOpResult::from(-SignedAmount::MAX_MONEY));
+    assert_eq!(ssat(0) - SignedAmount::MAX, NumOpResult::from(-SignedAmount::MAX));
 
     assert_eq!(ssat(0) - ssat(-307), sres(307));
     assert_eq!(ssat(-307) - ssat(0), sres(-307));
@@ -1484,7 +1484,7 @@ fn amount_op_result_neg() {
     assert_eq!(neg_zero, SignedAmount::ZERO);
 
     // Test negation of MAX_MONEY
-    let max = Amount::MAX_MONEY;
+    let max = Amount::MAX;
     let neg_max = -max;
     assert_eq!(neg_max, SignedAmount::MIN);
 }
@@ -1576,7 +1576,7 @@ fn signed_sub() {
 
     // Any two valid amounts will always produce a valid SignedAmount
     // This demonstrates the "cannot overflow" property
-    let amt1 = Amount::MAX_MONEY;
+    let amt1 = Amount::MAX;
     let amt2 = sat(1);
 
     let diff1 = amt1.signed_sub(amt2);
@@ -1584,8 +1584,8 @@ fn signed_sub() {
 
     assert!(diff1.is_positive());
     assert!(diff2.is_negative());
-    assert_eq!(diff1.to_sat(), (Amount::MAX_MONEY.to_sat() - 1) as i64);
-    assert_eq!(diff2.to_sat(), -((Amount::MAX_MONEY.to_sat() - 1) as i64));
+    assert_eq!(diff1.to_sat(), (Amount::MAX.to_sat() - 1) as i64);
+    assert_eq!(diff2.to_sat(), -((Amount::MAX.to_sat() - 1) as i64));
 }
 
 #[test]
@@ -1614,13 +1614,13 @@ fn display_dynamic() {
     assert_eq!(Amount::ZERO.display_dynamic().to_string(), "0 satoshi");
     assert_eq!(Amount::ONE_SAT.display_dynamic().to_string(), "1 satoshi");
     assert_eq!(Amount::ONE_BTC.display_dynamic().to_string(), "1 BTC");
-    assert_eq!(Amount::MAX_MONEY.display_dynamic().to_string(), "21000000 BTC");
+    assert_eq!(Amount::MAX.display_dynamic().to_string(), "21000000 BTC");
     assert_eq!(Amount::MAX.display_dynamic().to_string(), "21000000 BTC");
 
     assert_eq!(SignedAmount::ZERO.display_dynamic().to_string(), "0 satoshi");
     assert_eq!(SignedAmount::ONE_SAT.display_dynamic().to_string(), "1 satoshi");
     assert_eq!(SignedAmount::ONE_BTC.display_dynamic().to_string(), "1 BTC");
-    assert_eq!(SignedAmount::MAX_MONEY.display_dynamic().to_string(), "21000000 BTC");
+    assert_eq!(SignedAmount::MAX.display_dynamic().to_string(), "21000000 BTC");
     assert_eq!(SignedAmount::MAX.display_dynamic().to_string(), "21000000 BTC");
 
     // dynamic values

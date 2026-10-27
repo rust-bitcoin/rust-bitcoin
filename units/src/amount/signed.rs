@@ -52,6 +52,7 @@ mod encapsulate {
 
     impl SignedAmount {
         /// The maximum value of an amount.
+        #[doc(alias = "MAX_MONEY")]
         pub const MAX: Self = Self(21_000_000 * 100_000_000);
 
         /// The minimum value of an amount.
@@ -72,7 +73,7 @@ mod encapsulate {
         ///
         /// # Errors
         ///
-        /// If `satoshi` is outside of valid range (see [`Self::MAX_MONEY`]).
+        /// If `satoshi` is outside of valid range (see [`Self::MAX`]).
         ///
         /// # Examples
         ///
@@ -87,7 +88,7 @@ mod encapsulate {
         pub const fn from_sat(satoshi: i64) -> Result<Self, OutOfRangeError> {
             if satoshi < Self::MIN.to_sat() {
                 Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
-            } else if satoshi > Self::MAX_MONEY.to_sat() {
+            } else if satoshi > Self::MAX.to_sat() {
                 Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
             } else {
                 Ok(Self(satoshi))
@@ -111,9 +112,6 @@ impl SignedAmount {
 
     /// Exactly fifty bitcoin.
     pub const FIFTY_BTC: Self = Self::from_btc_i16(50);
-
-    /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = Self::MAX;
 
     /// Gets the number of millisatoshis in this [`SignedAmount`].
     ///
@@ -149,11 +147,11 @@ impl SignedAmount {
     ///
     /// # Errors
     ///
-    /// Returns an [`OutOfRangeError`] if the satoshi value > [`Self::MAX_MONEY`].
+    /// Returns an [`OutOfRangeError`] if the satoshi value > [`Self::MAX`].
     #[inline]
     #[allow(clippy::missing_panics_doc)]
     fn from_sat_u64(satoshi: u64) -> Result<Self, ParseAmountError> {
-        // u64 -> i64 only fails if value is greater than i64::MAX, which is also > Self::MAX_MONEY.
+        // u64 -> i64 only fails if value is greater than i64::MAX, which is also > Self::MAX.
         let amount = i64::try_from(satoshi)
             .map_err(|_| OutOfRangeError { is_signed: true, is_greater_than_max: true })
             .map_err(ParseAmountErrorInner::OutOfRange)

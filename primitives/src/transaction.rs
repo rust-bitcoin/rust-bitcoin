@@ -518,7 +518,7 @@ encoding::encoder_newtype_exact! {
 /// * Has more than one input and any of them spends the null (coinbase) prevout.
 /// * Is a coinbase transaction with a `script_sig` shorter than 2 or longer than 100 bytes.
 /// * Spends the same outpoint more than once.
-/// * Has outputs whose total value exceeds [`Amount::MAX_MONEY`].
+/// * Has outputs whose total value exceeds [`Amount::MAX`].
 /// * Has inputs and uses the SegWit serialization but all of its witnesses are empty. Zero-input
 ///   transactions use SegWit serialization to avoid ambiguity (see [`Transaction`]).
 #[cfg(feature = "alloc")]
@@ -729,7 +729,7 @@ impl encoding::Decoder for TransactionDecoder {
                 let mut total_out: u64 = 0;
                 for output in &tx.outputs {
                     total_out = total_out.saturating_add(output.amount.to_sat());
-                    if total_out > Amount::MAX_MONEY.to_sat() {
+                    if total_out > Amount::MAX.to_sat() {
                         return Err(E(Inner::OutputValueSumTooLarge(total_out)));
                     }
                 }
@@ -1667,7 +1667,7 @@ impl<'a> Arbitrary<'a> for Transaction {
             outputs.push(TxOut::arbitrary(u)?);
         }
 
-        let mut remaining = Amount::MAX_MONEY.to_sat();
+        let mut remaining = Amount::MAX.to_sat();
         for output in &mut outputs {
             let capped = output.amount.to_sat().min(remaining);
             output.amount = Amount::from_sat(capped).expect("capped <= MAX_MONEY");
@@ -2333,7 +2333,7 @@ mod tests {
         let tx = decoder.end().expect("sum of output values == MAX_MONEY should be accepted");
 
         let total: u64 = tx.outputs.iter().map(|o| o.amount.to_sat()).sum();
-        assert_eq!(total, Amount::MAX_MONEY.to_sat());
+        assert_eq!(total, Amount::MAX.to_sat());
     }
 
     #[test]
@@ -3333,7 +3333,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn transaction_decoder_output_value_sum_too_large_error() {
-        let expected = Amount::MAX_MONEY.to_sat() + 1;
+        let expected = Amount::MAX.to_sat() + 1;
         let tx = Transaction {
             version: Version::ONE,
             lock_time: absolute::LockTime::ZERO,
@@ -3344,7 +3344,7 @@ mod tests {
                 witness: Witness::default(),
             }],
             outputs: vec![
-                TxOut { amount: Amount::MAX_MONEY, script_pubkey: ScriptPubKeyBuf::new() },
+                TxOut { amount: Amount::MAX, script_pubkey: ScriptPubKeyBuf::new() },
                 TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() },
             ],
         };
