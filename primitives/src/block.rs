@@ -621,7 +621,7 @@ crate::decoder_newtype! {
 
     fn end(result: Result<(Header, Vec<Transaction>), <BlockInnerDecoder as encoding::Decoder>::Error>) -> Result<Block, BlockDecoderError> {
         let (header, transactions) =
-            result.map_err(|e| BlockDecoderError(error::BlockDecoderErrorInner::Decode(e)))?;
+            result.map_err(error::BlockDecoderErrorInner::Decode).map_err(BlockDecoderError)?;
         let weight = block_weight_wu(&transactions);
         if weight > crate::transaction::MAX_BLOCK_WEIGHT.to_wu() {
             return Err(BlockDecoderError(error::BlockDecoderErrorInner::BlockTooHeavy(weight)));

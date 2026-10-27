@@ -223,7 +223,7 @@ impl FromStr for Denomination {
 
         let form = Self::forms(s);
 
-        form.ok_or_else(|| E::Unknown(UnknownDenominationError(s.into())))
+        form.ok_or_else(|| UnknownDenominationError(s.into())).map_err(E::Unknown)
     }
 }
 

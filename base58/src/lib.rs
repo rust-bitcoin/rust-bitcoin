@@ -121,7 +121,8 @@ fn build_base256<T: Buffer>(data: &str, scratch: &mut T) -> Result<(), Base256Er
             .get(usize::from(d58))
             .copied()
             .flatten()
-            .ok_or(Base256Error::InvalidChar(InvalidCharacterError::new(d58)))
+            .ok_or(InvalidCharacterError::new(d58))
+            .map_err(Base256Error::InvalidChar)
             .map(u32::from)?;
         for d256 in scratch.slice_mut() {
             carry += u32::from(*d256) * 58;
