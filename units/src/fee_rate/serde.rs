@@ -133,9 +133,13 @@ pub mod as_sat_per_kwu_floor {
                 where
                     A: SeqAccess<'de>,
                 {
-                    #[derive(Deserialize)]
-                    #[serde(transparent)]
-                    struct Wrapper(#[serde(with = "super")] FeeRate);
+                    struct Wrapper(FeeRate);
+
+                    impl<'de> Deserialize<'de> for Wrapper {
+                        fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                            super::deserialize(d).map(Wrapper)
+                        }
+                    }
 
                     let mut out = Vec::with_capacity(
                         internals::serde::cautious_size_hint::<FeeRate>(seq.size_hint()),
@@ -261,9 +265,13 @@ pub mod as_sat_per_vb_floor {
                 where
                     A: SeqAccess<'de>,
                 {
-                    #[derive(Deserialize)]
-                    #[serde(transparent)]
-                    struct Wrapper(#[serde(with = "super")] FeeRate);
+                    struct Wrapper(FeeRate);
+
+                    impl<'de> Deserialize<'de> for Wrapper {
+                        fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                            super::deserialize(d).map(Wrapper)
+                        }
+                    }
 
                     let mut out = Vec::with_capacity(
                         internals::serde::cautious_size_hint::<FeeRate>(seq.size_hint()),
@@ -389,9 +397,13 @@ pub mod as_sat_per_vb_ceil {
                 where
                     A: SeqAccess<'de>,
                 {
-                    #[derive(Deserialize)]
-                    #[serde(transparent)]
-                    struct Wrapper(#[serde(with = "super")] FeeRate);
+                    struct Wrapper(FeeRate);
+
+                    impl<'de> Deserialize<'de> for Wrapper {
+                        fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                            super::deserialize(d).map(Wrapper)
+                        }
+                    }
 
                     let mut out = Vec::with_capacity(
                         internals::serde::cautious_size_hint::<FeeRate>(seq.size_hint()),
