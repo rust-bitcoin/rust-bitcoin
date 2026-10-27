@@ -36,8 +36,6 @@ exclude_re = [
     "units/.* MedianTimePast::to_consensus_u32", # Deprecated
     "units/.* Height::to_consensus_u32", # Deprecated
     "units/.* Sequence::to_hex", # Deprecated
-    "units/.* Weight::to_vbytes_floor", # Deprecated
-    "units/.* Weight::to_vbytes_ceil", # Deprecated
     "units/.* Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
     "units/.* \\| with \\^ in Target::to_compact_lossy", # compact | (size << 24). compact and size are bitwise independent, so impossible to tell ^ from |.
     "units/.* error::is_target_negative", # Related to formatting/display
