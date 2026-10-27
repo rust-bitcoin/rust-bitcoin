@@ -321,9 +321,13 @@ pub mod as_sat {
                 where
                     A: SeqAccess<'de>,
                 {
-                    #[derive(Deserialize)]
-                    #[serde(transparent)]
-                    struct Wrapper<T: AmountOps>(#[serde(with = "super")] T);
+                    struct Wrapper<T: AmountOps>(T);
+
+                    impl<'de, T: AmountOps> Deserialize<'de> for Wrapper<T> {
+                        fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                            super::deserialize(d).map(Wrapper)
+                        }
+                    }
 
                     let mut out = Vec::with_capacity(internals::serde::cautious_size_hint::<X>(
                         seq.size_hint(),
@@ -501,9 +505,13 @@ pub mod as_btc {
                 where
                     A: SeqAccess<'de>,
                 {
-                    #[derive(Deserialize)]
-                    #[serde(transparent)]
-                    struct Wrapper(#[serde(with = "super")] SignedAmount);
+                    struct Wrapper(SignedAmount);
+
+                    impl<'de> Deserialize<'de> for Wrapper {
+                        fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                            super::deserialize(d).map(Wrapper)
+                        }
+                    }
 
                     let mut out = Vec::with_capacity(internals::serde::cautious_size_hint::<X>(
                         seq.size_hint(),
@@ -683,9 +691,13 @@ pub mod as_str {
                 where
                     A: SeqAccess<'de>,
                 {
-                    #[derive(Deserialize)]
-                    #[serde(transparent)]
-                    struct Wrapper(#[serde(with = "super")] SignedAmount);
+                    struct Wrapper(SignedAmount);
+
+                    impl<'de> Deserialize<'de> for Wrapper {
+                        fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                            super::deserialize(d).map(Wrapper)
+                        }
+                    }
 
                     let mut out = Vec::with_capacity(internals::serde::cautious_size_hint::<X>(
                         seq.size_hint(),
