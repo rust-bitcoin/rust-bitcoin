@@ -112,7 +112,7 @@ impl<T> ScriptBuf<T> {
     /// avoided.
     ///
     /// [`reserve_exact`]: Self::reserve_exact
-    #[must_use]
+    #[must_use = "converting the value without using the result is useless; the only side effect is reallocation"]
     #[inline]
     pub fn into_boxed_script(self) -> Box<Script<T>> {
         Script::from_boxed_bytes(self.into_bytes().into_boxed_slice())
