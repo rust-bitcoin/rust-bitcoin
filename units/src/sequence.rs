@@ -116,7 +116,7 @@ impl Sequence {
 
     /// Returns `true` if the sequence number encodes a block based relative lock-time.
     #[inline]
-    pub fn is_height_locked(self) -> bool {
+    pub fn is_block_count_locked(self) -> bool {
         self.is_relative_lock_time() && (self.0 & Self::LOCK_TYPE_MASK == 0)
     }
 
@@ -152,7 +152,7 @@ impl Sequence {
 
     /// Constructs a new relative lock-time using a count of blocks.
     #[inline]
-    pub fn from_height(height: u16) -> Self { Self(u32::from(height)) }
+    pub fn from_block_count(count: u16) -> Self { Self(u32::from(count)) }
 
     /// Constructs a new relative lock-time using time intervals where each interval is equivalent
     /// to 512 seconds.
@@ -425,7 +425,7 @@ mod tests {
         assert!(!seq_final.is_relative_lock_time());
         assert!(!seq_non_rbf.is_rbf());
         assert!(block_time_lock.is_relative_lock_time());
-        assert!(block_time_lock.is_height_locked());
+        assert!(block_time_lock.is_block_count_locked());
         assert!(block_time_lock.is_rbf());
         assert!(unit_time_lock.is_relative_lock_time());
         assert!(unit_time_lock.is_time_locked());
@@ -485,9 +485,9 @@ mod tests {
 
         let seq_height_locked = Sequence(0x0039_9999);
         let seq_time_locked = Sequence(0x0040_0000);
-        assert!(seq_height_locked.is_height_locked());
+        assert!(seq_height_locked.is_block_count_locked());
         assert!(seq_time_locked.is_time_locked());
-        assert!(!seq_time_locked.is_height_locked());
+        assert!(!seq_time_locked.is_block_count_locked());
         assert!(!seq_height_locked.is_time_locked());
     }
 
@@ -528,15 +528,15 @@ mod tests {
     #[test]
     fn sequence_from_height() {
         // Check near the boundaries
-        assert_eq!(Sequence::from_height(0), Sequence(0));
-        assert_eq!(Sequence::from_height(1), Sequence(1));
-        assert_eq!(Sequence::from_height(0x7FFF), Sequence(0x7FFF));
-        assert_eq!(Sequence::from_height(0xFFFF), Sequence(0xFFFF));
+        assert_eq!(Sequence::from_block_count(0), Sequence(0));
+        assert_eq!(Sequence::from_block_count(1), Sequence(1));
+        assert_eq!(Sequence::from_block_count(0x7FFF), Sequence(0x7FFF));
+        assert_eq!(Sequence::from_block_count(0xFFFF), Sequence(0xFFFF));
 
         // Check steps throughout the whole range
         let step = 512;
         for v in (0..=u16::MAX).step_by(step) {
-            assert_eq!(Sequence::from_height(v), Sequence(v.into()));
+            assert_eq!(Sequence::from_block_count(v), Sequence(v.into()));
         }
     }
 
