@@ -144,8 +144,6 @@ struct Errors {
     j: amount::error::TooPreciseError,
     k: amount::error::UnknownDenominationError,
     l: block::TooBigForRelativeHeightError,
-    #[cfg(feature = "serde")]
-    m: fee_rate::serde::OverflowError,
     n: locktime::absolute::ConversionError,
     o: locktime::absolute::ParseHeightError,
     p: locktime::absolute::ParseTimeError,
@@ -267,8 +265,6 @@ fn c_good_err_display() {
     assert_display::<amount::error::TooPreciseError>();
     assert_display::<amount::error::UnknownDenominationError>();
     assert_display::<block::TooBigForRelativeHeightError>();
-    #[cfg(feature = "serde")]
-    assert_display::<fee_rate::serde::OverflowError>();
     assert_display::<locktime::absolute::ConversionError>();
     assert_display::<locktime::absolute::ParseHeightError>();
     assert_display::<locktime::absolute::ParseTimeError>();
@@ -426,8 +422,6 @@ fn p_consistent_exports_sequence() {
 /// P-CONSISTENT-EXPORTS: Tests that all types can be imported from the `fee_rate` module.
 #[test]
 fn p_consistent_exports_fee_rate() {
-    #[cfg(feature = "serde")]
-    use bitcoin_units::fee_rate::serde::OverflowError;
     use bitcoin_units::fee_rate::FeeRate;
 }
 
