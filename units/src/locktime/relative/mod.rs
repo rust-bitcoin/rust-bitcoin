@@ -305,8 +305,8 @@ impl LockTime {
     /// # use bitcoin_units::Sequence;
     ///
     /// # let required_height = 100;       // 100 blocks.
-    /// # let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
-    /// # let test_sequence = Sequence::from_height(required_height + 10);
+    /// # let lock = Sequence::from_block_count(required_height).to_relative_lock_time().expect("valid height");
+    /// # let test_sequence = Sequence::from_block_count(required_height + 10);
     ///
     /// let satisfied = match test_sequence.to_relative_lock_time() {
     ///     None => false, // Handle non-lock-time case.
