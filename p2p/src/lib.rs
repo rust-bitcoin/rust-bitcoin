@@ -241,7 +241,7 @@ impl ServiceFlags {
     pub fn to_u64(self) -> u64 { self.0 }
 
     /// Gets the hex representation of this type.
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "0.2.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
@@ -377,7 +377,7 @@ impl Magic {
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 
     /// Gets the hex representation of this type.
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "0.2.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
