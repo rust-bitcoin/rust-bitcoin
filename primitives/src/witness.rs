@@ -133,13 +133,14 @@ impl Witness {
         Self { content: Vec::new(), witness_elements: 0, indices_start: 0 }
     }
 
-    /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
+    /// Constructs a new [`Witness`] object from a slice of byte slices where each slice is a witness
+    /// item.
     ///
     /// # Panics
     ///
-    /// Panics if the starting offset of the last element within encoded bytes exceeds `u32::MAX`. When
-    /// the sum of the lengths of the elements before the last one, including their length prefixes,
-    /// is larger than that maximum.
+    /// Panics if the starting offset of the last element within the encoded bytes exceeds
+    /// `u32::MAX`, i.e., if the sum of the lengths of the elements before the last one, including
+    /// their length prefixes, is larger than that maximum.
     ///
     /// # Examples
     ///
