@@ -520,8 +520,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         input_index: usize,
         prevouts: &Prevouts<T>,
-        annex: Option<Annex>,
         sighash_type: TapSighashType,
+        annex: Option<Annex>,
     ) -> Result<TapSighash, TaprootError> {
         let mut enc = sha256t::Hash::<TapSighashTag>::engine();
         self.taproot_encode_signing_data_to(
@@ -545,10 +545,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         input_index: usize,
         prevouts: &Prevouts<T>,
-        annex: Option<Annex>,
         leaf_hash: S,
-        code_separator_pos: Option<u32>,
         sighash_type: TapSighashType,
+        annex: Option<Annex>,
+        code_separator_pos: Option<u32>,
     ) -> Result<TapSighash, TaprootError> {
         let mut enc = sha256t::Hash::<TapSighashTag>::engine();
         self.taproot_encode_signing_data_to(
@@ -1782,16 +1782,16 @@ mod tests {
             Some((leaf_hash, _)) => sighash_cache.taproot_script_spend_signature_hash(
                 input_index,
                 &prevouts,
-                annex,
                 leaf_hash,
-                code_separator_pos,
                 sighash_type,
+                annex,
+                code_separator_pos,
             ),
             None => sighash_cache.taproot_key_spend_signature_hash(
                 input_index,
                 &prevouts,
-                annex,
                 sighash_type,
+                annex,
             ),
         };
         assert_eq!(spend_hash.unwrap(), hash);
