@@ -67,8 +67,8 @@ impl<T> Builder<T> {
 
     /// Adds a single opcode to the script.
     #[must_use]
-    pub fn push_opcode(mut self, data: Opcode) -> Self {
-        self.0.push_opcode(data);
+    pub fn push_opcode(mut self, op: Opcode) -> Self {
+        self.0.push_opcode(op);
         self
     }
 
