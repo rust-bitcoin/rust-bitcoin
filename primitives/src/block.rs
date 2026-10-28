@@ -1139,7 +1139,8 @@ pub mod error {
     pub enum InvalidBlockError {
         /// Header Merkle root does not match the calculated Merkle root.
         InvalidMerkleRoot,
-        /// The witness commitment in coinbase transaction does not match the calculated `witness_root`.
+        /// The witness commitment in the coinbase transaction does not match the calculated
+        /// witness root.
         InvalidWitnessCommitment,
         /// Block has no transactions (missing coinbase).
         NoTransactions,
@@ -1160,7 +1161,10 @@ pub mod error {
             match self {
                 Self::InvalidMerkleRoot =>
                     write!(f, "header Merkle root does not match the calculated Merkle root"),
-                Self::InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
+                Self::InvalidWitnessCommitment => write!(
+                    f,
+                    "the witness commitment in the coinbase transaction does not match the calculated witness root"
+                ),
                 Self::NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
                 Self::InvalidCoinbase =>
                     write!(f, "the first transaction is not a valid coinbase transaction"),
