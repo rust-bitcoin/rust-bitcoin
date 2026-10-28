@@ -269,7 +269,6 @@ mod primitive {
         ///
         /// This method fails if `self` would exceed the limit.
         #[inline]
-        #[allow(deprecated)]
         pub fn push(&mut self, byte: u8) -> Result<(), PushBytesError> {
             // This is OK on 32 bit archs since vec has its own check and this check is pointless.
             check_limit(self.0.len().saturating_add(1))?;
