@@ -147,9 +147,6 @@ type ScriptMerkleProofMap = BTreeMap<(TapScriptBuf, LeafVersion), BTreeSet<Tapro
 /// most likely key should be made the internal key. See [BIP-0341] for more details on choosing
 /// internal keys for a Taproot application.
 ///
-/// Note: This library currently does not support
-/// [annex](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-5).
-///
 /// [BIP-0341]: <https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki>
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TaprootSpendInfo {
