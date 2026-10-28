@@ -484,10 +484,15 @@ internal_macros::define_extension_trait! {
         /// This does not guarantee that this represents a P2SH input [`ScriptSig`].
         /// It merely gets the last push of the script.
         ///
+        /// Returns `None` if the script is not push only (see [`ScriptExt::is_push_only`]),
+        /// matching Bitcoin Core's `IsPushOnly` check. This means `OP_RESERVED` and the
+        /// `OP_PUSHNUM` opcodes are allowed before the final push. Also returns `None` if
+        /// the last instruction is not a data push.
+        ///
         /// Use [`ScriptPubKey::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
         fn redeem_script(&self) -> Option<&RedeemScript> {
             // Script must consist entirely of pushes.
-            if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
+            if !self.is_push_only() {
                 return None;
             }
 

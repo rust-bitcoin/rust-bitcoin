@@ -1136,3 +1136,16 @@ fn tapscript_is_immediately_valid_in_push_data() {
     assert_eq!(is_immediately_valid(&[OP_PUSHBYTES_1.to_u8(), 0x50, 0x50]), Ok(true));
     assert_eq!(is_immediately_valid(&[]), Ok(false));
 }
+
+#[test]
+fn script_sig_redeem_script_after_small_int_push() {
+    // `OP_1 <redeem script>` is push-only (OP_1 <= OP_PUSHNUM_16), so the last push is the
+    // redeem script.
+    let script_sig = crate::ScriptSigBuf::from_bytes(vec![0x51, 0x03, 0xaa, 0xbb, 0xcc]);
+    let redeem_script = script_sig.redeem_script().expect("should have redeem script");
+    assert_eq!(redeem_script.as_bytes(), &[0xaa, 0xbb, 0xcc]);
+
+    // A non-push opcode anywhere in the script means there is no redeem script.
+    let script_sig = crate::ScriptSigBuf::from_bytes(vec![0x61, 0x03, 0xaa, 0xbb, 0xcc]);
+    assert!(script_sig.redeem_script().is_none());
+}
