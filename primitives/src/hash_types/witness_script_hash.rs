@@ -68,7 +68,7 @@ impl WScriptHash {
 
     /// Constructs a new [`WScriptHash`] from any script irrespective of script size.
     ///
-    /// If you hash a script that exceeds 10,000 bytes in size and use it to create a Segwit
+    /// If you hash a script that exceeds 10,000 bytes in size and use it to create a SegWit
     /// output then the output will be unspendable (see [BIP-0141]).
     ///
     /// ref: [BIP-0141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)

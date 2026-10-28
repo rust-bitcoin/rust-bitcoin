@@ -28,7 +28,7 @@ impl TryFrom<Instruction<'_>> for WitnessVersion {
     }
 }
 
-/// Error types for the segwit version number.
+/// Error types for the SegWit version number.
 pub mod error {
     use core::convert::Infallible;
     use core::fmt;

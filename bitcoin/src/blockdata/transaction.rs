@@ -125,7 +125,7 @@ internal_macros::define_extension_trait! {
         /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
         /// might increase more than `TxIn::segwit_weight`. This happens when:
         /// - the new input added causes the input length `CompactSize` to increase its encoding length
-        /// - the new input is the first segwit input added - this will add an additional 2WU to the
+        /// - the new input is the first SegWit input added - this will add an additional 2WU to the
         ///   transaction weight to take into account the SegWit marker
         ///
         /// # Panics

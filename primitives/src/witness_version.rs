@@ -45,8 +45,8 @@ pub use self::error::{ParseWitnessVersionError, InvalidWitnessVersionError};
 /// ]);
 ///
 /// match script_pubkey.witness_version() {
-///     Some(WitnessVersion::V0) => println!("segwit v0 output (P2WPKH or P2WSH)"),
-///     Some(WitnessVersion::V1) => println!("segwit v1 output (Taproot)"),
+///     Some(WitnessVersion::V0) => println!("SegWit v0 output (P2WPKH or P2WSH)"),
+///     Some(WitnessVersion::V1) => println!("SegWit v1 output (Taproot)"),
 ///     Some(version) => println!("unknown witness version: {}", version),
 ///     None => println!("not a witness program"),
 /// }
@@ -226,7 +226,7 @@ impl<'a> Arbitrary<'a> for WitnessVersion {
     }
 }
 
-/// Error types for the segwit version number.
+/// Error types for the SegWit version number.
 pub mod error {
     use core::convert::Infallible;
     use core::fmt;

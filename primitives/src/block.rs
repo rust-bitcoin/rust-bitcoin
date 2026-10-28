@@ -1874,7 +1874,7 @@ mod tests {
         }];
         let block = Block::new_unchecked(header, transactions);
 
-        // Transaction with no inputs uses segwit serialization:
+        // Transaction with no inputs uses SegWit serialization:
         // version (4) + marker (1) + flag (1) + input_count (1) + output_count (1) + lock_time (4)
         let want = "010000009999999999999999999999999999999999999999999999999999999999999999777777777777777777777777777777777777777777777777777777777777777702000000030000000400000001010000000001000000000000";
 

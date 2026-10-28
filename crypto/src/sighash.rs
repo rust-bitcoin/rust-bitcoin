@@ -118,7 +118,7 @@ pub enum EcdsaSighashType {
     SinglePlusAnyoneCanPay,
     /// Any other value: consensus-valid but non-standard
     ///
-    /// The value is a `u32` because the legacy and segwit v0 signing algorithms hash the
+    /// The value is a `u32` because the legacy and SegWit v0 signing algorithms hash the
     /// sighash type as 4 bytes, even though only the lowest byte is appended to the
     /// signature in a transaction. On bitcoin the higher bits are always zero, but on replay-protected forks they are
     /// sometimes set.
