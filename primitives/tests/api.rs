@@ -16,15 +16,15 @@ extern crate alloc;
 use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{
-    self, Builder, PushBytes, PushBytesBuf, RedeemScriptTag, ScriptHash, ScriptPubKeyBufDecoder,
-    ScriptPubKeyTag, ScriptSigBufDecoder, ScriptSigTag, SignetBlockScriptTag, TapScriptTag,
-    WScriptHash, WitnessScriptTag,
+    self, Builder, PushBytes, PushBytesBuf, RedeemScriptTag, ScriptCodeTag, ScriptHash,
+    ScriptPubKeyBufDecoder, ScriptPubKeyTag, ScriptSigBufDecoder, ScriptSigTag,
+    SignetBlockScriptTag, TapScriptTag, WScriptHash, WitnessScriptTag,
 };
 use bitcoin_primitives::{
     block, merkle_tree, opcodes, transaction, witness, witness_version, OutPoint, RedeemScript,
-    RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, SignetBlockScript,
-    SignetBlockScriptBuf, TapScript, TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness,
-    WitnessScript, WitnessScriptBuf, Wtxid,
+    RedeemScriptBuf, ScriptCode, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
+    SignetBlockScript, SignetBlockScriptBuf, TapScript, TapScriptBuf, Transaction, TxIn, TxOut,
+    Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
 };
 
 /// A struct that includes all public non-error enums.
@@ -38,6 +38,7 @@ struct Enums {
     h: script::SignetBlockScriptTag,
     i: script::TapScriptTag,
     j: script::WitnessScriptTag,
+    j2: script::ScriptCodeTag,
     k: witness_version::WitnessVersion,
 }
 
@@ -58,6 +59,7 @@ struct Structs<'a> {
     j4: &'a TapScript,
     j5: &'a WitnessScript,
     j6: &'a SignetBlockScript,
+    j7: &'a ScriptCode,
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
@@ -132,6 +134,7 @@ struct CommonTraits {
     ae4: script::SignetBlockScriptTag,
     ae5: script::TapScriptTag,
     ae6: script::WitnessScriptTag,
+    ae7: script::ScriptCodeTag,
     af1: block::Checked,
     af2: block::Unchecked,
 }
@@ -174,6 +177,8 @@ struct Clone<'a> {
     j3: alloc::boxed::Box<ScriptSig>,
     j4: alloc::boxed::Box<TapScript>,
     j5: alloc::boxed::Box<WitnessScript>,
+    j6: alloc::boxed::Box<SignetBlockScript>,
+    j7: alloc::boxed::Box<ScriptCode>,
     k: ScriptHash,
     l: WScriptHash,
     m1: RedeemScriptBuf,
@@ -202,6 +207,7 @@ struct Clone<'a> {
     ae4: script::SignetBlockScriptTag,
     ae5: script::TapScriptTag,
     ae6: script::WitnessScriptTag,
+    ae7: script::ScriptCodeTag,
     af1: block::Checked,
     af2: block::Unchecked,
 }
@@ -247,6 +253,7 @@ struct Ord {
     ae4: script::SignetBlockScriptTag,
     ae5: script::TapScriptTag,
     ae6: script::WitnessScriptTag,
+    ae7: script::ScriptCodeTag,
     af1: block::Checked,
     af2: block::Unchecked,
 }
@@ -261,6 +268,7 @@ struct Default {
     b4: &'static TapScript,
     b5: &'static WitnessScript,
     b6: &'static SignetBlockScript,
+    b7: &'static ScriptCode,
     c1: RedeemScriptBuf,
     c2: ScriptPubKeyBuf,
     c3: ScriptSigBuf,
@@ -376,6 +384,7 @@ fn c_debug_nonempty() {
         SIGNET_BLOCK_SCRIPT.as_script();
         TAP_SCRIPT.as_script();
         WITNESS_SCRIPT.as_script();
+        ScriptCode::from_bytes(&[]);
         ScriptHash::from_script(&REDEEM_SCRIPT).unwrap();
         WScriptHash::from_script(&WITNESS_SCRIPT).unwrap();
         REDEEM_SCRIPT.clone();
@@ -555,6 +564,7 @@ fn p_default_change() {
         b4: TapScript::from_bytes(&[]),
         b5: WitnessScript::from_bytes(&[]),
         b6: SignetBlockScript::from_bytes(&[]),
+        b7: ScriptCode::from_bytes(&[]),
         c1: RedeemScriptBuf::from_bytes(Vec::new()),
         c2: ScriptPubKeyBuf::from_bytes(Vec::new()),
         c3: ScriptSigBuf::from_bytes(Vec::new()),
@@ -637,10 +647,10 @@ fn p_consistent_exports_crate_modules() {
 fn p_consistent_exports_crate_types() {
     use bitcoin_primitives::{
         Block, BlockChecked, BlockHash, BlockHeader, BlockUnchecked, BlockValidation, BlockVersion,
-        CompactTarget, OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf,
-        ScriptSig, ScriptSigBuf, Sequence, SignetBlockScript, SignetBlockScriptBuf, TapScript,
-        TapScriptBuf, Transaction, TransactionVersion, TxIn, TxOut, Txid, Witness,
-        WitnessCommitment, WitnessScript, WitnessScriptBuf, Wtxid,
+        CompactTarget, OutPoint, RedeemScript, RedeemScriptBuf, ScriptCode, ScriptPubKey,
+        ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, SignetBlockScript,
+        SignetBlockScriptBuf, TapScript, TapScriptBuf, Transaction, TransactionVersion, TxIn,
+        TxOut, Txid, Witness, WitnessCommitment, WitnessScript, WitnessScriptBuf, Wtxid,
     };
 }
 
@@ -689,11 +699,12 @@ fn p_consistent_exports_script() {
     use bitcoin_primitives::script::{
         Builder, PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, RedeemScript,
         RedeemScriptBuf, RedeemScriptError, RedeemScriptSizeError, RedeemScriptTag, Script,
-        ScriptBuf, ScriptBufDecoder, ScriptBufDecoderError, ScriptEncoder, ScriptHash,
-        ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufDecoder, ScriptPubKeyTag,
-        ScriptSig, ScriptSigBuf, ScriptSigBufDecoder, ScriptSigTag, SignetBlockScript,
-        SignetBlockScriptBuf, SignetBlockScriptTag, Tag, TapScript, TapScriptBuf, TapScriptTag,
-        WScriptHash, WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
+        ScriptBuf, ScriptBufDecoder, ScriptBufDecoderError, ScriptCode, ScriptCodeTag,
+        ScriptEncoder, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf,
+        ScriptPubKeyBufDecoder, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigBufDecoder,
+        ScriptSigTag, SignetBlockScript, SignetBlockScriptBuf, SignetBlockScriptTag, Tag,
+        TapScript, TapScriptBuf, TapScriptTag, WScriptHash, WitnessScript, WitnessScriptBuf,
+        WitnessScriptSizeError, WitnessScriptTag, MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE,
     };
 }
 
