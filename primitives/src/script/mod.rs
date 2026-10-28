@@ -258,6 +258,7 @@ impl AsRef<ScriptCode> for ScriptPubKeyBuf {
         script_pub_key.as_ref()
     }
 }
+
 impl From<WitnessScriptBuf> for SignetBlockScriptBuf {
     #[inline]
     fn from(buf: WitnessScriptBuf) -> Self { Self::from_bytes(buf.into_bytes()) }
