@@ -2,9 +2,8 @@
 
 //! Bitcoin blocks.
 //!
-//! A block is a bundle of transactions with a proof-of-work attached,
-//! which commits to an earlier block to form the blockchain. This
-//! module describes structures and functions needed to describe
+//! A block is a bundle of transactions with a proof-of-work attached, which commits to an earlier
+//! block to form the blockchain. This module describes structures and functions needed to describe
 //! these blocks and the blockchain.
 //!
 //! # Examples
@@ -35,8 +34,7 @@
 //! assert!(coinbase.is_coinbase());
 //!
 //! let transactions = vec![coinbase];
-//! let merkle_root =
-//!     block::compute_merkle_root(&transactions).ok_or(InvalidBlockError::NoTransactions)?;
+//! let merkle_root = block::compute_merkle_root(&transactions).expect("tx list is valid");
 //!
 //! let header = Header {
 //!     version: Version::TWO,
@@ -142,9 +140,9 @@ pub struct Block<V = Unchecked>
 where
     V: Validation,
 {
-    /// The block header
+    /// The block header.
     header: Header,
-    /// List of transactions contained in the block
+    /// List of transactions contained in the block.
     transactions: Vec<Transaction>,
     /// Cached witness root if it's been computed.
     witness_root: Option<WitnessMerkleNode>,
@@ -280,7 +278,7 @@ impl Block<Unchecked> {
     /// #     }
     /// # }
     /// let transactions = vec![coinbase];
-    /// let root = block::compute_merkle_root(&transactions).unwrap();
+    /// let root = block::compute_merkle_root(&transactions).expect("tx list is valid");
     ///
     /// let block = Block::new_unchecked(header_with(root), transactions.clone());
     /// assert_eq!(block.validate()?.transactions().len(), 1);
@@ -370,7 +368,7 @@ impl Block<Unchecked> {
     /// #     }],
     /// #     outputs: vec![TxOut { amount: Amount::ZERO, script_pubkey: ScriptPubKeyBuf::new() }],
     /// # };
-    /// # let merkle_root = block::compute_merkle_root(&[coinbase.clone()]).expect("one transaction");
+    /// # let merkle_root = block::compute_merkle_root(&[coinbase.clone()]).expect("tx list is valid");
     /// # let header = Header {
     /// #     version: Version::TWO,
     /// #     prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
@@ -646,13 +644,12 @@ fn block_weight_wu(transactions: &[Transaction]) -> u64 {
 ///
 /// # Returns
 ///
-/// [`None`] if the iterator was empty, or if the transaction list contains
-/// consecutive duplicates which would trigger CVE-2012-2459. Blocks with duplicate
-/// transactions will always be invalid, so there is no harm in us refusing to
-/// compute their Merkle roots.
+/// [`None`] if the iterator was empty, or if the transaction list contains consecutive duplicates
+/// which would trigger CVE-2012-2459. Blocks with duplicate transactions will always be invalid, so
+/// there is no harm in us refusing to compute their Merkle roots.
 ///
-/// Unless you are certain your transaction list is nonempty and has no duplicates,
-/// you should not unwrap the [`Option`] returned by this method!
+/// Unless you are certain your transaction list is nonempty and has no duplicates, you should not
+/// unwrap the [`Option`] returned by this method!
 #[cfg(feature = "alloc")]
 pub fn compute_merkle_root<T>(transactions: T) -> Option<TxMerkleNode>
 where
@@ -667,13 +664,12 @@ where
 ///
 /// # Returns
 ///
-/// [`None`] if the iterator was empty, or if the transaction list contains
-/// consecutive duplicates which would trigger CVE-2012-2459. Blocks with duplicate
-/// transactions will always be invalid, so there is no harm in us refusing to
-/// compute their Merkle roots.
+/// [`None`] if the iterator was empty, or if the transaction list contains consecutive duplicates
+/// which would trigger CVE-2012-2459. Blocks with duplicate transactions will always be invalid, so
+/// there is no harm in us refusing to compute their Merkle roots.
 ///
-/// Unless you are certain your transaction list is nonempty and has no duplicates,
-/// you should not unwrap the [`Option`] returned by this method!
+/// Unless you are certain your transaction list is nonempty and has no duplicates, you should not
+/// unwrap the [`Option`] returned by this method!
 #[cfg(feature = "alloc")]
 pub fn compute_witness_root<T>(transactions: T) -> Option<WitnessMerkleNode>
 where
@@ -707,8 +703,8 @@ fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCom
 
 /// Bitcoin block header.
 ///
-/// Contains all the block's information except the actual transactions, but
-/// including a root of a [Merkle tree] committing to all transactions in the block.
+/// Contains all the block's information except the actual transactions, but including a root of a
+/// [Merkle tree] committing to all transactions in the block.
 ///
 /// [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
 ///
@@ -951,10 +947,10 @@ impl From<&Header> for BlockHash {
 pub struct Version(i32);
 
 impl Version {
-    /// The original Bitcoin Block v1.
+    /// The original Bitcoin block v1.
     pub const ONE: Self = Self(1);
 
-    /// BIP-0034 Block v2.
+    /// BIP-0034 block v2.
     pub const TWO: Self = Self(2);
 
     /// BIP-0009 compatible version number that does not signal for any softforks.
