@@ -125,7 +125,7 @@ crate::internal_macros::define_extension_trait! {
         /// Constructs a scriptSig required to spend a P2SH-P2WPKH output.
         ///
         /// The scriptSig pushes the P2WPKH redeem script (`0 <20-byte-pubkey-hash>`) which
-        /// is required when spending a P2SH-wrapped Segwit output. The witness data should
+        /// is required when spending a P2SH-wrapped SegWit output. The witness data should
         /// be provided separately using [`WitnessExt::p2wpkh`].
         ///
         /// [`WitnessExt::p2wpkh`]: crate::blockdata::witness::WitnessExt::p2wpkh
@@ -137,7 +137,7 @@ crate::internal_macros::define_extension_trait! {
         /// Constructs a scriptSig required to spend a P2SH-P2WSH output.
         ///
         /// The scriptSig pushes the P2WSH redeem script (`0 <32-byte-script-hash>`) which
-        /// is required when spending a P2SH-wrapped Segwit output. The witness data should
+        /// is required when spending a P2SH-wrapped SegWit output. The witness data should
         /// be provided separately using [`WitnessExt::p2wsh`].
         ///
         /// [`WitnessExt::p2wsh`]: crate::blockdata::witness::WitnessExt::p2wsh

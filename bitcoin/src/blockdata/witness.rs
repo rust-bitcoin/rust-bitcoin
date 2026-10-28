@@ -124,11 +124,11 @@ internal_macros::define_extension_trait! {
             P2TrSpend::from_witness(self)?.annex()
         }
 
-        /// Get the Segwit version 0 witness script.
+        /// Get the SegWit version 0 witness script.
         ///
         /// Unlike the Taproot case, we do no validation to determine whether this is a
         /// witness script: it may be a Taproot control block, annex, or some other kind
-        /// of object. If you are not certain whether the output being spent is Segwit v0,
+        /// of object. If you are not certain whether the output being spent is SegWit v0,
         /// use [`crate::script::Script::is_p2wsh`] on the output's script.
         fn witness_script(&self) -> Option<&WitnessScript> { self.last().map(WitnessScript::from_bytes) }
     }

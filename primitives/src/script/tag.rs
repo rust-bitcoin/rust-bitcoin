@@ -44,7 +44,7 @@ impl Tag for SignetBlockScriptTag {}
 pub enum TapScriptTag {}
 impl Tag for TapScriptTag {}
 
-/// A Segwit v0 witness script.
+/// A SegWit v0 witness script.
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum WitnessScriptTag {}
 impl Tag for WitnessScriptTag {}

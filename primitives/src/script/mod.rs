@@ -96,15 +96,15 @@ pub type TapScriptBuf = ScriptBuf<TapScriptTag>;
 /// A reference to a Segwit v1 Taproot script.
 pub type TapScript = Script<TapScriptTag>;
 
-/// A Segwit v0 witness script.
+/// A SegWit v0 witness script.
 pub type WitnessScriptBuf = ScriptBuf<WitnessScriptTag>;
 
-/// A reference to a Segwit v0 witness script.
+/// A reference to a SegWit v0 witness script.
 pub type WitnessScript = Script<WitnessScriptTag>;
 
 /// A reference to a script code (scriptCode) used in sighash computation.
 ///
-/// Used for legacy and Segwit v0 signature hashing. The `AsRef` implementations on
+/// Used for legacy and SegWit v0 signature hashing. The `AsRef` implementations on
 /// [`WitnessScript`], [`RedeemScript`], [`ScriptPubKey`], and their owned `Buf` variants
 /// borrow the entire script.
 ///
@@ -114,7 +114,7 @@ pub type WitnessScript = Script<WitnessScriptTag>;
 /// `OP_CODESEPARATOR` before the signature checking opcode. If no
 /// `OP_CODESEPARATOR` has executed, no prefix is removed.
 ///
-/// For Segwit v0, all `OP_CODESEPARATOR` instructions in the remaining script are
+/// For SegWit v0, all `OP_CODESEPARATOR` instructions in the remaining script are
 /// kept, including those in unexecuted branches (see [BIP-0143]). For legacy
 /// signature hashing, the remaining `OP_CODESEPARATOR` instructions are removed
 /// when encoding the signing data.
@@ -147,15 +147,15 @@ pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
-/// Either a redeem script or a Segwit version 0 scriptpubkey.
+/// Either a redeem script or a SegWit version 0 scriptpubkey.
 ///
-/// In the case of P2SH-wrapped Segwit version outputs, we take a Segwit scriptPubKey
+/// In the case of P2SH-wrapped SegWit version outputs, we take a SegWit scriptPubKey
 /// and put it in a redeem script slot. The Bitcoin script interpreter has special
 /// logic to handle this case, which is reflected in our API in several methods
 /// relating to P2SH and signature hashing. These methods take either a normal
-/// P2SH redeem script, or a Segwit version 0 scriptpubkey.
+/// P2SH redeem script, or a SegWit version 0 scriptpubkey.
 ///
-/// Segwit version 1 (Taproot) and higher do **not** support P2SH-wrapping, and hashing
+/// SegWit version 1 (Taproot) and higher do **not** support P2SH-wrapping, and hashing
 /// such a script with [`ScriptHash::from_script`] returns an error.
 pub trait ScriptHashableTag: sealed::Sealed {}
 

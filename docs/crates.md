@@ -9,7 +9,7 @@ entry in [roadmap.md] and likely also a file of their own.
 ## Current crates
 
 - `addresses`: **Empty** placeholder (see future crates below).
-- `base58`: Bitcoin base58 encoding and decoding (for pre-segwit addresses).
+- `base58`: Bitcoin base58 encoding and decoding (for pre-SegWit addresses).
 - `bitcoin`: The `rust-bitcoin` crate.
 - `chacha20_poly1305`: ChaCha20 stream cipher with the Poly1305 MAC.
 - `consensus_encoding`: Consensus encoding and decoding.

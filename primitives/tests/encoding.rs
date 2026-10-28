@@ -337,7 +337,7 @@ fn decode_segwit_without_witnesses_errors() {
     let mut slice = tx_bytes.as_slice();
     let err = Transaction::decoder()
         .push_bytes(&mut slice)
-        .expect_err("segwit tx with no witnesses should error");
+        .expect_err("SegWit tx with no witnesses should error");
 
     assert!(matches!(err, TransactionDecoderError { .. }));
 }

@@ -2,7 +2,7 @@
 
 //! Bitcoin addresses.
 //!
-//! Support for segwit and legacy addresses (bech32 and base58 respectively).
+//! Support for SegWit and legacy addresses (bech32 and base58 respectively).
 //!
 //! # Examples
 //!

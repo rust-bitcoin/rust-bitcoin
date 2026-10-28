@@ -2,7 +2,7 @@
 //!
 //! bech32's checksum is a BCH code, and base58's is four bytes of double SHA256 over a
 //! positional radix encoding. Neither is invertible by byte mutation, so an unaided fuzzer
-//! essentially never produces a parsable address and the whole segwit path goes unexercised.
+//! essentially never produces a parsable address and the whole SegWit path goes unexercised.
 //!
 //! So rather than mutate the string, this mutator decodes it into a record, mutates the
 //! record, and re-encodes.
@@ -12,7 +12,7 @@ use bitcoin::bech32::{self, Bech32, Bech32m, Fe32, Hrp};
 
 use super::{Mutate, Rng};
 
-/// Longest program the unchecked segwit encoder takes without silently truncating.
+/// Longest program the unchecked SegWit encoder takes without silently truncating.
 ///
 /// It writes into a fixed 90 byte buffer and drops whatever does not fit, which would leave a
 /// string whose checksum is wrong for the wrong reason. The worst case is the longest HRP:
@@ -42,9 +42,9 @@ fn base58_decode(s: &str) -> Option<Vec<u8>> { bitcoin::base58::decode_check(s).
 /// What kind of address a record describes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Form {
-    /// A valid segwit address.
+    /// A valid SegWit address.
     Segwit,
-    /// A segwit address with a correct checksum but an invalid witness program, which is what
+    /// A SegWit address with a correct checksum but an invalid witness program, which is what
     /// reaches the error paths behind `bech32::segwit::decode`.
     SegwitNearMiss,
     /// A base58check address.
@@ -52,7 +52,7 @@ enum Form {
 }
 
 impl Form {
-    /// Picks a form, weighted towards valid segwit addresses: those are the ones the target
+    /// Picks a form, weighted towards valid SegWit addresses: those are the ones the target
     /// could never reach on its own, and the only ones its roundtrip assertion runs on.
     fn pick(rng: &mut Rng) -> Self {
         match rng.below(4) {
@@ -71,7 +71,7 @@ struct Record {
     uppercase: bool,
     /// Whether to build a base58 payload the parser is bound to reject.
     malform: bool,
-    /// Witness version for the segwit forms, prefix byte for base58.
+    /// Witness version for the SegWit forms, prefix byte for base58.
     version: u8,
     program: [u8; MAX_PROGRAM],
     program_len: usize,
