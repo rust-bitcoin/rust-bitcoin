@@ -23,9 +23,6 @@
 //! }
 //! ```
 
-#[doc(no_inline)]
-pub use self::error::OverflowError;
-
 pub mod as_sat_per_kwu_floor {
     //! Serialize and deserialize [`FeeRate`] denominated in satoshis per 1000 weight units.
     //!
@@ -404,38 +401,6 @@ pub mod as_sat_per_vb_ceil {
             }
 
             d.deserialize_seq(VisitVec)
-        }
-    }
-}
-
-/// Error types for fee rate serde handling.
-pub mod error {
-    use core::convert::Infallible;
-    use core::fmt;
-
-    /// Overflow occurred while deserializing fee rate per virtual byte.
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    #[non_exhaustive]
-    pub struct OverflowError;
-
-    impl From<Infallible> for OverflowError {
-        #[inline]
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    impl fmt::Display for OverflowError {
-        #[inline]
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "overflow occurred while deserializing fee rate per virtual byte")
-        }
-    }
-
-    #[cfg(feature = "std")]
-    impl std::error::Error for OverflowError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self {} = self;
-            None
         }
     }
 }
