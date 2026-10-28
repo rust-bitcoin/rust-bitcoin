@@ -356,7 +356,7 @@ impl Witness {
     }
 }
 
-/// Correctness Requirements: value must always fit within u32
+/// Correctness requirements: `value` must always fit within a `u32`.
 #[inline]
 #[track_caller]
 fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value: usize) {

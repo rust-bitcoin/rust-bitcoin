@@ -206,7 +206,7 @@ impl<T> Script<T> {
     #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
-    /// Constructs a new script builder
+    /// Constructs a new script builder.
     pub fn builder() -> Builder<T> { Builder::new() }
 
     /// Returns witness version of the script, if any.
