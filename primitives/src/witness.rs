@@ -932,7 +932,7 @@ impl<'a> Arbitrary<'a> for Witness {
     }
 }
 
-/// Cast a decoded length prefix to a `usize`.
+/// Casts a decoded length prefix to a `usize`.
 ///
 /// This function is basically just defensive. For all sane use cases the length prefix should be
 /// less than `MAX_VEC_SIZE` (on a 32-bit machine). If the value is bigger that `u16::MAX` and we

@@ -1540,7 +1540,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 
-    /// Error while decoding an [`OutPoint`].
+    /// An error consensus decoding an [`OutPoint`].
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct OutPointDecoderError(pub(super) encoding::UnexpectedEofError);
 

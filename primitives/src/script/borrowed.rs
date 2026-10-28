@@ -312,7 +312,7 @@ impl ScriptPubKey {
 }
 
 impl WitnessScript {
-    /// Returns 256-bit hash of the script for P2WSH outputs.
+    /// Returns the 256-bit hash of the script for P2WSH outputs.
     ///
     /// # Errors
     ///
@@ -324,7 +324,7 @@ impl WitnessScript {
 }
 
 impl<T: ScriptHashableTag> Script<T> {
-    /// Returns 160-bit hash of the script for P2SH outputs.
+    /// Returns the 160-bit hash of the script for P2SH outputs.
     ///
     /// # Errors
     ///
