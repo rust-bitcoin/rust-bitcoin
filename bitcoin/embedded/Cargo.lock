@@ -149,7 +149,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-units"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
