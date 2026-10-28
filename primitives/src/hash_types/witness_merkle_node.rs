@@ -47,6 +47,9 @@ impl WitnessMerkleNode {
     /// transactions will always be invalid, so there is no harm in us refusing to
     /// compute their Merkle roots.
     ///
+    /// Also returns [`None`] if the `alloc` feature is disabled and `iter` has more than
+    /// 32,767 transactions.
+    ///
     /// Unless you are certain your transaction list is nonempty and has no duplicates,
     /// you should not unwrap the [`Option`] returned by this method!
     pub fn calculate_root<I: IntoIterator<Item = Wtxid>>(iter: I) -> Option<Self> {
