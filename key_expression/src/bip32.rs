@@ -157,8 +157,9 @@ impl_bip32_seed_from_array!(
 );
 
 /// Extended private key
+///
+/// `Debug` hides only the private-key field; metadata, including the chain code, remains visible.
 #[derive(Copy, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Xpriv {
     /// The network this key is to be used on
     pub network: NetworkKind,
@@ -176,7 +177,6 @@ pub struct Xpriv {
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpriv, "a BIP-0032 extended private key");
 
-#[cfg(not(feature = "std"))]
 impl fmt::Debug for Xpriv {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Xpriv")
@@ -1748,6 +1748,28 @@ mod tests {
     use hex::hex;
 
     use super::*;
+
+    #[test]
+    fn xpriv_debug_redacts_private_key() {
+        let xpriv = Xpriv {
+            network: NetworkKind::Main,
+            depth: 0,
+            parent_fingerprint: Fingerprint::default(),
+            child_number: ChildNumber::ZERO_NORMAL,
+            private_key: secp256k1::SecretKey::from_secret_bytes([1; 32]).unwrap(),
+            chain_code: ChainCode::from([3; 32]),
+        };
+        let other_key = Xpriv {
+            private_key: secp256k1::SecretKey::from_secret_bytes([2; 32]).unwrap(),
+            ..xpriv
+        };
+        assert_eq!(format!("{:?}", xpriv), format!("{:?}", other_key));
+        assert_eq!(format!("{:#?}", xpriv), format!("{:#?}", other_key));
+
+        let other_metadata = Xpriv { depth: 1, ..xpriv };
+        assert_ne!(format!("{:?}", xpriv), format!("{:?}", other_metadata));
+        assert_ne!(format!("{:#?}", xpriv), format!("{:#?}", other_metadata));
+    }
 
     #[cfg(feature = "arbitrary")]
     #[test]
