@@ -1574,7 +1574,8 @@ pub mod error {
         Vout(parse_int::ParseIntError),
         /// Error in general format.
         Format,
-        /// Size exceeds max.
+        /// String is longer than 75 characters (a 64 character txid, a colon, and a vout of at
+        /// most 10 digits).
         TooLong,
         /// Vout part is not strictly numeric without leading zeroes.
         VoutNotCanonical,
@@ -1596,7 +1597,7 @@ pub mod error {
                 Self::Txid(ref e) => write_err!(f, "error parsing TXID"; e),
                 Self::Vout(ref e) => write_err!(f, "error parsing vout"; e),
                 Self::Format => write!(f, "OutPoint not in <txid>:<vout> format"),
-                Self::TooLong => write!(f, "vout should be at most 10 digits"),
+                Self::TooLong => write!(f, "outpoint string is longer than 75 characters"),
                 Self::VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
             }
         }
