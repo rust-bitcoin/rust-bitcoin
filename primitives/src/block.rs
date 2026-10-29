@@ -344,8 +344,10 @@ impl Block<Unchecked> {
     ///
     /// # Returns
     ///
-    /// Returns the witness Merkle root if it was computed. This can then be passed into
-    /// [`assume_checked`] to save re-calculating it.
+    /// Whether the witness commitment is valid, and the witness Merkle root if it was computed.
+    /// The commitment is valid if it matches the transaction list, or if it is absent and no
+    /// transaction has witness data. The root can then be passed into [`assume_checked`] to save
+    /// re-calculating it.
     ///
     /// [`assume_checked`]: Block<Unchecked>::assume_checked
     ///
