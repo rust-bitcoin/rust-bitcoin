@@ -86,6 +86,26 @@ impl CompactSizeEncoder {
         }
     }
 
+    /// Returns the number of bytes used to encode this `CompactSize` value minus one.
+    ///
+    /// Intended for use in `encoded_tail_len`.
+    ///
+    /// # Returns
+    ///
+    /// - 0 for 0..=0xFC
+    /// - 2 for 0xFD..=(2^16-1)
+    /// - 4 for 0x10000..=(2^32-1)
+    /// - 8 otherwise.
+    #[inline]
+    pub const fn encoded_tail_size(value: usize) -> usize {
+        match value {
+            0..=0xFC => 0,
+            0xFD..=0xFFFF => 2,
+            0x10000..=0xFFFF_FFFF => 4,
+            _ => 8,
+        }
+    }
+
     /// Encodes `CompactSize` without allocating.
     #[inline]
     fn encode(value: u64) -> ArrayVec<u8, SIZE> {
