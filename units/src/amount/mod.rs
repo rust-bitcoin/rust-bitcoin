@@ -79,7 +79,8 @@ pub use self::error::AmountDecoderError;
 pub use self::error::{
     BadPositionError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
     OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-    PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
+    PossiblyConfusingDenominationError, TooHighAmountError, TooLowAmountError, TooPreciseError,
+    UnknownDenominationError,
 };
 #[doc(inline)]
 #[cfg(feature = "encoding")]
@@ -426,11 +427,14 @@ impl InnerParseError {
     #[inline]
     fn convert(self, is_signed: bool) -> ParseAmountError {
         match self {
-            Self::Overflow { is_negative } =>
-                ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError {
-                    is_signed,
-                    is_greater_than_max: !is_negative,
-                })),
+            Self::Overflow { is_negative } => {
+                let error = match (is_negative, is_signed) {
+                    (false, _) => OutOfRangeError::too_big(),
+                    (true, true) => OutOfRangeError::too_small(),
+                    (true, false) => OutOfRangeError::negative(),
+                };
+                ParseAmountError(ParseAmountErrorInner::OutOfRange(error))
+            }
             Self::TooPrecise(e) => ParseAmountError(ParseAmountErrorInner::TooPrecise(e)),
             Self::MissingDigits(e) => ParseAmountError(ParseAmountErrorInner::MissingDigits(e)),
             Self::InvalidCharacter(e) =>

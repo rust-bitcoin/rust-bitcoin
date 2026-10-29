@@ -87,9 +87,9 @@ mod encapsulate {
         #[inline]
         pub const fn from_sat(satoshi: i64) -> Result<Self, OutOfRangeError> {
             if satoshi < Self::MIN.to_sat() {
-                Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
+                Err(OutOfRangeError::too_small())
             } else if satoshi > Self::MAX.to_sat() {
-                Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
+                Err(OutOfRangeError::too_big())
             } else {
                 Ok(Self(satoshi))
             }
@@ -153,7 +153,7 @@ impl SignedAmount {
     fn from_sat_u64(satoshi: u64) -> Result<Self, ParseAmountError> {
         // u64 -> i64 only fails if value is greater than i64::MAX, which is also > Self::MAX.
         let amount = i64::try_from(satoshi)
-            .map_err(|_| OutOfRangeError { is_signed: true, is_greater_than_max: true })
+            .map_err(|_| OutOfRangeError::too_big())
             .map_err(ParseAmountErrorInner::OutOfRange)
             .map_err(ParseAmountError)?;
         Self::from_sat(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)

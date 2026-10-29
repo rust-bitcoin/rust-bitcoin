@@ -90,7 +90,7 @@ mod encapsulate {
         #[inline]
         pub const fn from_sat(satoshi: u64) -> Result<Self, OutOfRangeError> {
             if satoshi > Self::MAX.to_sat() {
-                Err(OutOfRangeError { is_signed: false, is_greater_than_max: true })
+                Err(OutOfRangeError::too_big())
             } else {
                 Ok(Self(satoshi))
             }
