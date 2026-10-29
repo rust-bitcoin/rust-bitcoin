@@ -159,21 +159,24 @@ impl_bip32_seed_from_array!(
 
 /// Extended private key
 ///
+/// Read metadata through the getters. Use checked [`Self::from_parts`] construction and
+/// [`Self::to_parts`] for component access, including the raw private key.
+///
 /// `Debug` hides only the private-key field; metadata, including the chain code, remains visible.
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Xpriv {
     /// The network this key is to be used on
-    pub network: NetworkKind,
+    network: NetworkKind,
     /// How many derivations this key is from the master (which is 0)
-    pub depth: u8,
+    depth: u8,
     /// Fingerprint of the parent key (0 for master)
-    pub parent_fingerprint: Fingerprint,
+    parent_fingerprint: Fingerprint,
     /// Child number of the key used to derive from parent (0 for master)
-    pub child_number: ChildNumber,
+    child_number: ChildNumber,
     /// Private key
-    pub private_key: secp256k1::SecretKey,
+    private_key: secp256k1::SecretKey,
     /// Chain code
-    pub chain_code: ChainCode,
+    chain_code: ChainCode,
 }
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpriv, "a BIP-0032 extended private key");
@@ -192,20 +195,23 @@ impl fmt::Debug for Xpriv {
 }
 
 /// Extended public key
+///
+/// Read metadata through the getters. Use checked [`Self::from_parts`] construction and
+/// [`Self::to_parts`] for component access, including the raw public key.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
 pub struct Xpub {
     /// The network kind this key is to be used on
-    pub network: NetworkKind,
+    network: NetworkKind,
     /// How many derivations this key is from the master (which is 0)
-    pub depth: u8,
+    depth: u8,
     /// Fingerprint of the parent key
-    pub parent_fingerprint: Fingerprint,
+    parent_fingerprint: Fingerprint,
     /// Child number of the key used to derive from parent (0 for master)
-    pub child_number: ChildNumber,
+    child_number: ChildNumber,
     /// Public key
-    pub public_key: secp256k1::PublicKey,
+    public_key: secp256k1::PublicKey,
     /// Chain code
-    pub chain_code: ChainCode,
+    chain_code: ChainCode,
 }
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpub, "a BIP-0032 extended public key");
@@ -2136,9 +2142,9 @@ mod tests {
         data[..2].fill(0);
         let xpub = Xpub::arbitrary(&mut Unstructured::new(&data)).unwrap();
 
-        assert_eq!(xpub.depth, 0);
-        assert_eq!(xpub.parent_fingerprint, Fingerprint::default());
-        assert_eq!(xpub.child_number, ChildNumber::ZERO_NORMAL);
+        assert_eq!(xpub.depth(), 0);
+        assert_eq!(xpub.parent_fingerprint(), Fingerprint::default());
+        assert_eq!(xpub.child_number(), ChildNumber::ZERO_NORMAL);
         assert_eq!(Xpub::decode(&xpub.encode()).unwrap(), xpub);
     }
 
@@ -2148,9 +2154,9 @@ mod tests {
         let data = [1; 128];
         let xpub = Xpub::arbitrary(&mut Unstructured::new(&data)).unwrap();
 
-        assert_eq!(xpub.depth, 1);
-        assert_eq!(xpub.parent_fingerprint, Fingerprint::from_byte_array([1; 4]));
-        assert_eq!(xpub.child_number, ChildNumber::from_raw(0x0101_0101));
+        assert_eq!(xpub.depth(), 1);
+        assert_eq!(xpub.parent_fingerprint(), Fingerprint::from_byte_array([1; 4]));
+        assert_eq!(xpub.child_number(), ChildNumber::from_raw(0x0101_0101));
         assert_eq!(Xpub::decode(&xpub.encode()).unwrap(), xpub);
     }
 
@@ -2405,7 +2411,7 @@ mod tests {
             sk = sk.derive_child(num).unwrap();
             if num.is_normal() {
                 let tweak = pk.derive_child_tweak(num).unwrap();
-                assert_eq!(tweak.chain_code, Xpub::from_xpriv(&sk).chain_code);
+                assert_eq!(&tweak.chain_code, Xpub::from_xpriv(&sk).chain_code());
 
                 let pk2 = pk.derive_child(num).unwrap();
                 pk = Xpub::from_xpriv(&sk);
@@ -2741,26 +2747,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
     fn schnorr_broken_privkey_zeros() {
-        /* this is how we generate key:
-        let mut sk = secp256k1::key::ONE_KEY;
-
-        let zeros = [0u8; 32];
-        unsafe {
-            sk.as_mut_ptr().copy_from(zeros.as_ptr(), 32);
-        }
-
-        let xpriv = Xpriv {
-            network: NetworkKind::Main,
-            depth: 0,
-            parent_fingerprint: Default::default(),
-            child_number: ChildNumber::ZERO_NORMAL,
-            private_key: sk,
-            chain_code: ChainCode::from([0u8; 32])
-        };
-
-        println!("{}", xpriv);
-         */
-
         // Xpriv having secret key set to all zeros
         let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx";
         xpriv_str.parse::<Xpriv>().unwrap();

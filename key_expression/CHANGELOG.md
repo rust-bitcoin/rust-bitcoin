@@ -4,6 +4,8 @@
 
 - Make `Xpriv` debug formatting redact the private-key field consistently with and without `std`.
 - Add checked `XprivParts`/`XpubParts` construction, xkey metadata getters, and a `secp256k1` crate re-export.
+- BREAKING: Make `Xpriv`/`Xpub` fields private; use metadata getters, checked `from_parts` construction,
+  and `to_parts` for raw-key access.
 
 ## [0.1.0] - 2026-05-28
 
