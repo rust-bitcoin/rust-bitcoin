@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Make `Xpriv` debug formatting redact the private-key field consistently with and without `std`.
+- Add checked `XprivParts`/`XpubParts` construction, xkey metadata getters, and a `secp256k1` crate re-export.
 
 ## [0.1.0] - 2026-05-28
 
