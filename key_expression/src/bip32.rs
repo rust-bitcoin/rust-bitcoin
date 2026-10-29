@@ -5,8 +5,11 @@
 //! Implementation of BIP-0032 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
+#[cfg(feature = "alloc")]
 use alloc::vec;
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
+#[cfg(feature = "alloc")]
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
@@ -24,9 +27,12 @@ pub use self::error::{
     CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
     InvalidBase58PayloadLengthError, InvalidSeedLengthError, InvalidXkeyPartsError,
     MaximumDepthExceededError, ParseAbsoluteDerivationPathError, ParseChildNumberError,
-    ParseRelativeDerivationPathError, ParseXprivError, ParseXpubError, XkeyDecodeError,
-    XprivDecodeError, XpubDecodeError
+    ParseRelativeDerivationPathError, XkeyDecodeError, XprivDecodeError, XpubDecodeError,
 };
+#[rustfmt::skip]
+#[cfg(feature = "alloc")]
+#[doc(no_inline)]
+pub use self::error::{ParseXprivError, ParseXpubError};
 
 /// Version bytes for extended public keys on Bitcoin Mainnet.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -48,7 +54,7 @@ pub type ExtendedPrivKey = Xpriv;
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
-impl_array_newtype!(ChainCode, u8, 32);
+impl_array_newtype!(ChainCode, u8, 32, #[cfg(feature = "alloc")]);
 crate::impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
@@ -58,6 +64,7 @@ impl ChainCode {
 
     /// Copies the underlying bytes into a new `Vec`.
     #[inline]
+    #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use to_vec instead")]
     pub fn to_bytes(self) -> alloc::vec::Vec<u8> { self.to_vec() }
 }
@@ -65,7 +72,7 @@ impl ChainCode {
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
-impl_array_newtype!(Fingerprint, u8, 4);
+impl_array_newtype!(Fingerprint, u8, 4, #[cfg(feature = "alloc")]);
 crate::impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {
@@ -178,6 +185,7 @@ pub struct Xpriv {
     /// Chain code
     chain_code: ChainCode,
 }
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpriv, "a BIP-0032 extended private key");
 
@@ -213,6 +221,7 @@ pub struct Xpub {
     /// Chain code
     chain_code: ChainCode,
 }
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpub, "a BIP-0032 extended public key");
 
@@ -488,12 +497,15 @@ impl serde::Serialize for ChildNumber {
 }
 
 /// A relative BIP-0032 derivation path.
+#[cfg(feature = "alloc")]
 #[derive(Default, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct RelativeDerivationPath(Vec<ChildNumber>);
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(RelativeDerivationPath, "a relative BIP-0032 derivation path");
 
+#[cfg(feature = "alloc")]
 impl<I> Index<I> for RelativeDerivationPath
 where
     Vec<ChildNumber>: Index<I>,
@@ -504,18 +516,22 @@ where
     fn index(&self, index: I) -> &Self::Output { &self.0[index] }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Vec<ChildNumber>> for RelativeDerivationPath {
     fn from(numbers: Vec<ChildNumber>) -> Self { Self(numbers) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<RelativeDerivationPath> for Vec<ChildNumber> {
     fn from(path: RelativeDerivationPath) -> Self { path.0 }
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> From<&'a [ChildNumber]> for RelativeDerivationPath {
     fn from(numbers: &'a [ChildNumber]) -> Self { Self(numbers.to_vec()) }
 }
 
+#[cfg(feature = "alloc")]
 impl core::iter::FromIterator<ChildNumber> for RelativeDerivationPath {
     fn from_iter<T>(iter: T) -> Self
     where
@@ -525,6 +541,7 @@ impl core::iter::FromIterator<ChildNumber> for RelativeDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[allow(clippy::into_iter_without_iter)]
 impl<'a> core::iter::IntoIterator for &'a RelativeDerivationPath {
     type Item = &'a ChildNumber;
@@ -532,10 +549,12 @@ impl<'a> core::iter::IntoIterator for &'a RelativeDerivationPath {
     fn into_iter(self) -> Self::IntoIter { self.0.iter() }
 }
 
+#[cfg(feature = "alloc")]
 impl AsRef<[ChildNumber]> for RelativeDerivationPath {
     fn as_ref(&self) -> &[ChildNumber] { &self.0 }
 }
 
+#[cfg(feature = "alloc")]
 impl FromStr for RelativeDerivationPath {
     type Err = ParseRelativeDerivationPathError;
 
@@ -570,12 +589,15 @@ impl FromStr for RelativeDerivationPath {
 ///
 /// [PR #2451]: https://github.com/rust-bitcoin/rust-bitcoin/pull/2451
 /// [PR #2677]: https://github.com/rust-bitcoin/rust-bitcoin/pull/2677
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct AbsoluteDerivationPath(RelativeDerivationPath);
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(AbsoluteDerivationPath, "an absolute BIP-0032 derivation path");
 
+#[cfg(feature = "alloc")]
 impl AbsoluteDerivationPath {
     /// Returns the absolute derivation path for a master key.
     pub fn master() -> Self { Self(RelativeDerivationPath::default()) }
@@ -603,10 +625,12 @@ impl AbsoluteDerivationPath {
     pub fn join<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self { Self(self.0.join(path)) }
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AbsoluteDerivationPath {
     fn default() -> Self { Self::master() }
 }
 
+#[cfg(feature = "alloc")]
 impl FromStr for AbsoluteDerivationPath {
     type Err = ParseAbsoluteDerivationPathError;
 
@@ -632,6 +656,7 @@ impl FromStr for AbsoluteDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for AbsoluteDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("m")?;
@@ -647,10 +672,12 @@ impl fmt::Display for AbsoluteDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<RelativeDerivationPath> for AbsoluteDerivationPath {
     fn from(path: RelativeDerivationPath) -> Self { Self(path) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<AbsoluteDerivationPath> for RelativeDerivationPath {
     fn from(path: AbsoluteDerivationPath) -> Self { path.0 }
 }
@@ -659,11 +686,13 @@ impl From<AbsoluteDerivationPath> for RelativeDerivationPath {
 ///
 /// It is returned by the methods [`RelativeDerivationPath::children_from`],
 /// [`RelativeDerivationPath::normal_children`] and [`RelativeDerivationPath::hardened_children`].
+#[cfg(feature = "alloc")]
 pub struct RelativeDerivationPathIterator<'a> {
     base: &'a RelativeDerivationPath,
     next_child: Option<ChildNumber>,
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> RelativeDerivationPathIterator<'a> {
     /// Starts a new [`RelativeDerivationPathIterator`] at the given child.
     pub fn start_from(path: &'a RelativeDerivationPath, start: ChildNumber) -> Self {
@@ -671,6 +700,7 @@ impl<'a> RelativeDerivationPathIterator<'a> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl Iterator for RelativeDerivationPathIterator<'_> {
     type Item = RelativeDerivationPath;
 
@@ -681,6 +711,7 @@ impl Iterator for RelativeDerivationPathIterator<'_> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl RelativeDerivationPath {
     /// Returns length of the derivation path
     pub fn len(&self) -> usize { self.0.len() }
@@ -772,6 +803,7 @@ impl RelativeDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for RelativeDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.0.iter();
@@ -794,12 +826,14 @@ impl fmt::Display for RelativeDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Debug for RelativeDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self, f) }
 }
 
 /// Full information on the used extended public key: fingerprint of the
 /// master extended public key and a derivation path from it.
+#[cfg(feature = "alloc")]
 pub type KeySource = (Fingerprint, RelativeDerivationPath);
 
 impl Xpriv {
@@ -1230,12 +1264,14 @@ impl Xpub {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for Xpriv {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         base58::Base58CkString::encode_unbounded(&self.encode()).fmt(fmt)
     }
 }
 
+#[cfg(feature = "alloc")]
 impl FromStr for Xpriv {
     type Err = ParseXprivError;
 
@@ -1251,12 +1287,14 @@ impl FromStr for Xpriv {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for Xpub {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         base58::Base58CkString::encode_unbounded(&self.encode()[..]).fmt(fmt)
     }
 }
 
+#[cfg(feature = "alloc")]
 impl FromStr for Xpub {
     type Err = ParseXpubError;
 
@@ -1519,6 +1557,7 @@ pub mod error {
     }
 
     /// Error parsing a base58check BIP-0032 xpriv string.
+    #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum ParseXprivError {
@@ -1530,6 +1569,7 @@ pub mod error {
         Decode(XprivDecodeError),
     }
 
+    #[cfg(feature = "alloc")]
     impl From<Infallible> for ParseXprivError {
         fn from(never: Infallible) -> Self { match never {} }
     }
@@ -1545,6 +1585,7 @@ pub mod error {
         }
     }
 
+    #[cfg(feature = "alloc")]
     impl fmt::Display for ParseXprivError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -1555,11 +1596,13 @@ pub mod error {
         }
     }
 
+    #[cfg(feature = "alloc")]
     impl From<base58::DecodeCheckError> for ParseXprivError {
         fn from(e: base58::DecodeCheckError) -> Self { Self::Base58(e) }
     }
 
     /// Error parsing a base58check BIP-0032 xpub string.
+    #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum ParseXpubError {
@@ -1571,6 +1614,7 @@ pub mod error {
         Decode(XpubDecodeError),
     }
 
+    #[cfg(feature = "alloc")]
     impl From<Infallible> for ParseXpubError {
         fn from(never: Infallible) -> Self { match never {} }
     }
@@ -1586,6 +1630,7 @@ pub mod error {
         }
     }
 
+    #[cfg(feature = "alloc")]
     impl fmt::Display for ParseXpubError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -1596,6 +1641,7 @@ pub mod error {
         }
     }
 
+    #[cfg(feature = "alloc")]
     impl From<base58::DecodeCheckError> for ParseXpubError {
         fn from(e: base58::DecodeCheckError) -> Self { Self::Base58(e) }
     }
@@ -1886,6 +1932,7 @@ pub mod error {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for RelativeDerivationPath {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -1894,6 +1941,7 @@ impl<'a> Arbitrary<'a> for RelativeDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AbsoluteDerivationPath {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -1990,6 +2038,7 @@ impl<'a> Arbitrary<'a> for Xpriv {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
     use alloc::format;
