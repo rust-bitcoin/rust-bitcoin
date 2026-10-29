@@ -302,32 +302,35 @@ crate::internal_macros::impl_op_for_references! {
     }
 }
 
-// Implement AddAssign on NumOpResults for all wrapped types that already implement AddAssign on themselves
-impl<T: ops::AddAssign> ops::AddAssign<T> for NumOpResult<T> {
-    #[inline]
-    #[track_caller]
-    fn add_assign(&mut self, rhs: T) {
-        if let Self::Valid(ref mut lhs) = self {
-            *lhs += rhs;
-        }
-    }
-}
-
-impl<T: ops::AddAssign + Copy> ops::AddAssign<Self> for NumOpResult<T> {
-    #[inline]
-    #[track_caller]
-    fn add_assign(&mut self, rhs: Self) {
-        match (&self, rhs) {
-            (Self::Valid(_), Self::Valid(rhs)) => *self += rhs,
-            (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
-            (Self::Error(_), _) => (), // If the lhs is an error, preserve it
-        }
-    }
-}
-
-// Generates checked subtraction assignments for wrapped numeric types.
-macro_rules! impl_checked_sub_assign {
+// Generates checked addition and subtraction assignments for wrapped numeric types.
+macro_rules! impl_checked_assign {
     ($ty:ty, $is_negative:expr) => {
+        impl ops::AddAssign<$ty> for NumOpResult<$ty> {
+            #[inline]
+            #[track_caller]
+            fn add_assign(&mut self, rhs: $ty) {
+                if let Self::Valid(lhs) = *self {
+                    let rhs_is_negative = ($is_negative)(rhs);
+                    *self = lhs.checked_add(rhs).valid_or_error(MathErrorKind::Overflow {
+                        op: MathOp::Add,
+                        is_negative: rhs_is_negative,
+                    });
+                }
+            }
+        }
+
+        impl ops::AddAssign<Self> for NumOpResult<$ty> {
+            #[inline]
+            #[track_caller]
+            fn add_assign(&mut self, rhs: Self) {
+                match (&self, rhs) {
+                    (Self::Valid(_), Self::Valid(rhs)) => *self += rhs,
+                    (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
+                    (Self::Error(_), _) => (), // If the lhs is an error, preserve it
+                }
+            }
+        }
+
         impl ops::SubAssign<$ty> for NumOpResult<$ty> {
             #[inline]
             #[track_caller]
@@ -356,12 +359,12 @@ macro_rules! impl_checked_sub_assign {
     };
 }
 
-impl_checked_sub_assign!(FeeRate, |_| false);
-impl_checked_sub_assign!(Weight, |_| false);
-impl_checked_sub_assign!(BlockHeightInterval, |_| false);
-impl_checked_sub_assign!(BlockMtpInterval, |_| false);
-impl_checked_sub_assign!(u64, |_| false);
-impl_checked_sub_assign!(i64, i64::is_negative);
+impl_checked_assign!(FeeRate, |_| false);
+impl_checked_assign!(Weight, |_| false);
+impl_checked_assign!(BlockHeightInterval, |_| false);
+impl_checked_assign!(BlockMtpInterval, |_| false);
+impl_checked_assign!(u64, |_| false);
+impl_checked_assign!(i64, i64::is_negative);
 
 pub(crate) trait OptionExt<T> {
     fn valid_or_error(self, kind: MathErrorKind) -> NumOpResult<T>;

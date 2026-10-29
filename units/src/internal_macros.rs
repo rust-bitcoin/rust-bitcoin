@@ -100,9 +100,7 @@ pub(crate) use impl_add_assign;
 
 /// Implement `ops::AddAssign` for `$ty` and `NumOpResult<$ty>` on `NumOpResult<$ty>`
 ///
-/// This implements the same logic as the generic [`NumOpResult`] implementation in result.rs,
-/// but works for types that can't implement `AddAssign` on themselves (e.g. [`Amount`],
-/// [`SignedAmount`])
+/// Uses `$ty`'s checked addition operator, which returns [`NumOpResult`].
 ///
 /// [`NumOpResult`]: crate::NumOpResult
 /// [`Amount`]: crate::Amount
