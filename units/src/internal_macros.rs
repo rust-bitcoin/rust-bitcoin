@@ -134,9 +134,7 @@ pub(crate) use impl_add_assign_for_results;
 
 /// Implement `ops::SubAssign` for `$ty` and `NumOpResult<$ty>` on `NumOpResult<$ty>`
 ///
-/// This implements the same logic as the generic [`NumOpResult`] implementation in result.rs,
-/// but works for types that can't implement `SubAssign` on themselves (e.g. [`Amount`],
-/// [`SignedAmount`])
+/// Uses `$ty`'s checked subtraction operator, which returns [`NumOpResult`].
 ///
 /// [`NumOpResult`]: crate::NumOpResult
 /// [`Amount`]: crate::Amount

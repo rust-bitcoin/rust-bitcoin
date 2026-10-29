@@ -9,7 +9,7 @@ use core::{fmt, ops};
 use arbitrary::{Arbitrary, Unstructured};
 use NumOpResult as R;
 
-use crate::{Amount, FeeRate, SignedAmount, Weight};
+use crate::{Amount, BlockHeightInterval, BlockMtpInterval, FeeRate, SignedAmount, Weight};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -325,28 +325,43 @@ impl<T: ops::AddAssign + Copy> ops::AddAssign<Self> for NumOpResult<T> {
     }
 }
 
-// Implement SubAssign on NumOpResults for all wrapped types that already implement SubAssign on themselves
-impl<T: ops::SubAssign> ops::SubAssign<T> for NumOpResult<T> {
-    #[inline]
-    #[track_caller]
-    fn sub_assign(&mut self, rhs: T) {
-        if let Self::Valid(ref mut lhs) = self {
-            *lhs -= rhs;
+// Generates checked subtraction assignments for wrapped numeric types.
+macro_rules! impl_checked_sub_assign {
+    ($ty:ty, $is_negative:expr) => {
+        impl ops::SubAssign<$ty> for NumOpResult<$ty> {
+            #[inline]
+            #[track_caller]
+            fn sub_assign(&mut self, rhs: $ty) {
+                if let Self::Valid(lhs) = *self {
+                    let rhs_is_negative = ($is_negative)(rhs);
+                    *self = lhs.checked_sub(rhs).valid_or_error(MathErrorKind::Overflow {
+                        op: MathOp::Sub,
+                        is_negative: !rhs_is_negative,
+                    });
+                }
+            }
         }
-    }
+
+        impl ops::SubAssign<Self> for NumOpResult<$ty> {
+            #[inline]
+            #[track_caller]
+            fn sub_assign(&mut self, rhs: Self) {
+                match (&self, rhs) {
+                    (Self::Valid(_), Self::Valid(rhs)) => *self -= rhs,
+                    (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
+                    (Self::Error(_), _) => (), // If the lhs is an error, preserve it
+                }
+            }
+        }
+    };
 }
 
-impl<T: ops::SubAssign + Copy> ops::SubAssign<Self> for NumOpResult<T> {
-    #[inline]
-    #[track_caller]
-    fn sub_assign(&mut self, rhs: Self) {
-        match (&self, rhs) {
-            (Self::Valid(_), Self::Valid(rhs)) => *self -= rhs,
-            (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
-            (Self::Error(_), _) => (), // If the lhs is an error, preserve it
-        }
-    }
-}
+impl_checked_sub_assign!(FeeRate, |_| false);
+impl_checked_sub_assign!(Weight, |_| false);
+impl_checked_sub_assign!(BlockHeightInterval, |_| false);
+impl_checked_sub_assign!(BlockMtpInterval, |_| false);
+impl_checked_sub_assign!(u64, |_| false);
+impl_checked_sub_assign!(i64, i64::is_negative);
 
 pub(crate) trait OptionExt<T> {
     fn valid_or_error(self, kind: MathErrorKind) -> NumOpResult<T>;
@@ -367,7 +382,16 @@ macro_rules! impl_opt_ext {
         )*
     }
 }
-impl_opt_ext!(Amount, SignedAmount, u64, i64, FeeRate, Weight);
+impl_opt_ext!(
+    Amount,
+    SignedAmount,
+    u64,
+    i64,
+    FeeRate,
+    Weight,
+    BlockHeightInterval,
+    BlockMtpInterval
+);
 
 /// The math operation that caused the error.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
