@@ -9,6 +9,7 @@ use alloc::borrow::Cow;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::convert::Infallible;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -152,9 +153,39 @@ type VersionMessageInnerDecoder = encoding::Decoder2<
         encoding::ArrayDecoder<8>,
         UserAgentDecoder,
         encoding::ArrayDecoder<4>,
-        encoding::ArrayDecoder<1>,
+        RelayDecoder,
     >,
 >;
+
+/// Decoder for the optional `relay` field of the `version` message.
+///
+/// BIP-0037 appends this field to the end of the message and specifies that if it is missing the
+/// peer behaves as if it were `true`.
+#[derive(Debug, Default, Clone)]
+struct RelayDecoder(Option<bool>);
+
+impl encoding::Decoder for RelayDecoder {
+    type Output = bool;
+    type Error = Infallible;
+
+    fn read_limit(&self) -> usize { usize::from(self.0.is_none()) }
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
+        if self.0.is_none() {
+            if let Some((&relay, rest)) = bytes.split_first() {
+                self.0 = Some(relay != 0);
+                *bytes = rest;
+            }
+        }
+        if self.0.is_some() {
+            Ok(encoding::DecoderStatus::Ready)
+        } else {
+            Ok(encoding::DecoderStatus::NeedsMore)
+        }
+    }
+
+    fn end(self) -> Result<bool, Infallible> { Ok(self.0.unwrap_or(true)) }
+}
 
 crate::decoder_newtype! {
     /// The Decoder for [`VersionMessage`].
@@ -180,7 +211,7 @@ crate::decoder_newtype! {
             nonce: u64::from_le_bytes(nonce),
             user_agent,
             start_height: i32::from_le_bytes(start_height),
-            relay: relay[0] != 0,
+            relay,
         })
     }
 }
@@ -866,6 +897,26 @@ mod tests {
         assert!(real_decode.relay);
 
         assert_eq!(encoding::encode_to_vec(&real_decode), from_sat);
+    }
+
+    #[test]
+    fn version_message_optional_relay() {
+        // Same message as `version_message_test` but without the trailing relay byte.
+        let without_relay = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f0400");
+
+        // BIP-0037: a missing relay field is treated as `true`.
+        let decode: VersionMessage = encoding::decode_from_slice(&without_relay).unwrap();
+        assert!(decode.relay);
+        assert_eq!(decode.start_height, 302_892);
+
+        let mut with_relay_false = without_relay.to_vec();
+        with_relay_false.push(0x00);
+        let decode: VersionMessage = encoding::decode_from_slice(&with_relay_false).unwrap();
+        assert!(!decode.relay);
+
+        // The start height is still required.
+        let truncated = &without_relay[..without_relay.len() - 1];
+        assert!(encoding::decode_from_slice::<VersionMessage>(truncated).is_err());
     }
 
     #[test]

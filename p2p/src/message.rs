@@ -2779,6 +2779,71 @@ mod test {
     }
 
     #[test]
+    fn deserialize_version_without_relay_followed_by_verack() {
+        let version: VersionMessage = encoding::decode_from_slice(&hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040000")).unwrap();
+        assert!(!version.relay);
+
+        // Strip the relay byte off the payload and re-frame the message by hand.
+        let mut payload = encoding::encode_to_vec(&version);
+        payload.pop();
+        let checksum = sha256d::Hash::hash(&payload).to_byte_array();
+
+        let mut stream = Vec::new();
+        stream.extend_from_slice(&Magic::BITCOIN.to_bytes());
+        stream.extend_from_slice(b"version\0\0\0\0\0");
+        stream.extend_from_slice(&u32::try_from(payload.len()).unwrap().to_le_bytes());
+        stream.extend_from_slice(&checksum[..4]);
+        stream.extend_from_slice(&payload);
+        stream.extend_from_slice(&encoding::encode_to_vec(&V1NetworkMessage::new(
+            Magic::BITCOIN,
+            NetworkMessage::Verack,
+        )));
+
+        let mut bytes = stream.as_slice();
+        let msg = encoding::decode_from_slice_unbounded::<V1NetworkMessage>(&mut bytes).unwrap();
+        match msg.payload {
+            NetworkMessage::Version(v) => {
+                assert!(v.relay);
+                assert_eq!(v.start_height, version.start_height);
+            }
+            _ => panic!("wrong message type"),
+        }
+
+        // The verack must be untouched by the preceding version message.
+        let msg = encoding::decode_from_slice_unbounded::<V1NetworkMessage>(&mut bytes).unwrap();
+        assert_eq!(msg.payload, NetworkMessage::Verack);
+        assert!(bytes.is_empty());
+    }
+
+    #[test]
+    fn deserialize_v2_version_without_relay() {
+        #[rustfmt::skip]
+        let msg = encoding::decode_from_slice::<V2NetworkMessage>(&[
+            0x00, // Full command encoding flag
+            0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00, // "version" command
+            0x7f, 0x11, 0x01, 0x00, // version: 70015
+            0x0d, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // services
+            0xf0, 0x0f, 0x4d, 0x5c, 0x00, 0x00, 0x00, 0x00, // timestamp: 1_548_554_224
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // receiver services: NONE
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x5b, 0xf0, 0x8c, 0x80, 0xb4, 0xbd, // addr_recv
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // sender services: NONE
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // addr_from
+            0xfa, 0xa9, 0x95, 0x59, 0xcc, 0x68, 0xa1, 0xc1, // nonce
+            0x10, 0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68, 0x69, 0x3a, 0x30, 0x2e, 0x31, 0x37, 0x2e, 0x31, 0x2f, // user_agent: "/Satoshi:0.17.1/"
+            0x93, 0x8c, 0x08, 0x00, // start_height: 560_275
+            // relay omitted
+        ]).unwrap();
+
+        match msg.payload {
+            NetworkMessage::Version(version_msg) => {
+                assert_eq!(version_msg.start_height, 560_275);
+                assert!(version_msg.relay);
+            }
+            _ => panic!("wrong message type"),
+        }
+    }
+
+    #[test]
     fn deserialize_partial_message() {
         #[rustfmt::skip]
         let data: [u8; 128] = [

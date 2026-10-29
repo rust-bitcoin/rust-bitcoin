@@ -6,7 +6,9 @@
 //! This fuzz target compares the consensus encoding produced by `bitcoin_consensus_encoding::encode_to_vec`
 //! in master branch with `bitcoin::consensus::encode::serialize` from bitcoin 0.32 for all shared types.
 
-use bitcoin_consensus_encoding::{check_encode, decode_from_slice, Decoder};
+use bitcoin_consensus_encoding::{
+    check_encode, decode_from_slice, encode_to_vec, Decode, Decoder, Encode,
+};
 use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
@@ -164,6 +166,22 @@ fn v1_network_message_should_skip(data: &[u8]) -> bool {
         .is_some_and(|command| MASTER_ONLY.contains(&command.trim_end_matches('\0')))
 }
 
+/// Returns `true` if `data` decodes as a `T` whose `version` message omits the optional relay field.
+///
+/// BIP-0037 makes the trailing relay byte optional, the master decoder defaults it to `true` while
+/// the old decoder requires it. Re-encoding always writes the relay byte, so a missing one shows up
+/// as the encoding being longer than the input.
+fn version_relay_missing<T: Decode + Encode>(data: &[u8]) -> bool {
+    decode_from_slice::<T>(data).is_ok_and(|msg| encode_to_vec(&msg).len() > data.len())
+}
+
+/// Returns `true` if `data`, interpreted as a `V1NetworkMessage`, is a `version` message without
+/// the optional relay field.
+fn v1_version_relay_missing(data: &[u8]) -> bool {
+    data.get(4..16).is_some_and(|command| command == b"version\0\0\0\0\0")
+        && version_relay_missing::<p2p::message::V1NetworkMessage>(data)
+}
+
 #[rustfmt::skip] // rustfmt butchers all of these with inconsistent newlines.
 fn do_test(data: &[u8]) {
     compare_encoding!(data, Block);
@@ -212,7 +230,9 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, p2p::message_filter::FilterHeader, bitcoin_0_32::bip158::FilterHeader);
     compare_encoding!(data, p2p::message_network::Reject, bitcoin_0_32::p2p::message_network::Reject);
     compare_encoding!(data, p2p::message_network::RejectReason, bitcoin_0_32::p2p::message_network::RejectReason);
-    compare_encoding!(data, p2p::message_network::VersionMessage, bitcoin_0_32::p2p::message_network::VersionMessage);
+    if !version_relay_missing::<p2p::message_network::VersionMessage>(data) {
+        compare_encoding!(data, p2p::message_network::VersionMessage, bitcoin_0_32::p2p::message_network::VersionMessage);
+    }
 
     // Types that only exist in new bitcoin, but can encode the same as some known type
     compare_encoding!(data, p2p::ProtocolVersion, u32);
@@ -223,7 +243,7 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, p2p::message::Pong, u64);
     // Skip messages unknown to bitcoin 0.32, which never fails them, while master
     // decoder parses can recognize and reject them.
-    if !v1_network_message_should_skip(data) {
+    if !v1_network_message_should_skip(data) && !v1_version_relay_missing(data) {
         compare_encoding!(data, p2p::message::V1NetworkMessage, bitcoin_0_32::p2p::message::RawNetworkMessage);
     }
     compare_encoding!(data, p2p::message_blockdata::BlockLocator, Vec<bitcoin_0_32::BlockHash>);
