@@ -579,7 +579,7 @@ mod tests {
     use std::error::Error;
 
     use crate::result::{MathErrorKind, MathOp, NumOpError, NumOpResult};
-    use crate::{Amount, FeeRate, Weight};
+    use crate::{Amount, BlockHeightInterval, BlockMtpInterval, FeeRate, Weight};
 
     #[test]
     fn mathop_predicates() {
@@ -799,5 +799,82 @@ mod tests {
         let combined = valid - division_by_zero;
 
         assert!(combined.unwrap_err().operation().is_division());
+    }
+
+    #[test]
+    fn sub_assign_overflow() {
+        let one = FeeRate::from_sat_per_mvb(1);
+        let two = FeeRate::from_sat_per_mvb(2);
+        let overflow =
+            NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Sub, is_negative: true });
+
+        let mut result = NumOpResult::Valid(one);
+        result -= two;
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(one);
+        result -= NumOpResult::Valid(two);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(0_u64);
+        result -= 1_u64;
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(BlockHeightInterval::ZERO);
+        result -= BlockHeightInterval::from_u32(1);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(BlockMtpInterval::ZERO);
+        result -= NumOpResult::Valid(BlockMtpInterval::from_u32(1));
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(i64::MAX);
+        result -= -1_i64;
+        assert_eq!(
+            result,
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Sub,
+                is_negative: false,
+            }))
+        );
+    }
+
+    #[test]
+    fn add_assign_overflow() {
+        let one = FeeRate::from_sat_per_mvb(1);
+        let overflow = NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        });
+
+        let mut result = NumOpResult::Valid(FeeRate::MAX);
+        result += one;
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(FeeRate::MAX);
+        result += NumOpResult::Valid(one);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(Weight::MAX);
+        result += Weight::from_wu(1);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(BlockHeightInterval::MAX);
+        result += NumOpResult::Valid(BlockHeightInterval::from_u32(1));
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(BlockMtpInterval::MAX);
+        result += BlockMtpInterval::from_u32(1);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(i64::MIN);
+        result += -1_i64;
+        assert_eq!(
+            result,
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: true,
+            }))
+        );
     }
 }
