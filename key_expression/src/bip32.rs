@@ -27,12 +27,8 @@ pub use self::error::{
     CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
     InvalidBase58PayloadLengthError, InvalidSeedLengthError, MaximumDepthExceededError,
     ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseRelativeDerivationPathError,
-    XkeyDecodeError, XprivDecodeError, XpubDecodeError
+    ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError
 };
-#[rustfmt::skip]
-#[cfg(feature = "alloc")]
-#[doc(no_inline)]
-pub use self::error::{ParseXprivError, ParseXpubError};
 
 /// Version bytes for extended public keys on Bitcoin Mainnet.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -1097,47 +1093,37 @@ impl Xpub {
     }
 }
 
-#[cfg(feature = "alloc")]
 impl fmt::Display for Xpriv {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        base58::Base58CkString::encode_unbounded(&self.encode()).fmt(fmt)
+        base58::Base58CkString::encode(&self.encode())
+            .expect("78 bytes encode to less than the length limit")
+            .fmt(fmt)
     }
 }
 
-#[cfg(feature = "alloc")]
 impl FromStr for Xpriv {
     type Err = ParseXprivError;
 
     fn from_str(inp: &str) -> Result<Self, ParseXprivError> {
-        let data = base58::decode_check(inp)?;
-
-        if data.len() != 78 {
-            return Err(InvalidBase58PayloadLengthError { length: data.len() })
-                .map_err(ParseXprivError::InvalidBase58PayloadLength);
-        }
+        let data = base58::decode_check_to_array::<78>(inp).map_err(ParseXprivError::Base58)?;
 
         Self::decode(&data).map_err(ParseXprivError::Decode)
     }
 }
 
-#[cfg(feature = "alloc")]
 impl fmt::Display for Xpub {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        base58::Base58CkString::encode_unbounded(&self.encode()[..]).fmt(fmt)
+        base58::Base58CkString::encode(&self.encode())
+            .expect("78 bytes encode to less than the length limit")
+            .fmt(fmt)
     }
 }
 
-#[cfg(feature = "alloc")]
 impl FromStr for Xpub {
     type Err = ParseXpubError;
 
     fn from_str(inp: &str) -> Result<Self, ParseXpubError> {
-        let data = base58::decode_check(inp)?;
-
-        if data.len() != 78 {
-            return Err(InvalidBase58PayloadLengthError { length: data.len() })
-                .map_err(ParseXpubError::InvalidBase58PayloadLength);
-        }
+        let data = base58::decode_check_to_array::<78>(inp).map_err(ParseXpubError::Base58)?;
 
         Self::decode(&data).map_err(ParseXpubError::Decode)
     }
@@ -1336,19 +1322,17 @@ pub mod error {
     }
 
     /// Error parsing a base58check BIP-0032 xpriv string.
-    #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum ParseXprivError {
         /// Base58 encoding error.
-        Base58(base58::DecodeCheckError),
+        Base58(base58::DecodeCheckArrayError),
         /// Base58 decoded data was an invalid length.
         InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Binary xpriv decode error.
         Decode(XprivDecodeError),
     }
 
-    #[cfg(feature = "alloc")]
     impl From<Infallible> for ParseXprivError {
         fn from(never: Infallible) -> Self { match never {} }
     }
@@ -1364,7 +1348,6 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "alloc")]
     impl fmt::Display for ParseXprivError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -1375,25 +1358,18 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "alloc")]
-    impl From<base58::DecodeCheckError> for ParseXprivError {
-        fn from(e: base58::DecodeCheckError) -> Self { Self::Base58(e) }
-    }
-
     /// Error parsing a base58check BIP-0032 xpub string.
-    #[cfg(feature = "alloc")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum ParseXpubError {
         /// Base58 encoding error.
-        Base58(base58::DecodeCheckError),
+        Base58(base58::DecodeCheckArrayError),
         /// Base58 decoded data was an invalid length.
         InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Binary xpub decode error.
         Decode(XpubDecodeError),
     }
 
-    #[cfg(feature = "alloc")]
     impl From<Infallible> for ParseXpubError {
         fn from(never: Infallible) -> Self { match never {} }
     }
@@ -1409,7 +1385,6 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "alloc")]
     impl fmt::Display for ParseXpubError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -1418,11 +1393,6 @@ pub mod error {
                 Self::Decode(ref e) => e.fmt(f),
             }
         }
-    }
-
-    #[cfg(feature = "alloc")]
-    impl From<base58::DecodeCheckError> for ParseXpubError {
-        fn from(e: base58::DecodeCheckError) -> Self { Self::Base58(e) }
     }
 
     /// Attempted to derive a child of depth 256 or higher.
