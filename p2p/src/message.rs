@@ -1285,10 +1285,29 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        let before = bytes.len();
-        let result = self.inner.push_bytes(bytes)?;
-        self.bytes_consumed += before - bytes.len();
-        Ok(result)
+        let Some(expected) = self.payload_len else {
+            let before = bytes.len();
+            let result = self.inner.push_bytes(bytes)?;
+            self.bytes_consumed += before - bytes.len();
+            return Ok(result);
+        };
+
+        // Never feed the payload decoder bytes past the declared payload length, they belong to
+        // the next message. Payloads with optional trailing fields (e.g. the `version` relay
+        // flag) rely on this to know where the payload ends.
+        let remaining = expected.saturating_sub(self.bytes_consumed);
+        let mut payload = &bytes[..remaining.min(bytes.len())];
+        let before = payload.len();
+        let result = self.inner.push_bytes(&mut payload)?;
+        let consumed = before - payload.len();
+        self.bytes_consumed += consumed;
+        *bytes = &bytes[consumed..];
+
+        if self.bytes_consumed == expected {
+            Ok(encoding::DecoderStatus::Ready)
+        } else {
+            Ok(result)
+        }
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
