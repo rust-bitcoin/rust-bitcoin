@@ -55,6 +55,7 @@ mod encapsulate {
 
     impl Amount {
         /// The maximum value of an amount.
+        #[doc(alias = "MAX_MONEY")]
         pub const MAX: Self = Self(21_000_000 * 100_000_000);
 
         /// The minimum value of an amount.
@@ -75,7 +76,7 @@ mod encapsulate {
         ///
         /// # Errors
         ///
-        /// If `satoshi` is outside of valid range (greater than [`Self::MAX_MONEY`]).
+        /// If `satoshi` is outside of valid range (greater than [`Self::MAX`]).
         ///
         /// # Examples
         ///
@@ -88,7 +89,7 @@ mod encapsulate {
         /// ```
         #[inline]
         pub const fn from_sat(satoshi: u64) -> Result<Self, OutOfRangeError> {
-            if satoshi > Self::MAX_MONEY.to_sat() {
+            if satoshi > Self::MAX.to_sat() {
                 Err(OutOfRangeError { is_signed: false, is_greater_than_max: true })
             } else {
                 Ok(Self(satoshi))
@@ -111,9 +112,6 @@ impl Amount {
 
     /// Exactly fifty bitcoin.
     pub const FIFTY_BTC: Self = Self::from_btc_u16(50);
-
-    /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = Self::MAX;
 
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.

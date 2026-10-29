@@ -466,16 +466,16 @@ crate::decoder_newtype! {
         let kvb = u64::from_le_bytes(array);
 
         // BIP-0133 specifies feefilter as int64_t (signed), but negative values and values
-        // exceeding Amount::MAX_MONEY are invalid for fee rates.
+        // exceeding Amount::MAX are invalid for fee rates.
         // https://github.com/bitcoin/bitcoin/blob/8396b7f2a3be4be7bb2ffc152f87b4cab95dd84e/src/net_processing.cpp#L4984
-        if kvb > Amount::MAX_MONEY.to_sat() {
+        if kvb > Amount::MAX.to_sat() {
             Err(FeeFilterDecoderError::InvalidFeeRate(kvb))
         } else {
             // We can't directly construct using kvb with any public constructors on FeeRate
-            // because the rate can be up to Amount::MAX_MONEY which overflows all of them.
+            // because the rate can be up to Amount::MAX which overflows all of them.
             // Instead, we construct a 1 sat/kvb and multiply by our kvb.
             let fee_rate = FeeRate::from_sat_per_kvb(kvb)
-                .expect("Amount::MAX_MONEY * 1000 < u64::MAX");
+                .expect("Amount::MAX * 1000 < u64::MAX");
 
             Ok(FeeFilter(fee_rate))
         }
@@ -2049,12 +2049,12 @@ pub mod error {
     pub enum FeeFilterDecoderError {
         /// Unexpected end of data.
         UnexpectedEof(encoding::UnexpectedEofError),
-        /// Fee rate value is out of valid range (must be in the range 0 to [`Amount::MAX_MONEY`]).
+        /// Fee rate value is out of valid range (must be in the range 0 to [`Amount::MAX`]).
         ///
         /// If an error of this variant is thrown while decoding a `V1NetworkMessage`, the message
         /// should be ignored.
         ///
-        /// [`Amount::MAX_MONEY`]: units::Amount::MAX_MONEY
+        /// [`Amount::MAX`]: units::Amount::MAX
         InvalidFeeRate(u64),
     }
 
@@ -2840,16 +2840,16 @@ mod test {
 
     #[test]
     fn fee_filter_decode_edge_cases() {
-        let max_money = units::Amount::MAX_MONEY.to_sat();
+        let max_money = units::Amount::MAX.to_sat();
 
-        // 0 to Amount::MAX_MONEY is valid
+        // 0 to Amount::MAX is valid
         let bytes = 0u64.to_le_bytes();
         assert_eq!(
             encoding::decode_from_slice::<FeeFilter>(&bytes).unwrap(),
             FeeFilter(FeeRate::ZERO)
         );
         let bytes = max_money.to_le_bytes();
-        let max_feerate = FeeFilter(FeeRate::from_sat_per_kvb(Amount::MAX_MONEY.to_sat()).unwrap());
+        let max_feerate = FeeFilter(FeeRate::from_sat_per_kvb(Amount::MAX.to_sat()).unwrap());
         assert_eq!(encoding::decode_from_slice::<FeeFilter>(&bytes).unwrap(), max_feerate);
 
         // Invalid cases
