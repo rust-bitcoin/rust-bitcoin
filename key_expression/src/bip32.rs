@@ -25,10 +25,9 @@ use network::NetworkKind;
 #[doc(no_inline)]
 pub use self::error::{
     CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
-    InvalidBase58PayloadLengthError, InvalidSeedLengthError, InvalidXkeyPartsError,
-    MaximumDepthExceededError, ParseAbsoluteDerivationPathError, ParseChildNumberError,
-    ParseRelativeDerivationPathError, ParseXprivError, ParseXpubError, XkeyDecodeError,
-    XprivDecodeError, XpubDecodeError,
+    InvalidSeedLengthError, InvalidXkeyPartsError, MaximumDepthExceededError,
+    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseRelativeDerivationPathError,
+    ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError,
 };
 
 /// Version bytes for extended public keys on Bitcoin Mainnet.
@@ -1549,8 +1548,6 @@ pub mod error {
     pub enum ParseXprivError {
         /// Base58 encoding error.
         Base58(base58::DecodeCheckArrayError),
-        /// Base58 decoded data was an invalid length.
-        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Binary xpriv decode error.
         Decode(XprivDecodeError),
     }
@@ -1564,7 +1561,6 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::Base58(ref e) => Some(e),
-                Self::InvalidBase58PayloadLength(ref e) => Some(e),
                 Self::Decode(ref e) => Some(e),
             }
         }
@@ -1574,7 +1570,6 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
                 Self::Decode(ref e) => e.fmt(f),
             }
         }
@@ -1586,8 +1581,6 @@ pub mod error {
     pub enum ParseXpubError {
         /// Base58 encoding error.
         Base58(base58::DecodeCheckArrayError),
-        /// Base58 decoded data was an invalid length.
-        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
         /// Binary xpub decode error.
         Decode(XpubDecodeError),
     }
@@ -1601,7 +1594,6 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::Base58(ref e) => Some(e),
-                Self::InvalidBase58PayloadLength(ref e) => Some(e),
                 Self::Decode(ref e) => Some(e),
             }
         }
@@ -1611,7 +1603,6 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
                 Self::Decode(ref e) => e.fmt(f),
             }
         }
@@ -1832,40 +1823,6 @@ pub mod error {
                 Self::MissingMasterPrefix =>
                     f.write_str("absolute derivation path is missing master prefix `m`"),
             }
-        }
-    }
-
-    /// Decoded base58 data was an invalid length.
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct InvalidBase58PayloadLengthError {
-        /// The base58 payload length we got after decoding xpriv/xpub string.
-        pub(crate) length: usize,
-    }
-
-    impl From<Infallible> for InvalidBase58PayloadLengthError {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    #[cfg(feature = "std")]
-    impl std::error::Error for InvalidBase58PayloadLengthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { length: _ } = self;
-            None
-        }
-    }
-
-    impl InvalidBase58PayloadLengthError {
-        /// Returns the invalid payload length.
-        pub fn invalid_base58_payload_length(&self) -> usize { self.length }
-    }
-
-    impl fmt::Display for InvalidBase58PayloadLengthError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(
-                f,
-                "decoded base58 xpriv/xpub data was an invalid length: {} (expected 78)",
-                self.length
-            )
         }
     }
 
