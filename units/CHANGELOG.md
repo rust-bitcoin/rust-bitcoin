@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-29
+
+The last last RC release.
+
+* Rename `Sequence` height block count [#7110](https://github.com/rust-bitcoin/rust-bitcoin/pull/7110)
+* Remove unused fee_rate `serde` `OverflowError` [#7111](https://github.com/rust-bitcoin/rust-bitcoin/pull/7111)
+
 ## [0.6.0] - 2026-10-14
 
 * Make zero target convert to zero work [#6872](https://github.com/rust-bitcoin/rust-bitcoin/pull/6872)
