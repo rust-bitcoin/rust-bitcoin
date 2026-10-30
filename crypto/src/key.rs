@@ -768,16 +768,16 @@ impl LegacyPublicKey {
     ///
     /// # Errors
     ///
-    /// * [`FromSliceError::InvalidLength`] if the slice has an invalid number of bytes.
-    /// * [`FromSliceError::InvalidKeyPrefix`] if the key prefix is invalid.
-    /// * [`FromSliceError::InvalidPublicKey`] if the provided bytes do not form a valid public key.
+    /// * [`FromSliceError::Length`] if the slice has an invalid number of bytes.
+    /// * [`FromSliceError::KeyPrefix`] if the key prefix is invalid.
+    /// * [`FromSliceError::PublicKey`] if the provided bytes do not form a valid public key.
     #[inline]
     pub fn from_slice(data: &[u8]) -> Result<Self, FromSliceError> {
         let compressed = match data.len() {
             33 => true,
             65 => false,
             len => {
-                return Err(FromSliceError::InvalidLength(len));
+                return Err(FromSliceError::Length(len));
             }
         };
 
@@ -786,12 +786,12 @@ impl LegacyPublicKey {
             (true, 0x02) => (),
             (true, 0x03) => (),
             (false, 0x04) => (),
-            (_, byte) => return Err(FromSliceError::InvalidKeyPrefix(byte)),
+            (_, byte) => return Err(FromSliceError::KeyPrefix(byte)),
         }
 
         let secp_key = secp256k1::PublicKey::from_slice(data)
             .map_err(|_| InvalidPublicKeyError)
-            .map_err(FromSliceError::InvalidPublicKey)?;
+            .map_err(FromSliceError::PublicKey)?;
         Ok(match compressed {
             true => Self::from_secp(secp_key),
             false => Self::from_secp_uncompressed(secp_key),
@@ -1629,12 +1629,6 @@ impl fmt::Display for TweakedPublicKey {
 pub type UntweakedKeypair = Keypair;
 
 impl TweakedKeypair {
-    /// Returns the underlying key pair.
-    #[inline]
-    #[doc(hidden)]
-    #[deprecated(since = "0.32.6", note = "use into_keypair() instead")]
-    pub fn to_inner(self) -> Keypair { self.into_keypair() }
-
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
     pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
@@ -1696,11 +1690,11 @@ pub mod error {
     #[non_exhaustive]
     pub enum FromSliceError {
         /// Invalid key prefix error.
-        InvalidKeyPrefix(u8),
+        KeyPrefix(u8),
         /// Invalid pubkey bytes error.
-        InvalidPublicKey(InvalidPublicKeyError),
+        PublicKey(InvalidPublicKeyError),
         /// Invalid Length of the slice.
-        InvalidLength(usize),
+        Length(usize),
     }
 
     impl From<Infallible> for FromSliceError {
@@ -1712,9 +1706,9 @@ pub mod error {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::InvalidPublicKey(ref e) => write_err!(f, "invalid pubkey error"; e),
-                Self::InvalidKeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
-                Self::InvalidLength(got) =>
+                Self::PublicKey(ref e) => write_err!(f, "invalid pubkey error"; e),
+                Self::KeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
+                Self::Length(got) =>
                     write!(f, "slice length should be 33 or 65 bytes, got: {}", got),
             }
         }
@@ -1725,8 +1719,8 @@ pub mod error {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::InvalidPublicKey(ref e) => Some(e),
-                Self::InvalidKeyPrefix(_) | Self::InvalidLength(_) => None,
+                Self::PublicKey(ref e) => Some(e),
+                Self::KeyPrefix(_) | Self::Length(_) => None,
             }
         }
     }
@@ -2418,7 +2412,7 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
-            ParsePublicKeyError::Encoding(FromSliceError::InvalidPublicKey(InvalidPublicKeyError))
+            ParsePublicKeyError::Encoding(FromSliceError::PublicKey(InvalidPublicKeyError))
         );
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd169";
@@ -2427,17 +2421,14 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
-            ParsePublicKeyError::Encoding(FromSliceError::InvalidPublicKey(InvalidPublicKeyError))
+            ParsePublicKeyError::Encoding(FromSliceError::PublicKey(InvalidPublicKeyError))
         );
 
         let s = "062e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
         assert_eq!(s.len(), 130);
         let res = s.parse::<LegacyPublicKey>();
         assert!(res.is_err());
-        assert_eq!(
-            res.unwrap_err(),
-            ParsePublicKeyError::Encoding(FromSliceError::InvalidKeyPrefix(6))
-        );
+        assert_eq!(res.unwrap_err(), ParsePublicKeyError::Encoding(FromSliceError::KeyPrefix(6)));
 
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b13g";
         assert_eq!(s.len(), 130);
