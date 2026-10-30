@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-30
+
+- Do not drop encoders with an empty first chunk [#6941](https://github.com/rust-bitcoin/rust-bitcoin/pull/6941)
+- docs: Fix wrong default limit in `CompactSizeDecoder` [#7058](https://github.com/rust-bitcoin/rust-bitcoin/pull/7058)
+- Upgrade to `bitcoin-internals 0.8.1` (nothing in `internals` appears in the public API)
+
 ## [1.3.0] - 2026-09-21
 
 - Add `ExactSizeEncoder` implementations for `IterEncoder`, `SliceEncoder`, and
@@ -116,7 +122,8 @@ around but the work got done. Props to him for many of the ideas.
 
 Empty crate to reserve the name on crates.io
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.3.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.3.1...HEAD
+[1.3.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.3.0...bitcoin-consensus-encoding-1.3.1
 [1.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.2.0...bitcoin-consensus-encoding-1.3.0
 [1.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.1.0...bitcoin-consensus-encoding-1.2.0
 [1.1.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.0.0...bitcoin-consensus-encoding-1.1.0
