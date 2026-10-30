@@ -133,13 +133,14 @@ impl Witness {
         Self { content: Vec::new(), witness_elements: 0, indices_start: 0 }
     }
 
-    /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
+    /// Constructs a new [`Witness`] object from a slice of byte slices where each slice is a witness
+    /// item.
     ///
     /// # Panics
     ///
-    /// Panics if the starting offset of the last element within encoded bytes exceeds `u32::MAX`. When
-    /// the sum of the lengths of the elements before the last one, including their length prefixes,
-    /// is larger than that maximum.
+    /// Panics if the starting offset of the last element within the encoded bytes exceeds
+    /// `u32::MAX`, i.e., if the sum of the lengths of the elements before the last one, including
+    /// their length prefixes, is larger than that maximum.
     ///
     /// # Examples
     ///
@@ -356,7 +357,7 @@ impl Witness {
     }
 }
 
-/// Correctness Requirements: value must always fit within u32
+/// Correctness requirements: `value` must always fit within a `u32`.
 #[inline]
 #[track_caller]
 fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value: usize) {
@@ -931,7 +932,7 @@ impl<'a> Arbitrary<'a> for Witness {
     }
 }
 
-/// Cast a decoded length prefix to a `usize`.
+/// Casts a decoded length prefix to a `usize`.
 ///
 /// This function is basically just defensive. For all sane use cases the length prefix should be
 /// less than `MAX_VEC_SIZE` (on a 32-bit machine). If the value is bigger that `u16::MAX` and we

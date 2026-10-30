@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 #![cfg(feature = "alloc")]
 
 use bitcoin_primitives::block::{Block, Unchecked};

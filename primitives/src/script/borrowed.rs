@@ -206,7 +206,7 @@ impl<T> Script<T> {
     #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
-    /// Constructs a new script builder
+    /// Constructs a new script builder.
     pub fn builder() -> Builder<T> { Builder::new() }
 
     /// Returns witness version of the script, if any.
@@ -312,7 +312,7 @@ impl ScriptPubKey {
 }
 
 impl WitnessScript {
-    /// Returns 256-bit hash of the script for P2WSH outputs.
+    /// Returns the 256-bit hash of the script for P2WSH outputs.
     ///
     /// # Errors
     ///
@@ -324,7 +324,7 @@ impl WitnessScript {
 }
 
 impl<T: ScriptHashableTag> Script<T> {
-    /// Returns 160-bit hash of the script for P2SH outputs.
+    /// Returns the 160-bit hash of the script for P2SH outputs.
     ///
     /// # Errors
     ///

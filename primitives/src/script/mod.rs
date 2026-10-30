@@ -258,6 +258,7 @@ impl AsRef<ScriptCode> for ScriptPubKeyBuf {
         script_pub_key.as_ref()
     }
 }
+
 impl From<WitnessScriptBuf> for SignetBlockScriptBuf {
     #[inline]
     fn from(buf: WitnessScriptBuf) -> Self { Self::from_bytes(buf.into_bytes()) }
@@ -310,7 +311,6 @@ impl<'a, T> From<&'a Script<T>> for Cow<'a, Script<T>> {
     fn from(value: &'a Script<T>) -> Self { Cow::Borrowed(value) }
 }
 
-/// Note: This will fail to compile on old Rust for targets that don't support atomics
 #[cfg(target_has_atomic = "ptr")]
 impl<'a, T> From<&'a Script<T>> for Arc<Script<T>> {
     #[inline]

@@ -271,6 +271,7 @@ pub mod error {
             }
         }
     }
+
     /// Error attempting to create a [`WitnessVersion`] from an integer.
     ///
     /// [`WitnessVersion`]: super::WitnessVersion
