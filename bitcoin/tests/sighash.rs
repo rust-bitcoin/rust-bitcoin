@@ -218,7 +218,7 @@ fn bip_341_sighash_tests() {
 
         let tweaked_keypair = tweaked_keypair.into_keypair();
         let key_spend_sig = tweaked_keypair
-            .raw_bip340_sign_with_aux_randomness(&sighash.to_byte_array(), &[0u8; 32]);
+            .raw_bip340_sign_with_aux_randomness(&sighash.to_byte_array(), [0u8; 32]);
 
         assert_eq!(expected.internal_pubkey.with_parity(internal_key.parity()), internal_key);
         assert_eq!(expected.sig_msg, sig_msg.to_lower_hex_string());

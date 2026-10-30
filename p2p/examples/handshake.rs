@@ -88,10 +88,10 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time error").as_secs();
 
     // "The network address of the node receiving this message"
-    let addr_recv = address::Address::new(&address, ServiceFlags::NONE);
+    let addr_recv = address::Address::new(address, ServiceFlags::NONE);
 
     // "The network address of the node emitting this message"
-    let addr_from = address::Address::new(&my_address, ServiceFlags::NONE);
+    let addr_from = address::Address::new(my_address, ServiceFlags::NONE);
 
     // "Node random nonce, randomly generated every time a version packet is sent. This nonce is used to detect connections to self."
     // Because this crate does not include the `rand` dependency, this is a fixed value.

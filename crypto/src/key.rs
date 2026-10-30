@@ -387,9 +387,9 @@ impl XOnlyPublicKey {
     /// Errors if the provided bytes don't represent a valid secp256k1 point x-coordinate.
     #[inline]
     pub fn from_byte_array(
-        data: &[u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
+        data: [u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
     ) -> Result<Self, ParseXOnlyPublicKeyError> {
-        secp256k1::XOnlyPublicKey::from_byte_array(*data)
+        secp256k1::XOnlyPublicKey::from_byte_array(data)
             .map(|key| Self::from_secp(key, Parity::Even))
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
@@ -433,8 +433,8 @@ impl XOnlyPublicKey {
     ///
     /// If the resulting key would be invalid.
     #[inline]
-    pub fn add_tweak(&self, tweak: &secp256k1::Scalar) -> Result<Self, TweakXOnlyPublicKeyError> {
-        match self.to_inner().add_tweak(tweak) {
+    pub fn add_tweak(self, tweak: secp256k1::Scalar) -> Result<Self, TweakXOnlyPublicKeyError> {
+        match self.to_inner().add_tweak(&tweak) {
             Ok((xonly, parity)) => Ok(Self::from_secp(xonly, parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
             Err(secp256k1::Error::InvalidParityValue(_)) =>
@@ -456,7 +456,7 @@ impl XOnlyPublicKey {
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
+    pub fn to_hex(self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl FromStr for XOnlyPublicKey {
@@ -587,9 +587,9 @@ impl Keypair {
     pub fn raw_bip340_sign_with_aux_randomness(
         &self,
         msg: &[u8],
-        aux_rand: &[u8; 32],
+        aux_rand: [u8; 32],
     ) -> secp256k1::schnorr::Signature {
-        secp256k1::schnorr::sign_with_aux_rand(msg, self.as_inner(), aux_rand)
+        secp256k1::schnorr::sign_with_aux_rand(msg, self.as_inner(), &aux_rand)
     }
 }
 
@@ -1089,8 +1089,8 @@ impl PrivateKey {
     /// Errors when the secret key is invalid: when it is all-zeros or would exceed
     /// the curve order when interpreted as a big-endian unsigned integer.
     #[inline]
-    pub fn from_secret_bytes(data: &[u8; 32]) -> Result<Self, FromSecretBytesError> {
-        secp256k1::SecretKey::from_secret_bytes(*data)
+    pub fn from_secret_bytes(data: [u8; 32]) -> Result<Self, FromSecretBytesError> {
+        secp256k1::SecretKey::from_secret_bytes(data)
             .map(Self::from_secp)
             .map_err(|_| FromSecretBytesErrorInner::InvalidSecretKey)
             .map_err(FromSecretBytesError)
@@ -1612,7 +1612,7 @@ impl TweakedPublicKey {
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
+    pub fn to_hex(self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::LowerHex for TweakedPublicKey {
@@ -1656,7 +1656,7 @@ impl SerializedXOnlyPublicKey {
     /// a valid secp256k1 point x-coordinate.
     #[inline]
     pub fn to_validated(self) -> Result<XOnlyPublicKey, ParseXOnlyPublicKeyError> {
-        XOnlyPublicKey::from_byte_array(self.as_byte_array())
+        XOnlyPublicKey::from_byte_array(*self.as_byte_array())
     }
 }
 
@@ -2467,7 +2467,7 @@ mod tests {
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
         )
         .expect("Failed to convert hex string to byte array");
-        let xonly_pub_key = XOnlyPublicKey::from_byte_array(key_bytes)
+        let xonly_pub_key = XOnlyPublicKey::from_byte_array(*key_bytes)
             .expect("Failed to create an XOnlyPublicKey from a byte array");
         // Confirm that the public key from bytes serializes back to the same bytes
         assert_eq!(&xonly_pub_key.serialize().0, key_bytes);
@@ -2500,7 +2500,7 @@ mod tests {
                 "1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9",
             )
             .unwrap();
-            let sk = PrivateKey::from_secret_bytes(&bytes).unwrap();
+            let sk = PrivateKey::from_secret_bytes(bytes).unwrap();
             Keypair::from_private_key(&sk)
         };
 

@@ -339,8 +339,8 @@ impl ChaCha20 {
                     neon::apply_8_blocks(
                         chunk_lo,
                         chunk_hi,
-                        &self.key,
-                        &self.nonce,
+                        self.key,
+                        self.nonce,
                         self.block_count,
                     );
                     self.block_count += 8;
@@ -351,7 +351,7 @@ impl ChaCha20 {
             let mut chunks = remaining_buffer.chunks_exact_mut(4 * CHACHA_BLOCKSIZE);
             for chunk in &mut chunks {
                 if let Ok(chunk) = <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
-                    neon::apply_4_blocks(chunk, &self.key, &self.nonce, self.block_count);
+                    neon::apply_4_blocks(chunk, self.key, self.nonce, self.block_count);
                     self.block_count += 4;
                 }
             }
@@ -369,7 +369,7 @@ impl ChaCha20 {
                     if let Ok(chunk) = <&mut [u8; 8 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
                         // SAFETY: `avx2_available` guarantees AVX2 support.
                         unsafe {
-                            avx2::apply_8_blocks(chunk, &self.key, &self.nonce, self.block_count);
+                            avx2::apply_8_blocks(chunk, self.key, self.nonce, self.block_count);
                         }
                         self.block_count += 8;
                     }
@@ -384,7 +384,7 @@ impl ChaCha20 {
                 let mut chunks = remaining_buffer.chunks_exact_mut(4 * CHACHA_BLOCKSIZE);
                 for chunk in &mut chunks {
                     if let Ok(chunk) = <&mut [u8; 4 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
-                        sse2::apply_4_blocks(chunk, &self.key, &self.nonce, self.block_count);
+                        sse2::apply_4_blocks(chunk, self.key, self.nonce, self.block_count);
                         self.block_count += 4;
                     }
                 }

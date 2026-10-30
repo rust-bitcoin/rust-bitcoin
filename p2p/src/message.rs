@@ -2389,7 +2389,7 @@ mod test {
             NetworkMessage::Verack,
             NetworkMessage::Addr(AddrPayload(vec![AddrV1Message {
                 time: 45,
-                address: Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
+                address: Address::new(([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
             }])),
             NetworkMessage::Inv(InventoryPayload(vec![Inventory::Block(
                 BlockHash::from_byte_array(hash([8u8; 32]).to_byte_array()),
