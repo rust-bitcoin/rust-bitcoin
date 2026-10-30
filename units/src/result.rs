@@ -359,6 +359,8 @@ macro_rules! impl_checked_assign {
     };
 }
 
+impl_checked_assign!(Amount, |_| false);
+impl_checked_assign!(SignedAmount, SignedAmount::is_negative);
 impl_checked_assign!(FeeRate, |_| false);
 impl_checked_assign!(Weight, |_| false);
 impl_checked_assign!(BlockHeightInterval, |_| false);
