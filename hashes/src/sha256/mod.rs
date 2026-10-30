@@ -64,6 +64,7 @@ impl Hash {
 
     /// Iterates the SHA256 algorithm to turn a SHA256 hash into a `SHA256d` hash.
     #[must_use]
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Released API.
     pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
 
     /// Computes hash from `bytes` in `const` context.
@@ -262,6 +263,7 @@ impl Midstate {
     /// Warning: this function is inefficient. It should be only used in `const` context. In
     /// other contexts, concatenate your arrays and then use [`Self::update_64`].
     #[must_use]
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Released API.
     pub const fn update_2x32_unoptimized(self, left: &[u8; 32], right: &[u8; 32]) -> Self {
         // This method basically only exists because it's extremely hard to put two arrays
         // together into one in a const context, so we can't tell users to call update_64.

@@ -29,6 +29,7 @@ crate::transparent_newtype! {
 
 impl Hash {
     /// Constructs a new hash from the underlying byte array.
+    #[allow(clippy::large_types_passed_by_value)] // Released API.
     pub const fn from_byte_array(bytes: [u8; BYTE_SIZE]) -> Self { Self(bytes) }
 
     /// Returns the underlying byte array.
