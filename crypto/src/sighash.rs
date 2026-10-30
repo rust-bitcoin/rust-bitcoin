@@ -201,8 +201,8 @@ impl EcdsaSighashType {
     ///
     /// See: <https://github.com/bitcoin/bitcoin/blob/e486597/src/script/interpreter.cpp#L1618-L1619>
     #[inline]
-    pub fn is_single(&self) -> bool {
-        match *self {
+    pub fn is_single(self) -> bool {
+        match self {
             Self::Single => true,
             Self::SinglePlusAnyoneCanPay => true,
             Self::NonStandard(n) => (n.to_u32() & 0x1f) == 0x03,
