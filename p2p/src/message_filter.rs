@@ -39,7 +39,7 @@ hashes::impl_serde_for_newtype!(FilterHash, FilterHeader);
 
 impl FilterHash {
     /// Computes the filter header from a filter hash and previous filter header.
-    pub fn filter_header(&self, previous_filter_header: FilterHeader) -> FilterHeader {
+    pub fn filter_header(self, previous_filter_header: FilterHeader) -> FilterHeader {
         let mut engine = sha256d::Hash::engine();
         engine.input(self.as_ref());
         engine.input(previous_filter_header.as_ref());
