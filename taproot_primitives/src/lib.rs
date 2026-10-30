@@ -232,6 +232,7 @@ impl LeafVersion {
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[allow(clippy::wrong_self_convention, clippy::trivially_copy_pass_by_ref)]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
@@ -334,6 +335,7 @@ impl FutureLeafVersion {
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[allow(clippy::wrong_self_convention, clippy::trivially_copy_pass_by_ref)]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
