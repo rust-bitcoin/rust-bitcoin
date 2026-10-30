@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-10-30
+
+- Reject plus sign in `U256` and hex integer strings [#6974](https://github.com/rust-bitcoin/rust-bitcoin/pull/6974)
+
 ## [0.8.1] - 2026-10-12
 
 - Add `track_caller` to `U256` ops [#7000](https://github.com/rust-bitcoin/rust-bitcoin/pull/7000)
@@ -95,7 +99,8 @@ Split this crate out from the [rust-bitcoin](https://github.com/rust-bitcoin/rus
 For previous development history see the original
 [CHANGELOG](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/CHANGELOG.md) file.
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.8.1...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.8.2...HEAD
+[0.8.2]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.8.1...bitcoin-internals-0.8.2
 [0.8.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.8.0...bitcoin-internals-0.8.1
 [0.8.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.7.0...bitcoin-internals-0.8.0
 [0.7.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-internals-0.6.0...bitcoin-internals-0.7.0
