@@ -7,6 +7,8 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
+#![allow(clippy::trivially_copy_pass_by_ref)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
+#![allow(clippy::wrong_self_convention)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
 
 include!("../include/array_newtype.rs");
 

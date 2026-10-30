@@ -13,6 +13,7 @@
 // Exclude lints we don't think are valuable.
 #![allow(clippy::inline_always)] // Not sure yet if we should give up the inline always, possible that the LLVM knows better.
 #![cfg_attr(chacha20_poly1305_fuzz, allow(dead_code, unused_imports))]
+#![allow(clippy::trivially_copy_pass_by_ref)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

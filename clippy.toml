@@ -1,3 +1,5 @@
 # Clippy config for `rust-bitcoin`.
 
 doc-valid-idents = ["SegWit", "OpenSSL"]
+
+avoid-breaking-exported-api = false
