@@ -171,7 +171,7 @@ impl Decoder for CompactSizeDecoder {
     fn end(self) -> Result<Self::Output, Self::Error> {
         use CompactSizeDecoderErrorInner as E;
 
-        let dec_value = compact_size_decode_u64(&self.buf)?;
+        let dec_value = compact_size_decode_u64(self.buf)?;
 
         match usize::try_from(dec_value) {
             Ok(nsize) if nsize <= self.limit => Ok(nsize),
@@ -181,7 +181,7 @@ impl Decoder for CompactSizeDecoder {
         }
     }
 
-    fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
+    fn read_limit(&self) -> usize { compact_size_read_limit(self.buf) }
 }
 
 /// Decodes a compact size encoded integer as a raw `u64`.
@@ -227,9 +227,9 @@ impl Decoder for CompactSizeU64Decoder {
         Ok(compact_size_push_bytes(&mut self.buf, bytes))
     }
 
-    fn end(self) -> Result<Self::Output, Self::Error> { compact_size_decode_u64(&self.buf) }
+    fn end(self) -> Result<Self::Output, Self::Error> { compact_size_decode_u64(self.buf) }
 
-    fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
+    fn read_limit(&self) -> usize { compact_size_read_limit(self.buf) }
 }
 
 /// Pushes bytes into a compact size buffer, returning the decoder status.
@@ -260,7 +260,7 @@ fn compact_size_push_bytes(buf: &mut ArrayVec<u8, 9>, bytes: &mut &[u8]) -> Deco
 }
 
 /// Returns the number of bytes the compact size decoder still needs to read.
-fn compact_size_read_limit(buf: &ArrayVec<u8, 9>) -> usize {
+fn compact_size_read_limit(buf: ArrayVec<u8, 9>) -> usize {
     match buf.len() {
         0 => 1,
         already_read => match buf[0] {
@@ -273,7 +273,7 @@ fn compact_size_read_limit(buf: &ArrayVec<u8, 9>) -> usize {
 }
 
 /// Decodes a compact size buffer to a u64, checking for minimal encoding.
-fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDecoderError> {
+fn compact_size_decode_u64(buf: ArrayVec<u8, 9>) -> Result<u64, CompactSizeDecoderError> {
     use CompactSizeDecoderErrorInner as E;
 
     fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
