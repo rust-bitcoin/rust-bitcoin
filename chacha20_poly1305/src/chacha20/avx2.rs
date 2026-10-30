@@ -160,8 +160,8 @@ unsafe fn init_nonce_words(nonce: &Nonce) -> (Word, Word, Word) {
 #[target_feature(enable = "avx,avx2")]
 pub(super) unsafe fn apply_8_blocks(
     chunk: &mut [u8; 8 * 64],
-    key: &Key,
-    nonce: &Nonce,
+    key: Key,
+    nonce: Nonce,
     start_block: u32,
 ) {
     // Initialize length 8 vectors of 32 bit values.
@@ -172,10 +172,10 @@ pub(super) unsafe fn apply_8_blocks(
         (init0, init1, init2, init3),
         (init4, init5, init6, init7),
         (init8, init9, init10, init11),
-    ) = init_three_rows(key);
+    ) = init_three_rows(&key);
     // The only state value that varies between blocks is the block counter.
     // We set the eight lanes to [start, start+1, ..., start+7].
-    let (init13, init14, init15) = init_nonce_words(nonce);
+    let (init13, init14, init15) = init_nonce_words(&nonce);
     let init12 = arch::_mm256_setr_epi32(
         start_block as i32,
         start_block.wrapping_add(1) as i32,
@@ -333,7 +333,7 @@ mod tests {
         for start in [0u32, 1, 42, 1_000, u32::MAX - 7] {
             let mut avx2_ks = [0u8; 8 * 64];
             // SAFETY: AVX2 support was detected above.
-            unsafe { apply_8_blocks(&mut avx2_ks, &key, &nonce, start) };
+            unsafe { apply_8_blocks(&mut avx2_ks, key, nonce, start) };
 
             let mut scalar_ks = [0u8; 8 * 64];
             for i in 0u32..8 {

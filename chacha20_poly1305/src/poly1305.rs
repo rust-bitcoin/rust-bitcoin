@@ -96,7 +96,7 @@ impl Poly1305 {
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         let remaining_message = if remaining_message.len() >= 4 * 16 && crate::avx2_available() {
             // SAFETY: `avx2_available` guarantees AVX2 support.
-            let powers = unsafe { avx2::r_powers(&self.r) };
+            let powers = unsafe { avx2::r_powers(self.r) };
             let mut chunks = remaining_message.chunks_exact(4 * 16);
             for chunk in &mut chunks {
                 if let Ok(chunk) = <&[u8; 4 * 16]>::try_from(chunk) {
@@ -262,7 +262,7 @@ fn prepare_padded_message_slice(msg: &[u8], is_last: bool) -> [u32; 5] {
     [m0, m1, m2, m3, m4]
 }
 
-fn _print_acc(num: &[u32; 5]) {
+fn _print_acc(num: [u32; 5]) {
     let a0 = num[0] | (num[1] << 26);
     let a1 = (num[1] >> 6) | (num[2] << 20);
     let a2 = (num[2] >> 12) | (num[3] << 14);
