@@ -318,6 +318,7 @@ impl Base58CkString {
     /// assert_eq!(wif.as_str(), "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ");
     /// # Ok::<_, base58ck::InputTooLongError>(())
     /// ```
+    #[allow(clippy::unnecessary_wraps)] // Infallible with alloc, fallible without it.
     pub fn encode(data: &[u8]) -> Result<Self, InputTooLongError> {
         #[cfg(feature = "alloc")]
         {

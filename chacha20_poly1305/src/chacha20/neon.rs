@@ -146,7 +146,7 @@ unsafe fn init_nonce_words(nonce: &Nonce) -> (Word, Word, Word) {
 // XOR four consecutive `ChaCha20` blocks of keystream into `chunk`, starting
 // at `start_block`.
 #[inline]
-pub(super) fn apply_4_blocks(chunk: &mut [u8; 4 * 64], key: &Key, nonce: &Nonce, start_block: u32) {
+pub(super) fn apply_4_blocks(chunk: &mut [u8; 4 * 64], key: Key, nonce: Nonce, start_block: u32) {
     // SAFETY: Neon intrinsics are gated by target feature `neon`.
     unsafe {
         // Initialize length 4 vectors of 32 bit values.
@@ -159,10 +159,10 @@ pub(super) fn apply_4_blocks(chunk: &mut [u8; 4 * 64], key: &Key, nonce: &Nonce,
             (init0, init1, init2, init3),
             (init4, init5, init6, init7),
             (init8, init9, init10, init11),
-        ) = init_three_rows(key);
+        ) = init_three_rows(&key);
         // The only state value that varies between rounds is the block counter.
         // We set the four lanes to [start, start+1, start+2, start+3].
-        let (init13, init14, init15) = init_nonce_words(nonce);
+        let (init13, init14, init15) = init_nonce_words(&nonce);
         let counter_init: [u32; 4] = [
             start_block,
             start_block.wrapping_add(1),
@@ -226,8 +226,8 @@ pub(super) fn apply_4_blocks(chunk: &mut [u8; 4 * 64], key: &Key, nonce: &Nonce,
 pub(super) fn apply_8_blocks(
     chunk_lo: &mut [u8; 4 * 64],
     chunk_hi: &mut [u8; 4 * 64],
-    key: &Key,
-    nonce: &Nonce,
+    key: Key,
+    nonce: Nonce,
     start_block: u32,
 ) {
     // This function is identical to the 4 block case, however two
@@ -241,8 +241,8 @@ pub(super) fn apply_8_blocks(
             (init0, init1, init2, init3),
             (init4, init5, init6, init7),
             (init8, init9, init10, init11),
-        ) = init_three_rows(key);
-        let (init13, init14, init15) = init_nonce_words(nonce);
+        ) = init_three_rows(&key);
+        let (init13, init14, init15) = init_nonce_words(&nonce);
         let counter_init_lo: [u32; 4] = [
             start_block,
             start_block.wrapping_add(1),
@@ -416,7 +416,7 @@ mod tests {
         // Compares the neon 4-block processing with the single block processing.
         for start in [0u32, 1, 42, 1_000, u32::MAX - 3] {
             let mut neon_ks = [0u8; 4 * 64];
-            apply_4_blocks(&mut neon_ks, &key, &nonce, start);
+            apply_4_blocks(&mut neon_ks, key, nonce, start);
 
             let mut scalar_ks = [0u8; 4 * 64];
             for i in 0u32..4 {
@@ -441,7 +441,7 @@ mod tests {
             let (lo, hi) = neon_ks.split_at_mut(4 * 64);
             let chunk_lo = <&mut [u8; 4 * 64]>::try_from(lo).unwrap();
             let chunk_hi = <&mut [u8; 4 * 64]>::try_from(hi).unwrap();
-            apply_8_blocks(chunk_lo, chunk_hi, &key, &nonce, start);
+            apply_8_blocks(chunk_lo, chunk_hi, key, nonce, start);
             let mut scalar_ks = [0u8; 8 * 64];
             for i in 0u32..8 {
                 let ks = cipher.get_keystream(start + i);

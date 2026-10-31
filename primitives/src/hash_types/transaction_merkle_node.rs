@@ -36,7 +36,7 @@ impl TxMerkleNode {
     /// Combines two nodes to get a single node. The final node of a tree is called the "root".
     #[inline]
     #[must_use]
-    pub fn combine(&self, other: &Self) -> Self { MerkleNode::combine(self, other) }
+    pub fn combine(self, other: Self) -> Self { MerkleNode::combine(self, other) }
 
     /// Computes the Merkle root from an iterator of leaves.
     ///

@@ -131,7 +131,7 @@ impl ChaCha20Poly1305 {
         poly.input(&len_buffer);
         let derived_tag = poly.tag();
 
-        if constant_time_eq(&derived_tag, &tag) {
+        if constant_time_eq(derived_tag, tag) {
             let mut chacha = ChaCha20::new_from_block(self.key, self.nonce, 1);
             chacha.apply_keystream(content);
             Ok(())
@@ -144,7 +144,7 @@ impl ChaCha20Poly1305 {
 /// Performs a constant-time equality check between two 16-byte arrays.
 /// ensuring that the comparison time does not leak information about the contents.
 #[inline]
-fn constant_time_eq(a: &[u8; 16], b: &[u8; 16]) -> bool {
+fn constant_time_eq(a: [u8; 16], b: [u8; 16]) -> bool {
     let mut res = 0u8;
     for (x, y) in a.iter().zip(b.iter()) {
         res |= x ^ y;
@@ -226,26 +226,26 @@ mod tests {
         let tag_c = [0x00u8; 16];
 
         // full equality
-        assert!(super::constant_time_eq(&tag_a, &tag_b));
+        assert!(super::constant_time_eq(tag_a, tag_b));
 
         // full difference
-        assert!(!super::constant_time_eq(&tag_a, &tag_c));
+        assert!(!super::constant_time_eq(tag_a, tag_c));
 
         // edge case  - single byte diff
         let mut tag_d = tag_a;
 
         // first byte diff
         tag_d[0] ^= 1;
-        assert!(!super::constant_time_eq(&tag_a, &tag_d));
+        assert!(!super::constant_time_eq(tag_a, tag_d));
 
         // last byte only diff
         tag_d = tag_a;
         tag_d[15] ^= 1;
-        assert!(!super::constant_time_eq(&tag_a, &tag_d));
+        assert!(!super::constant_time_eq(tag_a, tag_d));
 
         // mid byte diff
         tag_d = tag_a;
         tag_d[7] ^= 0xff;
-        assert!(!super::constant_time_eq(&tag_a, &tag_d));
+        assert!(!super::constant_time_eq(tag_a, tag_d));
     }
 }
