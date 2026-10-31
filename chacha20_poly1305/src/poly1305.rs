@@ -5,6 +5,9 @@
 //! Heavily inspired by the [`Donna`](https://github.com/floodyberry/poly1305-donna/blob/master/poly1305-donna-32.h) implementation in C
 //! and Loup Vaillant's [Poly1305 design article](https://loup-vaillant.fr/tutorials/poly1305-design).
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+mod avx2;
+
 /// 2^26 for the 26-bit limbs.
 const BITMASK: u32 = 0x03ff_ffff;
 /// Number is encoded in five 26-bit limbs.
@@ -87,6 +90,24 @@ impl Poly1305 {
 
         // Remove prefix already processed in leftovers.
         let remaining_message = &message[fill..];
+
+        // On x86, consume as many 4-block groups as possible with AVX2 when it
+        // is available, before falling back to single-block processing.
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        let remaining_message = if remaining_message.len() >= 4 * 16 && crate::avx2_available() {
+            // SAFETY: `avx2_available` guarantees AVX2 support.
+            let powers = unsafe { avx2::r_powers(&self.r) };
+            let mut chunks = remaining_message.chunks_exact(4 * 16);
+            for chunk in &mut chunks {
+                if let Ok(chunk) = <&[u8; 4 * 16]>::try_from(chunk) {
+                    // SAFETY: `avx2_available` guarantees AVX2 support.
+                    unsafe { avx2::process_4_blocks(&mut self.acc, &powers, chunk) };
+                }
+            }
+            chunks.remainder()
+        } else {
+            remaining_message
+        };
 
         // Add message to accumulator.
         let mut i = 0;
@@ -183,31 +204,42 @@ impl Poly1305 {
     #[cfg(chacha20_poly1305_fuzz)]
     pub fn tag(self) -> [u8; 16] { self.leftovers }
 
-    fn r_times_a(&mut self) {
-        // Multiply and reduce.
-        // While this looks complicated, it is a variation of schoolbook multiplication,
-        // described well in an article here: https://loup-vaillant.fr/tutorials/poly1305-design
-        let mut t = [0; 5];
-        for i in 0..5 {
-            for (j, t) in t.iter_mut().enumerate() {
-                let modulus: u64 = if i > j { 5 } else { 1 };
-                let start = (5 - i) % 5;
-                *t += modulus * u64::from(self.r[i]) * u64::from(self.acc[(start + j) % 5]);
-            }
+    fn r_times_a(&mut self) { self.acc = mul_mod(&self.acc, &self.r); }
+}
+
+// Multiply two numbers in five 26-bit limbs and reduce modulo 2^130 - 5.
+#[inline(always)]
+fn mul_mod(a: &[u32; 5], b: &[u32; 5]) -> [u32; 5] {
+    // While this looks complicated, it is a variation of schoolbook multiplication,
+    // described well in an article here: https://loup-vaillant.fr/tutorials/poly1305-design
+    let mut t = [0; 5];
+    for (i, b) in b.iter().enumerate() {
+        for (j, t) in t.iter_mut().enumerate() {
+            let modulus: u64 = if i > j { 5 } else { 1 };
+            let start = (5 - i) % 5;
+            *t += modulus * u64::from(*b) * u64::from(a[(start + j) % 5]);
         }
-        // Carry.
-        for i in 0..4 {
-            t[i + 1] += t[i] >> CARRY;
-        }
-        // Mask.
-        for (i, t) in t.iter().enumerate().take(self.acc.len()) {
-            self.acc[i] = *t as u32 & BITMASK;
-        }
-        // Carry and mask first limb.
-        self.acc[0] += (t[4] >> CARRY) as u32 * 5;
-        self.acc[1] += self.acc[0] >> CARRY;
-        self.acc[0] &= BITMASK;
     }
+    carry_and_reduce(t)
+}
+
+// Carry a product in five 64-bit limbs back into 26-bit limbs. The carry out of
+// the top limb is folded into the bottom limb multiplied by 5, as 2^130 = 5 mod p.
+#[inline(always)]
+fn carry_and_reduce(mut t: [u64; 5]) -> [u32; 5] {
+    // Carry.
+    for i in 0..4 {
+        t[i + 1] += t[i] >> CARRY;
+        t[i] &= u64::from(BITMASK);
+    }
+    // Carry and mask first limb.
+    t[0] += (t[4] >> CARRY) * 5;
+    t[4] &= u64::from(BITMASK);
+    t[1] += t[0] >> CARRY;
+    t[0] &= u64::from(BITMASK);
+    // The casts are not lossy, every limb is masked to 26 bits besides the second
+    // which only exceeds 26 bits by a small carry.
+    [t[0] as u32, t[1] as u32, t[2] as u32, t[3] as u32, t[4] as u32]
 }
 
 // Encode 16-byte (tag sized), unless is_last flag set to true, piece of message into 5 26-bit limbs.

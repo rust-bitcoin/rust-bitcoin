@@ -363,7 +363,7 @@ impl ChaCha20 {
         // single-block processing.
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         let remaining_buffer = {
-            let remaining_buffer = if avx2_available() {
+            let remaining_buffer = if crate::avx2_available() {
                 let mut chunks = remaining_buffer.chunks_exact_mut(8 * CHACHA_BLOCKSIZE);
                 for chunk in &mut chunks {
                     if let Ok(chunk) = <&mut [u8; 8 * CHACHA_BLOCKSIZE]>::try_from(chunk) {
@@ -432,26 +432,6 @@ impl ChaCha20 {
     pub fn block(&mut self, block: u32) {
         self.block_count = block;
         self.seek_offset_bytes = 0;
-    }
-}
-
-/// Use AVX2 if possible
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[inline]
-fn avx2_available() -> bool {
-    #[cfg(target_feature = "avx2")]
-    {
-        true
-    }
-    #[cfg(not(target_feature = "avx2"))]
-    #[cfg(feature = "std")]
-    {
-        std::is_x86_feature_detected!("avx2")
-    }
-    #[cfg(not(target_feature = "avx2"))]
-    #[cfg(not(feature = "std"))]
-    {
-        false
     }
 }
 

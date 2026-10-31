@@ -193,6 +193,26 @@ pub mod error {
     }
 }
 
+/// Use AVX2 if possible
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[inline]
+fn avx2_available() -> bool {
+    #[cfg(target_feature = "avx2")]
+    {
+        true
+    }
+    #[cfg(not(target_feature = "avx2"))]
+    #[cfg(feature = "std")]
+    {
+        std::is_x86_feature_detected!("avx2")
+    }
+    #[cfg(not(target_feature = "avx2"))]
+    #[cfg(not(feature = "std"))]
+    {
+        false
+    }
+}
+
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
