@@ -27,13 +27,14 @@ crate::internal_macros::define_extension_trait! {
         /// * [`ScriptIntError::NonMinimal`] if encoding is non-minimal.
         fn read_scriptint(&self) -> Result<i32, ScriptIntError> {
             // Cast is safe, since the function already checks for byte length > 4
-            let ret = read_scriptint_internal(self, 4)?;
+            let ret = read_scriptint_internal(self, 4, true)?;
             Ok(i32::try_from(ret).expect("4 bytes or less fits in an i32"))
         }
 
         /// Decodes a minimally encoded script integer using at most five bytes.
         ///
-        /// This is suitable to read input values for CHECKLOCKTIMEVERIFY instructions.
+        /// This is suitable to read input values for `OP_CHECKLOCKTIMEVERIFY` and
+        /// `OP_CHECKSEQUENCEVERIFY` instructions when minimal encoding is required.
         ///
         /// Unlike [`Self::read_scriptint`], this accepts signed-magnitude encodings of up to five
         /// bytes, supporting values in the range `[-2^39 + 1, 2^39 - 1]`. The extra byte allows
@@ -47,7 +48,30 @@ crate::internal_macros::define_extension_trait! {
         /// * [`ScriptIntError::NumericOverflow`] if the encoding is longer than five bytes.
         /// * [`ScriptIntError::NonMinimal`] if encoding is non-minimal.
         fn read_cltv_scriptint(&self) -> Result<i64, ScriptIntError> {
-            read_scriptint_internal(self, 5)
+            read_scriptint_internal(self, 5, true)
+        }
+
+        /// Decodes a script integer using at most five bytes, allowing non-minimal encodings.
+        ///
+        /// This is suitable to read input values for `OP_CHECKLOCKTIMEVERIFY` and
+        /// `OP_CHECKSEQUENCEVERIFY` instructions when minimal encoding is not required.
+        ///
+        /// Like [`Self::read_cltv_scriptint`], this accepts signed-magnitude encodings in the range
+        /// `[-2^39 + 1, 2^39 - 1]`. It also accepts redundant sign bytes and negative zero.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use bitcoin::script::{PushBytes, PushBytesExt};
+        ///
+        /// assert_eq!(PushBytes::read_cltv_scriptint_non_minimal([0u8; 5].as_ref()), Ok(0));
+        /// ```
+        ///
+        /// # Errors
+        ///
+        /// Returns [`ScriptIntError::NumericOverflow`] if the encoding is longer than five bytes.
+        fn read_cltv_scriptint_non_minimal(&self) -> Result<i64, ScriptIntError> {
+            read_scriptint_internal(self, 5, false)
         }
     }
 }
@@ -57,7 +81,11 @@ crate::internal_macros::define_extension_trait! {
 /// As with `read_cltv_scriptint`, this returns an i64, since that is the maximum size we might
 /// need to return data. In practice, if the max_size parameter is 4 or less, this function
 /// will always return a value that can fit into an i32, and can thus be safely cast.
-fn read_scriptint_internal(bytes: &PushBytes, max_size: usize) -> Result<i64, ScriptIntError> {
+fn read_scriptint_internal(
+    bytes: &PushBytes,
+    max_size: usize,
+    require_minimal: bool,
+) -> Result<i64, ScriptIntError> {
     let Some(last) = bytes.as_bytes().last() else {
         return Ok(0);
     };
@@ -69,7 +97,7 @@ fn read_scriptint_internal(bytes: &PushBytes, max_size: usize) -> Result<i64, Sc
     // If the most-significant-byte - excluding the sign bit - is zero
     // then we're not minimal. Note how this test also rejects the
     // negative-zero encoding, 0x80.
-    if (*last & 0x7f) == 0 {
+    if require_minimal && (*last & 0x7f) == 0 {
         // One exception: if there's more than one byte and the most
         // significant bit of the second-most-significant-byte is set
         // it would conflict with the sign bit. An example of this case
@@ -88,8 +116,7 @@ mod sealed {
     impl Sealed for super::PushBytes {}
 }
 
-/// Possible errors that can arise from [`PushBytes::read_scriptint`] or
-/// [`PushBytes::read_cltv_scriptint`].
+/// Possible errors that can arise when reading a script integer from [`PushBytes`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ScriptIntError {
