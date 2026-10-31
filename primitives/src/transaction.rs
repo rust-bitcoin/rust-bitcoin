@@ -2,11 +2,10 @@
 
 //! Bitcoin transactions.
 //!
-//! A transaction describes a transfer of money. It consumes previously-unspent
-//! transaction outputs and produces new ones, satisfying the condition to spend
-//! the old outputs (typically a digital signature with a specific key must be
-//! provided) and defining the condition to spend the new ones. The use of digital
-//! signatures ensures that coins cannot be spent by unauthorized parties.
+//! A transaction describes a transfer of money. It consumes previously-unspent transaction outputs
+//! and produces new ones, satisfying the condition to spend the old outputs (typically a digital
+//! signature with a specific key must be provided) and defining the condition to spend the new
+//! ones. The use of digital signatures ensures that coins cannot be spent by unauthorized parties.
 //!
 //! This module provides the structures and functions needed to support transactions.
 //!
@@ -127,43 +126,37 @@ pub use crate::hash_types::{Ntxid, Txid, Wtxid};
 ///
 /// # Serialization notes
 ///
-/// If any inputs have nonempty witnesses, the entire transaction is serialized
-/// in the post-BIP-0141 SegWit format which includes a list of witnesses. If all
-/// inputs have empty witnesses, the transaction is serialized in the pre-BIP-0141
-/// format.
+/// If any inputs have nonempty witnesses, the entire transaction is serialized in the post-BIP-0141
+/// SegWit format which includes a list of witnesses. If all inputs have empty witnesses, the
+/// transaction is serialized in the pre-BIP-0141 format.
 ///
-/// There is one major exception to this: to avoid deserialization ambiguity,
-/// if the transaction has no inputs, it is serialized in the BIP-0141 style. Be
-/// aware that this differs from the transaction format in PSBT, which _never_
-/// uses BIP-0141. (Ordinarily there is no conflict, since in PSBT transactions
-/// are always unsigned and therefore their inputs have empty witnesses.)
+/// There is one major exception to this: to avoid deserialization ambiguity, if the transaction has
+/// no inputs, it is serialized in the BIP-0141 style. Be aware that this differs from the
+/// transaction format in PSBT, which _never_ uses BIP-0141. (Ordinarily there is no conflict, since
+/// in PSBT transactions are always unsigned and therefore their inputs have empty witnesses.)
 ///
-/// The specific ambiguity is that SegWit uses the flag bytes `0001` where an old
-/// serializer would read the number of transaction inputs. The old serializer
-/// would interpret this as "no inputs, one output", which means the transaction
-/// is invalid, and simply reject it. SegWit further specifies that this encoding
-/// should *only* be used when some input has a nonempty witness; that is,
-/// witness-less transactions should be encoded in the traditional format.
+/// The specific ambiguity is that SegWit uses the flag bytes `0001` where an old serializer would
+/// read the number of transaction inputs. The old serializer would interpret this as "no inputs,
+/// one output", which means the transaction is invalid, and simply reject it. SegWit further
+/// specifies that this encoding should *only* be used when some input has a nonempty witness; that
+/// is, witness-less transactions should be encoded in the traditional format.
 ///
-/// However, in protocols where transactions may legitimately have 0 inputs, e.g.
-/// when parties are cooperatively funding a transaction, the "00 means SegWit"
-/// heuristic does not work. Since SegWit requires such a transaction to be encoded
-/// in the original transaction format (since it has no inputs and therefore
-/// no input witnesses), a traditionally encoded transaction may have the `0001`
-/// SegWit flag in it, which confuses most SegWit parsers including the one in
-/// Bitcoin Core.
+/// However, in protocols where transactions may legitimately have 0 inputs, e.g. when parties are
+/// cooperatively funding a transaction, the "00 means SegWit" heuristic does not work. Since SegWit
+/// requires such a transaction to be encoded in the original transaction format (since it has no
+/// inputs and therefore no input witnesses), a traditionally encoded transaction may have the
+/// `0001` SegWit flag in it, which confuses most SegWit parsers including the one in Bitcoin Core.
 ///
-/// We therefore deviate from the spec by always using the SegWit witness encoding
-/// for 0-input transactions, which results in unambiguously parseable transactions.
+/// We therefore deviate from the spec by always using the SegWit witness encoding for 0-input
+/// transactions, which results in unambiguously parseable transactions.
 ///
 /// # A note on ordering
 ///
-/// This type implements [`Ord`], even though it contains a locktime, which is not
-/// itself [`Ord`]. This was done to simplify applications that may need to hold
-/// transactions inside a sorted container. We have ordered the locktimes based
-/// on their representation as a `u32`, which is not a semantically meaningful
-/// order, and therefore the ordering on [`Transaction`] itself is not semantically
-/// meaningful either.
+/// This type implements [`Ord`], even though it contains a locktime, which is not itself [`Ord`].
+/// This was done to simplify applications that may need to hold transactions inside a sorted
+/// container. We have ordered the locktimes based on their representation as a `u32`, which is not
+/// a semantically meaningful order, and therefore the ordering on [`Transaction`] itself is not
+/// semantically meaningful either.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg(feature = "alloc")]
 pub struct Transaction {
@@ -190,9 +183,9 @@ impl Transaction {
 
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
-    /// This function is needed only for legacy (pre-Segwit or P2SH-wrapped segwit version 0)
+    /// This function is needed only for legacy (pre-SegWit or P2SH-wrapped SegWit version 0)
     /// applications. This method clears the `script_sig` and `witness` fields of each input. The
-    /// `script_sig` in Segwit transactions is already empty, so for Segwit transactions the ntxid
+    /// `script_sig` in SegWit transactions is already empty, so for SegWit transactions the ntxid
     /// will be equal to the txid, and you should simply use the latter.
     ///
     /// This gives a way to identify a transaction that is "the same" as another in the sense of
@@ -227,7 +220,8 @@ impl Transaction {
     ///
     /// Hashes the transaction **excluding** the SegWit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-SegWit transactions which do not have any SegWit data,
-    /// this will be equal to [`Transaction::compute_wtxid()`].
+    /// this will be equal to [`Transaction::compute_wtxid()`], except for zero-input transactions,
+    /// which always use the SegWit serialization.
     #[doc(alias = "txid")]
     #[inline]
     pub fn compute_txid(&self) -> Txid {
@@ -239,7 +233,8 @@ impl Transaction {
     ///
     /// Hashes the transaction **including** all SegWit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-SegWit transactions which do not have any SegWit data,
-    /// this will be equal to [`Transaction::compute_txid()`].
+    /// this will be equal to [`Transaction::compute_txid()`], except for zero-input transactions,
+    /// which always use the SegWit serialization.
     #[doc(alias = "wtxid")]
     #[inline]
     pub fn compute_wtxid(&self) -> Wtxid {
@@ -263,8 +258,9 @@ impl Transaction {
     ///
     /// The first transaction in the block distributes the mining reward and is called the coinbase
     /// transaction. It is impossible to check if the transaction is first in the block, so this
-    /// function checks the structure of the transaction instead - the previous output must be
-    /// all-zeros (creates satoshis "out of thin air").
+    /// function checks the structure of the transaction instead - there must be exactly one input
+    /// and its previous output must be [`OutPoint::COINBASE_PREVOUT`] (creates satoshis "out of
+    /// thin air").
     #[inline]
     #[doc(alias = "is_coin_base")] // method previously had this name
     pub fn is_coinbase(&self) -> bool {
@@ -368,8 +364,8 @@ pub(crate) const MAX_BLOCK_WEIGHT: Weight = Weight::from_wu(4_000_000);
 
 /// Computes the consensus weight of a transaction.
 ///
-/// Weight is `4 * base_size + witness_overhead`, where the base size excludes the segwit marker,
-/// flag and witness data, all of which contribute a weight of one.
+/// Weight is `4 * base_size + witness_size`, where the base size excludes the SegWit marker, flag
+/// and witness data, all of which contribute a weight of one per byte.
 #[cfg(feature = "alloc")]
 pub(crate) fn transaction_weight(tx: &Transaction) -> Weight {
     let compact = |n: usize| crate::compact_size_encode(n).as_slice().len();
@@ -406,7 +402,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     use hashes::HashEngine as _;
 
     let mut enc = sha256d::Hash::engine();
-    enc.input(&tx.version.0.to_le_bytes()); // Same as `encode::emit_i32`.
+    enc.input(&tx.version.0.to_le_bytes()); // Same as `Encode for Version`.
 
     if uses_segwit_serialization {
         // BIP-0141 (SegWit) transaction serialization also includes marker and flag.
@@ -766,18 +762,18 @@ enum TransactionDecoderState {
     Version(VersionDecoder),
     /// Decoding the transaction inputs.
     Inputs(Version, Attempt, VecDecoder<TxIn>),
-    /// Decoding the segwit flag.
+    /// Decoding the SegWit flag.
     SegwitFlag(Version),
     /// Decoding the transaction outputs.
     Outputs(Version, Vec<TxIn>, IsSegwit, VecDecoder<TxOut>),
-    /// Decoding the segwit transaction witnesses.
+    /// Decoding the SegWit transaction witnesses.
     Witnesses(Version, Vec<TxIn>, Vec<TxOut>, Iteration, WitnessDecoder),
     /// Decoding the transaction lock time.
     LockTime(Version, Vec<TxIn>, Vec<TxOut>, LockTimeDecoder),
     /// Done decoding the [`Transaction`].
     Done(Transaction),
-    /// When `end()`ing a sub-decoder, encountered an error which prevented us
-    /// from constructing the next sub-decoder.
+    /// When `end()`ing a sub-decoder, encountered an error which prevented us from constructing the
+    /// next sub-decoder.
     Errored,
 }
 
@@ -791,13 +787,13 @@ enum Attempt {
     Second,
 }
 
-/// Boolean used to track whether or not this transaction uses segwit encoding.
+/// Boolean used to track whether or not this transaction uses SegWit encoding.
 #[cfg(feature = "alloc")]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum IsSegwit {
-    /// Yes so uses segwit encoding.
+    /// Yes so uses SegWit encoding.
     Yes,
-    /// No segwit flag, marker, or witnesses.
+    /// No SegWit flag, marker, or witnesses.
     No,
 }
 
@@ -840,9 +836,8 @@ struct Iteration(usize);
 
 /// Bitcoin transaction input.
 ///
-/// It contains the location of the previous transaction's output
-/// that it spends, and the set of scripts that satisfy its spending
-/// conditions.
+/// It contains the location of the previous transaction's output that it spends, and the set of
+/// scripts that satisfy its spending conditions.
 ///
 /// # Bitcoin Core References
 ///
@@ -852,21 +847,21 @@ struct Iteration(usize);
 pub struct TxIn {
     /// The reference to the previous output that is being used as an input.
     pub previous_output: OutPoint,
-    /// The script which pushes values on the stack which will cause
-    /// the referenced output's script to be accepted.
+    /// The script which pushes values on the stack which will cause the referenced output's script
+    /// to be accepted.
     pub script_sig: ScriptSigBuf,
     /// The sequence number.
     ///
-    /// Used to enable the transaction lock time, to encode a relative lock time ([BIP-0068])
-    /// and to signal replaceability ([BIP-0125]).
+    /// Used to enable the transaction lock time, to encode a relative lock time ([BIP-0068]) and to
+    /// signal replaceability ([BIP-0125]).
     ///
     /// [BIP-0068]: <https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki>
     /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
     pub sequence: Sequence,
-    /// Witness data: an array of byte-arrays.
+    /// Witness data.
+    ///
     /// Note that this field is *not* (de)serialized with the rest of the [`TxIn`] in
     /// [`Encode`]/[`Decode`], as it is (de)serialized at the end of the full [`Transaction`].
-    /// It *is* (de)serialized with the rest of the [`TxIn`] in other (de)serialization routines.
     ///
     /// [`Encode`]: encoding::Encode
     /// [`Decode`]: encoding::Decode
@@ -877,9 +872,9 @@ pub struct TxIn {
 impl TxIn {
     /// An empty transaction input with the previous output as for a coinbase transaction.
     ///
-    /// This has a 0-byte scriptSig which is **invalid** per consensus rules
-    /// (coinbase scriptSig must be 2-100 bytes). This is kept for backwards compatibility
-    /// in PSBT workflows where the scriptSig is filled in later.
+    /// This has a 0-byte scriptSig which is **invalid** per consensus rules (coinbase scriptSig
+    /// must be 2-100 bytes). This is kept for backwards compatibility in PSBT workflows where the
+    /// scriptSig is filled in later.
     pub const EMPTY_COINBASE: Self = Self {
         previous_output: OutPoint::COINBASE_PREVOUT,
         script_sig: ScriptSigBuf::new(),
@@ -947,9 +942,8 @@ crate::decoder_newtype! {
 
 /// Bitcoin transaction output.
 ///
-/// Defines new coins to be created as a result of the transaction,
-/// along with spending conditions ("script", aka "output script"),
-/// which an input spending it must satisfy.
+/// Defines new coins to be created as a result of the transaction, along with spending conditions
+/// ("script", aka "output script"), which an input spending it must satisfy.
 ///
 /// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
 ///
@@ -1143,7 +1137,7 @@ impl Serialize for OutPoint {
             let mut state = serializer.serialize_struct("OutPoint", 2)?;
             // serializing as an array was found in the past to break for some serializers so we use
             // a slice instead. This causes 8 bytes to be prepended for the length (even though this
-            // is a bit silly because know the length).
+            // is a bit silly because we know the length).
             state.serialize_field("txid", self.txid.as_byte_array().as_slice())?;
             state.serialize_field("vout", &self.vout.to_le_bytes())?;
             state.end()
@@ -1246,7 +1240,8 @@ impl<'de> Deserialize<'de> for OutPoint {
 
 /// The transaction version.
 ///
-/// Currently, as specified by [BIP-0068] and [BIP-0431], version 1, 2, and 3 are considered standard.
+/// Currently, as specified by [BIP-0068] and [BIP-0431], version 1, 2, and 3 are considered
+/// standard.
 ///
 /// Standardness of the inner `u32` is not an invariant because you are free to create transactions
 /// of any version, transactions with non-standard version numbers will not be relayed by the
@@ -1280,10 +1275,10 @@ impl Version {
 
     /// Returns `true` if this transaction version number is considered standard.
     ///
-    /// The behavior of this method matches whatever Bitcoin Core considers standard at the time
-    /// of the release and may change in future versions to accommodate new standard versions.
-    /// As of Bitcoin Core 28.0 ([release notes](https://bitcoincore.org/en/releases/28.0/)),
-    /// versions 1, 2, and 3 are considered standard.
+    /// The behavior of this method matches whatever Bitcoin Core considers standard at the time of
+    /// the release and may change in future versions to accommodate new standard versions. As of
+    /// Bitcoin Core 28.0 ([release notes](https://bitcoincore.org/en/releases/28.0/)), versions 1,
+    /// 2, and 3 are considered standard.
     #[inline]
     pub const fn is_standard(self) -> bool {
         self.0 == Self::ONE.0 || self.0 == Self::TWO.0 || self.0 == Self::THREE.0
@@ -1384,7 +1379,7 @@ pub mod error {
     pub(super) enum TransactionDecoderErrorInner {
         /// Error while decoding the `version`.
         Version(VersionDecoderError),
-        /// We only support segwit flag value 0x01.
+        /// We only support SegWit flag value 0x01.
         UnsupportedSegwitFlag(u8),
         /// Error while decoding the `inputs`.
         Inputs(encoding::VecDecoderError<TxInDecoderError>),
@@ -1392,12 +1387,12 @@ pub mod error {
         Outputs(encoding::VecDecoderError<TxOutDecoderError>),
         /// Error while decoding one of the witnesses.
         Witness(WitnessDecoderError),
-        /// Non-empty Segwit transaction with no witnesses.
+        /// Non-empty SegWit transaction with no witnesses.
         NoWitnesses,
         /// Error while decoding the `lock_time`.
         LockTime(LockTimeDecoderError),
-        /// Attempt to call `end()` before the transaction was complete. Holds
-        /// a description of the current state.
+        /// Attempt to call `end()` before the transaction was complete. Holds a description of the
+        /// current state.
         EarlyEnd(&'static str),
         /// Null prevout in non-coinbase transaction.
         NullPrevoutInNonCoinbase(usize),
@@ -1405,9 +1400,9 @@ pub mod error {
         CoinbaseScriptSigTooSmall(usize),
         /// Coinbase scriptSig is too large (must be at most 100 bytes).
         CoinbaseScriptSigTooLarge(usize),
-        /// Transaction has duplicate inputs (this check prevents CVE-2018-17144 ).
+        /// Transaction has duplicate inputs (this check prevents CVE-2018-17144).
         DuplicateInput(OutPoint),
-        /// Sum of output values exceeds `MAX_MONEY`
+        /// Sum of output values exceeds `MAX_MONEY`.
         OutputValueSumTooLarge(u64),
         /// Transaction has no outputs.
         NoOutputs,
@@ -1429,12 +1424,12 @@ pub mod error {
             match self.0 {
                 E::Version(ref e) => write_err!(f, "transaction decoder error"; e),
                 E::UnsupportedSegwitFlag(v) => {
-                    write!(f, "we only support segwit flag value 0x01: {}", v)
+                    write!(f, "we only support SegWit flag value 0x01: {}", v)
                 }
                 E::Inputs(ref e) => write_err!(f, "transaction decoder error"; e),
                 E::Outputs(ref e) => write_err!(f, "transaction decoder error"; e),
                 E::Witness(ref e) => write_err!(f, "transaction decoder error"; e),
-                E::NoWitnesses => write!(f, "non-empty Segwit transaction with no witnesses"),
+                E::NoWitnesses => write!(f, "non-empty SegWit transaction with no witnesses"),
                 E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
                 E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
                 E::NullPrevoutInNonCoinbase(index) =>
