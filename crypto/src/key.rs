@@ -1311,6 +1311,7 @@ pub mod x_only_serde {
     //! The provided modules can be used as follows:
     //!
     //! ```
+    //! # #[cfg(feature = "alloc")]
     //! # #[cfg(feature = "hex")] {
     //! use bitcoin_crypto::key::XOnlyPublicKey;
     //! use serde::{Deserialize, Serialize};
@@ -1321,6 +1322,8 @@ pub mod x_only_serde {
     //!     pub key: XOnlyPublicKey,
     //!     #[serde(with = "bitcoin_crypto::key::x_only_serde::without_parity::opt")]
     //!     pub maybe_key: Option<XOnlyPublicKey>,
+    //!     #[serde(with = "bitcoin_crypto::key::x_only_serde::with_parity::vec")]
+    //!     pub keys: Vec<XOnlyPublicKey>,
     //! }
     //! # }
     //! ```
@@ -1381,6 +1384,38 @@ pub mod x_only_serde {
                 Option::<FullPublicKey>::deserialize(d).map(|key| key.map(XOnlyPublicKey::from))
             }
         }
+
+        #[cfg(feature = "alloc")]
+        pub mod vec {
+            //! Serialize and deserialize [`Vec<XOnlyPublicKey>`] including their parity.
+            //!
+            //! Use with `#[serde(with = "bitcoin_crypto::key::x_only_serde::with_parity::vec")]`.
+
+            use alloc::vec::Vec;
+
+            use serde::{Deserialize, Deserializer, Serializer};
+
+            use crate::key::{FullPublicKey, XOnlyPublicKey};
+
+            /// Serializes each key in `keys` as a [`FullPublicKey`] using its parity.
+            #[inline]
+            pub fn serialize<S: Serializer>(
+                keys: &[XOnlyPublicKey],
+                s: S,
+            ) -> Result<S::Ok, S::Error> {
+                s.collect_seq(keys.iter().map(|key| key.to_public_key()))
+            }
+
+            /// Deserializes a sequence of [`FullPublicKey`]s into [`XOnlyPublicKey`]s retaining
+            /// their parity.
+            #[inline]
+            pub fn deserialize<'d, D: Deserializer<'d>>(
+                d: D,
+            ) -> Result<Vec<XOnlyPublicKey>, D::Error> {
+                let keys = Vec::<FullPublicKey>::deserialize(d)?;
+                Ok(keys.into_iter().map(XOnlyPublicKey::from).collect())
+            }
+        }
     }
 
     pub mod without_parity {
@@ -1436,6 +1471,41 @@ pub mod x_only_serde {
             ) -> Result<Option<XOnlyPublicKey>, D::Error> {
                 Option::<secp256k1::XOnlyPublicKey>::deserialize(d)
                     .map(|key| key.map(|key| XOnlyPublicKey::from_secp(key, Parity::Even)))
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        pub mod vec {
+            //! Serialize and deserialize [`Vec<XOnlyPublicKey>`] without their parity.
+            //!
+            //! Use with `#[serde(with = "bitcoin_crypto::key::x_only_serde::without_parity::vec")]`.
+
+            use alloc::vec::Vec;
+
+            use secp256k1::Parity;
+            use serde::{Deserialize, Deserializer, Serializer};
+
+            use crate::key::XOnlyPublicKey;
+
+            /// Serializes the x-coordinate of each key in `keys`, discarding their parity.
+            #[inline]
+            pub fn serialize<S: Serializer>(
+                keys: &[XOnlyPublicKey],
+                s: S,
+            ) -> Result<S::Ok, S::Error> {
+                s.collect_seq(keys.iter().map(|key| key.to_inner()))
+            }
+
+            /// Deserializes a sequence of x-coordinates into [`XOnlyPublicKey`]s with even parity.
+            #[inline]
+            pub fn deserialize<'d, D: Deserializer<'d>>(
+                d: D,
+            ) -> Result<Vec<XOnlyPublicKey>, D::Error> {
+                let keys = Vec::<secp256k1::XOnlyPublicKey>::deserialize(d)?;
+                Ok(keys
+                    .into_iter()
+                    .map(|key| XOnlyPublicKey::from_secp(key, Parity::Even))
+                    .collect())
             }
         }
     }
