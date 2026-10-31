@@ -455,7 +455,7 @@ impl XOnlyPublicKey {
 
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "0.4.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
@@ -704,7 +704,7 @@ impl LegacyPublicKey {
     /// Serializes the public key to bytes.
     #[cfg(feature = "alloc")]
     #[inline]
-    #[deprecated(since = "TBD", note = "use to_vec or serialize instead")]
+    #[deprecated(since = "0.4.0", note = "use to_vec or serialize instead")]
     pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
 
     /// Serializes the public key into a `SortKey`.
@@ -1611,7 +1611,7 @@ impl TweakedPublicKey {
 
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "0.4.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
