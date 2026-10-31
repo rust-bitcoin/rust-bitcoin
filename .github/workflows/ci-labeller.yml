@@ -39,11 +39,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           issue_number=$(head -n1 api-diff)
           exit_code=$(tail -n1 api-diff)
+          # The artifact is produced by an untrusted PR run, validate it before use.
+          if ! [[ "$issue_number" =~ ^[0-9]+$ && "$exit_code" =~ ^[0-9]+$ ]]; then
+            echo "::error::Malformed api-diff artifact"
+            exit 1
+          fi
+          if [ "$(gh pr view "$issue_number" --json headRefOid --jq .headRefOid)" != "$HEAD_SHA" ]; then
+            echo "::notice::PR #$issue_number head does not match the triggering run, skipping"
+            exit 0
+          fi
           toggle=$([ "$exit_code" -eq 0 ] && echo "--remove-label" || echo "--add-label")
-          gh pr edit $issue_number $toggle "API diff"
+          gh pr edit "$issue_number" "$toggle" "API diff"
       # The semver break artifact must have the PR number on the first line,
       # and the exit code of the semver check on the second line.
       - name: "Toggle API break Label"
@@ -51,11 +61,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           issue_number=$(head -n1 semver-break)
           exit_code=$(tail -n1 semver-break)
+          # The artifact is produced by an untrusted PR run, validate it before use.
+          if ! [[ "$issue_number" =~ ^[0-9]+$ && "$exit_code" =~ ^[0-9]+$ ]]; then
+            echo "::error::Malformed semver-break artifact"
+            exit 1
+          fi
+          if [ "$(gh pr view "$issue_number" --json headRefOid --jq .headRefOid)" != "$HEAD_SHA" ]; then
+            echo "::notice::PR #$issue_number head does not match the triggering run, skipping"
+            exit 0
+          fi
           toggle=$([ "$exit_code" -eq 0 ] && echo "--remove-label" || echo "--add-label")
-          gh pr edit $issue_number $toggle "API break"
+          gh pr edit "$issue_number" "$toggle" "API break"
           if [ "$exit_code" -ne 0 ]; then
-            gh pr comment $issue_number --body 'API BREAKING CHANGE DETECTED!'
+            gh pr comment "$issue_number" --body 'API BREAKING CHANGE DETECTED!'
           fi
