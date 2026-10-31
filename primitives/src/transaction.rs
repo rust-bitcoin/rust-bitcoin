@@ -1177,13 +1177,6 @@ impl<'de> Deserialize<'de> for OutPoint {
 
             deserializer.deserialize_str(StringVisitor)
         } else {
-            #[derive(Deserialize)]
-            #[serde(field_identifier, rename_all = "lowercase")]
-            enum Field {
-                Txid,
-                Vout,
-            }
-
             struct OutPointVisitor;
 
             impl<'de> de::Visitor<'de> for OutPointVisitor {
@@ -1214,14 +1207,14 @@ impl<'de> Deserialize<'de> for OutPoint {
 
                     while let Some(key) = map.next_key()? {
                         match key {
-                            Field::Txid => {
+                            OutPointField::Txid => {
                                 if txid.is_some() {
                                     return Err(de::Error::duplicate_field("txid"));
                                 }
                                 let bytes: [u8; 32] = map.next_value()?;
                                 txid = Some(Txid::from_byte_array(bytes));
                             }
-                            Field::Vout => {
+                            OutPointField::Vout => {
                                 if vout.is_some() {
                                     return Err(de::Error::duplicate_field("vout"));
                                 }
@@ -1238,9 +1231,63 @@ impl<'de> Deserialize<'de> for OutPoint {
                 }
             }
 
-            const FIELDS: &[&str] = &["txid", "vout"];
-            deserializer.deserialize_struct("OutPoint", FIELDS, OutPointVisitor)
+            deserializer.deserialize_struct("OutPoint", OutPointField::NAMES, OutPointVisitor)
         }
+    }
+}
+
+/// A field of [`OutPoint`] when deserializing from a non-human-readable format.
+#[cfg(feature = "serde")]
+enum OutPointField {
+    Txid,
+    Vout,
+}
+
+#[cfg(feature = "serde")]
+impl OutPointField {
+    const NAMES: &'static [&'static str] = &["txid", "vout"];
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for OutPointField {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct FieldVisitor;
+
+        impl de::Visitor<'_> for FieldVisitor {
+            type Value = OutPointField;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("field identifier")
+            }
+
+            fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
+                match v {
+                    0 => Ok(OutPointField::Txid),
+                    1 => Ok(OutPointField::Vout),
+                    _ => Err(E::invalid_value(
+                        de::Unexpected::Unsigned(v),
+                        &"field index 0 <= i < 2",
+                    )),
+                }
+            }
+
+            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+                self.visit_bytes(v.as_bytes())
+            }
+
+            fn visit_bytes<E: de::Error>(self, v: &[u8]) -> Result<Self::Value, E> {
+                match v {
+                    b"txid" => Ok(OutPointField::Txid),
+                    b"vout" => Ok(OutPointField::Vout),
+                    _ => {
+                        let v = crate::prelude::String::from_utf8_lossy(v);
+                        Err(E::unknown_field(&v, OutPointField::NAMES))
+                    }
+                }
+            }
+        }
+
+        deserializer.deserialize_identifier(FieldVisitor)
     }
 }
 
@@ -1255,7 +1302,6 @@ impl<'de> Deserialize<'de> for OutPoint {
 /// [BIP-0068]: https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki
 /// [BIP-0431]: https://github.com/bitcoin/bips/blob/master/bip-0431.mediawiki
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version(u32);
 
 impl Version {
@@ -1318,6 +1364,28 @@ impl fmt::Binary for Version {
 impl From<Version> for u32 {
     #[inline]
     fn from(version: Version) -> Self { version.0 }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for Version {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u32::serialize(&self.to_u32(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Version {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::maybe_non_standard(u32::deserialize(d)?))
+    }
 }
 
 impl encoding::Encode for Version {

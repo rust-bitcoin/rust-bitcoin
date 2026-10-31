@@ -9,7 +9,7 @@ use core::ops::{Add, Sub};
 use arbitrary::{Arbitrary, Unstructured};
 use internals::u256::U256;
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::internal_macros::impl_fmt_traits_for_u32_wrapper;
 use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
@@ -93,6 +93,28 @@ macro_rules! do_impl {
                 U256::from_str(s).map($ty).map_err($err_ty)
             }
         }
+
+        #[cfg(feature = "serde")]
+        impl Serialize for $ty {
+            #[inline]
+            fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+            where
+                S: Serializer,
+            {
+                U256::serialize(&self.0, s)
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl<'de> Deserialize<'de> for $ty {
+            #[inline]
+            fn deserialize<D>(d: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                Ok($ty(U256::deserialize(d)?))
+            }
+        }
     };
 }
 
@@ -100,7 +122,6 @@ macro_rules! do_impl {
 ///
 /// Work is a measure of how difficult it is to find a hash below a given [`Target`].
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Work(U256);
 
 impl Work {
@@ -159,7 +180,6 @@ impl Sub for Work {
 ///
 /// ref: <https://en.bitcoin.it/wiki/Target>
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Target(U256);
 
 impl Target {
@@ -318,7 +338,6 @@ impl_fmt_traits_for_u32_wrapper!(Target);
 /// Equality is on the consensus encoded `u32`. Conversion to [`Target`] is lossy, so this type is
 /// not ordered. To compare two targets convert them first.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CompactTarget(u32);
 
 impl CompactTarget {
@@ -381,6 +400,28 @@ impl fmt::Display for CompactTarget {
 }
 
 parse_int::impl_parse_str_from_int_infallible!(CompactTarget, u32, from_consensus);
+
+#[cfg(feature = "serde")]
+impl Serialize for CompactTarget {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u32::serialize(&self.to_consensus_u32(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for CompactTarget {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_consensus(u32::deserialize(d)?))
+    }
+}
 
 impl TryFrom<CompactTarget> for Target {
     type Error = InvalidCompactTargetError;

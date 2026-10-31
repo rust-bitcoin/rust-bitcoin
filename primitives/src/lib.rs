@@ -72,7 +72,6 @@ pub extern crate encoding;
 #[cfg(feature = "hex")]
 pub extern crate hex;
 #[cfg(feature = "serde")]
-#[macro_use]
 pub extern crate serde;
 
 #[doc(hidden)]
