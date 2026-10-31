@@ -261,4 +261,36 @@ mod tests {
         let tag = poly.tag();
         assert_eq!("a8061dc1305136c6c22b8baf0c0127a9", tag.to_lower_hex_string());
     }
+
+    /// RFC 8439 Appendix A.3 test vector #3
+    #[cfg(not(chacha20_poly1305_fuzz))]
+    #[test]
+    fn rfc8439_a3_vector3() {
+        let key = hex!("36e5f6b5c5e06070f0efca96227a863e00000000000000000000000000000000");
+        let message = b"Any submission to the IETF intended by the Contributor for publication as all or part of an IETF Internet-Draft or RFC and any statement made within the context of an IETF activity is considered an \"IETF Contribution\". Such statements include oral statements in IETF sessions, as well as written and electronic communications made at any time or place, which are addressed to";
+        assert_eq!(message.len(), 375);
+
+        let mut poly = Poly1305::new(key);
+        poly.input(message);
+        assert_eq!("f3477e7cd95417af89a6b8794c310cf0", poly.tag().to_lower_hex_string());
+
+        let mut poly = Poly1305::new(key);
+        for chunk in message.chunks(7) {
+            poly.input(chunk);
+        }
+        assert_eq!("f3477e7cd95417af89a6b8794c310cf0", poly.tag().to_lower_hex_string());
+    }
+
+    /// RFC 8439 Appendix A.3 test vector #4
+    #[cfg(not(chacha20_poly1305_fuzz))]
+    #[test]
+    fn rfc8439_a3_vector4() {
+        let key = hex!("1c9240a5eb55d38af333888604f6b5f0473917c1402b80099dca5cbc207075c0");
+        let message = b"'Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.";
+        assert_eq!(message.len(), 127);
+
+        let mut poly = Poly1305::new(key);
+        poly.input(message);
+        assert_eq!("4541669a7eaaee61e708dc7cbcc5eb62", poly.tag().to_lower_hex_string());
+    }
 }
