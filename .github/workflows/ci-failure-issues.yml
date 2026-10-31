@@ -70,8 +70,11 @@ jobs:
               per_page: 100,
             });
 
+            // Only trust issues opened by this workflow
             const existing = issues.find(issue =>
-              !issue.pull_request && issue.body && issue.body.includes(marker)
+              !issue.pull_request &&
+              issue.user?.login === "github-actions[bot]" &&
+              issue.body && issue.body.includes(marker)
             );
 
             if (run.conclusion === "failure" && !existing) {
