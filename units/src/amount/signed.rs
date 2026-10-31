@@ -13,7 +13,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use super::error::{ParseAmountErrorInner, ParseErrorInner};
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination, Display,
-    DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
+    DisplayStyle, NegativeAmountError, OutOfRangeError, ParseAmountError, ParseError,
 };
 use crate::parse_int;
 
@@ -87,9 +87,9 @@ mod encapsulate {
         #[inline]
         pub const fn from_sat(satoshi: i64) -> Result<Self, OutOfRangeError> {
             if satoshi < Self::MIN.to_sat() {
-                Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
+                Err(OutOfRangeError::too_small())
             } else if satoshi > Self::MAX.to_sat() {
-                Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
+                Err(OutOfRangeError::too_big())
             } else {
                 Ok(Self(satoshi))
             }
@@ -153,7 +153,7 @@ impl SignedAmount {
     fn from_sat_u64(satoshi: u64) -> Result<Self, ParseAmountError> {
         // u64 -> i64 only fails if value is greater than i64::MAX, which is also > Self::MAX.
         let amount = i64::try_from(satoshi)
-            .map_err(|_| OutOfRangeError { is_signed: true, is_greater_than_max: true })
+            .map_err(|_| OutOfRangeError::too_big())
             .map_err(ParseAmountErrorInner::OutOfRange)
             .map_err(ParseAmountError)?;
         Self::from_sat(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
@@ -528,9 +528,9 @@ impl SignedAmount {
     /// If the amount is negative.
     #[inline]
     #[allow(clippy::missing_panics_doc)]
-    pub fn to_unsigned(self) -> Result<Amount, OutOfRangeError> {
+    pub fn to_unsigned(self) -> Result<Amount, NegativeAmountError> {
         if self.is_negative() {
-            Err(OutOfRangeError::negative())
+            Err(NegativeAmountError)
         } else {
             // Cast ok, checked not negative above.
             Ok(Amount::from_sat(self.to_sat() as u64)

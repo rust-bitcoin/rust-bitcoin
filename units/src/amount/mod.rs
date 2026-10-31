@@ -78,7 +78,7 @@ pub use self::error::AmountDecoderError;
 #[doc(no_inline)]
 pub use self::error::{
     BadPositionError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-    OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+    NegativeAmountError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
     PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
 };
 #[doc(inline)]
@@ -422,11 +422,12 @@ impl InnerParseError {
     #[inline]
     fn convert(self, is_signed: bool) -> ParseAmountError {
         match self {
-            Self::Overflow { is_negative } =>
-                ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError {
-                    is_signed,
-                    is_greater_than_max: !is_negative,
-                })),
+            Self::Overflow { is_negative: false } =>
+                ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big())),
+            Self::Overflow { is_negative: true } if is_signed =>
+                ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small())),
+            Self::Overflow { is_negative: true } =>
+                ParseAmountError(ParseAmountErrorInner::Negative(NegativeAmountError)),
             Self::TooPrecise(e) => ParseAmountError(ParseAmountErrorInner::TooPrecise(e)),
             Self::MissingDigits(e) => ParseAmountError(ParseAmountErrorInner::MissingDigits(e)),
             Self::InvalidCharacter(e) =>

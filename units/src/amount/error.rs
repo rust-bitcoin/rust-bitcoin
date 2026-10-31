@@ -63,6 +63,8 @@ pub struct ParseAmountError(pub(crate) ParseAmountErrorInner);
 pub(crate) enum ParseAmountErrorInner {
     /// The amount is too big or too small.
     OutOfRange(OutOfRangeError),
+    /// The amount is negative on unsigned type.
+    Negative(NegativeAmountError),
     /// Amount has higher precision than supported by the type.
     TooPrecise(TooPreciseError),
     /// A digit was expected but not found.
@@ -89,6 +91,7 @@ impl fmt::Display for ParseAmountError {
 
         match self.0 {
             E::OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
+            E::Negative(ref error) => write_err!(f, "negative amount"; error),
             E::TooPrecise(ref error) => write_err!(f, "amount has a too high precision"; error),
             E::MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
             E::InvalidCharacter(ref error) => {
@@ -110,6 +113,7 @@ impl std::error::Error for ParseAmountError {
         match self.0 {
             E::TooPrecise(ref error) => Some(error),
             E::OutOfRange(ref error) => Some(error),
+            E::Negative(ref error) => Some(error),
             E::MissingDigits(ref error) => Some(error),
             E::InvalidCharacter(ref error) => Some(error),
             E::BadPosition(ref error) => Some(error),
@@ -119,28 +123,16 @@ impl std::error::Error for ParseAmountError {
     }
 }
 
-/// Error returned when a parsed amount is too big or too small.
+/// Error returned when an amount is greater than [`Amount::MAX`] or less than
+/// [`SignedAmount::MIN`].
+///
+/// [`Amount::MAX`]: super::Amount::MAX
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OutOfRangeError {
-    pub(super) is_signed: bool,
-    pub(super) is_greater_than_max: bool,
+    is_greater_than_max: bool,
 }
 
 impl OutOfRangeError {
-    /// Returns the minimum value of the type that was attempted to be parsed.
-    fn lower_bound(&self) -> SignedAmount {
-        if self.is_signed() {
-            SignedAmount::MIN
-        } else {
-            SignedAmount::ZERO
-        }
-    }
-
-    /// Returns `true` if the type that was attempted to be parsed is signed (`SignedAmount`).
-    ///
-    /// This can be used to hint to users to enter non-negative values specifically.
-    pub fn is_signed(&self) -> bool { self.is_signed }
-
     /// Returns `true` if the input value was larger than the maximum allowed value.
     #[inline]
     pub fn is_above_max(&self) -> bool { self.is_greater_than_max }
@@ -149,28 +141,11 @@ impl OutOfRangeError {
     #[inline]
     pub fn is_below_min(&self) -> bool { !self.is_greater_than_max }
 
-    #[cfg(test)]
     #[inline]
-    pub(crate) fn too_big(is_signed: bool) -> Self { Self { is_signed, is_greater_than_max: true } }
-
-    #[cfg(test)]
-    #[inline]
-    pub(crate) fn too_small() -> Self {
-        Self {
-            // implied - negative() is used for the other
-            is_signed: true,
-            is_greater_than_max: false,
-        }
-    }
+    pub(crate) const fn too_big() -> Self { Self { is_greater_than_max: true } }
 
     #[inline]
-    pub(crate) fn negative() -> Self {
-        Self {
-            // implied - too_small() is used for the other
-            is_signed: false,
-            is_greater_than_max: false,
-        }
-    }
+    pub(crate) const fn too_small() -> Self { Self { is_greater_than_max: false } }
 }
 
 impl From<Infallible> for OutOfRangeError {
@@ -184,7 +159,7 @@ impl fmt::Display for OutOfRangeError {
         if self.is_greater_than_max {
             write!(f, "the amount is greater than {}", SignedAmount::MAX)
         } else {
-            write!(f, "the amount is less than {}", self.lower_bound())
+            write!(f, "the amount is less than {}", SignedAmount::MIN)
         }
     }
 }
@@ -193,7 +168,33 @@ impl fmt::Display for OutOfRangeError {
 impl std::error::Error for OutOfRangeError {
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { is_signed: _, is_greater_than_max: _ } = self;
+        let Self { is_greater_than_max: _ } = self;
+        None
+    }
+}
+
+/// Error returned when a negative value is converted to an unsigned [`Amount`].
+///
+/// [`Amount`]: super::Amount
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct NegativeAmountError;
+
+impl From<Infallible> for NegativeAmountError {
+    #[inline]
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for NegativeAmountError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "the amount is negative") }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for NegativeAmountError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self {} = self;
         None
     }
 }
@@ -597,7 +598,7 @@ mod tests {
         assert_amount_err!(e, OutOfRange, "error should be OutOfRangeError");
         // less than 0
         let e = Amount::from_str("-10 BTC").unwrap_err();
-        assert_amount_err!(e, OutOfRange, "error should be OutOfRangeError");
+        assert_amount_err!(e, Negative, "error should be NegativeAmountError");
 
         // TooPreciseError - sub-satoshi precision
         let e = Amount::from_str("0.000000001 BTC").unwrap_err();
