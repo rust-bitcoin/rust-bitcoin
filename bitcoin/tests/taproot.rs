@@ -5,14 +5,14 @@ use bitcoin::key::TapTweak as _;
 use bitcoin::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTweakHash, TaprootBuilder,
 };
-use bitcoin::{Address, AddressParams, ScriptPubKeyBuf, TapScriptBuf, XOnlyPublicKey};
+use bitcoin::{Address, AddressParams, ScriptPubKeyBuf, TaprootLeafBuf, XOnlyPublicKey};
 
 #[test]
 fn bip_341_tests() {
     fn process_script_trees(
         v: &serde_json::Value,
         mut builder: TaprootBuilder,
-        leaves: &mut Vec<(TapScriptBuf, LeafVersion)>,
+        leaves: &mut Vec<(TaprootLeafBuf, LeafVersion)>,
         depth: u8,
     ) -> TaprootBuilder {
         if v.is_null() {
@@ -23,7 +23,7 @@ fn bip_341_tests() {
             }
         } else {
             let script =
-                TapScriptBuf::from_hex_no_length_prefix(v["script"].as_str().unwrap()).unwrap();
+                TaprootLeafBuf::from_hex_no_length_prefix(v["script"].as_str().unwrap()).unwrap();
             let ver =
                 LeafVersion::from_consensus(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
             leaves.push((script.clone(), ver));

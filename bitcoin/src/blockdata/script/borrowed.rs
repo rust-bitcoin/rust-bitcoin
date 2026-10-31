@@ -183,7 +183,7 @@ crate::internal_macros::define_extension_trait! {
         /// Computes leaf hash of tapscript.
         #[inline]
         fn tapscript_leaf_hash(&self) -> TapLeafHash {
-            TapLeafHash::from_script(self, LeafVersion::TapScript)
+            TapLeafHash::from_script(self.as_ref(), LeafVersion::TapScript)
         }
 
         /// Checks whether this tapscript is valid without being executed, by scanning it for
