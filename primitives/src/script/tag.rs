@@ -14,6 +14,7 @@ mod sealed {
     impl Sealed for super::ScriptSigTag {}
     impl Sealed for super::ScriptPubKeyTag {}
     impl Sealed for super::SignetBlockScriptTag {}
+    impl Sealed for super::TaprootLeafTag {}
     impl Sealed for super::TapScriptTag {}
     impl Sealed for super::WitnessScriptTag {}
     impl Sealed for super::ScriptCodeTag {}
@@ -39,7 +40,16 @@ impl Tag for ScriptPubKeyTag {}
 pub enum SignetBlockScriptTag {}
 impl Tag for SignetBlockScriptTag {}
 
-/// A Segwit v1 Taproot script.
+/// A Segwit v1 Taproot leaf script of any version.
+///
+/// Unlike [`TapScriptTag`], this one doesn't enforce any specific version.
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub enum TaprootLeafTag {}
+impl Tag for TaprootLeafTag {}
+
+/// A Segwit v1 Taproot leaf script of version 0xc0, the tapscript.
+///
+/// Unlike [`TaprootLeafTag`], this represents the statically known leaf version 0xc0.
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum TapScriptTag {}
 impl Tag for TapScriptTag {}
