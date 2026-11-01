@@ -387,9 +387,9 @@ impl XOnlyPublicKey {
     /// Errors if the provided bytes don't represent a valid secp256k1 point x-coordinate.
     #[inline]
     pub fn from_byte_array(
-        data: &[u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
+        data: [u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
     ) -> Result<Self, ParseXOnlyPublicKeyError> {
-        secp256k1::XOnlyPublicKey::from_byte_array(*data)
+        secp256k1::XOnlyPublicKey::from_byte_array(data)
             .map(|key| Self::from_secp(key, Parity::Even))
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
@@ -433,8 +433,8 @@ impl XOnlyPublicKey {
     ///
     /// If the resulting key would be invalid.
     #[inline]
-    pub fn add_tweak(&self, tweak: &secp256k1::Scalar) -> Result<Self, TweakXOnlyPublicKeyError> {
-        match self.to_inner().add_tweak(tweak) {
+    pub fn add_tweak(self, tweak: secp256k1::Scalar) -> Result<Self, TweakXOnlyPublicKeyError> {
+        match self.to_inner().add_tweak(&tweak) {
             Ok((xonly, parity)) => Ok(Self::from_secp(xonly, parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
             Err(secp256k1::Error::InvalidParityValue(_)) =>
@@ -456,7 +456,7 @@ impl XOnlyPublicKey {
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
+    pub fn to_hex(self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl FromStr for XOnlyPublicKey {
@@ -587,9 +587,9 @@ impl Keypair {
     pub fn raw_bip340_sign_with_aux_randomness(
         &self,
         msg: &[u8],
-        aux_rand: &[u8; 32],
+        aux_rand: [u8; 32],
     ) -> secp256k1::schnorr::Signature {
-        secp256k1::schnorr::sign_with_aux_rand(msg, self.as_inner(), aux_rand)
+        secp256k1::schnorr::sign_with_aux_rand(msg, self.as_inner(), &aux_rand)
     }
 }
 
@@ -768,16 +768,16 @@ impl LegacyPublicKey {
     ///
     /// # Errors
     ///
-    /// * [`FromSliceError::InvalidLength`] if the slice has an invalid number of bytes.
-    /// * [`FromSliceError::InvalidKeyPrefix`] if the key prefix is invalid.
-    /// * [`FromSliceError::InvalidPublicKey`] if the provided bytes do not form a valid public key.
+    /// * [`FromSliceError::Length`] if the slice has an invalid number of bytes.
+    /// * [`FromSliceError::KeyPrefix`] if the key prefix is invalid.
+    /// * [`FromSliceError::PublicKey`] if the provided bytes do not form a valid public key.
     #[inline]
     pub fn from_slice(data: &[u8]) -> Result<Self, FromSliceError> {
         let compressed = match data.len() {
             33 => true,
             65 => false,
             len => {
-                return Err(FromSliceError::InvalidLength(len));
+                return Err(FromSliceError::Length(len));
             }
         };
 
@@ -786,12 +786,12 @@ impl LegacyPublicKey {
             (true, 0x02) => (),
             (true, 0x03) => (),
             (false, 0x04) => (),
-            (_, byte) => return Err(FromSliceError::InvalidKeyPrefix(byte)),
+            (_, byte) => return Err(FromSliceError::KeyPrefix(byte)),
         }
 
         let secp_key = secp256k1::PublicKey::from_slice(data)
             .map_err(|_| InvalidPublicKeyError)
-            .map_err(FromSliceError::InvalidPublicKey)?;
+            .map_err(FromSliceError::PublicKey)?;
         Ok(match compressed {
             true => Self::from_secp(secp_key),
             false => Self::from_secp_uncompressed(secp_key),
@@ -1089,8 +1089,8 @@ impl PrivateKey {
     /// Errors when the secret key is invalid: when it is all-zeros or would exceed
     /// the curve order when interpreted as a big-endian unsigned integer.
     #[inline]
-    pub fn from_secret_bytes(data: &[u8; 32]) -> Result<Self, FromSecretBytesError> {
-        secp256k1::SecretKey::from_secret_bytes(*data)
+    pub fn from_secret_bytes(data: [u8; 32]) -> Result<Self, FromSecretBytesError> {
+        secp256k1::SecretKey::from_secret_bytes(data)
             .map(Self::from_secp)
             .map_err(|_| FromSecretBytesErrorInner::InvalidSecretKey)
             .map_err(FromSecretBytesError)
@@ -1612,7 +1612,7 @@ impl TweakedPublicKey {
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
+    pub fn to_hex(self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::LowerHex for TweakedPublicKey {
@@ -1629,12 +1629,6 @@ impl fmt::Display for TweakedPublicKey {
 pub type UntweakedKeypair = Keypair;
 
 impl TweakedKeypair {
-    /// Returns the underlying key pair.
-    #[inline]
-    #[doc(hidden)]
-    #[deprecated(since = "0.32.6", note = "use into_keypair() instead")]
-    pub fn to_inner(self) -> Keypair { self.into_keypair() }
-
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
     pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
@@ -1662,7 +1656,7 @@ impl SerializedXOnlyPublicKey {
     /// a valid secp256k1 point x-coordinate.
     #[inline]
     pub fn to_validated(self) -> Result<XOnlyPublicKey, ParseXOnlyPublicKeyError> {
-        XOnlyPublicKey::from_byte_array(self.as_byte_array())
+        XOnlyPublicKey::from_byte_array(*self.as_byte_array())
     }
 }
 
@@ -1696,11 +1690,11 @@ pub mod error {
     #[non_exhaustive]
     pub enum FromSliceError {
         /// Invalid key prefix error.
-        InvalidKeyPrefix(u8),
+        KeyPrefix(u8),
         /// Invalid pubkey bytes error.
-        InvalidPublicKey(InvalidPublicKeyError),
+        PublicKey(InvalidPublicKeyError),
         /// Invalid Length of the slice.
-        InvalidLength(usize),
+        Length(usize),
     }
 
     impl From<Infallible> for FromSliceError {
@@ -1712,9 +1706,9 @@ pub mod error {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::InvalidPublicKey(ref e) => write_err!(f, "invalid pubkey error"; e),
-                Self::InvalidKeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
-                Self::InvalidLength(got) =>
+                Self::PublicKey(ref e) => write_err!(f, "invalid pubkey error"; e),
+                Self::KeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
+                Self::Length(got) =>
                     write!(f, "slice length should be 33 or 65 bytes, got: {}", got),
             }
         }
@@ -1725,8 +1719,8 @@ pub mod error {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::InvalidPublicKey(ref e) => Some(e),
-                Self::InvalidKeyPrefix(_) | Self::InvalidLength(_) => None,
+                Self::PublicKey(ref e) => Some(e),
+                Self::KeyPrefix(_) | Self::Length(_) => None,
             }
         }
     }
@@ -2418,7 +2412,7 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
-            ParsePublicKeyError::Encoding(FromSliceError::InvalidPublicKey(InvalidPublicKeyError))
+            ParsePublicKeyError::Encoding(FromSliceError::PublicKey(InvalidPublicKeyError))
         );
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd169";
@@ -2427,17 +2421,14 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
-            ParsePublicKeyError::Encoding(FromSliceError::InvalidPublicKey(InvalidPublicKeyError))
+            ParsePublicKeyError::Encoding(FromSliceError::PublicKey(InvalidPublicKeyError))
         );
 
         let s = "062e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
         assert_eq!(s.len(), 130);
         let res = s.parse::<LegacyPublicKey>();
         assert!(res.is_err());
-        assert_eq!(
-            res.unwrap_err(),
-            ParsePublicKeyError::Encoding(FromSliceError::InvalidKeyPrefix(6))
-        );
+        assert_eq!(res.unwrap_err(), ParsePublicKeyError::Encoding(FromSliceError::KeyPrefix(6)));
 
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b13g";
         assert_eq!(s.len(), 130);
@@ -2476,7 +2467,7 @@ mod tests {
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
         )
         .expect("Failed to convert hex string to byte array");
-        let xonly_pub_key = XOnlyPublicKey::from_byte_array(key_bytes)
+        let xonly_pub_key = XOnlyPublicKey::from_byte_array(*key_bytes)
             .expect("Failed to create an XOnlyPublicKey from a byte array");
         // Confirm that the public key from bytes serializes back to the same bytes
         assert_eq!(&xonly_pub_key.serialize().0, key_bytes);
@@ -2509,7 +2500,7 @@ mod tests {
                 "1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9",
             )
             .unwrap();
-            let sk = PrivateKey::from_secret_bytes(&bytes).unwrap();
+            let sk = PrivateKey::from_secret_bytes(bytes).unwrap();
             Keypair::from_private_key(&sk)
         };
 

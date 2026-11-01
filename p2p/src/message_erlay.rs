@@ -26,7 +26,7 @@ impl SendTxRcnCl {
     pub fn from_salt(salt: u64) -> Self { Self { version: Self::VERSION_ONE, salt } }
 
     /// Get the transaction reconciliation protocol version.
-    pub fn version(&self) -> u32 { self.version }
+    pub fn version(self) -> u32 { self.version }
 }
 
 encoding::encoder_newtype_exact! {

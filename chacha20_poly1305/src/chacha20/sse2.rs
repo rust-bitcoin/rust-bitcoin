@@ -144,7 +144,7 @@ unsafe fn init_nonce_words(nonce: &Nonce) -> (Word, Word, Word) {
 // XOR four consecutive `ChaCha20` blocks of keystream into `chunk`, starting
 // at `start_block`.
 #[inline]
-pub(super) fn apply_4_blocks(chunk: &mut [u8; 4 * 64], key: &Key, nonce: &Nonce, start_block: u32) {
+pub(super) fn apply_4_blocks(chunk: &mut [u8; 4 * 64], key: Key, nonce: Nonce, start_block: u32) {
     // SAFETY: SSE2 intrinsics are gated by target feature `sse2`.
     unsafe {
         // Initialize length 4 vectors of 32 bit values.
@@ -155,10 +155,10 @@ pub(super) fn apply_4_blocks(chunk: &mut [u8; 4 * 64], key: &Key, nonce: &Nonce,
             (init0, init1, init2, init3),
             (init4, init5, init6, init7),
             (init8, init9, init10, init11),
-        ) = init_three_rows(key);
+        ) = init_three_rows(&key);
         // The only state value that varies between rounds is the block counter.
         // We set the four lanes to [start, start+1, start+2, start+3].
-        let (init13, init14, init15) = init_nonce_words(nonce);
+        let (init13, init14, init15) = init_nonce_words(&nonce);
         let init12 = arch::_mm_set_epi32(
             start_block.wrapping_add(3) as i32,
             start_block.wrapping_add(2) as i32,
@@ -295,7 +295,7 @@ mod tests {
         // Compares the SSE2 4-block processing with the single block processing.
         for start in [0u32, 1, 42, 1_000, u32::MAX - 3] {
             let mut sse2_ks = [0u8; 4 * 64];
-            apply_4_blocks(&mut sse2_ks, &key, &nonce, start);
+            apply_4_blocks(&mut sse2_ks, key, nonce, start);
 
             let mut scalar_ks = [0u8; 4 * 64];
             for i in 0u32..4 {

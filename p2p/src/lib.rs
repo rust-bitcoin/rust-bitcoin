@@ -242,7 +242,7 @@ impl ServiceFlags {
 
     /// Gets the hex representation of this type.
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
+    pub fn to_hex(self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::LowerHex for ServiceFlags {
@@ -378,7 +378,7 @@ impl Magic {
 
     /// Gets the hex representation of this type.
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
+    pub fn to_hex(self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl FromStr for Magic {

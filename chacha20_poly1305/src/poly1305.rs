@@ -230,7 +230,7 @@ fn prepare_padded_message_slice(msg: &[u8], is_last: bool) -> [u32; 5] {
     [m0, m1, m2, m3, m4]
 }
 
-fn _print_acc(num: &[u32; 5]) {
+fn _print_acc(num: [u32; 5]) {
     let a0 = num[0] | (num[1] << 26);
     let a1 = (num[1] >> 6) | (num[2] << 20);
     let a2 = (num[2] >> 12) | (num[3] << 14);

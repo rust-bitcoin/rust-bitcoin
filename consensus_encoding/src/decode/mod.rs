@@ -124,9 +124,11 @@ pub enum DecoderStatus {
 
 impl DecoderStatus {
     /// Returns `true` if the decoder needs more data to continue.
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Released API.
     pub fn needs_more(&self) -> bool { matches!(self, Self::NeedsMore) }
 
     /// Returns `true` if ready to produce decoded value with [`Decoder::end`].
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Released API.
     pub fn is_ready(&self) -> bool { matches!(self, Self::Ready) }
 }
 

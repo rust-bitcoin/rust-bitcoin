@@ -286,10 +286,10 @@ impl ChildNumber {
     pub fn index(self) -> u32 { self.0 & MAX_CHILD_INDEX }
 
     /// Returns `true` if the child number is not hardened.
-    pub fn is_normal(&self) -> bool { !self.is_hardened() }
+    pub fn is_normal(self) -> bool { !self.is_hardened() }
 
     /// Returns `true` if the child number is hardened.
-    pub fn is_hardened(&self) -> bool { self.0 & HARDENED_FLAG != 0 }
+    pub fn is_hardened(self) -> bool { self.0 & HARDENED_FLAG != 0 }
 
     /// Returns the child number that is a single increment from this one.
     ///
@@ -615,7 +615,9 @@ impl RelativeDerivationPath {
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Returns `true` if the derivation path contains a hardened child number.
-    pub fn contains_hardened_child(&self) -> bool { self.0.iter().any(ChildNumber::is_hardened) }
+    pub fn contains_hardened_child(&self) -> bool {
+        self.0.iter().copied().any(ChildNumber::is_hardened)
+    }
 
     /// Constructs a new [`RelativeDerivationPath`] that is a child of this one.
     #[must_use]
