@@ -181,7 +181,7 @@ impl<T> ScriptBuf<T> {
     pub fn builder() -> Builder<T> { Builder::new() }
 
     /// Adds a single opcode to the script.
-    pub fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
+    pub fn push_opcode(&mut self, opcode: Opcode) { self.as_byte_vec().push(opcode.to_u8()); }
 
     /// Adds instructions to push some arbitrary data onto the stack.
     ///
