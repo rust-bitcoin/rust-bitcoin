@@ -81,6 +81,8 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 pub enum LockTime {
     /// A block height lock time value.
     ///
+    /// A transaction locked to height `h` can be included in block `h+1` or later.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -93,6 +95,9 @@ pub enum LockTime {
     /// ```
     Blocks(Height),
     /// A UNIX timestamp lock time value.
+    ///
+    /// A transaction locked to time `t` can be included in a block whose previous block has a
+    /// median time past greater than `t`.
     ///
     /// # Examples
     ///
@@ -301,7 +306,7 @@ impl LockTime {
         }
     }
 
-    /// Returns `true` if a transaction with this locktime can be spent in the next block.
+    /// Returns `true` if a transaction with this locktime can be included in the next block.
     ///
     /// If `height` is the current block height of the chain then a transaction with this locktime
     /// can be broadcast for inclusion in the next block.
