@@ -259,7 +259,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-primitives"
-version = "0.103.1"
+version = "0.104.0"
 dependencies = [
  "arbitrary",
  "bincode",
