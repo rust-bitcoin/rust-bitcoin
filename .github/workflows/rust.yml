@@ -28,8 +28,48 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rbmt
+      - name: "Read compiler version"
+        id: rustc
+        run: |
+          version=$(cargo rbmt toolchains --${{ matrix.toolchain }})
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: "Restore dependency artifacts"
+        id: deps-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            target
+            ~/.cargo/registry
+          key: test-deps-${{ runner.os }}-rustc-${{ steps.rustc.outputs.version }}-${{ matrix.dep }}-${{ hashFiles(format('Cargo-{0}.lock', matrix.dep)) }}
       - name: "Run tests"
         run: cargo rbmt test --toolchain ${{ matrix.toolchain }} --lock-file ${{ matrix.dep }}
+      - name: "Prune workspace artifacts"
+        id: prune
+        if: github.event_name == 'push' && steps.deps-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: |
+          target=$(cargo metadata --format-version 1 --no-deps | jq -r .target_directory)
+          for profile in "$target"/*/ "$target"/*/*/; do
+            [ -d "$profile.fingerprint" ] || continue
+            for dep_info in "$profile"deps/*.d; do
+              grep -qs '^[^/#]' "$dep_info" || continue
+              hash=${dep_info%.d}
+              hash=${hash##*-}
+              rm -rf "$profile".fingerprint/*-"$hash" "$profile"deps/*-"$hash" "$profile"deps/*-"$hash".*
+            done
+            find "$profile" -maxdepth 1 -type f ! -name .cargo-lock -delete
+            rm -rf "$profile"examples "$profile"incremental
+          done
+          du -sh "$target" ~/.cargo/registry
+      - name: "Save dependency artifacts"
+        if: github.event_name == 'push' && steps.deps-cache.outputs.cache-hit != 'true' && steps.prune.outcome == 'success'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            target
+            ~/.cargo/registry
+          key: ${{ steps.deps-cache.outputs.cache-primary-key }}
 
   Check:
     runs-on: ubuntu-24.04
