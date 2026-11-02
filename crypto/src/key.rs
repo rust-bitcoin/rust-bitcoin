@@ -1699,12 +1699,6 @@ impl fmt::Display for TweakedPublicKey {
 pub type UntweakedKeypair = Keypair;
 
 impl TweakedKeypair {
-    /// Returns the underlying key pair.
-    #[inline]
-    #[doc(hidden)]
-    #[deprecated(since = "0.32.6", note = "use into_keypair() instead")]
-    pub fn to_inner(self) -> Keypair { self.into_keypair() }
-
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
     pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
