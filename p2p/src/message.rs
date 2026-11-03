@@ -2297,6 +2297,7 @@ mod test {
     use alloc::vec;
     use std::net::Ipv4Addr;
 
+    use encoding::Decoder;
     use hex::hex;
     use primitives::transaction::{Transaction, Txid};
     use primitives::{Block, BlockHash};
@@ -2875,5 +2876,47 @@ mod test {
 
         encoding::decode_from_slice::<V1NetworkMessage>(&malformed_v1_message)
             .expect_err("Message with invalid payload checksum should be rejected");
+    }
+
+    #[test]
+    fn v1_decoder_clamps_to_header_payload_length() {
+        // The V1 decoder must clamp input to the header's
+        // declared payload_len, preventing the inner payload decoder from
+        // consuming bytes past the boundary.
+
+        // Encode a valid V1 ping (8-byte payload), then tamper the header to
+        // declare payload_len=0. The Ping decoder needs 8 bytes for a u64
+        // nonce; the clamp must prevent it from consuming any of them.
+        let msg = V1NetworkMessage::new(Magic::BITCOIN, NetworkMessage::Ping(Ping(42)));
+        let mut raw = encoding::encode_to_vec(&msg);
+
+        // Overwrite payload_len (bytes 16..20) from 8 to 0.
+        raw[16..20].copy_from_slice(&0u32.to_le_bytes());
+        // Recompute checksum (bytes 20..24) over the empty declared payload.
+        let checksum = sha256d::Hash::hash(&[]).to_byte_array();
+        raw[20..24].copy_from_slice(&checksum[..4]);
+
+        let mut decoder = V1NetworkMessageDecoder::default();
+        let mut bytes: &[u8] = &raw;
+        let _ = decoder.push_bytes(&mut bytes);
+
+        // Only the 24-byte header may be consumed; the 8-byte ping payload
+        // must remain unconsumed past the payload_len=0 boundary.
+        assert_eq!(
+            bytes.len(),
+            8,
+            "decoder left {} bytes unconsumed, expected 8 (ping payload)",
+            bytes.len()
+        );
+    }
+
+    #[test]
+    fn v2_unknown_message_roundtrip() {
+        let cmd = CommandString::try_from("somecmd").unwrap();
+        let payload = vec![1, 2, 3, 4, 5];
+        let msg = V2NetworkMessage::new(NetworkMessage::Unknown { command: cmd, payload });
+        let encoded = encoding::encode_to_vec(&msg);
+        let decoded = encoding::decode_from_slice::<V2NetworkMessage>(&encoded).unwrap();
+        assert_eq!(decoded, msg);
     }
 }
