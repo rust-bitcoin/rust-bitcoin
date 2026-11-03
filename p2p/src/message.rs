@@ -1255,11 +1255,11 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone)]
-enum DecoderState {
-    ReadingHeader {
+enum V1NetworkMessageDecoderState {
+    Header {
         header_decoder: V1MessageHeaderDecoder,
     },
-    ReadingPayload {
+    Payload {
         magic: Magic,
         checksum: [u8; 4],
         payload_decoder: NetworkMessageDecoder,
@@ -1270,9 +1270,9 @@ enum DecoderState {
     },
 }
 
-impl Default for DecoderState {
+impl Default for V1NetworkMessageDecoderState {
     fn default() -> Self {
-        Self::ReadingHeader { header_decoder: V1MessageHeaderDecoder::default() }
+        Self::Header { header_decoder: V1MessageHeaderDecoder::default() }
     }
 }
 
@@ -1283,7 +1283,7 @@ impl Default for DecoderState {
 /// to decode the dynamically sized network message.
 #[derive(Debug, Default, Clone)]
 pub struct V1NetworkMessageDecoder {
-    state: DecoderState,
+    state: V1NetworkMessageDecoderState,
 }
 
 impl encoding::Decoder for V1NetworkMessageDecoder {
@@ -1292,7 +1292,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         match &mut self.state {
-            DecoderState::ReadingHeader { header_decoder } => {
+            V1NetworkMessageDecoderState::Header { header_decoder } => {
                 let status = header_decoder
                     .push_bytes(bytes)
                     .map_err(V1NetworkMessageDecoderErrorInner::Header)
@@ -1313,7 +1313,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                     }
 
                     let payload_decoder = NetworkMessageDecoder::from_command(header.command);
-                    self.state = DecoderState::ReadingPayload {
+                    self.state = V1NetworkMessageDecoderState::Payload {
                         magic: header.magic,
                         checksum: header.checksum,
                         payload_decoder,
@@ -1328,7 +1328,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
                 Ok(status)
             }
-            DecoderState::ReadingPayload {
+            V1NetworkMessageDecoderState::Payload {
                 payload_decoder,
                 checksum_engine,
                 payload_len,
@@ -1355,12 +1355,12 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
     fn end(self) -> Result<Self::Output, Self::Error> {
         match self.state {
-            DecoderState::ReadingHeader { header_decoder } => Err(header_decoder
+            V1NetworkMessageDecoderState::Header { header_decoder } => Err(header_decoder
                 .end()
                 .map_err(V1NetworkMessageDecoderErrorInner::Header)
                 .map_err(V1NetworkMessageDecoderError)
-                .expect_err("push_bytes() moves to ReadingPayload on header_decoder completion")),
-            DecoderState::ReadingPayload {
+                .expect_err("push_bytes() moves to Payload on header_decoder completion")),
+            V1NetworkMessageDecoderState::Payload {
                 magic,
                 checksum,
                 payload_decoder,
@@ -1401,8 +1401,8 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
     fn read_limit(&self) -> usize {
         match &self.state {
-            DecoderState::ReadingHeader { header_decoder } => header_decoder.read_limit(),
-            DecoderState::ReadingPayload {
+            V1NetworkMessageDecoderState::Header { header_decoder } => header_decoder.read_limit(),
+            V1NetworkMessageDecoderState::Payload {
                 payload_decoder, payload_len, bytes_consumed, ..
             } => payload_decoder.read_limit().min(payload_len.saturating_sub(*bytes_consumed)),
         }
