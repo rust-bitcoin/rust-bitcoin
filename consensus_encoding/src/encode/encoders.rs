@@ -258,15 +258,6 @@ macro_rules! define_encoder_n {
                 self.skip_empty();
                 $(
                     if self.cur_idx == $enc_idx {
-                        if self.$enc_field.current_chunk().is_empty() {
-                            self.cur_idx += 1;
-                            self.skip_empty();
-                            return if self.cur_idx == $idx_limit {
-                                EncoderStatus::Finished
-                            } else {
-                                EncoderStatus::HasMore
-                            };
-                        }
                         if self.$enc_field.advance().has_more()
                             && !self.$enc_field.current_chunk().is_empty()
                         {
