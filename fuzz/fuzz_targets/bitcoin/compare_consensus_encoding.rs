@@ -154,14 +154,33 @@ fn addrv2_payload_should_skip(data: &[u8]) -> bool {
     .unwrap_or(false)
 }
 
-/// Returns `true` if `V1NetworkMessage` carries a command that only the master decodes.
-fn v1_network_message_should_skip(data: &[u8]) -> bool {
-    const MASTER_ONLY: &[&str] = &["sendtxrcncl", "feature"];
+/// Returns `true` if `data` is a version message without the trailing relay byte.
+///
+/// BIP-0037 made the byte optional. Master decodes a missing byte as `relay = true`,
+/// bitcoin 0.32 fails with an EOF.
+fn is_version_message_missing_relay_byte(data: &[u8]) -> bool {
+    let Ok(message) = decode_from_slice::<p2p::message_network::VersionMessage>(data) else {
+        return false;
+    };
+    let reencoded = bitcoin_consensus_encoding::encode_to_vec(&message);
+    reencoded.len() == data.len() + 1
+}
 
-    // A V1 header is `magic(4) || command(12) || ...`
-    data.get(4..16)
-        .and_then(|command| std::str::from_utf8(command).ok())
-        .is_some_and(|command| MASTER_ONLY.contains(&command.trim_end_matches('\0')))
+/// Returns `true` if `data` is a V1 network message that only master decodes.
+///
+/// A V1 message is `magic(4) || command(12) || length(4) || checksum(4) || payload`.
+fn is_v1_message_only_master_decodes(data: &[u8]) -> bool {
+    const HEADER_LEN: usize = 24;
+    const MASTER_ONLY_COMMANDS: &[&str] = &["sendtxrcncl", "feature"];
+
+    let Some(command) = data.get(4..16).and_then(|c| std::str::from_utf8(c).ok()) else {
+        return false;
+    };
+    let payload = data.get(HEADER_LEN..).unwrap_or_default();
+    match command.trim_end_matches('\0') {
+        "version" => is_version_message_missing_relay_byte(payload),
+        command => MASTER_ONLY_COMMANDS.contains(&command),
+    }
 }
 
 #[rustfmt::skip] // rustfmt butchers all of these with inconsistent newlines.
@@ -212,7 +231,9 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, p2p::message_filter::FilterHeader, bitcoin_0_32::bip158::FilterHeader);
     compare_encoding!(data, p2p::message_network::Reject, bitcoin_0_32::p2p::message_network::Reject);
     compare_encoding!(data, p2p::message_network::RejectReason, bitcoin_0_32::p2p::message_network::RejectReason);
-    compare_encoding!(data, p2p::message_network::VersionMessage, bitcoin_0_32::p2p::message_network::VersionMessage);
+    if !is_version_message_missing_relay_byte(data) {
+        compare_encoding!(data, p2p::message_network::VersionMessage, bitcoin_0_32::p2p::message_network::VersionMessage);
+    }
 
     // Types that only exist in new bitcoin, but can encode the same as some known type
     compare_encoding!(data, p2p::ProtocolVersion, u32);
@@ -223,7 +244,7 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, p2p::message::Pong, u64);
     // Skip messages unknown to bitcoin 0.32, which never fails them, while master
     // decoder parses can recognize and reject them.
-    if !v1_network_message_should_skip(data) {
+    if !is_v1_message_only_master_decodes(data) {
         compare_encoding!(data, p2p::message::V1NetworkMessage, bitcoin_0_32::p2p::message::RawNetworkMessage);
     }
     compare_encoding!(data, p2p::message_blockdata::BlockLocator, Vec<bitcoin_0_32::BlockHash>);

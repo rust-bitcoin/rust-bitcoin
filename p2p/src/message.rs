@@ -1285,10 +1285,18 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        let before = bytes.len();
-        let result = self.inner.push_bytes(bytes)?;
-        self.bytes_consumed += before - bytes.len();
-        Ok(result)
+        let limit = self
+            .payload_len
+            .map_or(bytes.len(), |expected| (expected - self.bytes_consumed).min(bytes.len()));
+        let mut payload = &bytes[..limit];
+        let status = self.inner.push_bytes(&mut payload)?;
+        let consumed = limit - payload.len();
+        self.bytes_consumed += consumed;
+        *bytes = &bytes[consumed..];
+        if self.payload_len == Some(self.bytes_consumed) {
+            return Ok(encoding::DecoderStatus::Ready);
+        }
+        Ok(status)
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
@@ -2350,7 +2358,7 @@ mod test {
         CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders,
         GetCFilters,
     };
-    use crate::message_network::{Alert, Reject, RejectReason, VersionMessage};
+    use crate::message_network::{Alert, Reject, RejectReason, UserAgent, VersionMessage};
     use crate::{ProtocolVersion, ServiceFlags};
 
     fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
@@ -2757,6 +2765,35 @@ mod test {
         } else {
             panic!("wrong message type");
         }
+    }
+
+    #[test]
+    fn deserialize_version_without_relay_byte_in_stream() {
+        let addr = Address::new(&([127, 0, 0, 1], 8333).into(), ServiceFlags::NONE);
+        let version = VersionMessage::new(
+            ProtocolVersion(70015),
+            ServiceFlags::NONE,
+            0,
+            addr.clone(),
+            addr,
+            0,
+            UserAgent::from_nonstandard(&"/test/"),
+            0,
+        );
+        let mut payload = encoding::encode_to_vec(&version);
+        payload.pop(); // relay byte
+
+        let version = NetworkMessage::Unknown { command: "version".parse().unwrap(), payload };
+        let mut stream = encoding::encode_to_vec(&V1NetworkMessage::new(Magic::BITCOIN, version));
+        let verack =
+            encoding::encode_to_vec(&V1NetworkMessage::new(Magic::BITCOIN, NetworkMessage::Verack));
+        stream.extend_from_slice(&verack);
+
+        let mut bytes = stream.as_slice();
+        // The verack is meant to be left over, we expect no bytes are stolen from it.
+        let msg: V1NetworkMessage = encoding::decode_from_slice_unbounded(&mut bytes).unwrap();
+        assert!(matches!(msg.payload(), NetworkMessage::Version(v) if v.relay));
+        assert_eq!(bytes, verack);
     }
 
     #[test]
