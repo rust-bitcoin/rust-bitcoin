@@ -42,8 +42,11 @@ pub use self::error::{
 
 /// The maximum number of [`super::message_blockdata::Inventory`] items in an `inv` message.
 ///
-/// This limit is not currently enforced by this implementation.
+/// This limit is enforced when decoding `inv`, `getdata` and `notfound` messages.
 pub const MAX_INV_SIZE: usize = 50_000;
+
+/// The maximum number of address entries in an `addr` or `addrv2` message.
+pub const MAX_ADDR_SIZE: usize = 1_000;
 
 /// Maximum size, in bytes, of an encoded message
 /// This by necessity should be larger than `MAX_VEC_SIZE`
@@ -317,8 +320,11 @@ type InventoryInnerDecoder = VecDecoder<message_blockdata::Inventory>;
 
 crate::decoder_newtype! {
     /// Decoder type for [`InventoryPayload`].
-    #[derive(Debug, Default, Clone)]
+    #[derive(Debug, Clone)]
     pub struct InventoryPayloadDecoder(InventoryInnerDecoder);
+
+    /// Constructs a new decoder that rejects more than [`MAX_INV_SIZE`] entries.
+    pub fn new() -> Self { Self(VecDecoder::new_with_limit(MAX_INV_SIZE)) }
 
     fn end(
         result: Result<Vec<message_blockdata::Inventory>, <InventoryInnerDecoder as encoding::Decoder>::Error>
@@ -353,8 +359,11 @@ type AddrPayloadInnerDecoder = VecDecoder<AddrV1Message>;
 
 crate::decoder_newtype! {
     /// Decoder type for [`AddrPayload`].
-    #[derive(Debug, Default, Clone)]
+    #[derive(Debug, Clone)]
     pub struct AddrPayloadDecoder(AddrPayloadInnerDecoder);
+
+    /// Constructs a new decoder that rejects more than [`MAX_ADDR_SIZE`] entries.
+    pub fn new() -> Self { Self(VecDecoder::new_with_limit(MAX_ADDR_SIZE)) }
 
     fn end(
         result: Result<Vec<AddrV1Message>, <AddrPayloadInnerDecoder as encoding::Decoder>::Error>
@@ -392,8 +401,11 @@ type AddrV2PayloadInnerDecoder = VecDecoder<AddrV2Message>;
 
 crate::decoder_newtype! {
     /// Decoder type for [`AddrV2Payload`].
-    #[derive(Debug, Default, Clone)]
+    #[derive(Debug, Clone)]
     pub struct AddrV2PayloadDecoder(AddrV2PayloadInnerDecoder);
+
+    /// Constructs a new decoder that rejects more than [`MAX_ADDR_SIZE`] entries.
+    pub fn new() -> Self { Self(VecDecoder::new_with_limit(MAX_ADDR_SIZE)) }
 
     fn end(
         result: Result<Vec<AddrV2Message>, VecDecoderError<AddrV2MessageDecoderError>>

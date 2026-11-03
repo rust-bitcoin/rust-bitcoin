@@ -203,7 +203,7 @@ crate::decoder_newtype! {
     pub struct BlockLocatorDecoder(BlockLocatorInnerDecoder);
 
     /// Creates a new decoder.
-    pub fn new() -> Self { Self(VecDecoder::<BlockHash>::new()) }
+    pub fn new() -> Self { Self(VecDecoder::<BlockHash>::new_with_limit(MAX_LOCATOR_HASHES)) }
 
     fn end(
         result: Result<Vec<BlockHash>, <BlockLocatorInnerDecoder as encoding::Decoder>::Error>
