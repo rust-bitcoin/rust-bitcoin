@@ -36,7 +36,8 @@ use crate::{
 pub use self::error::{
     AddrPayloadDecoderError, AddrV2PayloadDecoderError, CommandStringDecoderError,
     CommandStringError, FeeFilterDecoderError, HeadersMessageDecoderError,
-    InventoryPayloadDecoderError, NetworkHeaderDecoderError, PingDecoderError, PongDecoderError,
+    InventoryPayloadDecoderError, NetworkHeaderDecoderError,
+    NetworkMessageDecoderError, PingDecoderError, PongDecoderError,
     V1MessageHeaderDecoderError, V1NetworkMessageDecoderError, V2NetworkMessageDecoderError
 };
 
@@ -1120,11 +1121,11 @@ impl NetworkMessageDecoder {
 
 impl encoding::Decoder for NetworkMessageDecoder {
     type Output = NetworkMessage;
-    type Error = V1NetworkMessageDecoderError;
+    type Error = NetworkMessageDecoderError;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        let err = V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload);
+        let err = NetworkMessageDecoderError;
         match self {
             Self::Version(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Addr(d) => d.push_bytes(bytes).map_err(|_| err),
@@ -1167,7 +1168,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let err = V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload);
+        let err = NetworkMessageDecoderError;
         match self {
             Self::Version(d) => Ok(NetworkMessage::Version(d.end().map_err(|_| err)?)),
             Self::Addr(d) => Ok(NetworkMessage::Addr(d.end().map_err(|_| err)?)),
@@ -1338,7 +1339,9 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                 // Clamp given bytes so decoder doesn't overread.
                 let remaining = (*payload_len - *bytes_consumed).min(bytes.len());
                 let mut clamped_bytes = &(*bytes)[..remaining];
-                let status = payload_decoder.push_bytes(&mut clamped_bytes)?;
+                let status = payload_decoder.push_bytes(&mut clamped_bytes).map_err(|e| {
+                    V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload(e))
+                })?;
                 // Track bytes consumed and their checksum.
                 let consumed = remaining - clamped_bytes.len();
                 checksum_engine.input(&(*bytes)[..consumed]);
@@ -1376,7 +1379,9 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                         },
                     ));
                 }
-                let payload = payload_decoder.end()?;
+                let payload = payload_decoder.end().map_err(|e| {
+                    V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload(e))
+                })?;
 
                 let hash_bytes = checksum_engine.finalize().to_byte_array();
                 let expected_checksum =
@@ -1403,7 +1408,10 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
         match &self.state {
             V1NetworkMessageDecoderState::Header { header_decoder } => header_decoder.read_limit(),
             V1NetworkMessageDecoderState::Payload {
-                payload_decoder, payload_len, bytes_consumed, ..
+                payload_decoder,
+                payload_len,
+                bytes_consumed,
+                ..
             } => payload_decoder.read_limit().min(payload_len.saturating_sub(*bytes_consumed)),
         }
     }
@@ -1658,9 +1666,7 @@ impl V2NetworkMessageDecoder {
         use encoding::Decode as _;
         use NetworkMessageDecoder as E;
 
-        let err = V2NetworkMessageDecoderError::Payload(V1NetworkMessageDecoderError(
-            V1NetworkMessageDecoderErrorInner::Payload,
-        ));
+        let err = V2NetworkMessageDecoderError::Payload(NetworkMessageDecoderError);
         match short_id {
             1u8 => Ok(E::Addr(AddrPayload::decoder())),
             2u8 => Ok(E::Block(block::Block::decoder())),
@@ -2044,6 +2050,19 @@ pub mod error {
         }
     }
 
+    /// Error decoding a network message payload.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct NetworkMessageDecoderError;
+
+    impl fmt::Display for NetworkMessageDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "error decoding network message payload")
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for NetworkMessageDecoderError {}
+
     /// Error decoding a raw network message.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct V1NetworkMessageDecoderError(pub(super) V1NetworkMessageDecoderErrorInner);
@@ -2055,7 +2074,7 @@ pub mod error {
         /// Payload length exceeds maximum allowed message size.
         PayloadTooLarge,
         /// Error decoding the message payload.
-        Payload,
+        Payload(NetworkMessageDecoderError),
         /// Message checksum did not match the one reported in the message header.
         InvalidChecksum { expected: [u8; 4], actual: [u8; 4] },
         /// Bytes decoded by the payload decoder do not match the declared payload length.
@@ -2071,7 +2090,7 @@ pub mod error {
                 V1NetworkMessageDecoderErrorInner::PayloadTooLarge => {
                     write!(f, "payload length exceeds maximum allowed message size")
                 }
-                V1NetworkMessageDecoderErrorInner::Payload => {
+                V1NetworkMessageDecoderErrorInner::Payload(_) => {
                     write!(f, "error decoding message payload")
                 }
                 V1NetworkMessageDecoderErrorInner::InvalidChecksum { expected: ref e, actual: ref a } => write!(
@@ -2091,7 +2110,7 @@ pub mod error {
             match self.0 {
                 V1NetworkMessageDecoderErrorInner::Header(ref e) => Some(e),
                 V1NetworkMessageDecoderErrorInner::PayloadTooLarge => None,
-                V1NetworkMessageDecoderErrorInner::Payload => None,
+                V1NetworkMessageDecoderErrorInner::Payload(_) => None,
                 V1NetworkMessageDecoderErrorInner::InvalidChecksum { expected: _, actual: _ } =>
                     None,
                 V1NetworkMessageDecoderErrorInner::PayloadLengthMismatch { .. } => None,
@@ -2107,7 +2126,7 @@ pub mod error {
         /// Error decoding the command string.
         Command(CommandStringDecoderError),
         /// Error decoding the message payload.
-        Payload(V1NetworkMessageDecoderError),
+        Payload(NetworkMessageDecoderError),
         /// Unknown short ID value.
         UnknownShortId(u8),
     }
