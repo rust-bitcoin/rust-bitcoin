@@ -125,9 +125,11 @@ pub enum EncoderStatus {
 
 impl EncoderStatus {
     /// Returns `true` if `self` is `HasMore`, `false` otherwise.
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Released API.
     pub fn has_more(&self) -> bool { matches!(self, Self::HasMore) }
 
     /// Returns `true` if `self` is `Finished`, `false` otherwise.
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Released API.
     pub fn has_finished(&self) -> bool { matches!(self, Self::Finished) }
 }
 

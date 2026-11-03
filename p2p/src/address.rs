@@ -46,8 +46,8 @@ const INTERNAL_IN_IPV6: [u16; 3] = [0xFD6B, 0x88C0, 0x8724];
 
 impl Address {
     /// Constructs a new address message for a socket
-    pub fn new(socket: &SocketAddr, services: ServiceFlags) -> Self {
-        let (address, port) = match *socket {
+    pub fn new(socket: SocketAddr, services: ServiceFlags) -> Self {
+        let (address, port) = match socket {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
             SocketAddr::V6(addr) => (addr.ip().segments(), addr.port()),
         };
@@ -1025,7 +1025,7 @@ impl<'a> Arbitrary<'a> for Address {
             ),
         };
 
-        Ok(Self::new(&socket_addr, u.arbitrary()?))
+        Ok(Self::new(socket_addr, u.arbitrary()?))
     }
 }
 
@@ -1100,7 +1100,7 @@ mod test {
     #[test]
     fn encode_decode_address_roundtrip() {
         let sock = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8333);
-        let addr = Address::new(&sock, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
+        let addr = Address::new(sock, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         let encoded_addr = encoding::encode_to_vec(&addr);
         let decoded_addr = encoding::decode_from_slice::<Address>(&encoded_addr).unwrap();
 
@@ -1166,7 +1166,7 @@ mod test {
     #[test]
     fn socket_addr() {
         let s4 = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(111, 222, 123, 4)), 5555);
-        let a4 = Address::new(&s4, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
+        let a4 = Address::new(s4, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a4.socket_addr().unwrap(), s4);
         let s6 = SocketAddr::new(
             IpAddr::V6(Ipv6Addr::new(
@@ -1174,14 +1174,14 @@ mod test {
             )),
             9999,
         );
-        let a6 = Address::new(&s6, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
+        let a6 = Address::new(s6, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a6.socket_addr().unwrap(), s6);
     }
 
     #[test]
     fn address_ipv6_loopback_roundtrip() {
         let socket = SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::LOCALHOST, 8333, 0, 0));
-        let addr = Address::new(&socket, ServiceFlags::NONE);
+        let addr = Address::new(socket, ServiceFlags::NONE);
         // Public API round-trip: SocketAddr -> Address -> SocketAddr must be stable.
         assert_eq!(addr.socket_addr().unwrap(), socket);
         // Debug must reflect the same IPv6 address, not a bogus IPv4 one.
@@ -1192,7 +1192,7 @@ mod test {
     #[test]
     fn address_ipv4_mapped_roundtrip() {
         let socket = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 8333));
-        let addr = Address::new(&socket, ServiceFlags::NONE);
+        let addr = Address::new(socket, ServiceFlags::NONE);
         // Real IPv4 addresses are stored as IPv4-mapped IPv6 and must round-trip.
         assert_eq!(addr.socket_addr().unwrap(), socket);
     }
@@ -1203,7 +1203,7 @@ mod test {
             IpAddr::V6("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca".parse::<Ipv6Addr>().unwrap()),
             1111,
         );
-        let addr = Address::new(&onionaddr, ServiceFlags::NONE);
+        let addr = Address::new(onionaddr, ServiceFlags::NONE);
         assert!(addr.socket_addr().is_err());
     }
 

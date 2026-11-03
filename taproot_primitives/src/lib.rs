@@ -232,6 +232,7 @@ impl LeafVersion {
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[allow(clippy::wrong_self_convention, clippy::trivially_copy_pass_by_ref)]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
@@ -334,6 +335,7 @@ impl FutureLeafVersion {
     /// Gets the hex representation of this type.
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[allow(clippy::wrong_self_convention, clippy::trivially_copy_pass_by_ref)]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
@@ -398,7 +400,7 @@ impl TapTweak for UntweakedPublicKey {
     /// Returns the tweaked key and its parity.
     fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedPublicKey {
         let tweak = TapTweakHash::from_key_and_merkle_root(*self, merkle_root).to_scalar();
-        let output_key = self.add_tweak(&tweak).expect("Tap tweak failed");
+        let output_key = self.add_tweak(tweak).expect("Tap tweak failed");
 
         debug_assert!(self.tweak_add_check(&output_key, tweak));
         TweakedPublicKey::dangerous_assume_tweaked(output_key)

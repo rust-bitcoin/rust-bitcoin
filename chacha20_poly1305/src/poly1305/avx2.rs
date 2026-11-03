@@ -49,10 +49,10 @@ pub(super) struct RPowers {
 //
 // SAFETY: The caller must ensure that AVX2 is available on the current CPU.
 #[target_feature(enable = "avx,avx2")]
-pub(super) unsafe fn r_powers(r: &[u32; 5]) -> RPowers {
-    let r2 = mul_mod(r, r);
-    let r3 = mul_mod(&r2, r);
-    let r4 = mul_mod(&r3, r);
+pub(super) unsafe fn r_powers(r: [u32; 5]) -> RPowers {
+    let r2 = mul_mod(&r, &r);
+    let r3 = mul_mod(&r2, &r);
+    let r4 = mul_mod(&r3, &r);
 
     // Each vector holds the same limb of every power, with the fourth power
     // in the first lane and `r` in the last. `_mm256_setr_epi64x` sets the
@@ -243,7 +243,7 @@ mod tests {
                 let mut avx2 = Poly1305::new(key);
                 // SAFETY: AVX2 support was detected above.
                 unsafe {
-                    let powers = r_powers(&avx2.r);
+                    let powers = r_powers(avx2.r);
                     for chunk in message.chunks_exact(64) {
                         process_4_blocks(&mut avx2.acc, &powers, chunk.try_into().unwrap());
                     }

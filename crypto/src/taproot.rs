@@ -225,6 +225,7 @@ impl SerializedSignature {
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
