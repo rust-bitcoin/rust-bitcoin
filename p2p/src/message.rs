@@ -2907,6 +2907,49 @@ mod test {
         assert!(msg.is_err());
     }
 
+    /// Builds a payload of `count` repetitions of `entry`, prefixed with a 3-byte `CompactSize`.
+    fn repeated_payload(count: u16, entry: &[u8]) -> Vec<u8> {
+        let mut bytes = vec![0xFD];
+        bytes.extend_from_slice(&count.to_le_bytes());
+        for _ in 0..count {
+            bytes.extend_from_slice(entry);
+        }
+        bytes
+    }
+
+    #[test]
+    fn inventory_payload_enforces_max_inv_size() {
+        // A `tx` inventory entry with a zeroed hash.
+        let mut entry = 1u32.to_le_bytes().to_vec();
+        entry.extend_from_slice(&[0u8; 32]);
+
+        let at_limit = repeated_payload(MAX_INV_SIZE as u16, &entry);
+        let payload = encoding::decode_from_slice::<InventoryPayload>(&at_limit).unwrap();
+        assert_eq!(payload.0.len(), MAX_INV_SIZE);
+
+        let over_limit = repeated_payload(MAX_INV_SIZE as u16 + 1, &entry);
+        encoding::decode_from_slice::<InventoryPayload>(&over_limit).unwrap_err();
+    }
+
+    #[test]
+    fn addr_payloads_enforce_max_addr_size() {
+        // Timestamp, services, and a zeroed 16-byte IP and port.
+        let v1_entry = [0u8; 30];
+        let at_limit = repeated_payload(MAX_ADDR_SIZE as u16, &v1_entry);
+        let payload = encoding::decode_from_slice::<AddrPayload>(&at_limit).unwrap();
+        assert_eq!(payload.0.len(), MAX_ADDR_SIZE);
+        let over_limit = repeated_payload(MAX_ADDR_SIZE as u16 + 1, &v1_entry);
+        encoding::decode_from_slice::<AddrPayload>(&over_limit).unwrap_err();
+
+        // Timestamp, services, IPv4 network id, 4-byte address, and port.
+        let v2_entry = [0, 0, 0, 0, 0, 1, 4, 0, 0, 0, 0, 0, 0];
+        let at_limit = repeated_payload(MAX_ADDR_SIZE as u16, &v2_entry);
+        let payload = encoding::decode_from_slice::<AddrV2Payload>(&at_limit).unwrap();
+        assert_eq!(payload.0.len(), MAX_ADDR_SIZE);
+        let over_limit = repeated_payload(MAX_ADDR_SIZE as u16 + 1, &v2_entry);
+        encoding::decode_from_slice::<AddrV2Payload>(&over_limit).unwrap_err();
+    }
+
     #[test]
     #[rustfmt::skip] // Keep readable byte layout with comments.
     fn v1_message_rejects_invalid_checksum_with_noncanonical_encoding() {

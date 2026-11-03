@@ -476,6 +476,18 @@ mod tests {
     use super::*;
 
     #[test]
+    fn block_locator_enforces_max_locator_hashes() {
+        let mut at_limit = alloc::vec![MAX_LOCATOR_HASHES as u8];
+        at_limit.extend_from_slice(&[0u8; 32 * MAX_LOCATOR_HASHES]);
+        let locator = encoding::decode_from_slice::<BlockLocator>(&at_limit).unwrap();
+        assert_eq!(locator.0.len(), MAX_LOCATOR_HASHES);
+
+        let mut over_limit = alloc::vec![(MAX_LOCATOR_HASHES + 1) as u8];
+        over_limit.extend_from_slice(&[0u8; 32 * (MAX_LOCATOR_HASHES + 1)]);
+        encoding::decode_from_slice::<BlockLocator>(&over_limit).unwrap_err();
+    }
+
+    #[test]
     fn getblocks_message() {
         let from_sat = hex!("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000");
         let genhash = hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
