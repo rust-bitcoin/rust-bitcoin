@@ -7,6 +7,8 @@
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
+#[cfg(all(target_arch = "aarch64", target_endian = "little", target_feature = "neon"))]
+mod neon;
 
 /// 2^26 for the 26-bit limbs.
 const BITMASK: u32 = 0x03ff_ffff;
@@ -90,6 +92,22 @@ impl Poly1305 {
 
         // Remove prefix already processed in leftovers.
         let remaining_message = &message[fill..];
+
+        // On aarch64, consume as many 4-block groups as possible before falling
+        // back to single-block processing.
+        #[cfg(all(target_arch = "aarch64", target_endian = "little", target_feature = "neon"))]
+        let remaining_message = if remaining_message.len() >= 4 * 16 {
+            let powers = neon::r_powers(&self.r);
+            let mut chunks = remaining_message.chunks_exact(4 * 16);
+            for chunk in &mut chunks {
+                if let Ok(chunk) = <&[u8; 4 * 16]>::try_from(chunk) {
+                    neon::process_4_blocks(&mut self.acc, &powers, chunk);
+                }
+            }
+            chunks.remainder()
+        } else {
+            remaining_message
+        };
 
         // On x86, consume as many 4-block groups as possible with AVX2 when it
         // is available, before falling back to single-block processing.
