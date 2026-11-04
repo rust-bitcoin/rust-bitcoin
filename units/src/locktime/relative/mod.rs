@@ -209,9 +209,10 @@ impl LockTime {
     /// # Arguments
     ///
     /// * `chain_tip_height`: The current height of the blockchain.
-    /// * `chain_tip_mtp`: The current MTP (i.e. median of the 11 latest blocks).
+    /// * `chain_tip_mtp`: The current MTP (i.e. median of the 11 latest blocks, including the tip).
     /// * `utxo_mined_at_height`: `Some` height if mined, `None` if UTXO may go in the next block.
-    /// * `utxo_mined_at_mtp`: `Some` MTP if mined, `None` if UTXO may go in the next block.
+    /// * `utxo_mined_at_mtp`: `Some` MTP of the block preceding the UTXO confirmation
+    ///   block, `None` if UTXO may go in the next block.
     ///
     /// # Errors
     ///
@@ -263,8 +264,9 @@ impl LockTime {
     ///
     /// # Arguments
     ///
-    /// * `chain_tip`: The current MTP (i.e. median of the 11 latest blocks).
-    /// * `utxo_mined_at`: `Some` MTP if mined, `None` if UTXO may go in the next block.
+    /// * `chain_tip`: The current MTP (i.e. median of the 11 latest blocks, including the tip).
+    /// * `utxo_mined_at`: `Some` MTP of the block preceding the UTXO confirmation
+    ///   block, `None` if UTXO may go in the next block.
     ///
     /// # Errors
     ///
@@ -615,8 +617,9 @@ impl NumberOf512Seconds {
     ///
     /// # Arguments
     ///
-    /// * `chain_tip_mtp`: The current MTP (i.e. median of the 11 latest blocks).
-    /// * `utxo_mined_at`: `Some` MTP if mined, `None` if UTXO may go in the next block.
+    /// * `chain_tip`: The current MTP (i.e. median of the 11 latest blocks, including the tip).
+    /// * `utxo_mined_at`: `Some` MTP of the block preceding the UTXO confirmation
+    ///   block, `None` if UTXO may go in the next block.
     ///
     /// # Errors
     ///
