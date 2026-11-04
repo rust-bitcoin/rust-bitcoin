@@ -1066,9 +1066,20 @@ enum NetworkMessageDecoder {
     AddrV2(AddrV2PayloadDecoder),
     SendTxRcnCl(SendTxRcnClDecoder),
     Feature(FeatureDecoder),
-    /// Zero-payload messages: verack, mempool, sendheaders, getaddr, wtxidrelay,
-    /// filterclear, sendaddrv2.
-    Empty(CommandString),
+    /// Zero-payload `verack` message.
+    Verack,
+    /// Zero-payload `sendheaders` message.
+    SendHeaders,
+    /// Zero-payload `mempool` message.
+    MemPool,
+    /// Zero-payload `getaddr` message.
+    GetAddr,
+    /// Zero-payload `wtxidrelay` message.
+    WtxidRelay,
+    /// Zero-payload `filterclear` message.
+    FilterClear,
+    /// Zero-payload `sendaddrv2` message.
+    SendAddrV2,
     /// Unknown message buffers pushed bytes up to [`MAX_MSG_SIZE`].
     Unknown {
         command: CommandString,
@@ -1082,8 +1093,13 @@ impl NetworkMessageDecoder {
         use encoding::Decode as _;
         match command.as_ref() {
             "version" => Self::Version(message_network::VersionMessage::decoder()),
-            "verack" | "sendheaders" | "mempool" | "getaddr" | "wtxidrelay" | "filterclear"
-            | "sendaddrv2" => Self::Empty(command),
+            "verack" => Self::Verack,
+            "sendheaders" => Self::SendHeaders,
+            "mempool" => Self::MemPool,
+            "getaddr" => Self::GetAddr,
+            "wtxidrelay" => Self::WtxidRelay,
+            "filterclear" => Self::FilterClear,
+            "sendaddrv2" => Self::SendAddrV2,
             "addr" => Self::Addr(AddrPayload::decoder()),
             "inv" => Self::Inv(InventoryPayload::decoder()),
             "getdata" => Self::GetData(InventoryPayload::decoder()),
@@ -1157,7 +1173,8 @@ impl encoding::Decoder for NetworkMessageDecoder {
             Self::AddrV2(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::AddrV2(e))),
             Self::SendTxRcnCl(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::SendTxRcnCl(e))),
             Self::Feature(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Feature(e))),
-            Self::Empty(_) => Ok(encoding::DecoderStatus::Ready),
+            Self::Verack | Self::SendHeaders | Self::MemPool | Self::GetAddr | Self::WtxidRelay
+            | Self::FilterClear | Self::SendAddrV2 => Ok(encoding::DecoderStatus::Ready),
             Self::Unknown { buffer, .. } => {
                 // Defensively never extend the buffer past MAX_MSG_SIZE.
                 let remaining = MAX_MSG_SIZE - buffer.len();
@@ -1207,16 +1224,13 @@ impl encoding::Decoder for NetworkMessageDecoder {
             Self::AddrV2(d) => Ok(NetworkMessage::AddrV2(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::AddrV2(e)))?)),
             Self::SendTxRcnCl(d) => Ok(NetworkMessage::SendTxRcnCl(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::SendTxRcnCl(e)))?)),
             Self::Feature(d) => Ok(NetworkMessage::Feature(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Feature(e)))?)),
-            Self::Empty(cmd) => match cmd.as_ref() {
-                "verack" => Ok(NetworkMessage::Verack),
-                "mempool" => Ok(NetworkMessage::MemPool),
-                "sendheaders" => Ok(NetworkMessage::SendHeaders),
-                "getaddr" => Ok(NetworkMessage::GetAddr),
-                "wtxidrelay" => Ok(NetworkMessage::WtxidRelay),
-                "filterclear" => Ok(NetworkMessage::FilterClear),
-                "sendaddrv2" => Ok(NetworkMessage::SendAddrV2),
-                _ => unreachable!("Empty decoder holds a known-valid command"),
-            },
+            Self::Verack => Ok(NetworkMessage::Verack),
+            Self::SendHeaders => Ok(NetworkMessage::SendHeaders),
+            Self::MemPool => Ok(NetworkMessage::MemPool),
+            Self::GetAddr => Ok(NetworkMessage::GetAddr),
+            Self::WtxidRelay => Ok(NetworkMessage::WtxidRelay),
+            Self::FilterClear => Ok(NetworkMessage::FilterClear),
+            Self::SendAddrV2 => Ok(NetworkMessage::SendAddrV2),
             Self::Unknown { command, buffer } =>
                 Ok(NetworkMessage::Unknown { command, payload: buffer }),
         }
@@ -1254,7 +1268,8 @@ impl encoding::Decoder for NetworkMessageDecoder {
             Self::AddrV2(d) => d.read_limit(),
             Self::SendTxRcnCl(d) => d.read_limit(),
             Self::Feature(d) => d.read_limit(),
-            Self::Empty(_) => 0,
+            Self::Verack | Self::SendHeaders | Self::MemPool | Self::GetAddr | Self::WtxidRelay
+            | Self::FilterClear | Self::SendAddrV2 => 0,
             Self::Unknown { buffer, .. } => MAX_MSG_SIZE - buffer.len(),
         }
     }
@@ -1680,7 +1695,7 @@ impl V2NetworkMessageDecoder {
             4u8 => Ok(E::CmpctBlock(bip152::HeaderAndShortIds::decoder())),
             5u8 => Ok(E::FeeFilter(FeeFilter::decoder())),
             6u8 => Ok(E::FilterAdd(message_bloom::FilterAdd::decoder())),
-            7u8 => Ok(E::Empty(CommandString::try_from("filterclear").expect("valid command"))),
+            7u8 => Ok(E::FilterClear),
             8u8 => Ok(E::FilterLoad(message_bloom::FilterLoad::decoder())),
             9u8 => Ok(E::GetBlocks(message_blockdata::GetBlocksMessage::decoder())),
             10u8 => Ok(E::GetBlockTxn(bip152::BlockTransactionsRequest::decoder())),
@@ -1688,7 +1703,7 @@ impl V2NetworkMessageDecoder {
             12u8 => Ok(E::GetHeaders(message_blockdata::GetHeadersMessage::decoder())),
             13u8 => Ok(E::Headers(HeadersMessage::decoder())),
             14u8 => Ok(E::Inv(InventoryPayload::decoder())),
-            15u8 => Ok(E::Empty(CommandString::try_from("mempool").expect("valid command"))),
+            15u8 => Ok(E::MemPool),
             16u8 => Ok(E::MerkleBlock(MerkleBlock::decoder())),
             17u8 => Ok(E::NotFound(InventoryPayload::decoder())),
             18u8 => Ok(E::Ping(Ping::decoder())),
