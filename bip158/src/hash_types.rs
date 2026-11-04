@@ -51,9 +51,9 @@ crate::decoder_newtype! {
     pub struct FilterHashDecoder(ArrayDecoder<32>);
 
     /// Constructs a new [`FilterHash`] decoder.
-    pub const fn new() -> Self {Self(ArrayDecoder::new())}
+    pub const fn new() -> Self { Self(ArrayDecoder::new()) }
 
-    fn end(result: Result<[u8;32], encoding::UnexpectedEofError>) -> Result<FilterHash, FilterHashDecoderError> {
+    fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<FilterHash, FilterHashDecoderError> {
         let bytes = result.map_err(FilterHashDecoderError)?;
         Ok(FilterHash::from_byte_array(bytes))
     }
@@ -83,7 +83,7 @@ crate::decoder_newtype! {
     pub struct FilterHeaderDecoder(ArrayDecoder<32>);
 
     /// Constructs a new [`FilterHeader`] decoder.
-    pub const fn new() -> Self {Self(ArrayDecoder::new())}
+    pub const fn new() -> Self { Self(ArrayDecoder::new()) }
 
     fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<FilterHeader, FilterHeaderDecoderError> {
         let bytes = result.map_err(FilterHeaderDecoderError)?;
