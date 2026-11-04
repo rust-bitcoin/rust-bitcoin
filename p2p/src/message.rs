@@ -21,7 +21,7 @@ use primitives::block::{self, Header, HeaderDecoder, HeaderEncoder};
 use primitives::transaction;
 use units::{Amount, FeeRate};
 
-use self::error::V1NetworkMessageDecoderErrorInner;
+use self::error::{NetworkMessageDecoderErrorInner, V1NetworkMessageDecoderErrorInner};
 use crate::address::{AddrV1Message, AddrV2Message, AddrV2MessageDecoderError};
 use crate::bip434::{Feature, FeatureDecoder};
 use crate::merkle_tree::MerkleBlock;
@@ -1026,8 +1026,8 @@ impl encoding::Encode for V1NetworkMessage {
 /// Payload decoder for [`NetworkMessage`].
 ///
 /// Dispatches to a typed decoder based on the message command. For [`Unknown`]
-/// messages, buffers all pushed bytes without bound. The caller must enforce
-/// framing externally.
+/// messages, buffers the pushed bytes up to [`MAX_MSG_SIZE`]. The caller must
+/// enforce framing externally.
 ///
 /// - *V1*: Can clamp input based on the header's `payload_len`.
 /// - *V2*: Relies on the BIP-324 transport packet length.
@@ -1069,7 +1069,7 @@ enum NetworkMessageDecoder {
     /// Zero-payload messages: verack, mempool, sendheaders, getaddr, wtxidrelay,
     /// filterclear, sendaddrv2.
     Empty(CommandString),
-    /// Unknown message buffers all pushed bytes without bound.
+    /// Unknown message buffers pushed bytes up to [`MAX_MSG_SIZE`].
     Unknown {
         command: CommandString,
         buffer: Vec<u8>,
@@ -1125,7 +1125,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        let err = NetworkMessageDecoderError;
+        let err = NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::InvalidPayload);
         match self {
             Self::Version(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Addr(d) => d.push_bytes(bytes).map_err(|_| err),
@@ -1159,6 +1159,13 @@ impl encoding::Decoder for NetworkMessageDecoder {
             Self::Feature(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Empty(_) => Ok(encoding::DecoderStatus::Ready),
             Self::Unknown { buffer, .. } => {
+                // Defensively never extend the buffer past MAX_MSG_SIZE.
+                let remaining = MAX_MSG_SIZE - buffer.len();
+                if bytes.len() > remaining {
+                    return Err(NetworkMessageDecoderError(
+                        NetworkMessageDecoderErrorInner::UnknownTooLarge,
+                    ));
+                }
                 buffer.extend_from_slice(bytes);
                 *bytes = &[];
                 Ok(encoding::DecoderStatus::NeedsMore)
@@ -1168,7 +1175,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let err = NetworkMessageDecoderError;
+        let err = NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::InvalidPayload);
         match self {
             Self::Version(d) => Ok(NetworkMessage::Version(d.end().map_err(|_| err)?)),
             Self::Addr(d) => Ok(NetworkMessage::Addr(d.end().map_err(|_| err)?)),
@@ -1249,7 +1256,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
             Self::SendTxRcnCl(d) => d.read_limit(),
             Self::Feature(d) => d.read_limit(),
             Self::Empty(_) => 0,
-            Self::Unknown { .. } => MAX_MSG_SIZE,
+            Self::Unknown { buffer, .. } => MAX_MSG_SIZE - buffer.len(),
         }
     }
 }
@@ -1651,8 +1658,9 @@ impl Default for V2NetworkMessageDecoderState {
 /// Unlike V1, V2 messages carry no self-delimiting length field. The message boundary comes
 /// from the BIP-324 packet, which is decoded at the transport layer, not here. Consequently
 /// this decoder is *not* self-delimiting for [`NetworkMessage::Unknown`] payloads in particular.
-/// For this variant, the payload decoder buffers all pushed bytes and never reports `Ready` on its
-/// own. The caller is responsible for determining when the packet ends and invoking `end`.
+/// For this variant, the payload decoder buffers the pushed bytes up to [`MAX_MSG_SIZE`] and
+/// never reports `Ready` on its own. The caller is responsible for determining when the packet
+/// ends and invoking `end`.
 #[derive(Default)]
 pub struct V2NetworkMessageDecoder {
     state: V2NetworkMessageDecoderState,
@@ -1666,7 +1674,10 @@ impl V2NetworkMessageDecoder {
         use encoding::Decode as _;
         use NetworkMessageDecoder as E;
 
-        let err = V2NetworkMessageDecoderError::Payload(NetworkMessageDecoderError);
+        let err =
+            V2NetworkMessageDecoderError::Payload(NetworkMessageDecoderError(
+                NetworkMessageDecoderErrorInner::InvalidPayload,
+            ));
         match short_id {
             1u8 => Ok(E::Addr(AddrPayload::decoder())),
             2u8 => Ok(E::Block(block::Block::decoder())),
@@ -2052,11 +2063,24 @@ pub mod error {
 
     /// Error decoding a network message payload.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct NetworkMessageDecoderError;
+    pub struct NetworkMessageDecoderError(pub(super) NetworkMessageDecoderErrorInner);
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(super) enum NetworkMessageDecoderErrorInner {
+        /// A payload-command-specific decoder rejected the input.
+        InvalidPayload,
+        /// An unknown-message payload exceeds the maximum allowed message size.
+        UnknownTooLarge,
+    }
 
     impl fmt::Display for NetworkMessageDecoderError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "error decoding network message payload")
+            match self.0 {
+                NetworkMessageDecoderErrorInner::InvalidPayload =>
+                    write!(f, "error decoding network message payload"),
+                NetworkMessageDecoderErrorInner::UnknownTooLarge =>
+                    write!(f, "payload exceeds maximum allowed message size"),
+            }
         }
     }
 
@@ -2937,5 +2961,33 @@ mod test {
         let encoded = encoding::encode_to_vec(&msg);
         let decoded = encoding::decode_from_slice::<V2NetworkMessage>(&encoded).unwrap();
         assert_eq!(decoded, msg);
+    }
+
+    #[test]
+    fn unknown_payload_rejects_over_max_msg_size() {
+        let cmd = CommandString::try_from("somecmd").unwrap();
+        let mut decoder = NetworkMessageDecoder::Unknown { command: cmd, buffer: Vec::new() };
+
+        // Exactly at the limit is accepted.
+        let bytes_at_limit = vec![0u8; MAX_MSG_SIZE];
+        let mut bytes: &[u8] = &bytes_at_limit;
+        assert!(decoder.push_bytes(&mut bytes).is_ok());
+        assert!(bytes.is_empty());
+
+        // One byte past the limit must fail.
+        let mut bytes: &[u8] = &[0u8; 1];
+        assert!(decoder.push_bytes(&mut bytes).is_err());
+
+        // A fresh decoder at the exact limit should buffer and complete.
+        let cmd2 = CommandString::try_from("cmd2").unwrap();
+        let mut decoder2 = NetworkMessageDecoder::Unknown { command: cmd2, buffer: Vec::new() };
+        let exact_bytes = vec![0u8; MAX_MSG_SIZE];
+        let mut bytes2: &[u8] = &exact_bytes;
+        assert!(decoder2.push_bytes(&mut bytes2).is_ok());
+        let msg = decoder2.end().unwrap();
+        match msg {
+            NetworkMessage::Unknown { payload, .. } => assert_eq!(payload.len(), MAX_MSG_SIZE),
+            _ => panic!("wrong message variant"),
+        }
     }
 }
