@@ -306,3 +306,16 @@ impl AsRef<Self> for Params {
 impl AsRef<Params> for Network {
     fn as_ref(&self) -> &Params { Self::params(*self) }
 }
+
+#[cfg(test)]
+mod testnet5_tests {
+    use super::*;
+
+    #[test]
+    fn proof_of_work_parameters() {
+        let params = Params::new(Network::Testnet(TestnetVersion::V5));
+        assert_eq!(params.max_attainable_target.to_compact_lossy().to_consensus_u32(), 0x1a0fffff);
+        assert!(!params.allow_min_difficulty_blocks);
+        assert!(!params.no_pow_retargeting);
+    }
+}

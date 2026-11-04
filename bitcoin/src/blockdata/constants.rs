@@ -397,6 +397,26 @@ mod test {
         );
     }
 
+    #[test]
+    #[should_panic(expected = "testnet5 genesis block is not yet published")]
+    fn testnet5_genesis_unavailable() {
+        let _ = genesis_block(Network::Testnet(TestnetVersion::V5));
+    }
+
+    #[test]
+    #[should_panic(expected = "testnet5 genesis block is not yet published")]
+    fn testnet5_chain_hash_unavailable() {
+        let _ = ChainHash::using_genesis_block(Network::Testnet(TestnetVersion::V5));
+    }
+
+    #[test]
+    #[should_panic(expected = "testnet5 genesis block is not yet published")]
+    fn testnet5_network_chain_hash_unavailable() {
+        use crate::network::NetworkExt as _;
+
+        let _ = Network::Testnet(TestnetVersion::V5).chain_hash();
+    }
+
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array
     // representing the genesis block is the same as that created by hashing the genesis block.
     fn chain_hash_and_genesis_block(network: Network) {

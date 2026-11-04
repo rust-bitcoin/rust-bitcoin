@@ -550,6 +550,9 @@ mod tests {
         assert_eq!(encode_to_vec(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
         let magic: Magic = Network::Testnet(TestnetVersion::V4).try_into().unwrap();
         assert_eq!(encode_to_vec(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
+        let magic: Magic = Network::Testnet(TestnetVersion::V5).try_into().unwrap();
+        assert_eq!(encode_to_vec(&magic), &[0x46, 0x49, 0x56, 0x45]);
+        assert_eq!(Network::try_from(magic).unwrap(), Network::Testnet(TestnetVersion::V5));
         assert_eq!(encode_to_vec(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
         let magic: Magic = Network::Signet.try_into().unwrap();
         assert_eq!(encode_to_vec(&magic), &[0x0a, 0x03, 0xcf, 0x40]);

@@ -345,12 +345,14 @@ mod tests {
         assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
         assert_eq!(Network::Testnet(TestnetVersion::V3).to_string(), "testnet");
         assert_eq!(Network::Testnet(TestnetVersion::V4).to_string(), "testnet4");
+        assert_eq!(Network::Testnet(TestnetVersion::V5).to_string(), "testnet5");
         assert_eq!(Network::Regtest.to_string(), "regtest");
         assert_eq!(Network::Signet.to_string(), "signet");
 
         assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
         assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet(TestnetVersion::V3));
         assert_eq!("testnet4".parse::<Network>().unwrap(), Network::Testnet(TestnetVersion::V4));
+        assert_eq!("testnet5".parse::<Network>().unwrap(), Network::Testnet(TestnetVersion::V5));
         assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
         assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);
         assert!("fakenet".parse::<Network>().is_err());
@@ -367,6 +369,7 @@ mod tests {
             (Bitcoin, "bitcoin"),
             (Testnet(TestnetVersion::V3), "testnet"),
             (Testnet(TestnetVersion::V4), "testnet4"),
+            (Testnet(TestnetVersion::V5), "testnet5"),
             (Signet, "signet"),
             (Regtest, "regtest"),
         ];
@@ -389,6 +392,7 @@ mod tests {
             (Network::Bitcoin, "main"),
             (Network::Testnet(TestnetVersion::V3), "test"),
             (Network::Testnet(TestnetVersion::V4), "testnet4"),
+            (Network::Testnet(TestnetVersion::V5), "testnet5"),
             (Network::Regtest, "regtest"),
             (Network::Signet, "signet"),
         ];

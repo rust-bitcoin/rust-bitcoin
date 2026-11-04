@@ -938,6 +938,8 @@ mod tests {
         let max_mainnet: Target = Target(U256::new(u128::MAX >> 32, u128::MAX));
         // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
         let max_testnet: Target = Target(U256::new(u128::MAX >> 32, u128::MAX));
+        // https://github.com/bitcoin/bitcoin/blob/a81e5c2d8a75c32b7a60775bdf41cc59629e495a/src/kernel/chainparams.cpp#L495
+        let max_testnet5: Target = Target(U256::new(0x0fff_ff00_0000_0000_0000, 0));
         // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
         let max_regtest: Target = Target(U256::new(u128::MAX >> 1, u128::MAX));
         // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
@@ -950,6 +952,10 @@ mod tests {
         assert_eq!(
             Target::MAX_ATTAINABLE_TESTNET,
             Target::from_compact(max_testnet.to_compact_lossy()).unwrap()
+        );
+        assert_eq!(
+            Target::MAX_ATTAINABLE_TESTNET5,
+            Target::from_compact(max_testnet5.to_compact_lossy()).unwrap()
         );
         assert_eq!(
             Target::MAX_ATTAINABLE_REGTEST,
