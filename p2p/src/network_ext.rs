@@ -83,10 +83,11 @@ mod tests {
             Network::Signet,
             Network::Testnet(TestnetVersion::V3),
             Network::Testnet(TestnetVersion::V4),
+            Network::Testnet(TestnetVersion::V5),
             Network::Regtest,
         ];
 
-        let rpc_ports = vec![8332, 38332, 18332, 48332, 18442];
+        let rpc_ports = vec![8332, 38332, 18332, 48332, 18352, 18442];
 
         for (network, rpc_port) in networks.iter().zip(rpc_ports) {
             assert_eq!(network.default_rpc_port(), rpc_port);
@@ -100,10 +101,11 @@ mod tests {
             Network::Signet,
             Network::Testnet(TestnetVersion::V3),
             Network::Testnet(TestnetVersion::V4),
+            Network::Testnet(TestnetVersion::V5),
             Network::Regtest,
         ];
 
-        let p2p_ports = vec![8333, 38333, 18333, 48333, 18444];
+        let p2p_ports = vec![8333, 38333, 18333, 48333, 18353, 18444];
 
         for (network, p2p_port) in networks.iter().zip(p2p_ports) {
             assert_eq!(network.default_p2p_port(), p2p_port);
@@ -117,11 +119,18 @@ mod tests {
             Network::Signet,
             Network::Testnet(TestnetVersion::V3),
             Network::Testnet(TestnetVersion::V4),
+            Network::Testnet(TestnetVersion::V5),
             Network::Regtest,
         ];
 
-        let network_magics =
-            vec![Magic::BITCOIN, Magic::SIGNET, Magic::TESTNET3, Magic::TESTNET4, Magic::REGTEST];
+        let network_magics = vec![
+            Magic::BITCOIN,
+            Magic::SIGNET,
+            Magic::TESTNET3,
+            Magic::TESTNET4,
+            Magic::TESTNET5,
+            Magic::REGTEST,
+        ];
 
         for (network, network_magic) in networks.iter().zip(network_magics) {
             assert_eq!(network.default_network_magic(), network_magic);
