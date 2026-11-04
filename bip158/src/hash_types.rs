@@ -95,7 +95,7 @@ impl encoding::Decode for FilterHeader {
     type Decoder = FilterHeaderDecoder;
 }
 
-pub mod error {
+mod error {
     use core::convert::Infallible;
     use core::fmt;
 

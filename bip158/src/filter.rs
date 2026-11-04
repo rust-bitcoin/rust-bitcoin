@@ -473,7 +473,7 @@ impl BitWriter {
     }
 }
 
-pub mod error {
+mod error {
     use core::fmt;
     #[cfg(feature = "std")]
     use std::error::Error;
