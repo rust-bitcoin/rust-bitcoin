@@ -101,7 +101,7 @@ jobs:
         id: api_check
         run: |
           set +e
-          cargo rbmt api --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
+          cargo rbmt api --baseline "$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-$GITHUB_REF_NAME}")"
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
       - name: "Save API diff state"
         if: github.event_name == 'pull_request'
@@ -142,7 +142,7 @@ jobs:
           fetch-depth: 0 # History required for version bump detection.
       - uses: ./.github/actions/setup-rbmt
       - name: "Run pre-release checks"
-        run: cargo rbmt prerelease --baseline ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: cargo rbmt prerelease --baseline "$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-$GITHUB_REF_NAME}")"
 
   Embedded:
     runs-on: ubuntu-24.04
