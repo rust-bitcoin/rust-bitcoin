@@ -1125,38 +1125,38 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        let err = NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::InvalidPayload);
         match self {
-            Self::Version(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Addr(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Inv(d) | Self::GetData(d) | Self::NotFound(d) =>
-                d.push_bytes(bytes).map_err(|_| err),
-            Self::GetBlocks(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::GetHeaders(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Tx(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Block(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Headers(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Ping(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Pong(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::MerkleBlock(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::FilterLoad(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::FilterAdd(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::GetCFilters(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::CFilter(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::GetCFHeaders(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::CFHeaders(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::GetCFCheckpt(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::CFCheckpt(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::SendCmpct(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::CmpctBlock(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::GetBlockTxn(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::BlockTxn(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Alert(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Reject(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::FeeFilter(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::AddrV2(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::SendTxRcnCl(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Feature(d) => d.push_bytes(bytes).map_err(|_| err),
+            Self::Version(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Version(e))),
+            Self::Addr(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Addr(e))),
+            Self::Inv(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Inv(e))),
+            Self::GetData(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetData(e))),
+            Self::NotFound(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::NotFound(e))),
+            Self::GetBlocks(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetBlocks(e))),
+            Self::GetHeaders(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetHeaders(e))),
+            Self::Tx(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Tx(e))),
+            Self::Block(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Block(e))),
+            Self::Headers(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Headers(e))),
+            Self::Ping(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Ping(e))),
+            Self::Pong(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Pong(e))),
+            Self::MerkleBlock(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::MerkleBlock(e))),
+            Self::FilterLoad(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::FilterLoad(e))),
+            Self::FilterAdd(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::FilterAdd(e))),
+            Self::GetCFilters(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetCFilters(e))),
+            Self::CFilter(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::CFilter(e))),
+            Self::GetCFHeaders(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetCFHeaders(e))),
+            Self::CFHeaders(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::CFHeaders(e))),
+            Self::GetCFCheckpt(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetCFCheckpt(e))),
+            Self::CFCheckpt(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::CFCheckpt(e))),
+            Self::SendCmpct(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::SendCmpct(e))),
+            Self::CmpctBlock(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::CmpctBlock(e))),
+            Self::GetBlockTxn(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetBlockTxn(e))),
+            Self::BlockTxn(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::BlockTxn(e))),
+            Self::Alert(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Alert(e))),
+            Self::Reject(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Reject(e))),
+            Self::FeeFilter(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::FeeFilter(e))),
+            Self::AddrV2(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::AddrV2(e))),
+            Self::SendTxRcnCl(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::SendTxRcnCl(e))),
+            Self::Feature(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Feature(e))),
             Self::Empty(_) => Ok(encoding::DecoderStatus::Ready),
             Self::Unknown { buffer, .. } => {
                 // Defensively never extend the buffer past MAX_MSG_SIZE.
@@ -1175,39 +1175,38 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let err = NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::InvalidPayload);
         match self {
-            Self::Version(d) => Ok(NetworkMessage::Version(d.end().map_err(|_| err)?)),
-            Self::Addr(d) => Ok(NetworkMessage::Addr(d.end().map_err(|_| err)?)),
-            Self::Inv(d) => Ok(NetworkMessage::Inv(d.end().map_err(|_| err)?)),
-            Self::GetData(d) => Ok(NetworkMessage::GetData(d.end().map_err(|_| err)?)),
-            Self::NotFound(d) => Ok(NetworkMessage::NotFound(d.end().map_err(|_| err)?)),
-            Self::GetBlocks(d) => Ok(NetworkMessage::GetBlocks(d.end().map_err(|_| err)?)),
-            Self::GetHeaders(d) => Ok(NetworkMessage::GetHeaders(d.end().map_err(|_| err)?)),
-            Self::Tx(d) => Ok(NetworkMessage::Tx(d.end().map_err(|_| err)?)),
-            Self::Block(d) => Ok(NetworkMessage::Block(d.end().map_err(|_| err)?)),
-            Self::Headers(d) => Ok(NetworkMessage::Headers(d.end().map_err(|_| err)?)),
-            Self::Ping(d) => Ok(NetworkMessage::Ping(d.end().map_err(|_| err)?)),
-            Self::Pong(d) => Ok(NetworkMessage::Pong(d.end().map_err(|_| err)?)),
-            Self::MerkleBlock(d) => Ok(NetworkMessage::MerkleBlock(d.end().map_err(|_| err)?)),
-            Self::FilterLoad(d) => Ok(NetworkMessage::FilterLoad(d.end().map_err(|_| err)?)),
-            Self::FilterAdd(d) => Ok(NetworkMessage::FilterAdd(d.end().map_err(|_| err)?)),
-            Self::GetCFilters(d) => Ok(NetworkMessage::GetCFilters(d.end().map_err(|_| err)?)),
-            Self::CFilter(d) => Ok(NetworkMessage::CFilter(d.end().map_err(|_| err)?)),
-            Self::GetCFHeaders(d) => Ok(NetworkMessage::GetCFHeaders(d.end().map_err(|_| err)?)),
-            Self::CFHeaders(d) => Ok(NetworkMessage::CFHeaders(d.end().map_err(|_| err)?)),
-            Self::GetCFCheckpt(d) => Ok(NetworkMessage::GetCFCheckpt(d.end().map_err(|_| err)?)),
-            Self::CFCheckpt(d) => Ok(NetworkMessage::CFCheckpt(d.end().map_err(|_| err)?)),
-            Self::SendCmpct(d) => Ok(NetworkMessage::SendCmpct(d.end().map_err(|_| err)?)),
-            Self::CmpctBlock(d) => Ok(NetworkMessage::CmpctBlock(d.end().map_err(|_| err)?)),
-            Self::GetBlockTxn(d) => Ok(NetworkMessage::GetBlockTxn(d.end().map_err(|_| err)?)),
-            Self::BlockTxn(d) => Ok(NetworkMessage::BlockTxn(d.end().map_err(|_| err)?)),
-            Self::Alert(d) => Ok(NetworkMessage::Alert(d.end().map_err(|_| err)?)),
-            Self::Reject(d) => Ok(NetworkMessage::Reject(d.end().map_err(|_| err)?)),
-            Self::FeeFilter(d) => Ok(NetworkMessage::FeeFilter(d.end().map_err(|_| err)?)),
-            Self::AddrV2(d) => Ok(NetworkMessage::AddrV2(d.end().map_err(|_| err)?)),
-            Self::SendTxRcnCl(d) => Ok(NetworkMessage::SendTxRcnCl(d.end().map_err(|_| err)?)),
-            Self::Feature(d) => Ok(NetworkMessage::Feature(d.end().map_err(|_| err)?)),
+            Self::Version(d) => Ok(NetworkMessage::Version(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Version(e)))?)),
+            Self::Addr(d) => Ok(NetworkMessage::Addr(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Addr(e)))?)),
+            Self::Inv(d) => Ok(NetworkMessage::Inv(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Inv(e)))?)),
+            Self::GetData(d) => Ok(NetworkMessage::GetData(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetData(e)))?)),
+            Self::NotFound(d) => Ok(NetworkMessage::NotFound(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::NotFound(e)))?)),
+            Self::GetBlocks(d) => Ok(NetworkMessage::GetBlocks(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetBlocks(e)))?)),
+            Self::GetHeaders(d) => Ok(NetworkMessage::GetHeaders(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetHeaders(e)))?)),
+            Self::Tx(d) => Ok(NetworkMessage::Tx(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Tx(e)))?)),
+            Self::Block(d) => Ok(NetworkMessage::Block(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Block(e)))?)),
+            Self::Headers(d) => Ok(NetworkMessage::Headers(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Headers(e)))?)),
+            Self::Ping(d) => Ok(NetworkMessage::Ping(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Ping(e)))?)),
+            Self::Pong(d) => Ok(NetworkMessage::Pong(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Pong(e)))?)),
+            Self::MerkleBlock(d) => Ok(NetworkMessage::MerkleBlock(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::MerkleBlock(e)))?)),
+            Self::FilterLoad(d) => Ok(NetworkMessage::FilterLoad(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::FilterLoad(e)))?)),
+            Self::FilterAdd(d) => Ok(NetworkMessage::FilterAdd(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::FilterAdd(e)))?)),
+            Self::GetCFilters(d) => Ok(NetworkMessage::GetCFilters(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetCFilters(e)))?)),
+            Self::CFilter(d) => Ok(NetworkMessage::CFilter(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::CFilter(e)))?)),
+            Self::GetCFHeaders(d) => Ok(NetworkMessage::GetCFHeaders(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetCFHeaders(e)))?)),
+            Self::CFHeaders(d) => Ok(NetworkMessage::CFHeaders(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::CFHeaders(e)))?)),
+            Self::GetCFCheckpt(d) => Ok(NetworkMessage::GetCFCheckpt(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetCFCheckpt(e)))?)),
+            Self::CFCheckpt(d) => Ok(NetworkMessage::CFCheckpt(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::CFCheckpt(e)))?)),
+            Self::SendCmpct(d) => Ok(NetworkMessage::SendCmpct(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::SendCmpct(e)))?)),
+            Self::CmpctBlock(d) => Ok(NetworkMessage::CmpctBlock(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::CmpctBlock(e)))?)),
+            Self::GetBlockTxn(d) => Ok(NetworkMessage::GetBlockTxn(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::GetBlockTxn(e)))?)),
+            Self::BlockTxn(d) => Ok(NetworkMessage::BlockTxn(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::BlockTxn(e)))?)),
+            Self::Alert(d) => Ok(NetworkMessage::Alert(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Alert(e)))?)),
+            Self::Reject(d) => Ok(NetworkMessage::Reject(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Reject(e)))?)),
+            Self::FeeFilter(d) => Ok(NetworkMessage::FeeFilter(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::FeeFilter(e)))?)),
+            Self::AddrV2(d) => Ok(NetworkMessage::AddrV2(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::AddrV2(e)))?)),
+            Self::SendTxRcnCl(d) => Ok(NetworkMessage::SendTxRcnCl(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::SendTxRcnCl(e)))?)),
+            Self::Feature(d) => Ok(NetworkMessage::Feature(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Feature(e)))?)),
             Self::Empty(cmd) => match cmd.as_ref() {
                 "verack" => Ok(NetworkMessage::Verack),
                 "mempool" => Ok(NetworkMessage::MemPool),
@@ -1216,7 +1215,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                 "wtxidrelay" => Ok(NetworkMessage::WtxidRelay),
                 "filterclear" => Ok(NetworkMessage::FilterClear),
                 "sendaddrv2" => Ok(NetworkMessage::SendAddrV2),
-                _ => Err(err),
+                _ => unreachable!("Empty decoder holds a known-valid command"),
             },
             Self::Unknown { command, buffer } =>
                 Ok(NetworkMessage::Unknown { command, payload: buffer }),
@@ -1674,10 +1673,6 @@ impl V2NetworkMessageDecoder {
         use encoding::Decode as _;
         use NetworkMessageDecoder as E;
 
-        let err =
-            V2NetworkMessageDecoderError::Payload(NetworkMessageDecoderError(
-                NetworkMessageDecoderErrorInner::InvalidPayload,
-            ));
         match short_id {
             1u8 => Ok(E::Addr(AddrPayload::decoder())),
             2u8 => Ok(E::Block(block::Block::decoder())),
@@ -1685,7 +1680,7 @@ impl V2NetworkMessageDecoder {
             4u8 => Ok(E::CmpctBlock(bip152::HeaderAndShortIds::decoder())),
             5u8 => Ok(E::FeeFilter(FeeFilter::decoder())),
             6u8 => Ok(E::FilterAdd(message_bloom::FilterAdd::decoder())),
-            7u8 => Ok(E::Empty(CommandString::try_from("filterclear").map_err(|_| err)?)),
+            7u8 => Ok(E::Empty(CommandString::try_from("filterclear").expect("valid command"))),
             8u8 => Ok(E::FilterLoad(message_bloom::FilterLoad::decoder())),
             9u8 => Ok(E::GetBlocks(message_blockdata::GetBlocksMessage::decoder())),
             10u8 => Ok(E::GetBlockTxn(bip152::BlockTransactionsRequest::decoder())),
@@ -1693,7 +1688,7 @@ impl V2NetworkMessageDecoder {
             12u8 => Ok(E::GetHeaders(message_blockdata::GetHeadersMessage::decoder())),
             13u8 => Ok(E::Headers(HeadersMessage::decoder())),
             14u8 => Ok(E::Inv(InventoryPayload::decoder())),
-            15u8 => Ok(E::Empty(CommandString::try_from("mempool").map_err(|_| err)?)),
+            15u8 => Ok(E::Empty(CommandString::try_from("mempool").expect("valid command"))),
             16u8 => Ok(E::MerkleBlock(MerkleBlock::decoder())),
             17u8 => Ok(E::NotFound(InventoryPayload::decoder())),
             18u8 => Ok(E::Ping(Ping::decoder())),
@@ -1834,6 +1829,24 @@ pub mod error {
     use core::fmt;
 
     use internals::write_err;
+
+    use crate::bip152::{
+        BlockTransactionsDecoderError, BlockTransactionsRequestDecoderError,
+        HeaderAndShortIdsDecoderError,
+    };
+    use crate::bip434::error::FeatureDecoderError;
+    use crate::merkle_tree::MerkleBlockDecoderError;
+    use crate::message_blockdata::{GetBlocksMessageDecoderError, GetHeadersMessageDecoderError};
+    use crate::message_bloom::{FilterAddDecoderError, FilterLoadDecoderError};
+    use crate::message_compact_blocks::SendCmpctDecoderError;
+    use crate::message_erlay::error::SendTxRcnClDecoderError;
+    use crate::message_filter::{
+        CFCheckptDecoderError, CFHeadersDecoderError, CFilterDecoderError,
+        GetCFCheckptDecoderError, GetCFHeadersDecoderError, GetCFiltersDecoderError,
+    };
+    use crate::message_network::{AlertDecoderError, RejectDecoderError, VersionMessageDecoderError};
+    use primitives::block::BlockDecoderError;
+    use primitives::transaction::TransactionDecoderError;
 
     /// Error decoding a [`CommandString`].
     ///
@@ -2067,17 +2080,75 @@ pub mod error {
 
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub(super) enum NetworkMessageDecoderErrorInner {
-        /// A payload-command-specific decoder rejected the input.
-        InvalidPayload,
-        /// An unknown-message payload exceeds the maximum allowed message size.
+        Version(VersionMessageDecoderError),
+        Addr(AddrPayloadDecoderError),
+        Inv(InventoryPayloadDecoderError),
+        GetData(InventoryPayloadDecoderError),
+        NotFound(InventoryPayloadDecoderError),
+        GetBlocks(GetBlocksMessageDecoderError),
+        GetHeaders(GetHeadersMessageDecoderError),
+        Tx(TransactionDecoderError),
+        Block(BlockDecoderError),
+        Headers(HeadersMessageDecoderError),
+        Ping(PingDecoderError),
+        Pong(PongDecoderError),
+        MerkleBlock(MerkleBlockDecoderError),
+        FilterLoad(FilterLoadDecoderError),
+        FilterAdd(FilterAddDecoderError),
+        GetCFilters(GetCFiltersDecoderError),
+        CFilter(CFilterDecoderError),
+        GetCFHeaders(GetCFHeadersDecoderError),
+        CFHeaders(CFHeadersDecoderError),
+        GetCFCheckpt(GetCFCheckptDecoderError),
+        CFCheckpt(CFCheckptDecoderError),
+        SendCmpct(SendCmpctDecoderError),
+        CmpctBlock(HeaderAndShortIdsDecoderError),
+        GetBlockTxn(BlockTransactionsRequestDecoderError),
+        BlockTxn(BlockTransactionsDecoderError),
+        Alert(AlertDecoderError),
+        Reject(RejectDecoderError),
+        FeeFilter(FeeFilterDecoderError),
+        AddrV2(AddrV2PayloadDecoderError),
+        SendTxRcnCl(SendTxRcnClDecoderError),
+        Feature(FeatureDecoderError),
+        /// Buffer for an unknown message exceeds the maximum allowed message size.
         UnknownTooLarge,
     }
 
     impl fmt::Display for NetworkMessageDecoderError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self.0 {
-                NetworkMessageDecoderErrorInner::InvalidPayload =>
-                    write!(f, "error decoding network message payload"),
+                NetworkMessageDecoderErrorInner::Version(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Addr(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Inv(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::GetData(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::NotFound(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::GetBlocks(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::GetHeaders(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Tx(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Block(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Headers(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Ping(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Pong(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::MerkleBlock(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::FilterLoad(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::FilterAdd(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::GetCFilters(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::CFilter(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::GetCFHeaders(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::CFHeaders(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::GetCFCheckpt(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::CFCheckpt(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::SendCmpct(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::CmpctBlock(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::GetBlockTxn(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::BlockTxn(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Alert(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Reject(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::FeeFilter(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::AddrV2(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::SendTxRcnCl(ref e) => write_err!(f, "error decoding message payload"; e),
+                NetworkMessageDecoderErrorInner::Feature(ref e) => write_err!(f, "error decoding message payload"; e),
                 NetworkMessageDecoderErrorInner::UnknownTooLarge =>
                     write!(f, "payload exceeds maximum allowed message size"),
             }
@@ -2085,7 +2156,44 @@ pub mod error {
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for NetworkMessageDecoderError {}
+    impl std::error::Error for NetworkMessageDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self.0 {
+                NetworkMessageDecoderErrorInner::Version(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Addr(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Inv(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::GetData(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::NotFound(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::GetBlocks(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::GetHeaders(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Tx(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Block(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Headers(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Ping(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Pong(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::MerkleBlock(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::FilterLoad(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::FilterAdd(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::GetCFilters(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::CFilter(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::GetCFHeaders(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::CFHeaders(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::GetCFCheckpt(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::CFCheckpt(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::SendCmpct(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::CmpctBlock(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::GetBlockTxn(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::BlockTxn(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Alert(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Reject(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::FeeFilter(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::AddrV2(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::SendTxRcnCl(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::Feature(ref e) => Some(e),
+                NetworkMessageDecoderErrorInner::UnknownTooLarge => None,
+            }
+        }
+    }
 
     /// Error decoding a raw network message.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -2114,8 +2222,8 @@ pub mod error {
                 V1NetworkMessageDecoderErrorInner::PayloadTooLarge => {
                     write!(f, "payload length exceeds maximum allowed message size")
                 }
-                V1NetworkMessageDecoderErrorInner::Payload(_) => {
-                    write!(f, "error decoding message payload")
+                V1NetworkMessageDecoderErrorInner::Payload(ref e) => {
+                    write_err!(f, "error decoding message payload"; e)
                 }
                 V1NetworkMessageDecoderErrorInner::InvalidChecksum { expected: ref e, actual: ref a } => write!(
                     f,
@@ -2134,7 +2242,7 @@ pub mod error {
             match self.0 {
                 V1NetworkMessageDecoderErrorInner::Header(ref e) => Some(e),
                 V1NetworkMessageDecoderErrorInner::PayloadTooLarge => None,
-                V1NetworkMessageDecoderErrorInner::Payload(_) => None,
+                V1NetworkMessageDecoderErrorInner::Payload(ref e) => Some(e),
                 V1NetworkMessageDecoderErrorInner::InvalidChecksum { expected: _, actual: _ } =>
                     None,
                 V1NetworkMessageDecoderErrorInner::PayloadLengthMismatch { .. } => None,
