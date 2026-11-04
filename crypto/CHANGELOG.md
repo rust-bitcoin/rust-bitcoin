@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-03
+
+- Remove uses of `Index` on `secp256k1::SecretKey` [#6871](https://github.com/rust-bitcoin/rust-bitcoin/pull/6871)
+- Add `x_only_serde` module for `XOnlyPublicKey` `serde` [#7096](https://github.com/rust-bitcoin/rust-bitcoin/pull/7096)
+- Add `Vec` support to `XOnlyPublicKey` `serde` impls [#7126](https://github.com/rust-bitcoin/rust-bitcoin/pull/7126)
+- Remove panics from `LegacyPublicKey::from_str` [#6819](https://github.com/rust-bitcoin/rust-bitcoin/pull/6819)
+- Add `NonStandardSighashType` wrapper [#6805](https://github.com/rust-bitcoin/rust-bitcoin/pull/6805)
+- Bump `secp256k1` to 0.33.0 [#6798](https://github.com/rust-bitcoin/rust-bitcoin/pull/6798)
+- Extend `EcdsaSighashType` to accept non-standard values and make the conversion to
+  `TapSighashType` fallible [#6755](https://github.com/rust-bitcoin/rust-bitcoin/pull/6755)
+- Remove `alloc` gating from `WifKey` methods and remove `FromWifError::InvalidBase58PayloadLength`
+  [#6688](https://github.com/rust-bitcoin/rust-bitcoin/pull/6688)
+- Make `Keypair::as_inner` private [#6346](https://github.com/rust-bitcoin/rust-bitcoin/pull/6346)
+
 ## [0.3.0] - 2026-07-30
 
 - Remove `PrivateKeyExt` and make `PrivateKey::as_inner` private [#6345](https://github.com/rust-bitcoin/rust-bitcoin/pull/6345)
@@ -36,6 +50,7 @@
 
 - Empty crate to reserve the name on crates.io
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-crypto-0.3.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-crypto-0.4.0...HEAD
+[0.4.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-crypto-0.3.0...bitcoin-crypto-0.4.0
 [0.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-crypto-0.2.0...bitcoin-crypto-0.3.0
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-crypto-0.1.0...bitcoin-crypto-0.2.0

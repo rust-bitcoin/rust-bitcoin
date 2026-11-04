@@ -178,7 +178,7 @@ impl SerializedSignature {
     /// Gets the hex representation of this type.
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "0.4.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
