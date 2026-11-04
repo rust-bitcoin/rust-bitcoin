@@ -82,7 +82,7 @@ crate::decoder_newtype! {
     #[derive(Debug, Clone)]
     pub struct FilterHeaderDecoder(ArrayDecoder<32>);
 
-    /// Constructs a new [`FilterHash`] decoder.
+    /// Constructs a new [`FilterHeader`] decoder.
     pub const fn new() -> Self {Self(ArrayDecoder::new())}
 
     fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<FilterHeader, FilterHeaderDecoderError> {
