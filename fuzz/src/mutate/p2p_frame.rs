@@ -15,7 +15,7 @@ use super::{Mutate, Rng};
 /// Size of the v1 message header, in bytes.
 pub const HEADER_LEN: usize = 24;
 
-/// Every command accepted by `NetworkMessageDecoderInner::new` in `p2p/src/message.rs`.
+/// Every command accepted by `NetworkMessageDecoder::from_command` in `p2p/src/message.rs`.
 ///
 /// No public API exposes this list, so it is duplicated here. Anything absent decodes to
 /// `NetworkMessage::Unknown`, which means a stale entry costs a little fuzzing efficiency but

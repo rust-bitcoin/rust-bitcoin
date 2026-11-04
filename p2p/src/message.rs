@@ -36,7 +36,8 @@ use crate::{
 pub use self::error::{
     AddrPayloadDecoderError, AddrV2PayloadDecoderError, CommandStringDecoderError,
     CommandStringError, FeeFilterDecoderError, HeadersMessageDecoderError,
-    InventoryPayloadDecoderError, NetworkHeaderDecoderError, PingDecoderError, PongDecoderError,
+    InventoryPayloadDecoderError, NetworkHeaderDecoderError,
+    NetworkMessageDecoderError, PingDecoderError, PongDecoderError,
     V1MessageHeaderDecoderError, V1NetworkMessageDecoderError, V2NetworkMessageDecoderError
 };
 
@@ -1022,8 +1023,18 @@ impl encoding::Encode for V1NetworkMessage {
     }
 }
 
+/// Payload decoder for [`NetworkMessage`].
+///
+/// Dispatches to a typed decoder based on the message command. For [`Unknown`]
+/// messages, buffers all pushed bytes without bound. The caller must enforce
+/// framing externally.
+///
+/// - *V1*: Can clamp input based on the header's `payload_len`.
+/// - *V2*: Relies on the BIP-324 transport packet length.
+///
+/// [`Unknown`]: NetworkMessageDecoder::Unknown
 #[derive(Debug, Clone)]
-enum NetworkMessageDecoderInner {
+enum NetworkMessageDecoder {
     Version(message_network::VersionMessageDecoder),
     Addr(AddrPayloadDecoder),
     Inv(InventoryPayloadDecoder),
@@ -1058,16 +1069,16 @@ enum NetworkMessageDecoderInner {
     /// Zero-payload messages: verack, mempool, sendheaders, getaddr, wtxidrelay,
     /// filterclear, sendaddrv2.
     Empty(CommandString),
-    /// Unknown message — must buffer since type is unknown at compile time.
+    /// Unknown message buffers all pushed bytes without bound.
     Unknown {
         command: CommandString,
-        remaining: usize,
         buffer: Vec<u8>,
     },
 }
 
-impl NetworkMessageDecoderInner {
-    fn new(command: CommandString, payload_len: usize) -> Self {
+impl NetworkMessageDecoder {
+    /// Creates a payload decoder for the given command.
+    fn from_command(command: CommandString) -> Self {
         use encoding::Decode as _;
         match command.as_ref() {
             "version" => Self::Version(message_network::VersionMessage::decoder()),
@@ -1103,22 +1114,18 @@ impl NetworkMessageDecoderInner {
             "sendtxrcncl" => Self::SendTxRcnCl(SendTxRcnCl::decoder()),
             "addrv2" => Self::AddrV2(AddrV2Payload::decoder()),
             "feature" => Self::Feature(Feature::decoder()),
-            _ => Self::Unknown {
-                command,
-                remaining: payload_len,
-                buffer: Vec::with_capacity(payload_len),
-            },
+            _ => Self::Unknown { command, buffer: Vec::new() },
         }
     }
 }
 
-impl encoding::Decoder for NetworkMessageDecoderInner {
+impl encoding::Decoder for NetworkMessageDecoder {
     type Output = NetworkMessage;
-    type Error = V1NetworkMessageDecoderError;
+    type Error = NetworkMessageDecoderError;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        let err = V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload);
+        let err = NetworkMessageDecoderError;
         match self {
             Self::Version(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Addr(d) => d.push_bytes(bytes).map_err(|_| err),
@@ -1151,24 +1158,17 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::SendTxRcnCl(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Feature(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Empty(_) => Ok(encoding::DecoderStatus::Ready),
-            Self::Unknown { remaining, buffer, .. } => {
-                let copy_len = bytes.len().min(*remaining);
-                let (to_copy, rest) = bytes.split_at(copy_len);
-                buffer.extend_from_slice(to_copy);
-                *bytes = rest;
-                *remaining -= copy_len;
-                Ok(if *remaining > 0 {
-                    encoding::DecoderStatus::NeedsMore
-                } else {
-                    encoding::DecoderStatus::Ready
-                })
+            Self::Unknown { buffer, .. } => {
+                buffer.extend_from_slice(bytes);
+                *bytes = &[];
+                Ok(encoding::DecoderStatus::NeedsMore)
             }
         }
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let err = V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload);
+        let err = NetworkMessageDecoderError;
         match self {
             Self::Version(d) => Ok(NetworkMessage::Version(d.end().map_err(|_| err)?)),
             Self::Addr(d) => Ok(NetworkMessage::Addr(d.end().map_err(|_| err)?)),
@@ -1211,12 +1211,8 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
                 "sendaddrv2" => Ok(NetworkMessage::SendAddrV2),
                 _ => Err(err),
             },
-            Self::Unknown { command, buffer, remaining } => {
-                if remaining != 0 {
-                    return Err(err);
-                }
-                Ok(NetworkMessage::Unknown { command, payload: buffer })
-            }
+            Self::Unknown { command, buffer } =>
+                Ok(NetworkMessage::Unknown { command, payload: buffer }),
         }
     }
 
@@ -1253,85 +1249,31 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::SendTxRcnCl(d) => d.read_limit(),
             Self::Feature(d) => d.read_limit(),
             Self::Empty(_) => 0,
-            Self::Unknown { remaining, .. } => *remaining,
+            Self::Unknown { .. } => MAX_MSG_SIZE,
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-struct NetworkMessageDecoder {
-    inner: NetworkMessageDecoderInner,
-    payload_len: Option<usize>,
-    bytes_consumed: usize,
-}
-
-impl NetworkMessageDecoder {
-    fn new(command: CommandString, payload_len: usize) -> Self {
-        Self {
-            inner: NetworkMessageDecoderInner::new(command, payload_len),
-            payload_len: Some(payload_len),
-            bytes_consumed: 0,
-        }
-    }
-
-    fn from_inner(inner: NetworkMessageDecoderInner) -> Self {
-        Self { inner, payload_len: None, bytes_consumed: 0 }
-    }
-}
-
-impl encoding::Decoder for NetworkMessageDecoder {
-    type Output = NetworkMessage;
-    type Error = V1NetworkMessageDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        let before = bytes.len();
-        let result = self.inner.push_bytes(bytes)?;
-        self.bytes_consumed += before - bytes.len();
-        Ok(result)
-    }
-
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        if let Some(expected) = self.payload_len {
-            if self.bytes_consumed != expected {
-                return Err(V1NetworkMessageDecoderError(
-                    V1NetworkMessageDecoderErrorInner::PayloadLengthMismatch {
-                        expected,
-                        actual: self.bytes_consumed,
-                    },
-                ));
-            }
-        }
-        self.inner.end()
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize {
-        self.payload_len.map_or_else(
-            || self.inner.read_limit(),
-            |expected| self.inner.read_limit().min(expected.saturating_sub(self.bytes_consumed)),
-        )
     }
 }
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone)]
-enum DecoderState {
-    ReadingHeader {
+enum V1NetworkMessageDecoderState {
+    Header {
         header_decoder: V1MessageHeaderDecoder,
     },
-    ReadingPayload {
+    Payload {
         magic: Magic,
         checksum: [u8; 4],
         payload_decoder: NetworkMessageDecoder,
+        payload_len: usize,
+        bytes_consumed: usize,
         // Hash engine to compute checksum over raw payload bytes as they arrive.
         checksum_engine: sha256d::HashEngine,
     },
 }
 
-impl Default for DecoderState {
+impl Default for V1NetworkMessageDecoderState {
     fn default() -> Self {
-        Self::ReadingHeader { header_decoder: V1MessageHeaderDecoder::default() }
+        Self::Header { header_decoder: V1MessageHeaderDecoder::default() }
     }
 }
 
@@ -1342,7 +1284,7 @@ impl Default for DecoderState {
 /// to decode the dynamically sized network message.
 #[derive(Debug, Default, Clone)]
 pub struct V1NetworkMessageDecoder {
-    state: DecoderState,
+    state: V1NetworkMessageDecoderState,
 }
 
 impl encoding::Decoder for V1NetworkMessageDecoder {
@@ -1351,7 +1293,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         match &mut self.state {
-            DecoderState::ReadingHeader { header_decoder } => {
+            V1NetworkMessageDecoderState::Header { header_decoder } => {
                 let status = header_decoder
                     .push_bytes(bytes)
                     .map_err(V1NetworkMessageDecoderErrorInner::Header)
@@ -1371,11 +1313,13 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                         ));
                     }
 
-                    let payload_decoder = NetworkMessageDecoder::new(header.command, payload_len);
-                    self.state = DecoderState::ReadingPayload {
+                    let payload_decoder = NetworkMessageDecoder::from_command(header.command);
+                    self.state = V1NetworkMessageDecoderState::Payload {
                         magic: header.magic,
                         checksum: header.checksum,
                         payload_decoder,
+                        payload_len,
+                        bytes_consumed: 0,
                         checksum_engine: sha256d::HashEngine::new(),
                     };
 
@@ -1385,25 +1329,59 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
                 Ok(status)
             }
-            DecoderState::ReadingPayload { payload_decoder, checksum_engine, .. } => {
-                let original_bytes = *bytes;
-                let result = payload_decoder.push_bytes(bytes)?;
-                checksum_engine.input(&original_bytes[..original_bytes.len() - bytes.len()]);
+            V1NetworkMessageDecoderState::Payload {
+                payload_decoder,
+                checksum_engine,
+                payload_len,
+                bytes_consumed,
+                ..
+            } => {
+                // Clamp given bytes so decoder doesn't overread.
+                let remaining = (*payload_len - *bytes_consumed).min(bytes.len());
+                let mut clamped_bytes = &(*bytes)[..remaining];
+                let status = payload_decoder.push_bytes(&mut clamped_bytes).map_err(|e| {
+                    V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload(e))
+                })?;
+                // Track bytes consumed and their checksum.
+                let consumed = remaining - clamped_bytes.len();
+                checksum_engine.input(&(*bytes)[..consumed]);
+                *bytes = &(*bytes)[consumed..];
+                *bytes_consumed += consumed;
 
-                Ok(result)
+                if *bytes_consumed == *payload_len {
+                    return Ok(encoding::DecoderStatus::Ready);
+                }
+                Ok(status)
             }
         }
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
         match self.state {
-            DecoderState::ReadingHeader { header_decoder } => Err(header_decoder
+            V1NetworkMessageDecoderState::Header { header_decoder } => Err(header_decoder
                 .end()
                 .map_err(V1NetworkMessageDecoderErrorInner::Header)
                 .map_err(V1NetworkMessageDecoderError)
-                .expect_err("push_bytes() moves to ReadingPayload on header_decoder completion")),
-            DecoderState::ReadingPayload { magic, checksum, payload_decoder, checksum_engine } => {
-                let payload = payload_decoder.end()?;
+                .expect_err("push_bytes() moves to Payload on header_decoder completion")),
+            V1NetworkMessageDecoderState::Payload {
+                magic,
+                checksum,
+                payload_decoder,
+                payload_len,
+                bytes_consumed,
+                checksum_engine,
+            } => {
+                if bytes_consumed != payload_len {
+                    return Err(V1NetworkMessageDecoderError(
+                        V1NetworkMessageDecoderErrorInner::PayloadLengthMismatch {
+                            expected: payload_len,
+                            actual: bytes_consumed,
+                        },
+                    ));
+                }
+                let payload = payload_decoder.end().map_err(|e| {
+                    V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload(e))
+                })?;
 
                 let hash_bytes = checksum_engine.finalize().to_byte_array();
                 let expected_checksum =
@@ -1428,8 +1406,13 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
     fn read_limit(&self) -> usize {
         match &self.state {
-            DecoderState::ReadingHeader { header_decoder } => header_decoder.read_limit(),
-            DecoderState::ReadingPayload { payload_decoder, .. } => payload_decoder.read_limit(),
+            V1NetworkMessageDecoderState::Header { header_decoder } => header_decoder.read_limit(),
+            V1NetworkMessageDecoderState::Payload {
+                payload_decoder,
+                payload_len,
+                bytes_consumed,
+                ..
+            } => payload_decoder.read_limit().min(payload_len.saturating_sub(*bytes_consumed)),
         }
     }
 }
@@ -1662,6 +1645,14 @@ impl Default for V2NetworkMessageDecoderState {
 /// It first decodes the 1-byte short ID. For optimized messages (IDs 1-28), it dispatches
 /// directly to the payload decoder. For non-optimized messages (ID 0), it first reads the
 /// 12-byte command string before dispatching.
+///
+/// # Not Self-Delimiting
+///
+/// Unlike V1, V2 messages carry no self-delimiting length field. The message boundary comes
+/// from the BIP-324 packet, which is decoded at the transport layer, not here. Consequently
+/// this decoder is *not* self-delimiting for [`NetworkMessage::Unknown`] payloads in particular.
+/// For this variant, the payload decoder buffers all pushed bytes and never reports `Ready` on its
+/// own. The caller is responsible for determining when the packet ends and invoking `end`.
 #[derive(Default)]
 pub struct V2NetworkMessageDecoder {
     state: V2NetworkMessageDecoderState,
@@ -1673,12 +1664,10 @@ impl V2NetworkMessageDecoder {
         short_id: u8,
     ) -> Result<NetworkMessageDecoder, V2NetworkMessageDecoderError> {
         use encoding::Decode as _;
-        use NetworkMessageDecoderInner as E;
+        use NetworkMessageDecoder as E;
 
-        let err = V2NetworkMessageDecoderError::Payload(V1NetworkMessageDecoderError(
-            V1NetworkMessageDecoderErrorInner::Payload,
-        ));
-        (match short_id {
+        let err = V2NetworkMessageDecoderError::Payload(NetworkMessageDecoderError);
+        match short_id {
             1u8 => Ok(E::Addr(AddrPayload::decoder())),
             2u8 => Ok(E::Block(block::Block::decoder())),
             3u8 => Ok(E::BlockTxn(bip152::BlockTransactions::decoder())),
@@ -1709,27 +1698,7 @@ impl V2NetworkMessageDecoder {
             28u8 => Ok(E::AddrV2(AddrV2Payload::decoder())),
             37u8 => Ok(E::Feature(Feature::decoder())),
             id => Err(V2NetworkMessageDecoderError::UnknownShortId(id)),
-        })
-        .map(NetworkMessageDecoder::from_inner)
-    }
-
-    /// Creates a payload decoder from a command string (for short ID == 0).
-    fn payload_decoder_from_command(command: CommandString) -> NetworkMessageDecoder {
-        use encoding::Decode as _;
-        use NetworkMessageDecoderInner as E;
-
-        NetworkMessageDecoder::from_inner(match command.as_ref() {
-            "version" => E::Version(message_network::VersionMessage::decoder()),
-            "verack" | "sendheaders" | "getaddr" | "wtxidrelay" | "sendaddrv2" => E::Empty(command),
-            "alert" => E::Alert(message_network::Alert::decoder()),
-            "reject" => E::Reject(message_network::Reject::decoder()),
-            "sendtxrcncl" => E::SendTxRcnCl(SendTxRcnCl::decoder()),
-            _ => E::Unknown {
-                command,
-                remaining: 0, // no payload length, buffer all bytes until end().
-                buffer: Vec::new(),
-            },
-        })
+        }
     }
 }
 
@@ -1782,7 +1751,7 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
                             let command = command_string
                                 .end()
                                 .map_err(V2NetworkMessageDecoderError::Command)?;
-                            let payload_decoder = Self::payload_decoder_from_command(command);
+                            let payload_decoder = NetworkMessageDecoder::from_command(command);
                             self.state = V2NetworkMessageDecoderState::Payload(payload_decoder);
                         }
                         _ => unreachable!("we know we're in the Second state"),
@@ -2081,6 +2050,19 @@ pub mod error {
         }
     }
 
+    /// Error decoding a network message payload.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct NetworkMessageDecoderError;
+
+    impl fmt::Display for NetworkMessageDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "error decoding network message payload")
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for NetworkMessageDecoderError {}
+
     /// Error decoding a raw network message.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct V1NetworkMessageDecoderError(pub(super) V1NetworkMessageDecoderErrorInner);
@@ -2092,7 +2074,7 @@ pub mod error {
         /// Payload length exceeds maximum allowed message size.
         PayloadTooLarge,
         /// Error decoding the message payload.
-        Payload,
+        Payload(NetworkMessageDecoderError),
         /// Message checksum did not match the one reported in the message header.
         InvalidChecksum { expected: [u8; 4], actual: [u8; 4] },
         /// Bytes decoded by the payload decoder do not match the declared payload length.
@@ -2108,7 +2090,7 @@ pub mod error {
                 V1NetworkMessageDecoderErrorInner::PayloadTooLarge => {
                     write!(f, "payload length exceeds maximum allowed message size")
                 }
-                V1NetworkMessageDecoderErrorInner::Payload => {
+                V1NetworkMessageDecoderErrorInner::Payload(_) => {
                     write!(f, "error decoding message payload")
                 }
                 V1NetworkMessageDecoderErrorInner::InvalidChecksum { expected: ref e, actual: ref a } => write!(
@@ -2128,7 +2110,7 @@ pub mod error {
             match self.0 {
                 V1NetworkMessageDecoderErrorInner::Header(ref e) => Some(e),
                 V1NetworkMessageDecoderErrorInner::PayloadTooLarge => None,
-                V1NetworkMessageDecoderErrorInner::Payload => None,
+                V1NetworkMessageDecoderErrorInner::Payload(_) => None,
                 V1NetworkMessageDecoderErrorInner::InvalidChecksum { expected: _, actual: _ } =>
                     None,
                 V1NetworkMessageDecoderErrorInner::PayloadLengthMismatch { .. } => None,
@@ -2144,7 +2126,7 @@ pub mod error {
         /// Error decoding the command string.
         Command(CommandStringDecoderError),
         /// Error decoding the message payload.
-        Payload(V1NetworkMessageDecoderError),
+        Payload(NetworkMessageDecoderError),
         /// Unknown short ID value.
         UnknownShortId(u8),
     }
@@ -2334,6 +2316,7 @@ mod test {
     use alloc::vec;
     use std::net::Ipv4Addr;
 
+    use encoding::Decoder;
     use hex::hex;
     use primitives::transaction::{Transaction, Txid};
     use primitives::{Block, BlockHash};
@@ -2830,7 +2813,7 @@ mod test {
         let data = hex!("010101010101");
 
         let mut decoder =
-            NetworkMessageDecoder::new(CommandString::try_from("unknown").unwrap(), 6);
+            NetworkMessageDecoder::from_command(CommandString::try_from("unknown").unwrap());
         let _ = decoder.push_bytes(&mut data.as_slice());
         let decoded = decoder.end().unwrap();
 
@@ -2912,5 +2895,47 @@ mod test {
 
         encoding::decode_from_slice::<V1NetworkMessage>(&malformed_v1_message)
             .expect_err("Message with invalid payload checksum should be rejected");
+    }
+
+    #[test]
+    fn v1_decoder_clamps_to_header_payload_length() {
+        // The V1 decoder must clamp input to the header's
+        // declared payload_len, preventing the inner payload decoder from
+        // consuming bytes past the boundary.
+
+        // Encode a valid V1 ping (8-byte payload), then tamper the header to
+        // declare payload_len=0. The Ping decoder needs 8 bytes for a u64
+        // nonce; the clamp must prevent it from consuming any of them.
+        let msg = V1NetworkMessage::new(Magic::BITCOIN, NetworkMessage::Ping(Ping(42)));
+        let mut raw = encoding::encode_to_vec(&msg);
+
+        // Overwrite payload_len (bytes 16..20) from 8 to 0.
+        raw[16..20].copy_from_slice(&0u32.to_le_bytes());
+        // Recompute checksum (bytes 20..24) over the empty declared payload.
+        let checksum = sha256d::Hash::hash(&[]).to_byte_array();
+        raw[20..24].copy_from_slice(&checksum[..4]);
+
+        let mut decoder = V1NetworkMessageDecoder::default();
+        let mut bytes: &[u8] = &raw;
+        let _ = decoder.push_bytes(&mut bytes);
+
+        // Only the 24-byte header may be consumed; the 8-byte ping payload
+        // must remain unconsumed past the payload_len=0 boundary.
+        assert_eq!(
+            bytes.len(),
+            8,
+            "decoder left {} bytes unconsumed, expected 8 (ping payload)",
+            bytes.len()
+        );
+    }
+
+    #[test]
+    fn v2_unknown_message_roundtrip() {
+        let cmd = CommandString::try_from("somecmd").unwrap();
+        let payload = vec![1, 2, 3, 4, 5];
+        let msg = V2NetworkMessage::new(NetworkMessage::Unknown { command: cmd, payload });
+        let encoded = encoding::encode_to_vec(&msg);
+        let decoded = encoding::decode_from_slice::<V2NetworkMessage>(&encoded).unwrap();
+        assert_eq!(decoded, msg);
     }
 }
