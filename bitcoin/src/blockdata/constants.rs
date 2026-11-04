@@ -73,6 +73,8 @@ const GENESIS_OUTPUT_PK: [u8; 65] = [
 #[rustfmt::skip]
 const TESTNET4_GENESIS_OUTPUT_PK: [u8; 33] = [0x00; 33];
 
+const TESTNET5_GENESIS_EXTRANONCE: [u8; 8] = [0x95, 0xeb, 0xf7, 0x6a, 0x02, 0x00, 0x00, 0x00];
+
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
 fn bitcoin_genesis_tx(params: &Params) -> Transaction {
     // Base
@@ -94,6 +96,23 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
                 script::Builder::new().push_slice(TESTNET4_GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script(),
 
             ),
+            Network::Testnet(TestnetVersion::V5) => {
+                let message: &script::PushBytes = b"2026-11-14 975744 0000000000000000000123e2681e2f82acdcb9430a15eec24cc85b400691d479"
+                    .as_slice()
+                    .try_into()
+                    .expect("82-byte genesis message fits in a script push");
+                (
+                    script::Builder::new()
+                        .push_int_unchecked(486604799)
+                        .push_int_non_minimal(4)
+                        .push_slice(message)
+                        .into_script(),
+                    script::Builder::new()
+                        .push_opcode(OP_RETURN)
+                        .push_slice(TESTNET5_GENESIS_EXTRANONCE)
+                        .into_script(),
+                )
+            },
             _ => (
                 script::Builder::new()
                 .push_int_unchecked(486604799)
@@ -158,6 +177,18 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
                 time: BlockTime::from_u32(1714777860),
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 393743547,
+            },
+            transactions,
+        )
+        .assume_checked(witness_root),
+        Network::Testnet(TestnetVersion::V5) => Block::new_unchecked(
+            block::Header {
+                version: block::Version::from_consensus(0x2230c000),
+                prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
+                merkle_root,
+                time: BlockTime::from_u32(1794632593),
+                bits: CompactTarget::from_consensus(0x1a0fffff),
+                nonce: 0x653d9131,
             },
             transactions,
         )
@@ -230,6 +261,11 @@ impl ChainHash {
         67, 240, 139, 218, 176, 80, 227, 91, 86, 124, 134, 75, 145, 244, 127, 80, 174, 114, 90,
         226, 222, 83, 188, 251, 186, 242, 132, 218, 0, 0, 0, 0,
     ]);
+    /// `ChainHash` for Bitcoin testnet5.
+    pub const TESTNET5: Self = Self([
+        151, 212, 145, 74, 103, 13, 32, 75, 71, 106, 255, 111, 253, 70, 69, 61, 51, 28, 220, 82,
+        50, 125, 126, 99, 193, 8, 0, 0, 0, 0, 0, 0,
+    ]);
     /// `ChainHash` for Bitcoin signet.
     pub const SIGNET: Self = Self([
         246, 30, 238, 59, 99, 163, 128, 164, 119, 160, 99, 175, 50, 178, 187, 201, 124, 159, 249,
@@ -250,6 +286,7 @@ impl ChainHash {
             Network::Bitcoin => Self::BITCOIN,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(TestnetVersion::V5) => Self::TESTNET5,
             Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
@@ -265,6 +302,7 @@ impl ChainHash {
             Network::Bitcoin => Self::BITCOIN,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(TestnetVersion::V5) => Self::TESTNET5,
             Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,

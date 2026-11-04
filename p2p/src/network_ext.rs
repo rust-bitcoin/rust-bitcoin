@@ -23,7 +23,7 @@ pub trait NetworkExt {
 impl NetworkExt for Network {
     /// The default P2P port for a given [`Network`].
     ///
-    /// Note: All [`TestnetVersion`] variants >4 are treated as [`TestnetVersion::V4`].
+    /// Note: All [`TestnetVersion`] variants >5 are treated as [`TestnetVersion::V4`].
     /// This function will be updated as new test networks are defined.
     fn default_p2p_port(self) -> u16 {
         match &self {
@@ -31,6 +31,7 @@ impl NetworkExt for Network {
             Self::Signet => 38333,
             Self::Testnet(TestnetVersion::V3) => 18333,
             Self::Testnet(TestnetVersion::V4) => 48333,
+            Self::Testnet(TestnetVersion::V5) => 18353,
             Self::Testnet(_) => 48333,
             Self::Regtest => 18444,
         }
@@ -38,21 +39,23 @@ impl NetworkExt for Network {
 
     /// The default RPC port for a given [`Network`].
     ///
-    /// Note: All [`TestnetVersion`] variants >4 are treated as [`TestnetVersion::V4`].
+    /// Note: All [`TestnetVersion`] variants >5 are treated as [`TestnetVersion::V4`].
     /// This function will be updated as new test networks are defined.
     fn default_rpc_port(&self) -> u16 {
         match self {
             Self::Bitcoin => 8332,
             Self::Signet => 38332,
             Self::Testnet(TestnetVersion::V3) => 18332,
-            Self::Testnet(TestnetVersion::V4 | _) => 48332,
+            Self::Testnet(TestnetVersion::V4) => 48332,
+            Self::Testnet(TestnetVersion::V5) => 18352,
+            Self::Testnet(_) => 48332,
             Self::Regtest => 18442,
         }
     }
 
     /// The default network [`Magic`] for a given [`Network`].
     ///
-    /// Note: All [`TestnetVersion`] variants >4 are treated as [`TestnetVersion::V4`].
+    /// Note: All [`TestnetVersion`] variants >5 are treated as [`TestnetVersion::V4`].
     /// This function will be updated as new test networks are defined.
     fn default_network_magic(self) -> Magic {
         match &self {
@@ -60,6 +63,7 @@ impl NetworkExt for Network {
             Self::Signet => Magic::SIGNET,
             Self::Testnet(TestnetVersion::V3) => Magic::TESTNET3,
             Self::Testnet(TestnetVersion::V4) => Magic::TESTNET4,
+            Self::Testnet(TestnetVersion::V5) => Magic::TESTNET5,
             Self::Testnet(_) => Magic::TESTNET4,
             Self::Regtest => Magic::REGTEST,
         }
