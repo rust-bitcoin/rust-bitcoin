@@ -226,6 +226,12 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
     /// Unwraps the filter into its serialized representation.
     pub fn into_bytes(self) -> B { self.bytes }
 
+    /// Returns the element count of this filter.
+    pub fn element_count(&self) -> u32 { self.element_count }
+
+    /// Returns `true` if this filter contains no elements.
+    pub fn is_empty(&self) -> bool { self.element_count() == 0 }
+
     fn match_sorted_batch<I, T>(
         &self,
         block_hash: BlockHash,
