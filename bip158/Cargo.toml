@@ -15,7 +15,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std", "hex"]
-std = ["alloc", "encoding/std", "hashes/std", "internals/std"]
+std = ["alloc", "encoding/std", "hashes/std", "internals/std", "primitives/std"]
 alloc = ["encoding/alloc", "hashes/alloc", "internals/alloc", "primitives/alloc"]
 serde = ["hashes/serde", "alloc", "hex"]
 hex = ["hashes/hex", "primitives/hex"]
