@@ -129,6 +129,8 @@ pub static TESTNET: Params = Params::TESTNET3;
 pub static TESTNET3: Params = Params::TESTNET3;
 /// The testnet4 parameters.
 pub static TESTNET4: Params = Params::TESTNET4;
+/// The draft BIP 95 testnet5 parameters.
+pub static TESTNET5: Params = Params::TESTNET5;
 /// The signet parameters.
 pub static SIGNET: Params = Params::SIGNET;
 /// The regtest parameters.
@@ -212,6 +214,20 @@ impl Params {
         no_pow_retargeting: false,
     };
 
+    /// The draft BIP 95 testnet5 parameters.
+    /// TODO: Update them if needed after testnet5 launches
+    /// or remove this comment if they did not change.
+    pub const TESTNET5: Self = Self {
+        network: Network::Testnet(TestnetVersion::V5),
+        bip34_height: BlockHeight::from_u32(1),
+        bip65_height: BlockHeight::from_u32(1),
+        bip66_height: BlockHeight::from_u32(1),
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(1512), // 75%
+        pow_limit: Target::MAX_ATTAINABLE_TESTNET5,
+        max_attainable_target: Target::MAX_ATTAINABLE_TESTNET5,
+        ..Self::MAINNET
+    };
+
     /// The signet parameters.
     pub const SIGNET: Self = Self {
         network: Network::Signet,
@@ -254,6 +270,7 @@ impl Params {
             Network::Bitcoin => Self::MAINNET,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(TestnetVersion::V5) => Self::TESTNET5,
             Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,

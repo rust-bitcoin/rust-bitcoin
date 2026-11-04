@@ -200,6 +200,10 @@ impl Target {
     // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
     pub const MAX_ATTAINABLE_SIGNET: Self = Self(U256::new(0x0377_ae00 << 80, 0));
 
+    /// Maximum target on testnet5 (compact encoding 0x1a0fffff).
+    // https://github.com/bitcoin/bitcoin/blob/a81e5c2d8a75c32b7a60775bdf41cc59629e495a/src/kernel/chainparams.cpp#L495
+    pub const MAX_ATTAINABLE_TESTNET5: Self = Self(U256::new(0x0f_ffff << 56, 0));
+
     /// Computes the [`Target`] value from a compact representation.
     ///
     /// Bitcoin Core parses a negative or overflowing compact value as a zero target. Use

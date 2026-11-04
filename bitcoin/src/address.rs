@@ -64,6 +64,7 @@ impl From<&Params> for AddressParams {
             Network::Regtest => Self::REGTEST,
             Network::Signet => Self::SIGNET,
             Network::Testnet(network::TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(network::TestnetVersion::V5) => Self::TESTNET5,
             Network::Testnet(network::TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(_) => Self::TESTNET3,
         }
