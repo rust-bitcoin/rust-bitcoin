@@ -5,9 +5,9 @@
 use bitcoin::consensus::serialize;
 use bitcoin::hashes::Hash;
 use bitcoin::{
-    block, compat, opcodes, script, transaction, BlockHash, CompactTarget, OutPoint, Script,
-    ScriptBuf, ScriptHash, Sequence, TxIn, TxMerkleNode, Txid, WScriptHash, Witness,
-    WitnessCommitment, WitnessMerkleNode, WitnessVersion, Wtxid,
+    absolute, block, compat, opcodes, script, transaction, Amount, Block, BlockHash, CompactTarget,
+    Network, OutPoint, Script, ScriptBuf, ScriptHash, Sequence, Transaction, TxIn, TxMerkleNode,
+    TxOut, Txid, WScriptHash, Witness, WitnessCommitment, WitnessMerkleNode, WitnessVersion, Wtxid,
 };
 use bitcoin_primitives_stable::encoding::encode_to_vec;
 
@@ -178,5 +178,194 @@ fn headers() {
         assert_eq!(encode_to_vec(&stable), serialize(&unstable));
         assert_eq!(stable.block_hash().to_byte_array(), unstable.block_hash().to_byte_array());
         assert_eq!(block::Header::from_stable(stable), unstable);
+    }
+}
+
+fn transaction() -> Transaction {
+    Transaction {
+        version: transaction::Version::TWO,
+        lock_time: absolute::LockTime::from_consensus(500_000_000),
+        input: vec![
+            TxIn {
+                previous_output: OutPoint { txid: Txid::from_byte_array([0x42; 32]), vout: 7 },
+                script_sig: ScriptBuf::from_bytes(vec![0x4c]),
+                sequence: Sequence(0x0040_0001),
+                witness: Witness::from_slice(&[vec![], vec![0x51; 253]]),
+            },
+            TxIn::default(),
+        ],
+        output: vec![
+            TxOut { value: Amount::ZERO, script_pubkey: ScriptBuf::new() },
+            TxOut {
+                value: Amount::from_sat(compat::Amount::MAX_MONEY.to_sat()),
+                script_pubkey: ScriptBuf::from_bytes(vec![0x00, 0x51, 0xff]),
+            },
+        ],
+    }
+}
+
+#[test]
+fn outputs() {
+    for sat in [0, 1, compat::Amount::MAX_MONEY.to_sat()] {
+        let unstable = TxOut {
+            value: Amount::from_sat(sat),
+            script_pubkey: ScriptBuf::from_bytes(vec![0x51]),
+        };
+        let ptr = unstable.script_pubkey.as_bytes().as_ptr();
+        let stable = unstable.clone().to_stable().unwrap();
+        assert_eq!(stable.amount.to_sat(), sat);
+        assert_eq!(encode_to_vec(&stable), serialize(&unstable));
+        assert_eq!(TxOut::from_stable(stable), unstable);
+        let stable = unstable.to_stable().unwrap();
+        assert_eq!(stable.script_pubkey.as_bytes().as_ptr(), ptr);
+    }
+}
+
+#[test]
+fn output_errors_preserve_input() {
+    for sat in [compat::Amount::MAX_MONEY.to_sat() + 1, u64::MAX] {
+        let unstable = TxOut {
+            value: Amount::from_sat(sat),
+            script_pubkey: ScriptBuf::from_bytes(vec![0x51]),
+        };
+        let expected = unstable.clone();
+        let ptr = unstable.script_pubkey.as_bytes().as_ptr();
+        let error = unstable.to_stable().unwrap_err();
+        assert_eq!(error.input(), &expected);
+        assert_eq!(error.location(), None);
+        assert_eq!(error.input().script_pubkey.as_bytes().as_ptr(), ptr);
+        let original = error.into_input();
+        assert_eq!(original, expected);
+    }
+    assert!(TxOut::NULL.to_stable().is_err());
+}
+
+#[test]
+fn transactions() {
+    for version in [i32::MIN, -1, 0, 1, 2, 3, i32::MAX] {
+        for lock_time in [0, 499_999_999, 500_000_000, u32::MAX] {
+            let mut unstable = transaction();
+            unstable.version = transaction::Version(version);
+            unstable.lock_time = absolute::LockTime::from_consensus(lock_time);
+            let stable = unstable.clone().to_stable().unwrap();
+            assert_eq!(encode_to_vec(&stable), serialize(&unstable));
+            assert_eq!(
+                stable.compute_txid().to_byte_array(),
+                unstable.compute_txid().to_byte_array()
+            );
+            assert_eq!(
+                stable.compute_wtxid().to_byte_array(),
+                unstable.compute_wtxid().to_byte_array()
+            );
+            assert_eq!(Transaction::from_stable(stable), unstable);
+        }
+    }
+
+    let mut unstable = transaction();
+    unstable.input.clear();
+    unstable.output.clear();
+    let stable = unstable.clone().to_stable().unwrap();
+    assert_eq!(encode_to_vec(&stable), serialize(&unstable));
+    assert_eq!(Transaction::from_stable(stable), unstable);
+
+    let mut unstable = transaction();
+    for input in &mut unstable.input {
+        input.witness.clear();
+    }
+    unstable.output.push(unstable.output[1].clone());
+    let stable = unstable.clone().to_stable().unwrap();
+    assert_eq!(encode_to_vec(&stable), serialize(&unstable));
+    assert_eq!(Transaction::from_stable(stable), unstable);
+}
+
+#[test]
+fn transaction_errors_preserve_input() {
+    for index in 0..2 {
+        let mut unstable = transaction();
+        unstable.output[index].value = Amount::from_sat(compat::Amount::MAX_MONEY.to_sat() + 1);
+        let expected = unstable.clone();
+        let inputs_ptr = unstable.input.as_ptr();
+        let outputs_ptr = unstable.output.as_ptr();
+        let witness_ptr = unstable.input[0].witness.iter().nth(1).unwrap().as_ptr();
+        let error = unstable.to_stable().unwrap_err();
+        assert_eq!(error.input(), &expected);
+        assert_eq!(
+            error.location(),
+            Some(compat::AmountConversionLocation::TransactionOutput { output_index: index })
+        );
+        assert!(error.to_string().contains(&format!("output at index {index}")));
+        let original = error.into_input();
+        assert_eq!(serialize(&original), serialize(&expected));
+        assert_eq!(original.input.as_ptr(), inputs_ptr);
+        assert_eq!(original.output.as_ptr(), outputs_ptr);
+        assert_eq!(original.input[0].witness.iter().nth(1).unwrap().as_ptr(), witness_ptr);
+    }
+}
+
+#[test]
+fn blocks() {
+    for network in [Network::Bitcoin, Network::Testnet, Network::Signet, Network::Regtest] {
+        let unstable = bitcoin::constants::genesis_block(network);
+        let stable: compat::Block<compat::BlockUnchecked> = unstable.clone().to_stable().unwrap();
+        assert_eq!(encode_to_vec(&stable), serialize(&unstable));
+        assert_eq!(stable.block_hash().to_byte_array(), unstable.block_hash().to_byte_array());
+        assert_eq!(Block::from_stable(stable.clone()), unstable);
+        assert!(stable.validate().is_ok());
+    }
+
+    let mut unstable = bitcoin::constants::genesis_block(Network::Bitcoin);
+    unstable.txdata = vec![transaction()];
+    let stable = unstable.clone().to_stable().unwrap();
+    assert_eq!(encode_to_vec(&stable), serialize(&unstable));
+    assert_eq!(Block::from_stable(stable.clone()), unstable);
+    assert!(stable.validate().is_err());
+
+    unstable.txdata.clear();
+    let stable = unstable.clone().to_stable().unwrap();
+    assert_eq!(encode_to_vec(&stable), serialize(&unstable));
+    assert_eq!(Block::from_stable(stable), unstable);
+}
+
+#[test]
+fn block_errors_preserve_input() {
+    for index in 0..2 {
+        let mut unstable = bitcoin::constants::genesis_block(Network::Bitcoin);
+        unstable.txdata = vec![transaction(), transaction()];
+        unstable.txdata[index].output[1].value = Amount::from_sat(u64::MAX);
+        let expected = unstable.clone();
+        let transactions_ptr = unstable.txdata.as_ptr();
+        let outputs_ptr = unstable.txdata[index].output.as_ptr();
+        let error = unstable.to_stable().unwrap_err();
+        assert_eq!(error.input(), &expected);
+        assert_eq!(
+            error.location(),
+            Some(compat::AmountConversionLocation::BlockTransactionOutput {
+                transaction_index: index,
+                output_index: 1,
+            })
+        );
+        assert!(error
+            .to_string()
+            .contains(&format!("transaction index {index} and output index 1")));
+        let original = error.into_input();
+        assert_eq!(serialize(&original), serialize(&expected));
+        assert_eq!(original.txdata.as_ptr(), transactions_ptr);
+        assert_eq!(original.txdata[index].output.as_ptr(), outputs_ptr);
+    }
+}
+
+#[test]
+fn conversion_error_display() {
+    let error = TxOut::NULL.to_stable().unwrap_err();
+    assert!(error.to_string().contains("cannot convert to stable type"));
+    assert_eq!(error.out_of_range_error(), &Amount::from_sat(u64::MAX).to_stable().unwrap_err());
+    #[cfg(feature = "std")]
+    {
+        use std::error::Error;
+
+        assert_eq!(
+            error.source().unwrap().to_string(),
+            Amount::from_sat(u64::MAX).to_stable().unwrap_err().to_string()
+        );
     }
 }

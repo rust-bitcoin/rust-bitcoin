@@ -686,6 +686,59 @@ pub struct Block {
 impl_consensus_encoding!(Block, header, txdata);
 
 impl Block {
+    /// Converts a pre-1.0 block to an unchecked stable block.
+    ///
+    /// No block validation is performed.
+    ///
+    /// # Errors
+    ///
+    /// Returns the original block and the location of the first transaction output whose value
+    /// exceeds [`crate::compat::Amount::MAX_MONEY`].
+    #[cfg(feature = "compat")]
+    pub fn to_stable(
+        self,
+    ) -> Result<crate::compat::Block, crate::compat::AmountConversionError<Self>> {
+        let amounts = match self
+            .txdata
+            .iter()
+            .enumerate()
+            .map(|(transaction_index, tx)| {
+                tx.stable_amounts()
+                    .map_err(|(output_index, error)| (transaction_index, output_index, error))
+            })
+            .collect::<Result<Vec<_>, _>>()
+        {
+            Ok(amounts) => amounts,
+            Err((transaction_index, output_index, error)) => {
+                return Err(crate::compat::AmountConversionError::new(
+                    self,
+                    Some(crate::compat::AmountConversionLocation::BlockTransactionOutput {
+                        transaction_index,
+                        output_index,
+                    }),
+                    error,
+                ));
+            }
+        };
+        let transactions = self
+            .txdata
+            .into_iter()
+            .zip(amounts)
+            .map(|(tx, amounts)| tx.into_stable_with_amounts(amounts))
+            .collect();
+        Ok(crate::compat::Block::new_unchecked(self.header.to_stable(), transactions))
+    }
+
+    /// Converts an unchecked stable block to a pre-1.0 block.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::Block) -> Self {
+        let (header, transactions) = stable.into_parts();
+        Self {
+            header: Header::from_stable(header),
+            txdata: transactions.into_iter().map(Transaction::from_stable).collect(),
+        }
+    }
+
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
 

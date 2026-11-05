@@ -1,6 +1,8 @@
 # unreleased
 
 - Extend the `compat` feature to primitive hashes, scripts, witnesses, outpoints, transaction inputs, block headers, versions, and opcodes.
+- Add fallible `compat` conversions for transaction outputs, transactions, and unchecked blocks.
+- Return the original value and the invalid output location when an amount prevents a `compat` conversion.
 
 # 0.32.102 - 2026-07-06
 

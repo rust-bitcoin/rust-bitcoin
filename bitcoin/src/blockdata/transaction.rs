@@ -713,6 +713,36 @@ pub struct TxOut {
 }
 
 impl TxOut {
+    /// Converts a pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Returns the original output and the units error if its value exceeds
+    /// [`crate::compat::Amount::MAX_MONEY`]. In particular, [`Self::NULL`] cannot be converted.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(
+        self,
+    ) -> Result<crate::compat::TxOut, crate::compat::AmountConversionError<Self>> {
+        match self.value.to_stable() {
+            Ok(amount) => Ok(self.into_stable_with_amount(amount)),
+            Err(error) => Err(crate::compat::AmountConversionError::new(self, None, error)),
+        }
+    }
+
+    #[cfg(feature = "compat")]
+    fn into_stable_with_amount(self, amount: crate::compat::Amount) -> crate::compat::TxOut {
+        crate::compat::TxOut { amount, script_pubkey: self.script_pubkey.to_stable() }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::TxOut) -> Self {
+        Self {
+            value: Amount::from_stable(stable.amount),
+            script_pubkey: ScriptBuf::from_stable(stable.script_pubkey),
+        }
+    }
+
     /// This is used as a "null txout" in consensus signing code.
     pub const NULL: Self =
         TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
@@ -860,6 +890,69 @@ impl cmp::Ord for Transaction {
 }
 
 impl Transaction {
+    /// Converts a pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Returns the original transaction and the units error if any output value exceeds
+    /// [`crate::compat::Amount::MAX_MONEY`]. No other transaction validation is performed.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(
+        self,
+    ) -> Result<crate::compat::Transaction, crate::compat::AmountConversionError<Self>> {
+        match self.stable_amounts() {
+            Ok(amounts) => Ok(self.into_stable_with_amounts(amounts)),
+            Err((output_index, error)) => Err(crate::compat::AmountConversionError::new(
+                self,
+                Some(crate::compat::AmountConversionLocation::TransactionOutput { output_index }),
+                error,
+            )),
+        }
+    }
+
+    /// Converts all output values, so that the fallible part of [`Self::to_stable`] can run
+    /// before `self` is consumed.
+    #[cfg(feature = "compat")]
+    pub(crate) fn stable_amounts(
+        &self,
+    ) -> Result<Vec<crate::compat::Amount>, (usize, crate::compat::amount::OutOfRangeError)> {
+        self.output
+            .iter()
+            .enumerate()
+            .map(|(index, output)| output.value.to_stable().map_err(|error| (index, error)))
+            .collect()
+    }
+
+    /// `amounts` must come from [`Self::stable_amounts`] on this transaction.
+    #[cfg(feature = "compat")]
+    pub(crate) fn into_stable_with_amounts(
+        self,
+        amounts: Vec<crate::compat::Amount>,
+    ) -> crate::compat::Transaction {
+        crate::compat::Transaction {
+            version: self.version.to_stable(),
+            lock_time: self.lock_time.to_stable(),
+            inputs: self.input.into_iter().map(TxIn::to_stable).collect(),
+            outputs: self
+                .output
+                .into_iter()
+                .zip(amounts)
+                .map(|(output, amount)| output.into_stable_with_amount(amount))
+                .collect(),
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::Transaction) -> Self {
+        Self {
+            version: Version::from_stable(stable.version),
+            lock_time: absolute::LockTime::from_stable(stable.lock_time),
+            input: stable.inputs.into_iter().map(TxIn::from_stable).collect(),
+            output: stable.outputs.into_iter().map(TxOut::from_stable).collect(),
+        }
+    }
+
     // https://github.com/bitcoin/bitcoin/blob/44b05bf3fef2468783dcebf651654fdd30717e7e/src/policy/policy.h#L27
     /// Maximum transaction weight for Bitcoin Core 25.0.
     pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
