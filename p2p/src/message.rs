@@ -2457,10 +2457,10 @@ mod test {
             }),
             NetworkMessage::Alert(Alert::final_alert()),
             NetworkMessage::Reject(Reject {
-                message: "Test reject".into(),
+                message: "tx".into(),
                 ccode: RejectReason::Duplicate,
                 reason: "Cause".into(),
-                hash: hash([255u8; 32]),
+                hash: Some(hash([255u8; 32])),
             }),
             NetworkMessage::FeeFilter(FeeFilter::from(FeeRate::from_sat_per_vb_u32(1))),
             NetworkMessage::WtxidRelay,
