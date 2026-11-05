@@ -946,3 +946,34 @@ fn vec_deserializers_do_not_trust_size_hint() {
         fee_rate::serde::as_sat_per_vb_ceil::vec::deserialize => FeeRate,
     );
 }
+
+#[test]
+fn serde_opt_null_through_flatten() {
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct Inner {
+        #[serde(with = "amount::serde::as_sat::opt")]
+        a: Option<Amount>,
+        #[serde(with = "amount::serde::as_btc::opt")]
+        b: Option<SignedAmount>,
+        #[serde(with = "amount::serde::as_str::opt")]
+        c: Option<Amount>,
+        #[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::opt")]
+        d: Option<FeeRate>,
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_floor::opt")]
+        e: Option<FeeRate>,
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil::opt")]
+        f: Option<FeeRate>,
+    }
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct Outer {
+        #[serde(flatten)]
+        inner: Inner,
+    }
+
+    let none = Outer { inner: Inner { a: None, b: None, c: None, d: None, e: None, f: None } };
+    let json = "{\"a\":null,\"b\":null,\"c\":null,\"d\":null,\"e\":null,\"f\":null}";
+
+    assert_eq!(serde_json::from_str::<Outer>(json).unwrap(), none);
+    assert_eq!(serde_json::to_string(&none).unwrap(), json);
+}
