@@ -15,7 +15,7 @@ use core::str::FromStr;
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 #[cfg(feature = "compat")]
-use bitcoin_units_stable as stable;
+use bitcoin_primitives_stable as stable;
 use io::{Read, Write};
 use units::parse::{self, ParseIntError};
 

@@ -18,7 +18,7 @@ checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
 name = "base58ck"
 version = "0.1.101"
 dependencies = [
- "bitcoin_hashes",
+ "bitcoin_hashes 0.14.101",
  "hex-conservative 0.2.2",
 ]
 
@@ -54,9 +54,10 @@ dependencies = [
  "bincode",
  "bitcoin-consensus-encoding 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitcoin-io",
+ "bitcoin-primitives",
  "bitcoin-units 0.1.101",
  "bitcoin-units 1.0.0",
- "bitcoin_hashes",
+ "bitcoin_hashes 0.14.101",
  "bitcoinconsensus",
  "hex-conservative 0.2.2",
  "hex_lit",
@@ -110,6 +111,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-primitives"
+version = "0.104.0"
+source = "git+https://github.com/tcharding/rust-bitcoin?branch=push-puzmtlnlttlr#e3141bc5baf89f335b82bf837af5f9a7482cdf38"
+dependencies = [
+ "bitcoin-consensus-encoding 1.3.0 (git+https://github.com/tcharding/rust-bitcoin?branch=push-puzmtlnlttlr)",
+ "bitcoin-internals 0.8.2",
+ "bitcoin-units 1.0.0",
+ "bitcoin_hashes 1.2.0",
+ "hex-conservative 1.2.0",
+ "serde",
+]
+
+[[package]]
 name = "bitcoin-units"
 version = "0.1.101"
 dependencies = [
@@ -141,6 +155,17 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_test",
+]
+
+[[package]]
+name = "bitcoin_hashes"
+version = "1.2.0"
+source = "git+https://github.com/tcharding/rust-bitcoin?branch=push-puzmtlnlttlr#e3141bc5baf89f335b82bf837af5f9a7482cdf38"
+dependencies = [
+ "bitcoin-consensus-encoding 1.3.0 (git+https://github.com/tcharding/rust-bitcoin?branch=push-puzmtlnlttlr)",
+ "bitcoin-internals 0.8.2",
+ "hex-conservative 1.2.0",
+ "serde",
 ]
 
 [[package]]
@@ -300,7 +325,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e0cc0f1cf93f4969faf3ea1c7d8a9faed25918d96affa959720823dfe86d4f3"
 dependencies = [
- "bitcoin_hashes",
+ "bitcoin_hashes 0.14.101",
  "rand",
  "secp256k1-sys",
  "serde",

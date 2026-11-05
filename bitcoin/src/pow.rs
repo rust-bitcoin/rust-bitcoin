@@ -13,7 +13,7 @@ use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
 #[cfg(feature = "compat")]
-use bitcoin_units_stable as stable;
+use bitcoin_primitives_stable as stable;
 use io::{Read, Write};
 use units::parse;
 

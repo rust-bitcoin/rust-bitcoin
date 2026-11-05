@@ -313,6 +313,25 @@ macro_rules! impl_hashencode {
 }
 pub(crate) use impl_hashencode;
 
+/// Implements `to_stable` and `from_stable` for a hash type if the `compat` feature is enabled.
+macro_rules! impl_compat_hash {
+    ($hashtype:ident, $stable:ty) => {
+        #[cfg(feature = "compat")]
+        impl $hashtype {
+            /// Converts pre-1.0 type to a stable type.
+            pub fn to_stable(self) -> $stable {
+                <$stable>::from_byte_array($crate::hashes::Hash::to_byte_array(self))
+            }
+
+            /// Converts a stable type to a pre-1.0 type.
+            pub fn from_stable(stable: $stable) -> Self {
+                <Self as $crate::hashes::Hash>::from_byte_array(stable.to_byte_array())
+            }
+        }
+    };
+}
+pub(crate) use impl_compat_hash;
+
 #[rustfmt::skip]
 macro_rules! impl_asref_push_bytes {
     ($($hashtype:ident),*) => {

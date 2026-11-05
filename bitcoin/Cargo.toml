@@ -18,18 +18,18 @@ exclude = ["api", "tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "io/std", "secp256k1/std", "units/std", "bitcoin-units-stable?/std"]
+std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "io/std", "secp256k1/std", "units/std", "bitcoin-units-stable?/std", "bitcoin-primitives-stable?/std"]
 rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
-serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "units/serde", "bitcoin-units-stable?/serde"]
+serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "units/serde", "bitcoin-units-stable?/serde", "bitcoin-primitives-stable?/serde"]
 secp-global-context = ["secp256k1/global-context"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
-arbitrary = ["actual-arbitrary", "units/arbitrary"] # arbitrary doesn't work for `bitcoin-units-stable`. 
+arbitrary = ["actual-arbitrary", "units/arbitrary"] # arbitrary doesn't work for `bitcoin-units-stable` or `bitcoin-primitives-stable`.
 
 # Both these features raise the MSRV to 1.74.0.
-compat = ["dep:bitcoin-units-stable", "encoding", "units/compat"]
+compat = ["dep:bitcoin-units-stable", "dep:bitcoin-primitives-stable", "encoding", "units/compat"]
 encoding = ["dep:encoding", "units/encoding", "bitcoin-units-stable?/encoding"]
 
 [package.metadata.docs.rs]
@@ -53,6 +53,8 @@ ordered = { version = "0.2.0", optional = true }
 bitcoinconsensus = { version = "0.105.0+25.1", default-features = false, optional = true }
 # 1.0.0 release tracking PR: https://github.com/rust-bitcoin/rust-bitcoin/pull/6248
 bitcoin-units-stable = { package = "bitcoin-units", git = "https://github.com/tcharding/rust-bitcoin", branch = "push-puzmtlnlttlr", default-features = false, features = ["alloc"], optional = true }
+# `hex` is required for the stable types to implement `Display` and `FromStr`.
+bitcoin-primitives-stable = { package = "bitcoin-primitives", git = "https://github.com/tcharding/rust-bitcoin", branch = "push-puzmtlnlttlr", default-features = false, features = ["alloc", "hex"], optional = true }
 
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.195", default-features = false, features = [ "derive", "alloc" ], optional = true }
@@ -115,6 +117,9 @@ enabled = true
 [package.metadata.rbmt.lint]
 allowed_duplicates = [
     "hex-conservative",
+    "bitcoin_hashes",
     "bitcoin-units",
     "bitcoin-internals",
+    # Duplicated only while the stable crates are a git dependency.
+    "bitcoin-consensus-encoding",
 ]

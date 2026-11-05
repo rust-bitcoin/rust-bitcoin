@@ -11,7 +11,7 @@ use core::cmp::Ordering;
 use core::{cmp, convert, fmt};
 
 #[cfg(feature = "compat")]
-use bitcoin_units_stable as stable;
+use bitcoin_primitives_stable as stable;
 
 #[cfg(doc)]
 use crate::relative;

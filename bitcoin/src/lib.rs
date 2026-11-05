@@ -28,8 +28,8 @@
 //!   achieve the same without this feature but it could happen the implementations diverge one
 //!   day.
 //! * `ordered` - (dependency), adds implementations of `ArbitraryOrdOrd` to some structs.
-//! * `compat` - adds a compatibility layer to convert to/from `units-1.0.0` types as well
-//!   as a `compat` module that re-exports the stable types.
+//! * `compat` - adds a compatibility layer to convert to/from `units-1.0.0` and `primitives-1.0.0`
+//!   types as well as a `compat` module that re-exports the stable types.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 // Experimental features we need.

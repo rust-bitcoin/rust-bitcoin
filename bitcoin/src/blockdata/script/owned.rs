@@ -9,6 +9,8 @@ use core::ops::Deref;
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
 use hex::FromHex;
 use secp256k1::{Secp256k1, Verification};
 
@@ -316,6 +318,23 @@ impl ScriptBuf {
         // Copied from PathBuf::into_boxed_path
         let rw = Box::into_raw(self.0.into_boxed_slice()) as *mut Script;
         unsafe { Box::from_raw(rw) }
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// Stable scripts are tagged with the role they play e.g., [`stable::ScriptPubKeyBuf`]. The
+    /// pre-1.0 type has no tag so the caller selects `T`, typically by way of type inference.
+    #[cfg(feature = "compat")]
+    pub fn to_stable<T>(self) -> stable::script::ScriptBuf<T> {
+        stable::script::ScriptBuf::from_bytes(self.into_bytes())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    ///
+    /// The pre-1.0 type has no tag so `T` is discarded.
+    #[cfg(feature = "compat")]
+    pub fn from_stable<T>(stable: stable::script::ScriptBuf<T>) -> Self {
+        Self::from_bytes(stable.into_bytes())
     }
 }
 

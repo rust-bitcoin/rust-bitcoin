@@ -18,7 +18,7 @@ use core::str::FromStr;
 use core::{cmp, fmt};
 
 #[cfg(feature = "compat")]
-use bitcoin_units_stable as stable;
+use bitcoin_primitives_stable as stable;
 #[cfg(feature = "encoding")]
 use encoding::{
     ArrayEncoder, BytesEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder2, Encoder3,
@@ -46,7 +46,9 @@ use crate::blockdata::witness::{WitnessDecoder, WitnessDecoderError, WitnessEnco
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode, write_err};
+use crate::internal_macros::{
+    impl_compat_hash, impl_consensus_encoding, impl_hashencode, write_err,
+};
 use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
@@ -74,6 +76,8 @@ hashes::hash_newtype! {
 }
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
+impl_compat_hash!(Txid, stable::Txid);
+impl_compat_hash!(Wtxid, stable::Wtxid);
 
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
@@ -126,6 +130,18 @@ impl OutPoint {
     /// ```
     #[inline]
     pub fn is_null(&self) -> bool { *self == OutPoint::null() }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::OutPoint {
+        stable::OutPoint { txid: self.txid.to_stable(), vout: self.vout }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::OutPoint) -> Self {
+        Self { txid: Txid::from_stable(stable.txid), vout: stable.vout }
+    }
 }
 
 impl Default for OutPoint {
@@ -315,6 +331,28 @@ impl TxIn {
     ///
     /// Total size includes the witness data (for base size see [`Self::base_size`]).
     pub fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::TxIn {
+        stable::TxIn {
+            previous_output: self.previous_output.to_stable(),
+            script_sig: self.script_sig.to_stable(),
+            sequence: self.sequence.to_stable(),
+            witness: self.witness.to_stable(),
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::TxIn) -> Self {
+        Self {
+            previous_output: OutPoint::from_stable(stable.previous_output),
+            script_sig: ScriptBuf::from_stable(stable.script_sig),
+            sequence: Sequence::from_stable(stable.sequence),
+            witness: Witness::from_stable(stable.witness),
+        }
+    }
 }
 
 impl Default for TxIn {
@@ -1261,6 +1299,22 @@ impl Version {
 
     /// Returns true if this transaction version number is considered standard.
     pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// The stable version is unsigned whereas the pre-1.0 version is signed. A negative version
+    /// converts to the stable version that has the same consensus encoding.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::TransactionVersion {
+        stable::TransactionVersion::maybe_non_standard(self.0 as u32)
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    ///
+    /// The stable version is unsigned whereas the pre-1.0 version is signed. A version above
+    /// `i32::MAX` converts to the negative version that has the same consensus encoding.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::TransactionVersion) -> Self { Self(stable.to_u32() as i32) }
 }
 
 impl Encodable for Version {
