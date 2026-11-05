@@ -79,7 +79,7 @@ fn check_if_num_is_too_precise() {
 #[test]
 #[cfg(feature = "alloc")]
 fn from_str_zero() {
-    let denoms = ["BTC", "cBTC", "mBTC", "uBTC", "bits", "sats"];
+    let denoms = ["BTC", "cBTC", "mBTC", "bits", "sats"];
     for denom in denoms {
         for v in &["0", "000"] {
             let s = format!("{} {}", v, denom);
@@ -806,13 +806,13 @@ fn from_str() {
     assert_eq!(
         "xBTC".parse::<Amount>(),
         Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("xBTC".into())
+            UnknownDenominationError { input: "xBTC".into(), is_micro_bitcoin: false }
         )))),
     );
     assert_eq!(
         "5 BTC BTC".parse::<Amount>(),
         Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("BTC BTC".into())
+            UnknownDenominationError { input: "BTC BTC".into(), is_micro_bitcoin: false }
         )))),
     );
     assert_eq!(
@@ -827,7 +827,7 @@ fn from_str() {
     assert_eq!(
         "5 5 BTC".parse::<Amount>(),
         Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("5 BTC".into())
+            UnknownDenominationError { input: "5 BTC".into(), is_micro_bitcoin: false }
         )))),
     );
 
@@ -857,7 +857,17 @@ fn from_str() {
 
     case(
         "5 BCH",
-        &Err(denom_err(ParseDenominationError::Unknown(UnknownDenominationError("BCH".into())))),
+        &Err(denom_err(ParseDenominationError::Unknown(UnknownDenominationError {
+            input: "BCH".into(),
+            is_micro_bitcoin: false,
+        }))),
+    );
+    case(
+        "200 uBTC",
+        &Err(denom_err(ParseDenominationError::Unknown(UnknownDenominationError {
+            input: "uBTC".into(),
+            is_micro_bitcoin: true,
+        }))),
     );
 
     case("-1 BTC", &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::negative()))));
@@ -966,11 +976,6 @@ fn to_from_string_in() {
     assert_eq!("100", sat(100_000_00).to_string_in(D::MilliBitcoin));
     assert_eq!("-100", ssat(-100_000_00).to_string_in(D::MilliBitcoin));
 
-    assert_eq!("2535.83", sat(253_583).to_string_in(D::MicroBitcoin));
-    assert_eq!("-2535.83", ssat(-253_583).to_string_in(D::MicroBitcoin));
-    assert_eq!("100000", sat(100_000_00).to_string_in(D::MicroBitcoin));
-    assert_eq!("-100000", ssat(-100_000_00).to_string_in(D::MicroBitcoin));
-
     assert_eq!("0.5", sat(50).to_string_in(D::Bit));
     assert_eq!("100", sat(10_000).to_string_in(D::Bit));
     assert_eq!("-0.5", ssat(-50).to_string_in(D::Bit));
@@ -991,24 +996,22 @@ fn to_from_string_in() {
         ua_str(&sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
         Ok(sat(1_000_000_000_000))
     );
-    assert_eq!(ua_str(&sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(sat(1)));
     assert_eq!(ua_str(&sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(sat(21_000_000)));
     assert_eq!(ua_str(&sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(sat(0)));
 
     assert!(ua_str(&Amount::MAX.to_string_in(D::Bitcoin), D::Bitcoin).is_ok());
     assert!(ua_str(&Amount::MAX.to_string_in(D::CentiBitcoin), D::CentiBitcoin).is_ok());
     assert!(ua_str(&Amount::MAX.to_string_in(D::MilliBitcoin), D::MilliBitcoin).is_ok());
-    assert!(ua_str(&Amount::MAX.to_string_in(D::MicroBitcoin), D::MicroBitcoin).is_ok());
     assert!(ua_str(&Amount::MAX.to_string_in(D::Bit), D::Bit).is_ok());
     assert!(ua_str(&Amount::MAX.to_string_in(D::Satoshi), D::Satoshi).is_ok());
 
     assert_eq!(
-        sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::MicroBitcoin),
+        sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::Bit),
         Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true))))
     );
     // Test an overflow bug in `abs()`
     assert_eq!(
-        sa_str(&SignedAmount::MIN.to_string_in(D::Satoshi), D::MicroBitcoin),
+        sa_str(&SignedAmount::MIN.to_string_in(D::Satoshi), D::Bit),
         Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small())))
     );
 }
@@ -1023,20 +1026,19 @@ fn to_string_with_denomination_from_str_roundtrip() {
     assert_eq!(denom(amt, D::Bitcoin).parse::<Amount>(), Ok(amt));
     assert_eq!(denom(amt, D::CentiBitcoin).parse::<Amount>(), Ok(amt));
     assert_eq!(denom(amt, D::MilliBitcoin).parse::<Amount>(), Ok(amt));
-    assert_eq!(denom(amt, D::MicroBitcoin).parse::<Amount>(), Ok(amt));
     assert_eq!(denom(amt, D::Bit).parse::<Amount>(), Ok(amt));
     assert_eq!(denom(amt, D::Satoshi).parse::<Amount>(), Ok(amt));
 
     assert_eq!(
         "42 satoshi BTC".parse::<Amount>(),
         Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("satoshi BTC".into())
+            UnknownDenominationError { input: "satoshi BTC".into(), is_micro_bitcoin: false }
         ))))
     );
     assert_eq!(
         "-42 satoshi BTC".parse::<SignedAmount>(),
         Err(ParseError(ParseErrorInner::Denomination(ParseDenominationError::Unknown(
-            UnknownDenominationError("satoshi BTC".into())
+            UnknownDenominationError { input: "satoshi BTC".into(), is_micro_bitcoin: false }
         )))),
     );
 }
@@ -1079,9 +1081,8 @@ fn sum_amounts() {
 fn denomination_string_acceptable_forms() {
     // Exhaustive list of valid forms.
     let valid = [
-        "BTC", "btc", "cBTC", "cbtc", "mBTC", "mbtc", "uBTC", "ubtc", "µBTC", "µbtc", "bit",
-        "bits", "BIT", "BITS", "SATOSHI", "satoshi", "SATOSHIS", "satoshis", "SAT", "sat", "SATS",
-        "sats",
+        "BTC", "btc", "cBTC", "cbtc", "mBTC", "mbtc", "bit", "bits", "BIT", "BITS", "SATOSHI",
+        "satoshi", "SATOSHIS", "satoshis", "SAT", "sat", "SATS", "sats",
     ];
     for denom in valid {
         assert!(denom.parse::<Denomination>().is_ok());
@@ -1090,7 +1091,7 @@ fn denomination_string_acceptable_forms() {
 
 #[test]
 fn disallow_confusing_forms() {
-    let confusing = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
+    let confusing = ["CBTC", "Cbtc", "MBTC", "Mbtc"];
     for denom in confusing {
         match denom.parse::<Denomination>() {
             Ok(_) => panic!("from_str should error for {}", denom),
@@ -1103,7 +1104,7 @@ fn disallow_confusing_forms() {
 #[test]
 fn disallow_unknown_denomination() {
     // Non-exhaustive list of unknown forms.
-    let unknown = ["NBTC", "ABC", "abc", "mSat", "msat"];
+    let unknown = ["NBTC", "ABC", "abc", "mSat", "msat", "uBTC", "ubtc", "µBTC", "µbtc", "UBTC"];
     for denom in unknown {
         match denom.parse::<Denomination>() {
             Ok(_) => panic!("from_str should error for {}", denom),
