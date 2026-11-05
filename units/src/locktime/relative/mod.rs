@@ -2,7 +2,7 @@
 
 //! Provides type [`LockTime`] that implements the logic around `nSequence`/`OP_CHECKSEQUENCEVERIFY`.
 //!
-//! There are two types of lock time: lock-by-block-count and lock-by-time, distinguished by whether
+//! There are two types of lock time: lock by block count and lock by time, distinguished by whether
 //! bit 22 of the `u32` consensus value is set. To support these we provide the [`NumberOfBlocks`]
 //! and [`NumberOf512Seconds`] types.
 //!
@@ -186,8 +186,8 @@ impl LockTime {
         }
     }
 
-    /// Returns `true` if both lock times use the same unit i.e., both height based or both time
-    /// based.
+    /// Returns `true` if both lock times use the same unit i.e., both block count based or both
+    /// time based.
     #[inline]
     pub const fn is_same_unit(self, other: Self) -> bool {
         matches!((self, other), (Self::Blocks(_), Self::Blocks(_)) | (Self::Time(_), Self::Time(_)))
@@ -243,7 +243,7 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// Returns an error if this lock is not lock-by-block-count.
+    /// Returns an error if this lock is not lock by block count.
     #[inline]
     pub fn is_satisfied_by_height(
         self,
@@ -268,7 +268,7 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// Returns an error if this lock is not lock-by-time.
+    /// Returns an error if this lock is not lock by time.
     #[inline]
     pub fn is_satisfied_by_time(
         self,
@@ -411,7 +411,7 @@ impl<'de> serde::Deserialize<'de> for LockTime {
     }
 }
 
-/// A relative lock time lock-by-block-count value.
+/// A relative lock time lock by block count value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NumberOfBlocks(u16);
 
@@ -521,9 +521,9 @@ impl<'de> Deserialize<'de> for NumberOfBlocks {
     }
 }
 
-/// A relative lock time lock-by-time value.
+/// A relative lock time lock by time value.
 ///
-/// For BIP-0068 relative lock-by-time locks, time is measured in 512 second intervals.
+/// For BIP-0068 relative lock by time locks, time is measured in 512 second intervals.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NumberOf512Seconds(u16);
 

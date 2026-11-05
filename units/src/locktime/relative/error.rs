@@ -86,7 +86,7 @@ impl std::error::Error for IsSatisfiedByError {
 pub enum IsSatisfiedByHeightError {
     /// Satisfaction of the lock height value failed.
     Satisfaction(InvalidHeightError),
-    /// Tried to satisfy a lock-by-time locktime using a block height.
+    /// Tried to satisfy a lock by time locktime using a block height.
     Incompatible(IncompatibleHeightError),
 }
 
@@ -132,7 +132,7 @@ impl fmt::Display for IncompatibleHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "tried to satisfy a lock-by-time locktime ({} 512-second intervals) using a block height",
+            "tried to satisfy a lock by time locktime ({} 512-second intervals) using a block height",
             self.0
         )
     }
@@ -154,7 +154,7 @@ impl std::error::Error for IncompatibleHeightError {
 pub enum IsSatisfiedByTimeError {
     /// Satisfaction of the lock time value failed.
     Satisfaction(InvalidTimeError),
-    /// Tried to satisfy a lock-by-block-count locktime using an MTP.
+    /// Tried to satisfy a lock by block count locktime using an MTP.
     Incompatible(IncompatibleTimeError),
 }
 
@@ -198,7 +198,11 @@ impl From<Infallible> for IncompatibleTimeError {
 impl fmt::Display for IncompatibleTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tried to satisfy a lock-by-height locktime ({} blocks) using an MTP", self.0)
+        write!(
+            f,
+            "tried to satisfy a lock by block count locktime ({} blocks) using an MTP",
+            self.0
+        )
     }
 }
 

@@ -40,21 +40,21 @@ impl std::error::Error for LockTimeDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
-/// Tried to satisfy a lock-by-time lock using a height value.
+/// Tried to satisfy a lock by time lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompatibleHeightError {
-    /// The inner value of the lock-by-time lock.
+    /// The inner value of the lock by time lock.
     pub(super) lock: MedianTimePast,
-    /// Attempted to satisfy a lock-by-time lock with this height.
+    /// Attempted to satisfy a lock by time lock with this height.
     pub(super) incompatible: Height,
 }
 
 impl IncompatibleHeightError {
-    /// Returns the value of the lock-by-time lock.
+    /// Returns the value of the lock by time lock.
     #[inline]
     pub fn lock(&self) -> MedianTimePast { self.lock }
 
-    /// Returns the height that was erroneously used to try and satisfy a lock-by-time lock.
+    /// Returns the height that was erroneously used to try and satisfy a lock by time lock.
     #[inline]
     pub fn incompatible(&self) -> Height { self.incompatible }
 }
@@ -69,7 +69,7 @@ impl fmt::Display for IncompatibleHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "tried to satisfy a lock-by-time lock {} with height: {}",
+            "tried to satisfy a lock by time lock {} with height: {}",
             self.lock, self.incompatible
         )
     }
@@ -84,21 +84,21 @@ impl std::error::Error for IncompatibleHeightError {
     }
 }
 
-/// Tried to satisfy a lock-by-height lock using an MTP value.
+/// Tried to satisfy a lock by height lock using an MTP value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompatibleTimeError {
-    /// The inner value of the lock-by-height lock.
+    /// The inner value of the lock by height lock.
     pub(super) lock: Height,
-    /// Attempted to satisfy a lock-by-height lock with this MTP.
+    /// Attempted to satisfy a lock by height lock with this MTP.
     pub(super) incompatible: MedianTimePast,
 }
 
 impl IncompatibleTimeError {
-    /// Returns the value of the lock-by-height lock.
+    /// Returns the value of the lock by height lock.
     #[inline]
     pub fn lock(&self) -> Height { self.lock }
 
-    /// Returns the MTP that was erroneously used to try and satisfy a lock-by-height lock.
+    /// Returns the MTP that was erroneously used to try and satisfy a lock by height lock.
     #[inline]
     pub fn incompatible(&self) -> MedianTimePast { self.incompatible }
 }
@@ -113,7 +113,7 @@ impl fmt::Display for IncompatibleTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "tried to satisfy a lock-by-height lock {} with MTP: {}",
+            "tried to satisfy a lock by height lock {} with MTP: {}",
             self.lock, self.incompatible
         )
     }
@@ -367,7 +367,7 @@ impl std::error::Error for ConversionError {
     }
 }
 
-/// Describes the two types of locking, lock-by-height and lock-by-time.
+/// Describes the two types of locking, lock by height and lock by time.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 enum LockTimeUnit {
     /// Lock by blockheight.
@@ -381,9 +381,9 @@ impl fmt::Display for LockTimeUnit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Blocks =>
-                write!(f, "expected lock-by-height (must be < {})", LOCK_TIME_THRESHOLD),
+                write!(f, "expected lock by height (must be < {})", LOCK_TIME_THRESHOLD),
             Self::Seconds =>
-                write!(f, "expected lock-by-time (must be >= {})", LOCK_TIME_THRESHOLD),
+                write!(f, "expected lock by time (must be >= {})", LOCK_TIME_THRESHOLD),
         }
     }
 }
@@ -415,8 +415,8 @@ mod tests {
         let blocks = LockTimeUnit::Blocks;
         let seconds = LockTimeUnit::Seconds;
 
-        assert_eq!(format!("{}", blocks), "expected lock-by-height (must be < 500000000)");
-        assert_eq!(format!("{}", seconds), "expected lock-by-time (must be >= 500000000)");
+        assert_eq!(format!("{}", blocks), "expected lock by height (must be < 500000000)");
+        assert_eq!(format!("{}", seconds), "expected lock by time (must be >= 500000000)");
     }
 
     #[test]
