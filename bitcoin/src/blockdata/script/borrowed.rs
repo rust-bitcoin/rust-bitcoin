@@ -79,6 +79,20 @@ impl ToOwned for Script {
 }
 
 impl Script {
+    /// Borrows this script as a stable script with the specified role.
+    ///
+    /// The tag does not validate the script or change its bytes.
+    #[cfg(feature = "compat")]
+    pub fn to_stable<T>(&self) -> &crate::compat::script::Script<T> {
+        crate::compat::script::Script::from_bytes(self.as_bytes())
+    }
+
+    /// Borrows a stable script as a pre-1.0 script, discarding its tag.
+    #[cfg(feature = "compat")]
+    pub fn from_stable<T>(stable: &crate::compat::script::Script<T>) -> &Self {
+        Self::from_bytes(stable.as_bytes())
+    }
+
     /// Creates a new empty script.
     #[inline]
     pub fn new() -> &'static Script { Script::from_bytes(&[]) }

@@ -93,6 +93,11 @@ hashes::hash_newtype! {
 }
 impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(ScriptHash, crate::compat::script::ScriptHash);
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(WScriptHash, crate::compat::script::WScriptHash);
+
 impl From<ScriptBuf> for ScriptHash {
     fn from(script: ScriptBuf) -> ScriptHash { script.script_hash() }
 }

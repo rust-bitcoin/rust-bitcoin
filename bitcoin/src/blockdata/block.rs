@@ -48,6 +48,18 @@ impl_hashencode!(BlockHash);
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(BlockHash, crate::compat::BlockHash);
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(TxMerkleNode, crate::compat::merkle_tree::TxMerkleNode);
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(
+    WitnessMerkleNode,
+    crate::compat::merkle_tree::WitnessMerkleNode
+);
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(WitnessCommitment, crate::compat::WitnessCommitment);
+
 #[cfg(feature = "encoding")]
 impl encoding::Encode for BlockHash {
     type Encoder<'e> = BlockHashEncoder<'e>;
@@ -267,6 +279,32 @@ pub struct Header {
 impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 impl Header {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::BlockHeader {
+        crate::compat::BlockHeader {
+            version: self.version.to_stable(),
+            prev_blockhash: self.prev_blockhash.to_stable(),
+            merkle_root: self.merkle_root.to_stable(),
+            time: crate::compat::BlockTime::from_u32(self.time),
+            bits: self.bits.to_stable(),
+            nonce: self.nonce,
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::BlockHeader) -> Self {
+        Self {
+            version: Version::from_stable(stable.version),
+            prev_blockhash: BlockHash::from_stable(stable.prev_blockhash),
+            merkle_root: TxMerkleNode::from_stable(stable.merkle_root),
+            time: stable.time.to_u32(),
+            bits: CompactTarget::from_stable(stable.bits),
+            nonce: stable.nonce,
+        }
+    }
+
     /// The number of bytes that the block header contributes to the size of a block.
     // Serialized length of fields (version, prev_blockhash, merkle_root, time, bits, nonce)
     pub const SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4; // 80
@@ -488,6 +526,18 @@ impl std::error::Error for HeaderDecoderError {
 pub struct Version(i32);
 
 impl Version {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::BlockVersion {
+        crate::compat::BlockVersion::from_consensus(self.to_consensus())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::BlockVersion) -> Self {
+        Self::from_consensus(stable.to_consensus())
+    }
+
     /// The original Bitcoin Block v1.
     pub const ONE: Self = Self(1);
 
@@ -636,6 +686,59 @@ pub struct Block {
 impl_consensus_encoding!(Block, header, txdata);
 
 impl Block {
+    /// Converts a pre-1.0 block to an unchecked stable block.
+    ///
+    /// No block validation is performed.
+    ///
+    /// # Errors
+    ///
+    /// Returns the original block and the location of the first transaction output whose value
+    /// exceeds [`crate::compat::Amount::MAX_MONEY`].
+    #[cfg(feature = "compat")]
+    pub fn to_stable(
+        self,
+    ) -> Result<crate::compat::Block, crate::compat::AmountConversionError<Self>> {
+        let amounts = match self
+            .txdata
+            .iter()
+            .enumerate()
+            .map(|(transaction_index, tx)| {
+                tx.stable_amounts()
+                    .map_err(|(output_index, error)| (transaction_index, output_index, error))
+            })
+            .collect::<Result<Vec<_>, _>>()
+        {
+            Ok(amounts) => amounts,
+            Err((transaction_index, output_index, error)) => {
+                return Err(crate::compat::AmountConversionError::new(
+                    self,
+                    Some(crate::compat::AmountConversionLocation::BlockTransactionOutput {
+                        transaction_index,
+                        output_index,
+                    }),
+                    error,
+                ));
+            }
+        };
+        let transactions = self
+            .txdata
+            .into_iter()
+            .zip(amounts)
+            .map(|(tx, amounts)| tx.into_stable_with_amounts(amounts))
+            .collect();
+        Ok(crate::compat::Block::new_unchecked(self.header.to_stable(), transactions))
+    }
+
+    /// Converts an unchecked stable block to a pre-1.0 block.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::Block) -> Self {
+        let (header, transactions) = stable.into_parts();
+        Self {
+            header: Header::from_stable(header),
+            txdata: transactions.into_iter().map(Transaction::from_stable).collect(),
+        }
+    }
+
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
 

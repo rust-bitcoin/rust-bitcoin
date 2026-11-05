@@ -66,6 +66,58 @@ pub enum WitnessVersion {
 }
 
 impl WitnessVersion {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::witness_version::WitnessVersion {
+        use crate::compat::witness_version::WitnessVersion as Stable;
+
+        match self {
+            Self::V0 => Stable::V0,
+            Self::V1 => Stable::V1,
+            Self::V2 => Stable::V2,
+            Self::V3 => Stable::V3,
+            Self::V4 => Stable::V4,
+            Self::V5 => Stable::V5,
+            Self::V6 => Stable::V6,
+            Self::V7 => Stable::V7,
+            Self::V8 => Stable::V8,
+            Self::V9 => Stable::V9,
+            Self::V10 => Stable::V10,
+            Self::V11 => Stable::V11,
+            Self::V12 => Stable::V12,
+            Self::V13 => Stable::V13,
+            Self::V14 => Stable::V14,
+            Self::V15 => Stable::V15,
+            Self::V16 => Stable::V16,
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::witness_version::WitnessVersion) -> Self {
+        use crate::compat::witness_version::WitnessVersion as Stable;
+
+        match stable {
+            Stable::V0 => Self::V0,
+            Stable::V1 => Self::V1,
+            Stable::V2 => Self::V2,
+            Stable::V3 => Self::V3,
+            Stable::V4 => Self::V4,
+            Stable::V5 => Self::V5,
+            Stable::V6 => Self::V6,
+            Stable::V7 => Self::V7,
+            Stable::V8 => Self::V8,
+            Stable::V9 => Self::V9,
+            Stable::V10 => Self::V10,
+            Stable::V11 => Self::V11,
+            Stable::V12 => Self::V12,
+            Stable::V13 => Self::V13,
+            Stable::V14 => Self::V14,
+            Stable::V15 => Self::V15,
+            Stable::V16 => Self::V16,
+        }
+    }
+
     /// Returns integer version number representation for a given [`WitnessVersion`] value.
     ///
     /// NB: this is not the same as an integer representation of the opcode signifying witness

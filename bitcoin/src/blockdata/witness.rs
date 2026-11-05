@@ -556,6 +556,16 @@ impl std::error::Error for UnexpectedEofError {
 }
 
 impl Witness {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::Witness { self.iter().collect() }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::Witness) -> Self {
+        Self::from_slice(&stable.iter().collect::<Vec<_>>())
+    }
+
     /// Creates a new empty [`Witness`].
     #[inline]
     pub const fn new() -> Self {

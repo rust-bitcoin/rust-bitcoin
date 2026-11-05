@@ -17,6 +17,8 @@ use core::mem;
 use core::str::FromStr;
 use core::{cmp, fmt};
 
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 #[cfg(feature = "encoding")]
 use encoding::{
     ArrayEncoder, BytesEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder2, Encoder3,
@@ -73,6 +75,11 @@ hashes::hash_newtype! {
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
 
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(Txid, crate::compat::Txid);
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(Wtxid, crate::compat::Wtxid);
+
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
@@ -94,6 +101,18 @@ pub struct OutPoint {
 crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::OutPoint {
+        crate::compat::OutPoint { txid: self.txid.to_stable(), vout: self.vout }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::OutPoint) -> Self {
+        Self { txid: Txid::from_stable(stable.txid), vout: stable.vout }
+    }
+
     /// The number of bytes that an outpoint contributes to the size of a transaction.
     const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
 
@@ -251,6 +270,28 @@ pub struct TxIn {
 }
 
 impl TxIn {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::TxIn {
+        crate::compat::TxIn {
+            previous_output: self.previous_output.to_stable(),
+            script_sig: self.script_sig.to_stable(),
+            sequence: self.sequence.to_stable(),
+            witness: self.witness.to_stable(),
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::TxIn) -> Self {
+        Self {
+            previous_output: OutPoint::from_stable(stable.previous_output),
+            script_sig: ScriptBuf::from_stable(stable.script_sig),
+            sequence: Sequence::from_stable(stable.sequence),
+            witness: Witness::from_stable(stable.witness),
+        }
+    }
+
     /// Returns the input base weight.
     ///
     /// Base weight excludes the witness and script.
@@ -516,6 +557,18 @@ impl Sequence {
         }
     }
 
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::Sequence {
+        stable::Sequence::from_consensus(self.to_consensus_u32())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Sequence) -> Self {
+        Self::from_consensus(stable.to_consensus_u32())
+    }
+
     /// Returns the low 16 bits from sequence number.
     ///
     /// BIP-68 only uses the low 16 bits for relative lock value.
@@ -660,6 +713,36 @@ pub struct TxOut {
 }
 
 impl TxOut {
+    /// Converts a pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Returns the original output and the units error if its value exceeds
+    /// [`crate::compat::Amount::MAX_MONEY`]. In particular, [`Self::NULL`] cannot be converted.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(
+        self,
+    ) -> Result<crate::compat::TxOut, crate::compat::AmountConversionError<Self>> {
+        match self.value.to_stable() {
+            Ok(amount) => Ok(self.into_stable_with_amount(amount)),
+            Err(error) => Err(crate::compat::AmountConversionError::new(self, None, error)),
+        }
+    }
+
+    #[cfg(feature = "compat")]
+    fn into_stable_with_amount(self, amount: crate::compat::Amount) -> crate::compat::TxOut {
+        crate::compat::TxOut { amount, script_pubkey: self.script_pubkey.to_stable() }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::TxOut) -> Self {
+        Self {
+            value: Amount::from_stable(stable.amount),
+            script_pubkey: ScriptBuf::from_stable(stable.script_pubkey),
+        }
+    }
+
     /// This is used as a "null txout" in consensus signing code.
     pub const NULL: Self =
         TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
@@ -807,6 +890,69 @@ impl cmp::Ord for Transaction {
 }
 
 impl Transaction {
+    /// Converts a pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Returns the original transaction and the units error if any output value exceeds
+    /// [`crate::compat::Amount::MAX_MONEY`]. No other transaction validation is performed.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(
+        self,
+    ) -> Result<crate::compat::Transaction, crate::compat::AmountConversionError<Self>> {
+        match self.stable_amounts() {
+            Ok(amounts) => Ok(self.into_stable_with_amounts(amounts)),
+            Err((output_index, error)) => Err(crate::compat::AmountConversionError::new(
+                self,
+                Some(crate::compat::AmountConversionLocation::TransactionOutput { output_index }),
+                error,
+            )),
+        }
+    }
+
+    /// Converts all output values, so that the fallible part of [`Self::to_stable`] can run
+    /// before `self` is consumed.
+    #[cfg(feature = "compat")]
+    pub(crate) fn stable_amounts(
+        &self,
+    ) -> Result<Vec<crate::compat::Amount>, (usize, crate::compat::amount::OutOfRangeError)> {
+        self.output
+            .iter()
+            .enumerate()
+            .map(|(index, output)| output.value.to_stable().map_err(|error| (index, error)))
+            .collect()
+    }
+
+    /// `amounts` must come from [`Self::stable_amounts`] on this transaction.
+    #[cfg(feature = "compat")]
+    pub(crate) fn into_stable_with_amounts(
+        self,
+        amounts: Vec<crate::compat::Amount>,
+    ) -> crate::compat::Transaction {
+        crate::compat::Transaction {
+            version: self.version.to_stable(),
+            lock_time: self.lock_time.to_stable(),
+            inputs: self.input.into_iter().map(TxIn::to_stable).collect(),
+            outputs: self
+                .output
+                .into_iter()
+                .zip(amounts)
+                .map(|(output, amount)| output.into_stable_with_amount(amount))
+                .collect(),
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::Transaction) -> Self {
+        Self {
+            version: Version::from_stable(stable.version),
+            lock_time: absolute::LockTime::from_stable(stable.lock_time),
+            input: stable.inputs.into_iter().map(TxIn::from_stable).collect(),
+            output: stable.outputs.into_iter().map(TxOut::from_stable).collect(),
+        }
+    }
+
     // https://github.com/bitcoin/bitcoin/blob/44b05bf3fef2468783dcebf651654fdd30717e7e/src/policy/policy.h#L27
     /// Maximum transaction weight for Bitcoin Core 25.0.
     pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
@@ -1236,6 +1382,20 @@ impl std::error::Error for IndexOutOfBoundsError {
 pub struct Version(pub i32);
 
 impl Version {
+    /// Converts a pre-1.0 type to a stable type, preserving the consensus bytes.
+    ///
+    /// Negative versions become non-standard unsigned versions with the same bit pattern.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::TransactionVersion {
+        crate::compat::TransactionVersion::maybe_non_standard(self.0 as u32)
+    }
+
+    /// Converts a stable type to a pre-1.0 type, preserving the consensus bytes.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::TransactionVersion) -> Self {
+        Self(stable.to_u32() as i32)
+    }
+
     /// The original Bitcoin transaction version (pre-BIP-68).
     pub const ONE: Self = Self(1);
 
