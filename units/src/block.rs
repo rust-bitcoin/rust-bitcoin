@@ -28,7 +28,7 @@ use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 #[doc(no_inline)]
 pub use self::error::BlockHeightDecoderError;
 #[doc(no_inline)]
-pub use self::error::TooBigForRelativeHeightError;
+pub use self::error::BlockCountOverflowError;
 
 macro_rules! impl_u32_wrapper {
     {
@@ -301,7 +301,7 @@ impl From<relative::NumberOfBlocks> for BlockHeightInterval {
 }
 
 impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
-    type Error = TooBigForRelativeHeightError;
+    type Error = BlockCountOverflowError;
 
     /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::NumberOfBlocks`].
     ///
@@ -311,7 +311,7 @@ impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
     fn try_from(h: BlockHeightInterval) -> Result<Self, Self::Error> {
         u16::try_from(h.to_u32())
             .map(Self::from_count)
-            .map_err(|_| TooBigForRelativeHeightError(h.into()))
+            .map_err(|_| BlockCountOverflowError(h.into()))
     }
 }
 
@@ -650,14 +650,14 @@ pub mod error {
 
     /// Error returned when the block interval is too big to be used as a relative lock time.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct TooBigForRelativeHeightError(pub(super) u32);
+    pub struct BlockCountOverflowError(pub(super) u32);
 
-    impl From<Infallible> for TooBigForRelativeHeightError {
+    impl From<Infallible> for BlockCountOverflowError {
         #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for TooBigForRelativeHeightError {
+    impl fmt::Display for BlockCountOverflowError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(
@@ -670,7 +670,7 @@ pub mod error {
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for TooBigForRelativeHeightError {
+    impl std::error::Error for BlockCountOverflowError {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self(_) = self;
@@ -966,7 +966,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn error_display_is_non_empty() {
-        // TooBigForRelativeHeightError - block interval too big for relative height
+        // BlockCountOverflowError - block interval too big for a number of blocks
         let big_interval = BlockHeightInterval::from_u32(u32::MAX);
         let e = relative::NumberOfBlocks::try_from(big_interval).unwrap_err();
         assert!(!e.to_string().is_empty());

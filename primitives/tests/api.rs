@@ -712,17 +712,17 @@ fn p_consistent_exports_script() {
 #[test]
 fn p_consistent_exports_block() {
     use bitcoin_primitives::block::error::{
-        BlockDecoderError as _, BlockHashDecoderError as _, BlockHeightDecoderError as _,
-        HeaderDecoderError as _, InvalidBlockError as _, TooBigForRelativeHeightError as _,
+        BlockCountOverflowError as _, BlockDecoderError as _, BlockHashDecoderError as _,
+        BlockHeightDecoderError as _, HeaderDecoderError as _, InvalidBlockError as _,
         VersionDecoderError as _,
     };
     use bitcoin_primitives::block::{
-        Block, BlockDecoder, BlockDecoderError, BlockEncoder, BlockHash, BlockHashDecoder,
-        BlockHashDecoderError, BlockHashEncoder, BlockHeight, BlockHeightDecoder,
+        Block, BlockCountOverflowError, BlockDecoder, BlockDecoderError, BlockEncoder, BlockHash,
+        BlockHashDecoder, BlockHashDecoderError, BlockHashEncoder, BlockHeight, BlockHeightDecoder,
         BlockHeightDecoderError, BlockHeightEncoder, BlockHeightInterval, BlockMtp,
         BlockMtpInterval, Checked, Header, HeaderDecoder, HeaderDecoderError, HeaderEncoder,
-        InvalidBlockError, TooBigForRelativeHeightError, Unchecked, Validation, Version,
-        VersionDecoder, VersionDecoderError, VersionEncoder, WitnessCommitment,
+        InvalidBlockError, Unchecked, Validation, Version, VersionDecoder, VersionDecoderError,
+        VersionEncoder, WitnessCommitment,
     };
 }
 

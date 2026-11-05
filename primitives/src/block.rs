@@ -102,8 +102,8 @@ pub use units::block::{BlockHeight, BlockHeightDecoder, BlockHeightEncoder, Bloc
 pub use self::error::{BlockDecoderError, InvalidBlockError};
 #[doc(no_inline)]
 pub use self::error::{
-    BlockHashDecoderError, BlockHeightDecoderError, HeaderDecoderError,
-    TooBigForRelativeHeightError, VersionDecoderError,
+    BlockCountOverflowError, BlockHashDecoderError, BlockHeightDecoderError, HeaderDecoderError,
+    VersionDecoderError,
 };
 #[doc(inline)]
 pub use crate::hash_types::{BlockHash, BlockHashDecoder, BlockHashEncoder, WitnessCommitment};
@@ -1076,7 +1076,7 @@ pub mod error {
 
     #[rustfmt::skip]                // Keep public re-exports separate.
     #[doc(no_inline)]
-    pub use units::block::{BlockHeightDecoderError, TooBigForRelativeHeightError};
+    pub use units::block::{BlockHeightDecoderError, BlockCountOverflowError};
     #[doc(inline)]
     pub use crate::hash_types::BlockHashDecoderError;
 

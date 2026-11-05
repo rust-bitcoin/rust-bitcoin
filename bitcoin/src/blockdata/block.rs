@@ -32,8 +32,8 @@ pub use units::block::{
 
 #[doc(no_inline)]
 pub use self::error::{
-    Bip34Error, BlockDecoderError, BlockHashDecoderError, BlockHeightDecoderError,
-    HeaderDecoderError, InvalidBlockError, TooBigForRelativeHeightError, ValidationError,
+    Bip34Error, BlockCountOverflowError, BlockDecoderError, BlockHashDecoderError,
+    BlockHeightDecoderError, HeaderDecoderError, InvalidBlockError, ValidationError,
     VersionDecoderError,
 };
 
@@ -234,7 +234,7 @@ pub mod error {
         VersionDecoderError,
     };
     #[doc(no_inline)]
-    pub use units::block::{BlockHeightDecoderError, TooBigForRelativeHeightError};
+    pub use units::block::{BlockCountOverflowError, BlockHeightDecoderError};
 
     /// An error when looking up a BIP-0034 block height.
     #[derive(Debug, Clone, PartialEq, Eq)]
