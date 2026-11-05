@@ -51,9 +51,9 @@ crate::decoder_newtype! {
     pub struct FilterHashDecoder(ArrayDecoder<32>);
 
     /// Constructs a new [`FilterHash`] decoder.
-    pub const fn new() -> Self {Self(ArrayDecoder::new())}
+    pub const fn new() -> Self { Self(ArrayDecoder::new()) }
 
-    fn end(result: Result<[u8;32], encoding::UnexpectedEofError>) -> Result<FilterHash, FilterHashDecoderError> {
+    fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<FilterHash, FilterHashDecoderError> {
         let bytes = result.map_err(FilterHashDecoderError)?;
         Ok(FilterHash::from_byte_array(bytes))
     }
@@ -82,8 +82,8 @@ crate::decoder_newtype! {
     #[derive(Debug, Clone)]
     pub struct FilterHeaderDecoder(ArrayDecoder<32>);
 
-    /// Constructs a new [`FilterHash`] decoder.
-    pub const fn new() -> Self {Self(ArrayDecoder::new())}
+    /// Constructs a new [`FilterHeader`] decoder.
+    pub const fn new() -> Self { Self(ArrayDecoder::new()) }
 
     fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<FilterHeader, FilterHeaderDecoderError> {
         let bytes = result.map_err(FilterHeaderDecoderError)?;
@@ -95,7 +95,7 @@ impl encoding::Decode for FilterHeader {
     type Decoder = FilterHeaderDecoder;
 }
 
-pub mod error {
+mod error {
     use core::convert::Infallible;
     use core::fmt;
 
