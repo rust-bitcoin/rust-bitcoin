@@ -50,22 +50,22 @@ pub use self::{
 /// * `$gen: $gent` - the generic type(s) and trait bound(s).
 macro_rules! impl_bytelike_traits {
     ($ty:ident, $len:expr $(, $gen:ident: $gent:ident)*) => {
-        impl $crate::_export::_core::convert::AsRef<[u8; { $len }]> for $ty {
+        impl core::convert::AsRef<[u8; { $len }]> for $ty {
             #[inline]
             fn as_ref(&self) -> &[u8; { $len }] { self.as_byte_array() }
         }
 
-        impl $crate::_export::_core::convert::AsRef<[u8]> for $ty {
+        impl core::convert::AsRef<[u8]> for $ty {
             #[inline]
             fn as_ref(&self) -> &[u8] { self.as_byte_array() }
         }
 
-        impl $crate::_export::_core::borrow::Borrow<[u8; { $len }]> for $ty {
+        impl core::borrow::Borrow<[u8; { $len }]> for $ty {
             #[inline]
             fn borrow(&self) -> &[u8; { $len }] { self.as_byte_array() }
         }
 
-        impl $crate::_export::_core::borrow::Borrow<[u8]> for $ty {
+        impl core::borrow::Borrow<[u8]> for $ty {
             #[inline]
             fn borrow(&self) -> &[u8] { self.as_byte_array() }
         }

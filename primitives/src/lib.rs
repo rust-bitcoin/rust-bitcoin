@@ -75,14 +75,6 @@ pub extern crate hex;
 #[macro_use]
 pub extern crate serde;
 
-#[doc(hidden)]
-pub mod _export {
-    /// A re-export of `core::*`.
-    pub mod _core {
-        pub use core::*;
-    }
-}
-
 mod hash_types;
 
 pub mod block;

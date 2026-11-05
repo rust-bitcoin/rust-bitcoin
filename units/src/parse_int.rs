@@ -124,44 +124,40 @@ fn int<T: Integer, S: AsRef<str> + error::BoundedInput>(s: S) -> Result<T, Parse
 /// [`TryFrom<String>`]: core::convert::TryFrom
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
-        impl $crate::_export::_core::str::FromStr for $to {
+        impl core::str::FromStr for $to {
             type Err = $crate::parse_int::ParseIntError;
 
             #[inline]
-            fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                $crate::_export::_core::convert::TryFrom::try_from(s)
+            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+                core::convert::TryFrom::try_from(s)
             }
         }
 
-        impl $crate::_export::_core::convert::TryFrom<&str> for $to {
+        impl core::convert::TryFrom<&str> for $to {
             type Error = $crate::parse_int::ParseIntError;
 
             #[inline]
-            fn try_from(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+            fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
                 $crate::parse_int::int_from_str::<$inner>(s).map($to::$fn)
             }
         }
 
         #[cfg(feature = "alloc")]
-        impl $crate::_export::_core::convert::TryFrom<alloc::string::String> for $to {
+        impl core::convert::TryFrom<alloc::string::String> for $to {
             type Error = $crate::parse_int::ParseIntError;
 
             #[inline]
-            fn try_from(
-                s: alloc::string::String,
-            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+            fn try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error> {
                 $crate::parse_int::int_from_string::<$inner>(s).map($to::$fn)
             }
         }
 
         #[cfg(feature = "alloc")]
-        impl $crate::_export::_core::convert::TryFrom<alloc::boxed::Box<str>> for $to {
+        impl core::convert::TryFrom<alloc::boxed::Box<str>> for $to {
             type Error = $crate::parse_int::ParseIntError;
 
             #[inline]
-            fn try_from(
-                s: alloc::boxed::Box<str>,
-            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+            fn try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error> {
                 $crate::parse_int::int_from_box::<$inner>(s).map($to::$fn)
             }
         }
@@ -201,11 +197,11 @@ macro_rules! impl_parse_str {
         #[cfg(feature = "alloc")]
         $crate::parse_int::impl_tryfrom_str!(alloc::string::String, $to, $err, $inner_fn; alloc::boxed::Box<str>, $to, $err, $inner_fn);
 
-        impl $crate::_export::_core::str::FromStr for $to {
+        impl core::str::FromStr for $to {
             type Err = $err;
 
             #[inline]
-            fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
+            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
                 $inner_fn(s)
             }
         }
@@ -217,11 +213,11 @@ pub(crate) use impl_parse_str;
 macro_rules! impl_tryfrom_str {
     ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
         $(
-            impl $crate::_export::_core::convert::TryFrom<$from> for $to {
+            impl core::convert::TryFrom<$from> for $to {
                 type Error = $err;
 
                 #[inline]
-                fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                fn try_from(s: $from) -> core::result::Result<Self, Self::Error> {
                     $inner_fn(s)
                 }
             }
