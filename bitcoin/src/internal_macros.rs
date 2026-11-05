@@ -5,6 +5,25 @@
 //! Macros meant to be used inside the Rust Bitcoin library.
 //!
 
+#[cfg(feature = "compat")]
+macro_rules! impl_compat_hash {
+    ($ty:ident, $stable:path) => {
+        impl $ty {
+            /// Converts a pre-1.0 type to a stable type.
+            pub fn to_stable(self) -> $stable {
+                <$stable>::from_byte_array($crate::hashes::Hash::to_byte_array(self))
+            }
+
+            /// Converts a stable type to a pre-1.0 type.
+            pub fn from_stable(stable: $stable) -> Self {
+                <Self as $crate::hashes::Hash>::from_byte_array(stable.to_byte_array())
+            }
+        }
+    };
+}
+#[cfg(feature = "compat")]
+pub(crate) use impl_compat_hash;
+
 /// Implements standard array methods for a given wrapper type.
 macro_rules! impl_array_newtype {
     ($thing:ident, $ty:ty, $len:literal) => {

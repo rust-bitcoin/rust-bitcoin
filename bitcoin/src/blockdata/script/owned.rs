@@ -40,6 +40,20 @@ use crate::taproot::TapNodeHash;
 pub struct ScriptBuf(pub(in crate::blockdata::script) Vec<u8>);
 
 impl ScriptBuf {
+    /// Converts this script to a stable script with the specified role.
+    ///
+    /// The tag does not validate the script or change its bytes.
+    #[cfg(feature = "compat")]
+    pub fn to_stable<T>(self) -> crate::compat::script::ScriptBuf<T> {
+        crate::compat::script::ScriptBuf::from_bytes(self.into_bytes())
+    }
+
+    /// Converts a stable script to a pre-1.0 script, discarding its tag.
+    #[cfg(feature = "compat")]
+    pub fn from_stable<T>(stable: crate::compat::script::ScriptBuf<T>) -> Self {
+        Self::from_bytes(stable.into_bytes())
+    }
+
     /// Creates a new empty script.
     #[inline]
     pub const fn new() -> Self { ScriptBuf(Vec::new()) }

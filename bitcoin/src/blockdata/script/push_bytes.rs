@@ -44,6 +44,18 @@ mod primitive {
     pub struct PushBytes([u8]);
 
     impl PushBytes {
+        /// Borrows this byte slice as a stable type.
+        #[cfg(feature = "compat")]
+        pub fn to_stable(&self) -> &crate::compat::script::PushBytes {
+            self.as_bytes().try_into().expect("both types limit pushes to less than 2^32 bytes")
+        }
+
+        /// Borrows a stable byte slice as a pre-1.0 type.
+        #[cfg(feature = "compat")]
+        pub fn from_stable(stable: &crate::compat::script::PushBytes) -> &Self {
+            stable.as_bytes().try_into().expect("both types limit pushes to less than 2^32 bytes")
+        }
+
         /// Creates `&Self` without checking the length.
         ///
         /// ## Safety
@@ -193,6 +205,18 @@ mod primitive {
     pub struct PushBytesBuf(Vec<u8>);
 
     impl PushBytesBuf {
+        /// Converts a pre-1.0 type to a stable type.
+        #[cfg(feature = "compat")]
+        pub fn to_stable(self) -> crate::compat::script::PushBytesBuf {
+            Vec::from(self).try_into().expect("both types limit pushes to less than 2^32 bytes")
+        }
+
+        /// Converts a stable type to a pre-1.0 type.
+        #[cfg(feature = "compat")]
+        pub fn from_stable(stable: crate::compat::script::PushBytesBuf) -> Self {
+            Vec::from(stable).try_into().expect("both types limit pushes to less than 2^32 bytes")
+        }
+
         /// Creates a new empty `PushBytesBuf`.
         #[inline]
         pub const fn new() -> Self { PushBytesBuf(Vec::new()) }

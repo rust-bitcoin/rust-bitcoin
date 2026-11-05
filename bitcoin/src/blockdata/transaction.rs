@@ -75,6 +75,11 @@ hashes::hash_newtype! {
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
 
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(Txid, crate::compat::Txid);
+#[cfg(feature = "compat")]
+crate::internal_macros::impl_compat_hash!(Wtxid, crate::compat::Wtxid);
+
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
@@ -96,6 +101,18 @@ pub struct OutPoint {
 crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::OutPoint {
+        crate::compat::OutPoint { txid: self.txid.to_stable(), vout: self.vout }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::OutPoint) -> Self {
+        Self { txid: Txid::from_stable(stable.txid), vout: stable.vout }
+    }
+
     /// The number of bytes that an outpoint contributes to the size of a transaction.
     const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
 
@@ -253,6 +270,28 @@ pub struct TxIn {
 }
 
 impl TxIn {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::TxIn {
+        crate::compat::TxIn {
+            previous_output: self.previous_output.to_stable(),
+            script_sig: self.script_sig.to_stable(),
+            sequence: self.sequence.to_stable(),
+            witness: self.witness.to_stable(),
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::TxIn) -> Self {
+        Self {
+            previous_output: OutPoint::from_stable(stable.previous_output),
+            script_sig: ScriptBuf::from_stable(stable.script_sig),
+            sequence: Sequence::from_stable(stable.sequence),
+            witness: Witness::from_stable(stable.witness),
+        }
+    }
+
     /// Returns the input base weight.
     ///
     /// Base weight excludes the witness and script.
@@ -1250,6 +1289,20 @@ impl std::error::Error for IndexOutOfBoundsError {
 pub struct Version(pub i32);
 
 impl Version {
+    /// Converts a pre-1.0 type to a stable type, preserving the consensus bytes.
+    ///
+    /// Negative versions become non-standard unsigned versions with the same bit pattern.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::TransactionVersion {
+        crate::compat::TransactionVersion::maybe_non_standard(self.0 as u32)
+    }
+
+    /// Converts a stable type to a pre-1.0 type, preserving the consensus bytes.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::TransactionVersion) -> Self {
+        Self(stable.to_u32() as i32)
+    }
+
     /// The original Bitcoin transaction version (pre-BIP-68).
     pub const ONE: Self = Self(1);
 

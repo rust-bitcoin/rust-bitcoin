@@ -350,6 +350,18 @@ pub enum ClassifyContext {
 }
 
 impl Opcode {
+    /// Converts a pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> crate::compat::opcodes::Opcode {
+        crate::compat::opcodes::Opcode::from_u8(self.to_u8())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: crate::compat::opcodes::Opcode) -> Self {
+        Self::from(stable.to_u8())
+    }
+
     /// Classifies an Opcode into a broad class.
     #[inline]
     pub fn classify(self, ctx: ClassifyContext) -> Class {

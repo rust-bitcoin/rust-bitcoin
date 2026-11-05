@@ -1,5 +1,7 @@
 # unreleased
 
+- Extend the `compat` feature to primitive hashes, scripts, witnesses, outpoints, transaction inputs, block headers, versions, and opcodes.
+
 # 0.32.102 - 2026-07-06
 
 - Backport: Make `SendCmpct` idempotent [#6525](https://github.com/rust-bitcoin/rust-bitcoin/pull/6525)
