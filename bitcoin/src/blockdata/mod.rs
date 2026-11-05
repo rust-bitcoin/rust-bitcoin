@@ -34,7 +34,7 @@ pub mod locktime {
     pub mod absolute {
         //! Provides type [`LockTime`] that implements the logic around nLockTime/OP_CHECKLOCKTIMEVERIFY.
         //!
-        //! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
+        //! There are two types of lock time: lock by height and lock by time, distinguished by
         //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
         // Re-export everything from the `units::locktime::absolute` module.
@@ -57,8 +57,8 @@ pub mod locktime {
     pub mod relative {
         //! Provides type [`LockTime`] that implements the logic around nSequence/OP_CHECKSEQUENCEVERIFY.
         //!
-        //! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
-        //! whether bit 22 of the `u32` consensus value is set.
+        //! There are two types of lock time: lock by block count and lock by time, distinguished
+        //! by whether bit 22 of the `u32` consensus value is set.
 
         // Re-export everything from the `units::locktime::relative` module.
         #[doc(inline)]

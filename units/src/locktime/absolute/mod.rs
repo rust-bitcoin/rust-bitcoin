@@ -2,7 +2,7 @@
 
 //! Provides type [`LockTime`] that implements the logic around `nLockTime`/`OP_CHECKLOCKTIMEVERIFY`.
 //!
-//! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
+//! There are two types of lock time: lock by height and lock by time, distinguished by
 //! whether [`LockTime`] < [`LOCK_TIME_THRESHOLD`]. To support these we provide the [`Height`] and
 //! [`MedianTimePast`] types.
 
@@ -313,7 +313,7 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// Returns an error if this lock is not lock-by-height.
+    /// Returns an error if this lock is not lock by height.
     #[inline]
     pub fn is_satisfied_by_height(self, height: Height) -> Result<bool, IncompatibleHeightError> {
         match self {
@@ -327,7 +327,7 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// Returns an error if this lock is not lock-by-time.
+    /// Returns an error if this lock is not lock by time.
     #[inline]
     pub fn is_satisfied_by_time(self, mtp: MedianTimePast) -> Result<bool, IncompatibleTimeError> {
         match self {

@@ -143,7 +143,7 @@ struct Errors {
     i: amount::error::PossiblyConfusingDenominationError,
     j: amount::error::TooPreciseError,
     k: amount::error::UnknownDenominationError,
-    l: block::TooBigForRelativeHeightError,
+    l: block::BlockCountOverflowError,
     n: locktime::absolute::ConversionError,
     o: locktime::absolute::ParseHeightError,
     p: locktime::absolute::ParseTimeError,
@@ -264,7 +264,7 @@ fn c_good_err_display() {
     assert_display::<amount::error::PossiblyConfusingDenominationError>();
     assert_display::<amount::error::TooPreciseError>();
     assert_display::<amount::error::UnknownDenominationError>();
-    assert_display::<block::TooBigForRelativeHeightError>();
+    assert_display::<block::BlockCountOverflowError>();
     assert_display::<locktime::absolute::ConversionError>();
     assert_display::<locktime::absolute::ParseHeightError>();
     assert_display::<locktime::absolute::ParseTimeError>();
@@ -405,7 +405,7 @@ fn p_consistent_exports_amount_error() {
 #[test]
 fn p_consistent_exports_block() {
     use bitcoin_units::block::{
-        BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, TooBigForRelativeHeightError,
+        BlockCountOverflowError, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval,
     };
     #[cfg(feature = "encoding")]
     use bitcoin_units::block::{BlockHeightDecoder, BlockHeightDecoderError, BlockHeightEncoder};

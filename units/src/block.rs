@@ -28,7 +28,7 @@ use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 #[doc(no_inline)]
 pub use self::error::BlockHeightDecoderError;
 #[doc(no_inline)]
-pub use self::error::TooBigForRelativeHeightError;
+pub use self::error::BlockCountOverflowError;
 
 macro_rules! impl_u32_wrapper {
     {
@@ -250,8 +250,9 @@ impl_u32_wrapper! {
     ///
     /// Block interval is an integer type representing a difference between the heights of two blocks.
     ///
-    /// This type is not meant for constructing relative height based timelocks. It is a general
-    /// purpose block interval abstraction. For locktimes please see [`locktime::relative::NumberOfBlocks`].
+    /// This type is not meant for constructing relative block count based timelocks. It is a
+    /// general purpose block interval abstraction. For locktimes please see
+    /// [`locktime::relative::NumberOfBlocks`].
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct BlockHeightInterval(u32);
 }
@@ -294,24 +295,26 @@ crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockHeightInterval);
 impl From<relative::NumberOfBlocks> for BlockHeightInterval {
     /// Converts a [`locktime::relative::NumberOfBlocks`] to a [`BlockHeightInterval`].
     ///
-    /// A relative locktime block height has a maximum value of `u16::MAX` where as a
-    /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
+    /// A relative locktime block count has a maximum value of `u16::MAX` where as a
+    /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not
+    /// interchangeable.
     #[inline]
     fn from(h: relative::NumberOfBlocks) -> Self { Self::from_u32(h.to_count().into()) }
 }
 
 impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
-    type Error = TooBigForRelativeHeightError;
+    type Error = BlockCountOverflowError;
 
     /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::NumberOfBlocks`].
     ///
-    /// A relative locktime block height has a maximum value of `u16::MAX` where as a
-    /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
+    /// A relative locktime block count has a maximum value of `u16::MAX` where as a
+    /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not
+    /// interchangeable.
     #[inline]
     fn try_from(h: BlockHeightInterval) -> Result<Self, Self::Error> {
         u16::try_from(h.to_u32())
             .map(Self::from_count)
-            .map_err(|_| TooBigForRelativeHeightError(h.into()))
+            .map_err(|_| BlockCountOverflowError(h.into()))
     }
 }
 
@@ -650,14 +653,14 @@ pub mod error {
 
     /// Error returned when the block interval is too big to be used as a relative lock time.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct TooBigForRelativeHeightError(pub(super) u32);
+    pub struct BlockCountOverflowError(pub(super) u32);
 
-    impl From<Infallible> for TooBigForRelativeHeightError {
+    impl From<Infallible> for BlockCountOverflowError {
         #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for TooBigForRelativeHeightError {
+    impl fmt::Display for BlockCountOverflowError {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(
@@ -670,7 +673,7 @@ pub mod error {
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for TooBigForRelativeHeightError {
+    impl std::error::Error for BlockCountOverflowError {
         #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self(_) = self;
@@ -966,7 +969,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn error_display_is_non_empty() {
-        // TooBigForRelativeHeightError - block interval too big for relative height
+        // BlockCountOverflowError - block interval too big for a number of blocks
         let big_interval = BlockHeightInterval::from_u32(u32::MAX);
         let e = relative::NumberOfBlocks::try_from(big_interval).unwrap_err();
         assert!(!e.to_string().is_empty());
