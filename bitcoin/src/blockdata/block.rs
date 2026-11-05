@@ -826,6 +826,36 @@ impl Block {
             _ => Err(Bip34Error::NotPresent),
         }
     }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// The pre-1.0 block type is not validated so the stable block is unchecked.
+    ///
+    /// # Errors
+    ///
+    /// Errors if any unstable output value is outside the range of the stable amount type
+    /// ([`stable::Amount::MAX`]).
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> Result<stable::Block, stable::amount::OutOfRangeError> {
+        let transactions =
+            self.txdata.into_iter().map(Transaction::to_stable).collect::<Result<_, _>>()?;
+
+        Ok(stable::Block::new_unchecked(self.header.to_stable(), transactions))
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    ///
+    /// Only an unchecked stable block can be converted. To convert a checked block use
+    /// [`Header::from_stable`] and [`Transaction::from_stable`] on its header and transactions.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Block) -> Self {
+        let (header, transactions) = stable.into_parts();
+
+        Self {
+            header: Header::from_stable(header),
+            txdata: transactions.into_iter().map(Transaction::from_stable).collect(),
+        }
+    }
 }
 
 #[cfg(feature = "encoding")]

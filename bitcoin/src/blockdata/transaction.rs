@@ -763,6 +763,29 @@ impl TxOut {
     pub fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
         TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
     }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the unstable output value is outside the range of the stable amount type
+    /// ([`stable::Amount::MAX`]). This is always the case for [`TxOut::NULL`].
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> Result<stable::TxOut, stable::amount::OutOfRangeError> {
+        Ok(stable::TxOut {
+            amount: self.value.to_stable()?,
+            script_pubkey: self.script_pubkey.to_stable(),
+        })
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::TxOut) -> Self {
+        Self {
+            value: Amount::from_stable(stable.amount),
+            script_pubkey: ScriptBuf::from_stable(stable.script_pubkey),
+        }
+    }
 }
 
 /// Returns the total number of bytes that this script pubkey would contribute to a transaction.
@@ -1211,6 +1234,35 @@ impl Transaction {
         self.output
             .get(output_index)
             .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Errors if any unstable output value is outside the range of the stable amount type
+    /// ([`stable::Amount::MAX`]).
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> Result<stable::Transaction, stable::amount::OutOfRangeError> {
+        let outputs = self.output.into_iter().map(TxOut::to_stable).collect::<Result<_, _>>()?;
+
+        Ok(stable::Transaction {
+            version: self.version.to_stable(),
+            lock_time: self.lock_time.to_stable(),
+            inputs: self.input.into_iter().map(TxIn::to_stable).collect(),
+            outputs,
+        })
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Transaction) -> Self {
+        Self {
+            version: Version::from_stable(stable.version),
+            lock_time: absolute::LockTime::from_stable(stable.lock_time),
+            input: stable.inputs.into_iter().map(TxIn::from_stable).collect(),
+            output: stable.outputs.into_iter().map(TxOut::from_stable).collect(),
+        }
     }
 }
 

@@ -9,10 +9,31 @@ use bitcoin::opcodes::all::{OP_DUP, OP_EQUAL, OP_EQUALVERIFY};
 use bitcoin::opcodes::Opcode;
 use bitcoin::script::{Builder, PushBytes, PushBytesBuf};
 use bitcoin::{
-    block, compat, transaction, BlockHash, CompactTarget, OutPoint, Script, ScriptBuf, ScriptHash,
-    Sequence, TxIn, TxMerkleNode, Txid, WScriptHash, Witness, WitnessCommitment, WitnessMerkleNode,
-    WitnessVersion, Wtxid,
+    absolute, block, compat, transaction, Amount, Block, BlockHash, CompactTarget, Network,
+    OutPoint, Script, ScriptBuf, ScriptHash, Sequence, Transaction, TxIn, TxMerkleNode, TxOut,
+    Txid, WScriptHash, Witness, WitnessCommitment, WitnessMerkleNode, WitnessVersion, Wtxid,
 };
+
+/// Returns a SegWit transaction, a stable amount can represent the value of each output.
+fn transaction() -> Transaction {
+    Transaction {
+        version: transaction::Version::TWO,
+        lock_time: absolute::LockTime::from_consensus(840_000),
+        input: vec![
+            TxIn {
+                previous_output: OutPoint { txid: Txid::from_byte_array([0x42; 32]), vout: 7 },
+                script_sig: ScriptBuf::from_bytes(vec![0x51]),
+                sequence: Sequence::ENABLE_RBF_NO_LOCKTIME,
+                witness: Witness::from_slice(&[vec![], vec![0xab; 72]]),
+            },
+            TxIn::default(),
+        ],
+        output: vec![
+            TxOut { value: Amount::ZERO, script_pubkey: ScriptBuf::new() },
+            TxOut { value: Amount::MAX_MONEY, script_pubkey: ScriptBuf::from_bytes(vec![0x51]) },
+        ],
+    }
+}
 
 #[test]
 fn hash_types() {
@@ -194,4 +215,83 @@ fn block_header() {
         assert_eq!(stable.block_hash(), unstable.block_hash().to_stable());
         assert_eq!(block::Header::from_stable(stable), unstable);
     }
+}
+
+#[test]
+fn tx_out() {
+    for value in [Amount::ZERO, Amount::ONE_SAT, Amount::MAX_MONEY] {
+        let unstable = TxOut { value, script_pubkey: ScriptBuf::from_bytes(vec![0x51]) };
+
+        let stable = unstable.clone().to_stable().unwrap();
+        assert_eq!(stable.amount.to_sat(), value.to_sat());
+        assert_eq!(stable.script_pubkey.as_bytes(), unstable.script_pubkey.as_bytes());
+        assert_eq!(TxOut::from_stable(stable), unstable);
+    }
+}
+
+#[test]
+fn tx_out_value_out_of_range() {
+    for value in [Amount::MAX_MONEY + Amount::ONE_SAT, Amount::MAX] {
+        let unstable = TxOut { value, script_pubkey: ScriptBuf::new() };
+        assert_eq!(unstable.to_stable(), Err(value.to_stable().unwrap_err()));
+    }
+
+    assert!(TxOut::NULL.to_stable().is_err());
+}
+
+#[test]
+fn transaction_roundtrip() {
+    // Stable versions are unsigned, conversion preserves the consensus encoding.
+    for version in [transaction::Version::TWO, transaction::Version(-1)] {
+        let mut unstable = transaction();
+        unstable.version = version;
+
+        let stable = unstable.clone().to_stable().unwrap();
+        // The txid and wtxid together commit to the consensus encoding of every field.
+        assert_eq!(stable.compute_txid(), unstable.compute_txid().to_stable());
+        assert_eq!(stable.compute_wtxid(), unstable.compute_wtxid().to_stable());
+        assert_eq!(Transaction::from_stable(stable), unstable);
+    }
+}
+
+#[test]
+fn transaction_output_value_out_of_range() {
+    let value = Amount::MAX_MONEY + Amount::ONE_SAT;
+
+    for index in 0..2 {
+        let mut unstable = transaction();
+        unstable.output[index].value = value;
+        assert_eq!(unstable.to_stable(), Err(value.to_stable().unwrap_err()));
+    }
+}
+
+#[test]
+fn block_roundtrip() {
+    for network in [Network::Bitcoin, Network::Testnet, Network::Signet, Network::Regtest] {
+        let unstable = bitcoin::constants::genesis_block(network);
+
+        let stable = unstable.clone().to_stable().unwrap();
+        assert_eq!(stable.block_hash(), unstable.block_hash().to_stable());
+        // Checks the coinbase and merkle root, which commits to every transaction.
+        assert!(stable.clone().validate().is_ok());
+        assert_eq!(Block::from_stable(stable), unstable);
+    }
+
+    let mut unstable = bitcoin::constants::genesis_block(Network::Bitcoin);
+    unstable.txdata.push(transaction());
+
+    let stable = unstable.clone().to_stable().unwrap();
+    let (_, transactions) = stable.as_parts();
+    assert_eq!(transactions[1], transaction().to_stable().unwrap());
+    assert_eq!(Block::from_stable(stable), unstable);
+}
+
+#[test]
+fn block_output_value_out_of_range() {
+    let value = Amount::MAX_MONEY + Amount::ONE_SAT;
+
+    let mut unstable = bitcoin::constants::genesis_block(Network::Bitcoin);
+    unstable.txdata.push(transaction());
+    unstable.txdata[1].output[1].value = value;
+    assert_eq!(unstable.to_stable().unwrap_err(), value.to_stable().unwrap_err());
 }

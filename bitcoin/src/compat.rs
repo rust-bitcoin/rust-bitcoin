@@ -39,6 +39,23 @@
 //! let unstable = ScriptBuf::from_stable(stable);
 //! assert_eq!(unstable, script);
 //! ```
+//!
+//! Stable amounts are limited to `Amount::MAX`, pre-1.0 amounts are not. Conversion to the stable
+//! type is fallible for amounts and for the types that contain an amount.
+//!
+//! ```
+//! use bitcoin::{Amount, ScriptBuf, TxOut};
+//!
+//! let txout = TxOut { value: Amount::from_sat(1_000), script_pubkey: ScriptBuf::new() };
+//! let stable = txout.clone().to_stable()?;
+//!
+//! let unstable = TxOut::from_stable(stable);
+//! assert_eq!(unstable, txout);
+//!
+//! // `TxOut::NULL` has a value of `u64::MAX` satoshis.
+//! assert!(TxOut::NULL.to_stable().is_err());
+//! # Ok::<_, bitcoin::compat::amount::OutOfRangeError>(())
+//! ```
 
 #[doc(inline)]
 pub use bitcoin_primitives_stable::{
