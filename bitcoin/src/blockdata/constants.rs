@@ -119,6 +119,7 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
 }
 
 /// Constructs and returns the genesis block.
+/// Panics for testnet5 until its genesis block is published.
 pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
     let params = params.as_ref();
     let transactions = vec![bitcoin_genesis_tx(params)];
@@ -162,6 +163,9 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
             transactions,
         )
         .assume_checked(witness_root),
+        Network::Testnet(TestnetVersion::V5) => {
+            panic!("testnet5 genesis block is not yet published")
+        },
         Network::Testnet(_) => Block::new_unchecked(
             block::Header {
                 version: block::Version::ONE,
@@ -245,11 +249,15 @@ impl ChainHash {
     ///
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
+    /// Panics for testnet5 until its genesis block is published.
     pub fn using_genesis_block(params: impl AsRef<Params>) -> Self {
         match params.as_ref().network {
             Network::Bitcoin => Self::BITCOIN,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(TestnetVersion::V5) => {
+                panic!("testnet5 genesis block is not yet published")
+            },
             Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
@@ -260,11 +268,15 @@ impl ChainHash {
     ///
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
+    /// Panics for testnet5 until its genesis block is published.
     pub const fn using_genesis_block_const(network: Network) -> Self {
         match network {
             Network::Bitcoin => Self::BITCOIN,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(TestnetVersion::V5) => {
+                panic!("testnet5 genesis block is not yet published")
+            },
             Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
@@ -383,6 +395,26 @@ mod test {
             gen.header().block_hash().to_string(),
             "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "testnet5 genesis block is not yet published")]
+    fn testnet5_genesis_unavailable() {
+        let _ = genesis_block(Network::Testnet(TestnetVersion::V5));
+    }
+
+    #[test]
+    #[should_panic(expected = "testnet5 genesis block is not yet published")]
+    fn testnet5_chain_hash_unavailable() {
+        let _ = ChainHash::using_genesis_block(Network::Testnet(TestnetVersion::V5));
+    }
+
+    #[test]
+    #[should_panic(expected = "testnet5 genesis block is not yet published")]
+    fn testnet5_network_chain_hash_unavailable() {
+        use crate::network::NetworkExt as _;
+
+        let _ = Network::Testnet(TestnetVersion::V5).chain_hash();
     }
 
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array

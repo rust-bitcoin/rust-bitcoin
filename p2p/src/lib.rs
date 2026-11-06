@@ -365,6 +365,8 @@ impl Magic {
     pub const TESTNET3: Self = Self([0x0B, 0x11, 0x09, 0x07]);
     /// Bitcoin testnet4 network magic bytes.
     pub const TESTNET4: Self = Self([0x1c, 0x16, 0x3f, 0x28]);
+    /// Bitcoin testnet5 network magic bytes, spelling `FIVE` in ASCII.
+    pub const TESTNET5: Self = Self([0x46, 0x49, 0x56, 0x45]);
     /// Bitcoin signet network magic bytes.
     pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
     /// Bitcoin regtest network magic bytes.
@@ -400,6 +402,7 @@ impl TryFrom<Network> for Magic {
             Network::Bitcoin => Ok(Self::BITCOIN),
             Network::Testnet(TestnetVersion::V3) => Ok(Self::TESTNET3),
             Network::Testnet(TestnetVersion::V4) => Ok(Self::TESTNET4),
+            Network::Testnet(TestnetVersion::V5) => Ok(Self::TESTNET5),
             Network::Signet => Ok(Self::SIGNET),
             Network::Regtest => Ok(Self::REGTEST),
             Network::Testnet(_) => Err(UnknownNetworkError(network)),
@@ -415,6 +418,7 @@ impl TryFrom<Magic> for Network {
             Magic::BITCOIN => Ok(Self::Bitcoin),
             Magic::TESTNET3 => Ok(Self::Testnet(TestnetVersion::V3)),
             Magic::TESTNET4 => Ok(Self::Testnet(TestnetVersion::V4)),
+            Magic::TESTNET5 => Ok(Self::Testnet(TestnetVersion::V5)),
             Magic::SIGNET => Ok(Self::Signet),
             Magic::REGTEST => Ok(Self::Regtest),
             _ => Err(UnknownMagicError(magic)),
@@ -546,6 +550,9 @@ mod tests {
         assert_eq!(encode_to_vec(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
         let magic: Magic = Network::Testnet(TestnetVersion::V4).try_into().unwrap();
         assert_eq!(encode_to_vec(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
+        let magic: Magic = Network::Testnet(TestnetVersion::V5).try_into().unwrap();
+        assert_eq!(encode_to_vec(&magic), &[0x46, 0x49, 0x56, 0x45]);
+        assert_eq!(Network::try_from(magic).unwrap(), Network::Testnet(TestnetVersion::V5));
         assert_eq!(encode_to_vec(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
         let magic: Magic = Network::Signet.try_into().unwrap();
         assert_eq!(encode_to_vec(&magic), &[0x0a, 0x03, 0xcf, 0x40]);

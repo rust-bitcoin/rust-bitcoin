@@ -23,6 +23,7 @@ pub use self::error::{ParseNetworkError, UnknownChainHashError};
 // `define_extension_trait` chokes on the rustdoc example code.
 pub trait NetworkExt: sealed::Sealed {
     /// Return the network's chain hash (genesis block hash).
+    /// Panics for testnet5 until its genesis block is published.
     ///
     /// # Examples
     ///
@@ -64,6 +65,7 @@ impl NetworkExt for Network {
             Self::Bitcoin => &Params::BITCOIN,
             Self::Testnet(TestnetVersion::V3) => &Params::TESTNET3,
             Self::Testnet(TestnetVersion::V4) => &Params::TESTNET4,
+            Self::Testnet(TestnetVersion::V5) => &Params::TESTNET5,
             Self::Testnet(_) => &Params::TESTNET3,
             Self::Signet => &Params::SIGNET,
             Self::Regtest => &Params::REGTEST,
