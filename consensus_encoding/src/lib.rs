@@ -168,3 +168,10 @@ pub use self::error::{
     CompactSizeDecoderError, DecodeError, Decoder2Error, Decoder3Error, Decoder4Error,
     Decoder6Error, UnconsumedError, UnexpectedEofError,
 };
+
+/// A shared trick to compute the size of return type of a closure in const context without naming
+/// it.
+#[doc(hidden)]
+pub const fn _size_of_return_type<T, R, F: FnOnce(T) -> R>(_: &F) -> usize {
+    core::mem::size_of::<R>()
+}
