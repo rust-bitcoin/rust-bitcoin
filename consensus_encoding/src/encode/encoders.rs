@@ -242,25 +242,22 @@ macro_rules! define_encoder_n {
         impl<$($enc_ty: Encoder,)*> Encoder for $name<$($enc_ty,)*> {
             #[inline]
             fn current_chunk(&self) -> &[u8] {
-                match self.cur_idx {
-                    $($enc_idx => self.$enc_field.current_chunk(),)*
-                    _ => &[],
-                }
+                $(
+                    if self.cur_idx <= $enc_idx {
+                        let chunk = self.$enc_field.current_chunk();
+                        if !chunk.is_empty() {
+                            return chunk;
+                        }
+                    }
+                )*
+                &[]
             }
 
             #[inline]
             fn advance(&mut self) -> EncoderStatus {
+                self.skip_empty();
                 $(
                     if self.cur_idx == $enc_idx {
-                        if self.$enc_field.current_chunk().is_empty() {
-                            self.cur_idx += 1;
-                            self.skip_empty();
-                            return if self.cur_idx == $idx_limit {
-                                EncoderStatus::Finished
-                            } else {
-                                EncoderStatus::HasMore
-                            };
-                        }
                         if self.$enc_field.advance().has_more()
                             && !self.$enc_field.current_chunk().is_empty()
                         {
