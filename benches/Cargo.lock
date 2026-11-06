@@ -255,7 +255,7 @@ checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
 
 [[package]]
 name = "chacha20-poly1305"
-version = "0.2.1"
+version = "0.3.0"
 
 [[package]]
 name = "ciborium"
