@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add `PushBytes::read_cltv_scriptint_non_minimal` for five-byte CLTV and CSV operands that do not
+  require minimal encoding.
 - `pow`'s internal `U256` helper (used only by `U256Wrapper` byte-array conversions) is now sourced
   from `bitcoin-internals` instead of a duplicated `include!` module.
 
