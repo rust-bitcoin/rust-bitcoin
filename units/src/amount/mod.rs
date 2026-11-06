@@ -131,9 +131,7 @@ pub enum Denomination {
     CentiBitcoin,
     /// mBTC (1 mBTC = 100,000 satoshi).
     MilliBitcoin,
-    /// µBTC (1 µBTC = 100 satoshi).
-    MicroBitcoin,
-    /// bits (bits = µBTC).
+    /// bits (1 bit = 1 µBTC = 100 satoshi).
     Bit,
     /// satoshi (1 BTC = 100,000,000 satoshi).
     Satoshi,
@@ -157,7 +155,6 @@ impl Denomination {
             Self::Bitcoin => -8,
             Self::CentiBitcoin => -6,
             Self::MilliBitcoin => -5,
-            Self::MicroBitcoin => -2,
             Self::Bit => -2,
             Self::Satoshi => 0,
             Self::_DoNotUse(infallible) => match infallible {},
@@ -171,7 +168,6 @@ impl Denomination {
             Self::Bitcoin => "BTC",
             Self::CentiBitcoin => "cBTC",
             Self::MilliBitcoin => "mBTC",
-            Self::MicroBitcoin => "uBTC",
             Self::Bit => "bits",
             Self::Satoshi => "satoshi",
             Self::_DoNotUse(infallible) => match infallible {},
@@ -185,8 +181,8 @@ impl Denomination {
             "BTC" | "btc" => Some(Self::Bitcoin),
             "cBTC" | "cbtc" => Some(Self::CentiBitcoin),
             "mBTC" | "mbtc" => Some(Self::MilliBitcoin),
-            "uBTC" | "ubtc" | "µBTC" | "µbtc" => Some(Self::MicroBitcoin),
-            "bit" | "bits" | "BIT" | "BITS" => Some(Self::Bit),
+            "uBTC" | "ubtc" | "µBTC" | "µbtc" | "bit" | "bits" | "BIT" | "BITS" =>
+                Some(Self::Bit),
             "SATOSHI" | "satoshi" | "SATOSHIS" | "satoshis" | "SAT" | "sat" | "SATS" | "sats" =>
                 Some(Self::Satoshi),
             _ => None,
@@ -702,13 +698,12 @@ enum DisplayStyle {
 impl<'a> Arbitrary<'a> for Denomination {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let choice = u.int_in_range(0..=5)?;
+        let choice = u.int_in_range(0..=4)?;
         match choice {
             0 => Ok(Self::Bitcoin),
             1 => Ok(Self::CentiBitcoin),
             2 => Ok(Self::MilliBitcoin),
-            3 => Ok(Self::MicroBitcoin),
-            4 => Ok(Self::Bit),
+            3 => Ok(Self::Bit),
             _ => Ok(Self::Satoshi),
         }
     }

@@ -966,11 +966,6 @@ fn to_from_string_in() {
     assert_eq!("100", sat(100_000_00).to_string_in(D::MilliBitcoin));
     assert_eq!("-100", ssat(-100_000_00).to_string_in(D::MilliBitcoin));
 
-    assert_eq!("2535.83", sat(253_583).to_string_in(D::MicroBitcoin));
-    assert_eq!("-2535.83", ssat(-253_583).to_string_in(D::MicroBitcoin));
-    assert_eq!("100000", sat(100_000_00).to_string_in(D::MicroBitcoin));
-    assert_eq!("-100000", ssat(-100_000_00).to_string_in(D::MicroBitcoin));
-
     assert_eq!("0.5", sat(50).to_string_in(D::Bit));
     assert_eq!("100", sat(10_000).to_string_in(D::Bit));
     assert_eq!("-0.5", ssat(-50).to_string_in(D::Bit));
@@ -991,24 +986,22 @@ fn to_from_string_in() {
         ua_str(&sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
         Ok(sat(1_000_000_000_000))
     );
-    assert_eq!(ua_str(&sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(sat(1)));
     assert_eq!(ua_str(&sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(sat(21_000_000)));
     assert_eq!(ua_str(&sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(sat(0)));
 
     assert!(ua_str(&Amount::MAX.to_string_in(D::Bitcoin), D::Bitcoin).is_ok());
     assert!(ua_str(&Amount::MAX.to_string_in(D::CentiBitcoin), D::CentiBitcoin).is_ok());
     assert!(ua_str(&Amount::MAX.to_string_in(D::MilliBitcoin), D::MilliBitcoin).is_ok());
-    assert!(ua_str(&Amount::MAX.to_string_in(D::MicroBitcoin), D::MicroBitcoin).is_ok());
     assert!(ua_str(&Amount::MAX.to_string_in(D::Bit), D::Bit).is_ok());
     assert!(ua_str(&Amount::MAX.to_string_in(D::Satoshi), D::Satoshi).is_ok());
 
     assert_eq!(
-        sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::MicroBitcoin),
+        sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::Bit),
         Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true))))
     );
     // Test an overflow bug in `abs()`
     assert_eq!(
-        sa_str(&SignedAmount::MIN.to_string_in(D::Satoshi), D::MicroBitcoin),
+        sa_str(&SignedAmount::MIN.to_string_in(D::Satoshi), D::Bit),
         Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small())))
     );
 }
@@ -1023,7 +1016,6 @@ fn to_string_with_denomination_from_str_roundtrip() {
     assert_eq!(denom(amt, D::Bitcoin).parse::<Amount>(), Ok(amt));
     assert_eq!(denom(amt, D::CentiBitcoin).parse::<Amount>(), Ok(amt));
     assert_eq!(denom(amt, D::MilliBitcoin).parse::<Amount>(), Ok(amt));
-    assert_eq!(denom(amt, D::MicroBitcoin).parse::<Amount>(), Ok(amt));
     assert_eq!(denom(amt, D::Bit).parse::<Amount>(), Ok(amt));
     assert_eq!(denom(amt, D::Satoshi).parse::<Amount>(), Ok(amt));
 
@@ -1085,6 +1077,13 @@ fn denomination_string_acceptable_forms() {
     ];
     for denom in valid {
         assert!(denom.parse::<Denomination>().is_ok());
+    }
+}
+
+#[test]
+fn micro_bitcoin_forms_parse_as_bit() {
+    for denom in ["uBTC", "ubtc", "µBTC", "µbtc"] {
+        assert_eq!(denom.parse::<Denomination>(), Ok(Denomination::Bit));
     }
 }
 
