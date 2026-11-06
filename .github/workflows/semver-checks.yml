@@ -37,7 +37,7 @@ jobs:
         id: semver
         run: |
           set +e
-          ./contrib/check-semver.sh ${{ github.event.pull_request.base.sha || github.event.before }}
+          ./contrib/check-semver.sh "$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-$GITHUB_REF_NAME}")"
           echo "exit_code=$?" >> $GITHUB_OUTPUT
       - name: "Save breaking state"
         env:
