@@ -211,7 +211,7 @@ impl LockTime {
     /// * `chain_tip_height`: The current height of the blockchain.
     /// * `chain_tip_mtp`: The current MTP (i.e. median of the 11 latest blocks, including the tip).
     /// * `utxo_mined_at_height`: `Some` height if mined, `None` if UTXO may go in the next block.
-    /// * `utxo_mined_at_mtp`: `Some` MTP of the block preceding the UTXO confirmation
+    /// * `utxo_prev_block_mtp`: `Some` MTP of the block preceding the UTXO confirmation
     ///   block, `None` if UTXO may go in the next block.
     ///
     /// # Errors
@@ -223,14 +223,14 @@ impl LockTime {
         chain_tip_height: BlockHeight,
         chain_tip_mtp: BlockMtp,
         utxo_mined_at_height: Option<BlockHeight>,
-        utxo_mined_at_mtp: Option<BlockMtp>,
+        utxo_prev_block_mtp: Option<BlockMtp>,
     ) -> Result<bool, IsSatisfiedByError> {
         match self {
             Self::Blocks(blocks) => blocks
                 .is_satisfied_by(chain_tip_height, utxo_mined_at_height)
                 .map_err(IsSatisfiedByError::Blocks),
             Self::Time(time) => time
-                .is_satisfied_by(chain_tip_mtp, utxo_mined_at_mtp)
+                .is_satisfied_by(chain_tip_mtp, utxo_prev_block_mtp)
                 .map_err(IsSatisfiedByError::Time),
         }
     }
@@ -265,7 +265,7 @@ impl LockTime {
     /// # Arguments
     ///
     /// * `chain_tip`: The current MTP (i.e. median of the 11 latest blocks, including the tip).
-    /// * `utxo_mined_at`: `Some` MTP of the block preceding the UTXO confirmation
+    /// * `utxo_prev_block_mtp`: `Some` MTP of the block preceding the UTXO confirmation
     ///   block, `None` if UTXO may go in the next block.
     ///
     /// # Errors
@@ -275,11 +275,11 @@ impl LockTime {
     pub fn is_satisfied_by_time(
         self,
         chain_tip: BlockMtp,
-        utxo_mined_at: Option<BlockMtp>,
+        utxo_prev_block_mtp: Option<BlockMtp>,
     ) -> Result<bool, IsSatisfiedByTimeError> {
         match self {
             Self::Time(time) => time
-                .is_satisfied_by(chain_tip, utxo_mined_at)
+                .is_satisfied_by(chain_tip, utxo_prev_block_mtp)
                 .map_err(IsSatisfiedByTimeError::Satisfaction),
             Self::Blocks(blocks) =>
                 Err(IncompatibleTimeError(blocks)).map_err(IsSatisfiedByTimeError::Incompatible),
@@ -618,26 +618,26 @@ impl NumberOf512Seconds {
     /// # Arguments
     ///
     /// * `chain_tip`: The current MTP (i.e. median of the 11 latest blocks, including the tip).
-    /// * `utxo_mined_at`: `Some` MTP of the block preceding the UTXO confirmation
+    /// * `utxo_prev_block_mtp`: `Some` MTP of the block preceding the UTXO confirmation
     ///   block, `None` if UTXO may go in the next block.
     ///
     /// # Errors
     ///
-    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip` is not _after_ `utxo_prev_block_mtp` i.e., if you get the args mixed up.
     #[inline]
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockMtp,
-        utxo_mined_at: Option<crate::BlockMtp>,
+        utxo_prev_block_mtp: Option<crate::BlockMtp>,
     ) -> Result<bool, InvalidTimeError> {
-        utxo_mined_at.map_or(
+        utxo_prev_block_mtp.map_or(
             // We want 0-value relative timelocks to be able to go into transactions in the
             // mempool if their parent is also in the mempool.
             Ok(self == Self::ZERO),
-            |mined_at| {
+            |prev_block_mtp| {
                 chain_tip
-                    .checked_sub(mined_at)
-                    .ok_or(InvalidTimeError { chain_tip, utxo_mined_at: mined_at })
+                    .checked_sub(prev_block_mtp)
+                    .ok_or(InvalidTimeError { chain_tip, utxo_prev_block_mtp: prev_block_mtp })
                     .map(|diff| self.to_seconds() <= diff.to_u32())
             },
         )
@@ -903,11 +903,11 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn incompatible_time_error() {
         // This is an error test these values are not used in the error path.
-        let mined_at = BlockMtp::from_u32(1_234_567_890);
+        let prev_block_mtp = BlockMtp::from_u32(1_234_567_890);
         let chain_tip = BlockMtp::from_u32(1_600_000_000);
 
         let lock_by_height = LockTime::from_block_count(10); // Arbitrary value.
-        let err = lock_by_height.is_satisfied_by_time(chain_tip, Some(mined_at)).unwrap_err();
+        let err = lock_by_height.is_satisfied_by_time(chain_tip, Some(prev_block_mtp)).unwrap_err();
 
         let expected_height = NumberOfBlocks::from_count(10);
         assert_eq!(
@@ -920,14 +920,14 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn invalid_time_error() {
-        // If chain tip precedes mined_at, should return an invalid time error
-        let mined_at = BlockMtp::from_u32(1_734_567_890);
+        // If chain tip precedes prev_block_mtp, should return an invalid time error
+        let prev_block_mtp = BlockMtp::from_u32(1_734_567_890);
         let chain_tip = BlockMtp::from_u32(1_600_000_000);
 
         let time_interval = NumberOf512Seconds::from_512_second_intervals(10); // Arbitrary value.
-        let err = time_interval.is_satisfied_by(chain_tip, Some(mined_at)).unwrap_err();
+        let err = time_interval.is_satisfied_by(chain_tip, Some(prev_block_mtp)).unwrap_err();
 
-        assert!(matches!(err, InvalidTimeError { chain_tip: _, utxo_mined_at: _ }));
+        assert!(matches!(err, InvalidTimeError { chain_tip: _, utxo_prev_block_mtp: _ }));
     }
 
     #[test]
