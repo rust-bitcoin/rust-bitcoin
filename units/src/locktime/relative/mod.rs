@@ -216,7 +216,8 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// If `chain_tip` is not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
+    /// If `chain_tip_height` is less than `utxo_mined_at_height`  for block-based lock, or
+    /// `chain_tip_mtp` is less than `utxo_prev_block_mtp` for time-based lock.
     #[inline]
     pub fn is_satisfied_by(
         self,
@@ -623,7 +624,7 @@ impl NumberOf512Seconds {
     ///
     /// # Errors
     ///
-    /// If `chain_tip` is not _after_ `utxo_prev_block_mtp` i.e., if you get the args mixed up.
+    /// If `chain_tip` is less than `utxo_prev_block_mtp` i.e., if you get the args mixed up.
     #[inline]
     pub fn is_satisfied_by(
         self,
