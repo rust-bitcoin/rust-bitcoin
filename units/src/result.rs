@@ -9,7 +9,7 @@ use core::{fmt, ops};
 use arbitrary::{Arbitrary, Unstructured};
 use NumOpResult as R;
 
-use crate::{Amount, FeeRate, SignedAmount, Weight};
+use crate::{Amount, BlockHeightInterval, BlockMtpInterval, FeeRate, SignedAmount, Weight};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -302,51 +302,71 @@ crate::internal_macros::impl_op_for_references! {
     }
 }
 
-// Implement AddAssign on NumOpResults for all wrapped types that already implement AddAssign on themselves
-impl<T: ops::AddAssign> ops::AddAssign<T> for NumOpResult<T> {
-    #[inline]
-    #[track_caller]
-    fn add_assign(&mut self, rhs: T) {
-        if let Self::Valid(ref mut lhs) = self {
-            *lhs += rhs;
+// Generates checked addition and subtraction assignments for wrapped numeric types.
+macro_rules! impl_checked_assign {
+    ($ty:ty, $is_negative:expr) => {
+        impl ops::AddAssign<$ty> for NumOpResult<$ty> {
+            #[inline]
+            #[track_caller]
+            fn add_assign(&mut self, rhs: $ty) {
+                if let Self::Valid(lhs) = *self {
+                    let rhs_is_negative = ($is_negative)(rhs);
+                    *self = lhs.checked_add(rhs).valid_or_error(MathErrorKind::Overflow {
+                        op: MathOp::Add,
+                        is_negative: rhs_is_negative,
+                    });
+                }
+            }
         }
-    }
+
+        impl ops::AddAssign<Self> for NumOpResult<$ty> {
+            #[inline]
+            #[track_caller]
+            fn add_assign(&mut self, rhs: Self) {
+                match (&self, rhs) {
+                    (Self::Valid(_), Self::Valid(rhs)) => *self += rhs,
+                    (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
+                    (Self::Error(_), _) => (), // If the lhs is an error, preserve it
+                }
+            }
+        }
+
+        impl ops::SubAssign<$ty> for NumOpResult<$ty> {
+            #[inline]
+            #[track_caller]
+            fn sub_assign(&mut self, rhs: $ty) {
+                if let Self::Valid(lhs) = *self {
+                    let rhs_is_negative = ($is_negative)(rhs);
+                    *self = lhs.checked_sub(rhs).valid_or_error(MathErrorKind::Overflow {
+                        op: MathOp::Sub,
+                        is_negative: !rhs_is_negative,
+                    });
+                }
+            }
+        }
+
+        impl ops::SubAssign<Self> for NumOpResult<$ty> {
+            #[inline]
+            #[track_caller]
+            fn sub_assign(&mut self, rhs: Self) {
+                match (&self, rhs) {
+                    (Self::Valid(_), Self::Valid(rhs)) => *self -= rhs,
+                    (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
+                    (Self::Error(_), _) => (), // If the lhs is an error, preserve it
+                }
+            }
+        }
+    };
 }
 
-impl<T: ops::AddAssign + Copy> ops::AddAssign<Self> for NumOpResult<T> {
-    #[inline]
-    #[track_caller]
-    fn add_assign(&mut self, rhs: Self) {
-        match (&self, rhs) {
-            (Self::Valid(_), Self::Valid(rhs)) => *self += rhs,
-            (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
-            (Self::Error(_), _) => (), // If the lhs is an error, preserve it
-        }
-    }
-}
-
-// Implement SubAssign on NumOpResults for all wrapped types that already implement SubAssign on themselves
-impl<T: ops::SubAssign> ops::SubAssign<T> for NumOpResult<T> {
-    #[inline]
-    #[track_caller]
-    fn sub_assign(&mut self, rhs: T) {
-        if let Self::Valid(ref mut lhs) = self {
-            *lhs -= rhs;
-        }
-    }
-}
-
-impl<T: ops::SubAssign + Copy> ops::SubAssign<Self> for NumOpResult<T> {
-    #[inline]
-    #[track_caller]
-    fn sub_assign(&mut self, rhs: Self) {
-        match (&self, rhs) {
-            (Self::Valid(_), Self::Valid(rhs)) => *self -= rhs,
-            (Self::Valid(_), Self::Error(err)) => *self = Self::Error(err),
-            (Self::Error(_), _) => (), // If the lhs is an error, preserve it
-        }
-    }
-}
+impl_checked_assign!(Amount, |_| false);
+impl_checked_assign!(SignedAmount, SignedAmount::is_negative);
+impl_checked_assign!(FeeRate, |_| false);
+impl_checked_assign!(Weight, |_| false);
+impl_checked_assign!(BlockHeightInterval, |_| false);
+impl_checked_assign!(BlockMtpInterval, |_| false);
+impl_checked_assign!(u64, |_| false);
+impl_checked_assign!(i64, i64::is_negative);
 
 pub(crate) trait OptionExt<T> {
     fn valid_or_error(self, kind: MathErrorKind) -> NumOpResult<T>;
@@ -367,7 +387,16 @@ macro_rules! impl_opt_ext {
         )*
     }
 }
-impl_opt_ext!(Amount, SignedAmount, u64, i64, FeeRate, Weight);
+impl_opt_ext!(
+    Amount,
+    SignedAmount,
+    u64,
+    i64,
+    FeeRate,
+    Weight,
+    BlockHeightInterval,
+    BlockMtpInterval
+);
 
 /// The math operation that caused the error.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -552,7 +581,7 @@ mod tests {
     use std::error::Error;
 
     use crate::result::{MathErrorKind, MathOp, NumOpError, NumOpResult};
-    use crate::{Amount, FeeRate, Weight};
+    use crate::{Amount, BlockHeightInterval, BlockMtpInterval, FeeRate, Weight};
 
     #[test]
     fn mathop_predicates() {
@@ -772,5 +801,82 @@ mod tests {
         let combined = valid - division_by_zero;
 
         assert!(combined.unwrap_err().operation().is_division());
+    }
+
+    #[test]
+    fn sub_assign_overflow() {
+        let one = FeeRate::from_sat_per_mvb(1);
+        let two = FeeRate::from_sat_per_mvb(2);
+        let overflow =
+            NumOpError::while_doing(MathErrorKind::Overflow { op: MathOp::Sub, is_negative: true });
+
+        let mut result = NumOpResult::Valid(one);
+        result -= two;
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(one);
+        result -= NumOpResult::Valid(two);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(0_u64);
+        result -= 1_u64;
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(BlockHeightInterval::ZERO);
+        result -= BlockHeightInterval::from_u32(1);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(BlockMtpInterval::ZERO);
+        result -= NumOpResult::Valid(BlockMtpInterval::from_u32(1));
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(i64::MAX);
+        result -= -1_i64;
+        assert_eq!(
+            result,
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Sub,
+                is_negative: false,
+            }))
+        );
+    }
+
+    #[test]
+    fn add_assign_overflow() {
+        let one = FeeRate::from_sat_per_mvb(1);
+        let overflow = NumOpError::while_doing(MathErrorKind::Overflow {
+            op: MathOp::Add,
+            is_negative: false,
+        });
+
+        let mut result = NumOpResult::Valid(FeeRate::MAX);
+        result += one;
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(FeeRate::MAX);
+        result += NumOpResult::Valid(one);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(Weight::MAX);
+        result += Weight::from_wu(1);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(BlockHeightInterval::MAX);
+        result += NumOpResult::Valid(BlockHeightInterval::from_u32(1));
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(BlockMtpInterval::MAX);
+        result += BlockMtpInterval::from_u32(1);
+        assert_eq!(result, NumOpResult::Error(overflow));
+
+        let mut result = NumOpResult::Valid(i64::MIN);
+        result += -1_i64;
+        assert_eq!(
+            result,
+            NumOpResult::Error(NumOpError::while_doing(MathErrorKind::Overflow {
+                op: MathOp::Add,
+                is_negative: true,
+            }))
+        );
     }
 }
