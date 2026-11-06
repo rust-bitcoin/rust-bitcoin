@@ -203,7 +203,7 @@ crate::decoder_newtype! {
     pub struct BlockLocatorDecoder(BlockLocatorInnerDecoder);
 
     /// Creates a new decoder.
-    pub fn new() -> Self { Self(VecDecoder::<BlockHash>::new()) }
+    pub fn new() -> Self { Self(VecDecoder::<BlockHash>::new_with_limit(MAX_LOCATOR_HASHES)) }
 
     fn end(
         result: Result<Vec<BlockHash>, <BlockLocatorInnerDecoder as encoding::Decoder>::Error>
@@ -474,6 +474,18 @@ mod tests {
     use hex::hex;
 
     use super::*;
+
+    #[test]
+    fn block_locator_enforces_max_locator_hashes() {
+        let mut at_limit = alloc::vec![MAX_LOCATOR_HASHES as u8];
+        at_limit.extend_from_slice(&[0u8; 32 * MAX_LOCATOR_HASHES]);
+        let locator = encoding::decode_from_slice::<BlockLocator>(&at_limit).unwrap();
+        assert_eq!(locator.0.len(), MAX_LOCATOR_HASHES);
+
+        let mut over_limit = alloc::vec![(MAX_LOCATOR_HASHES + 1) as u8];
+        over_limit.extend_from_slice(&[0u8; 32 * (MAX_LOCATOR_HASHES + 1)]);
+        encoding::decode_from_slice::<BlockLocator>(&over_limit).unwrap_err();
+    }
 
     #[test]
     fn getblocks_message() {
