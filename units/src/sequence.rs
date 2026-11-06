@@ -19,7 +19,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::locktime::relative::error::TimeOverflowError;
 use crate::locktime::relative::{self, NumberOf512Seconds};
@@ -32,7 +32,6 @@ pub use self::error::SequenceDecoderError;
 
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Sequence(u32);
 
 impl Sequence {
@@ -245,6 +244,28 @@ impl fmt::Debug for Sequence {
 }
 
 parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+
+#[cfg(feature = "serde")]
+impl Serialize for Sequence {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u32::serialize(&self.to_consensus_u32(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Sequence {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_consensus(u32::deserialize(d)?))
+    }
+}
 
 #[cfg(feature = "encoding")]
 impl encoding::Encode for Sequence {
