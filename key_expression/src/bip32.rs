@@ -5,8 +5,11 @@
 //! Implementation of BIP-0032 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
+#[cfg(feature = "alloc")]
 use alloc::vec;
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
+#[cfg(feature = "alloc")]
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
@@ -22,9 +25,9 @@ use network::NetworkKind;
 #[doc(no_inline)]
 pub use self::error::{
     CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
-    InvalidBase58PayloadLengthError, InvalidSeedLengthError, MaximumDepthExceededError,
-    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseRelativeDerivationPathError,
-    ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError
+    InvalidSeedLengthError, MaximumDepthExceededError, ParseAbsoluteDerivationPathError,
+    ParseChildNumberError, ParseRelativeDerivationPathError, ParseXprivError,
+    ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError
 };
 
 /// Version bytes for extended public keys on Bitcoin Mainnet.
@@ -47,7 +50,7 @@ pub type ExtendedPrivKey = Xpriv;
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
-impl_array_newtype!(ChainCode, u8, 32);
+impl_array_newtype!(ChainCode, u8, 32, #[cfg(feature = "alloc")]);
 crate::impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
@@ -57,6 +60,7 @@ impl ChainCode {
 
     /// Copies the underlying bytes into a new `Vec`.
     #[inline]
+    #[cfg(feature = "alloc")]
     #[deprecated(since = "TBD", note = "use to_vec instead")]
     pub fn to_bytes(self) -> alloc::vec::Vec<u8> { self.to_vec() }
 }
@@ -64,7 +68,7 @@ impl ChainCode {
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
-impl_array_newtype!(Fingerprint, u8, 4);
+impl_array_newtype!(Fingerprint, u8, 4, #[cfg(feature = "alloc")]);
 crate::impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {
@@ -173,6 +177,7 @@ pub struct Xpriv {
     /// Chain code
     pub chain_code: ChainCode,
 }
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpriv, "a BIP-0032 extended private key");
 
@@ -206,6 +211,7 @@ pub struct Xpub {
     /// Chain code
     pub chain_code: ChainCode,
 }
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpub, "a BIP-0032 extended public key");
 
@@ -414,12 +420,15 @@ impl serde::Serialize for ChildNumber {
 }
 
 /// A relative BIP-0032 derivation path.
+#[cfg(feature = "alloc")]
 #[derive(Default, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct RelativeDerivationPath(Vec<ChildNumber>);
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(RelativeDerivationPath, "a relative BIP-0032 derivation path");
 
+#[cfg(feature = "alloc")]
 impl<I> Index<I> for RelativeDerivationPath
 where
     Vec<ChildNumber>: Index<I>,
@@ -430,18 +439,22 @@ where
     fn index(&self, index: I) -> &Self::Output { &self.0[index] }
 }
 
+#[cfg(feature = "alloc")]
 impl From<Vec<ChildNumber>> for RelativeDerivationPath {
     fn from(numbers: Vec<ChildNumber>) -> Self { Self(numbers) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<RelativeDerivationPath> for Vec<ChildNumber> {
     fn from(path: RelativeDerivationPath) -> Self { path.0 }
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> From<&'a [ChildNumber]> for RelativeDerivationPath {
     fn from(numbers: &'a [ChildNumber]) -> Self { Self(numbers.to_vec()) }
 }
 
+#[cfg(feature = "alloc")]
 impl core::iter::FromIterator<ChildNumber> for RelativeDerivationPath {
     fn from_iter<T>(iter: T) -> Self
     where
@@ -451,6 +464,7 @@ impl core::iter::FromIterator<ChildNumber> for RelativeDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[allow(clippy::into_iter_without_iter)]
 impl<'a> core::iter::IntoIterator for &'a RelativeDerivationPath {
     type Item = &'a ChildNumber;
@@ -458,10 +472,12 @@ impl<'a> core::iter::IntoIterator for &'a RelativeDerivationPath {
     fn into_iter(self) -> Self::IntoIter { self.0.iter() }
 }
 
+#[cfg(feature = "alloc")]
 impl AsRef<[ChildNumber]> for RelativeDerivationPath {
     fn as_ref(&self) -> &[ChildNumber] { &self.0 }
 }
 
+#[cfg(feature = "alloc")]
 impl FromStr for RelativeDerivationPath {
     type Err = ParseRelativeDerivationPathError;
 
@@ -496,12 +512,15 @@ impl FromStr for RelativeDerivationPath {
 ///
 /// [PR #2451]: https://github.com/rust-bitcoin/rust-bitcoin/pull/2451
 /// [PR #2677]: https://github.com/rust-bitcoin/rust-bitcoin/pull/2677
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct AbsoluteDerivationPath(RelativeDerivationPath);
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(AbsoluteDerivationPath, "an absolute BIP-0032 derivation path");
 
+#[cfg(feature = "alloc")]
 impl AbsoluteDerivationPath {
     /// Returns the absolute derivation path for a master key.
     pub fn master() -> Self { Self(RelativeDerivationPath::default()) }
@@ -529,10 +548,12 @@ impl AbsoluteDerivationPath {
     pub fn join<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self { Self(self.0.join(path)) }
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AbsoluteDerivationPath {
     fn default() -> Self { Self::master() }
 }
 
+#[cfg(feature = "alloc")]
 impl FromStr for AbsoluteDerivationPath {
     type Err = ParseAbsoluteDerivationPathError;
 
@@ -558,6 +579,7 @@ impl FromStr for AbsoluteDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for AbsoluteDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("m")?;
@@ -573,10 +595,12 @@ impl fmt::Display for AbsoluteDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<RelativeDerivationPath> for AbsoluteDerivationPath {
     fn from(path: RelativeDerivationPath) -> Self { Self(path) }
 }
 
+#[cfg(feature = "alloc")]
 impl From<AbsoluteDerivationPath> for RelativeDerivationPath {
     fn from(path: AbsoluteDerivationPath) -> Self { path.0 }
 }
@@ -585,11 +609,13 @@ impl From<AbsoluteDerivationPath> for RelativeDerivationPath {
 ///
 /// It is returned by the methods [`RelativeDerivationPath::children_from`],
 /// [`RelativeDerivationPath::normal_children`] and [`RelativeDerivationPath::hardened_children`].
+#[cfg(feature = "alloc")]
 pub struct RelativeDerivationPathIterator<'a> {
     base: &'a RelativeDerivationPath,
     next_child: Option<ChildNumber>,
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> RelativeDerivationPathIterator<'a> {
     /// Starts a new [`RelativeDerivationPathIterator`] at the given child.
     pub fn start_from(path: &'a RelativeDerivationPath, start: ChildNumber) -> Self {
@@ -597,6 +623,7 @@ impl<'a> RelativeDerivationPathIterator<'a> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl Iterator for RelativeDerivationPathIterator<'_> {
     type Item = RelativeDerivationPath;
 
@@ -607,6 +634,7 @@ impl Iterator for RelativeDerivationPathIterator<'_> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl RelativeDerivationPath {
     /// Returns length of the derivation path
     pub fn len(&self) -> usize { self.0.len() }
@@ -698,6 +726,7 @@ impl RelativeDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Display for RelativeDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.0.iter();
@@ -720,12 +749,14 @@ impl fmt::Display for RelativeDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl fmt::Debug for RelativeDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self, f) }
 }
 
 /// Full information on the used extended public key: fingerprint of the
 /// master extended public key and a derivation path from it.
+#[cfg(feature = "alloc")]
 pub type KeySource = (Fingerprint, RelativeDerivationPath);
 
 impl Xpriv {
@@ -1064,7 +1095,9 @@ impl Xpub {
 
 impl fmt::Display for Xpriv {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        base58::Base58CkString::encode_unbounded(&self.encode()).fmt(fmt)
+        base58::Base58CkString::encode(&self.encode())
+            .expect("78 bytes encode to less than the length limit")
+            .fmt(fmt)
     }
 }
 
@@ -1072,12 +1105,7 @@ impl FromStr for Xpriv {
     type Err = ParseXprivError;
 
     fn from_str(inp: &str) -> Result<Self, ParseXprivError> {
-        let data = base58::decode_check(inp)?;
-
-        if data.len() != 78 {
-            return Err(InvalidBase58PayloadLengthError { length: data.len() })
-                .map_err(ParseXprivError::InvalidBase58PayloadLength);
-        }
+        let data = base58::decode_check_to_array::<78>(inp).map_err(ParseXprivError::Base58)?;
 
         Self::decode(&data).map_err(ParseXprivError::Decode)
     }
@@ -1085,7 +1113,9 @@ impl FromStr for Xpriv {
 
 impl fmt::Display for Xpub {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        base58::Base58CkString::encode_unbounded(&self.encode()[..]).fmt(fmt)
+        base58::Base58CkString::encode(&self.encode())
+            .expect("78 bytes encode to less than the length limit")
+            .fmt(fmt)
     }
 }
 
@@ -1093,12 +1123,7 @@ impl FromStr for Xpub {
     type Err = ParseXpubError;
 
     fn from_str(inp: &str) -> Result<Self, ParseXpubError> {
-        let data = base58::decode_check(inp)?;
-
-        if data.len() != 78 {
-            return Err(InvalidBase58PayloadLengthError { length: data.len() })
-                .map_err(ParseXpubError::InvalidBase58PayloadLength);
-        }
+        let data = base58::decode_check_to_array::<78>(inp).map_err(ParseXpubError::Base58)?;
 
         Self::decode(&data).map_err(ParseXpubError::Decode)
     }
@@ -1301,9 +1326,7 @@ pub mod error {
     #[non_exhaustive]
     pub enum ParseXprivError {
         /// Base58 encoding error.
-        Base58(base58::DecodeCheckError),
-        /// Base58 decoded data was an invalid length.
-        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+        Base58(base58::DecodeCheckArrayError),
         /// Binary xpriv decode error.
         Decode(XprivDecodeError),
     }
@@ -1317,7 +1340,6 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::Base58(ref e) => Some(e),
-                Self::InvalidBase58PayloadLength(ref e) => Some(e),
                 Self::Decode(ref e) => Some(e),
             }
         }
@@ -1327,14 +1349,9 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
                 Self::Decode(ref e) => e.fmt(f),
             }
         }
-    }
-
-    impl From<base58::DecodeCheckError> for ParseXprivError {
-        fn from(e: base58::DecodeCheckError) -> Self { Self::Base58(e) }
     }
 
     /// Error parsing a base58check BIP-0032 xpub string.
@@ -1342,9 +1359,7 @@ pub mod error {
     #[non_exhaustive]
     pub enum ParseXpubError {
         /// Base58 encoding error.
-        Base58(base58::DecodeCheckError),
-        /// Base58 decoded data was an invalid length.
-        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+        Base58(base58::DecodeCheckArrayError),
         /// Binary xpub decode error.
         Decode(XpubDecodeError),
     }
@@ -1358,7 +1373,6 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::Base58(ref e) => Some(e),
-                Self::InvalidBase58PayloadLength(ref e) => Some(e),
                 Self::Decode(ref e) => Some(e),
             }
         }
@@ -1368,14 +1382,9 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
                 Self::Decode(ref e) => e.fmt(f),
             }
         }
-    }
-
-    impl From<base58::DecodeCheckError> for ParseXpubError {
-        fn from(e: base58::DecodeCheckError) -> Self { Self::Base58(e) }
     }
 
     /// Attempted to derive a child of depth 256 or higher.
@@ -1596,40 +1605,6 @@ pub mod error {
         }
     }
 
-    /// Decoded base58 data was an invalid length.
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct InvalidBase58PayloadLengthError {
-        /// The base58 payload length we got after decoding xpriv/xpub string.
-        pub(crate) length: usize,
-    }
-
-    impl From<Infallible> for InvalidBase58PayloadLengthError {
-        fn from(never: Infallible) -> Self { match never {} }
-    }
-
-    #[cfg(feature = "std")]
-    impl std::error::Error for InvalidBase58PayloadLengthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { length: _ } = self;
-            None
-        }
-    }
-
-    impl InvalidBase58PayloadLengthError {
-        /// Returns the invalid payload length.
-        pub fn invalid_base58_payload_length(&self) -> usize { self.length }
-    }
-
-    impl fmt::Display for InvalidBase58PayloadLengthError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(
-                f,
-                "decoded base58 xpriv/xpub data was an invalid length: {} (expected 78)",
-                self.length
-            )
-        }
-    }
-
     /// Master seed had an invalid length.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct InvalidSeedLengthError {
@@ -1664,6 +1639,7 @@ pub mod error {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for RelativeDerivationPath {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -1672,6 +1648,7 @@ impl<'a> Arbitrary<'a> for RelativeDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AbsoluteDerivationPath {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -1740,6 +1717,7 @@ impl<'a> Arbitrary<'a> for Xpriv {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
     use alloc::format;
@@ -2251,15 +2229,13 @@ mod tests {
             let encoded = base58::Base58CkString::encode(&vec![0u8; len]).unwrap();
 
             match encoded.as_str().parse::<Xpriv>() {
-                Err(ParseXprivError::InvalidBase58PayloadLength(e)) =>
-                    assert_eq!(e.invalid_base58_payload_length(), len),
-                result => panic!("Expected InvalidBase58PayloadLength error, got {:?}", result),
+                Err(ParseXprivError::Base58(e)) => assert_eq!(e.invalid_length(), Some((len, 78))),
+                result => panic!("Expected Base58 invalid length error, got {:?}", result),
             }
 
             match encoded.as_str().parse::<Xpub>() {
-                Err(ParseXpubError::InvalidBase58PayloadLength(e)) =>
-                    assert_eq!(e.invalid_base58_payload_length(), len),
-                result => panic!("Expected InvalidBase58PayloadLength error, got {:?}", result),
+                Err(ParseXpubError::Base58(e)) => assert_eq!(e.invalid_length(), Some((len, 78))),
+                result => panic!("Expected Base58 invalid length error, got {:?}", result),
             }
         }
     }
