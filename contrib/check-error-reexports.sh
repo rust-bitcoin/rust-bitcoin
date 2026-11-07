@@ -85,6 +85,9 @@ check_required_commands() {
     need_cmd grep
     need_cmd sed
     need_cmd sort
+    if ! printf 'probe\n' | grep -P '^probe$' > /dev/null 2>&1; then
+        err "need grep with Perl-compatible regular expression support (-P)"
+    fi
 }
 
 generate_api_files() {
