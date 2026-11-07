@@ -6,7 +6,7 @@ resolver = "2"
 [workspace.metadata]
 rbmt.version = "0.5.4"
 rbmt.lock.lockfiles = ["minimal", "recent"]
-rbmt.toolchains.nightly = "nightly-2026-10-31"
+rbmt.toolchains.nightly = "nightly-2026-11-07"
 rbmt.toolchains.stable = "1.99.1"
 
 [workspace.dependencies]
