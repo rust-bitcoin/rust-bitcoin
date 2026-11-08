@@ -211,7 +211,8 @@ The main types are:
 
 Empty crate to reserve the name on crates.io
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.6.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.7.0...HEAD
+[0.7.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.6.0...bitcoin-units-0.7.0
 [0.6.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.5.0...bitcoin-units-0.6.0
 [0.5.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.4.0...bitcoin-units-0.5.0
 [0.4.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.3.0...bitcoin-units-0.4.0
