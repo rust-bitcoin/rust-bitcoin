@@ -2,7 +2,7 @@ use std::env;
 
 use bitcoin::address::{Address, AddressParams};
 use bitcoin::bip32::{ChildNumber, RelativeDerivationPath, Xpriv, Xpub};
-use bitcoin::{hex, FullPublicKey, NetworkKind};
+use bitcoin::{hex, NetworkKind};
 
 fn main() {
     // This example derives root xprv from a 32-byte seed,
@@ -38,7 +38,7 @@ fn main() {
     // generate first receiving address at m/0/0
     // manually creating indexes this time
     let zero = ChildNumber::ZERO_NORMAL;
-    let public_key = xpub.derive_from_path([zero, zero]).unwrap().public_key;
-    let address = Address::p2wpkh(FullPublicKey::from_secp(public_key), AddressParams::MAINNET);
+    let public_key = xpub.derive_from_path([zero, zero]).unwrap().to_public_key();
+    let address = Address::p2wpkh(public_key, AddressParams::MAINNET);
     println!("First receiving address: {address}");
 }

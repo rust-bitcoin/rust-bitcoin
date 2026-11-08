@@ -22,9 +22,10 @@ use network::NetworkKind;
 #[doc(no_inline)]
 pub use self::error::{
     CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
-    InvalidBase58PayloadLengthError, InvalidSeedLengthError, MaximumDepthExceededError,
-    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseRelativeDerivationPathError,
-    ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError
+    InvalidBase58PayloadLengthError, InvalidSeedLengthError, InvalidXkeyPartsError,
+    MaximumDepthExceededError, ParseAbsoluteDerivationPathError, ParseChildNumberError,
+    ParseRelativeDerivationPathError, ParseXprivError, ParseXpubError, XkeyDecodeError,
+    XprivDecodeError, XpubDecodeError
 };
 
 /// Version bytes for extended public keys on Bitcoin Mainnet.
@@ -157,26 +158,29 @@ impl_bip32_seed_from_array!(
 );
 
 /// Extended private key
+///
+/// Read metadata through the getters. Use checked [`Self::from_parts`] construction and
+/// [`Self::to_parts`] for component access, including the raw private key.
+///
+/// `Debug` hides only the private-key field; metadata, including the chain code, remains visible.
 #[derive(Copy, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Xpriv {
     /// The network this key is to be used on
-    pub network: NetworkKind,
+    network: NetworkKind,
     /// How many derivations this key is from the master (which is 0)
-    pub depth: u8,
+    depth: u8,
     /// Fingerprint of the parent key (0 for master)
-    pub parent_fingerprint: Fingerprint,
+    parent_fingerprint: Fingerprint,
     /// Child number of the key used to derive from parent (0 for master)
-    pub child_number: ChildNumber,
+    child_number: ChildNumber,
     /// Private key
-    pub private_key: secp256k1::SecretKey,
+    private_key: secp256k1::SecretKey,
     /// Chain code
-    pub chain_code: ChainCode,
+    chain_code: ChainCode,
 }
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpriv, "a BIP-0032 extended private key");
 
-#[cfg(not(feature = "std"))]
 impl fmt::Debug for Xpriv {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Xpriv")
@@ -191,23 +195,93 @@ impl fmt::Debug for Xpriv {
 }
 
 /// Extended public key
+///
+/// Read metadata through the getters. Use checked [`Self::from_parts`] construction and
+/// [`Self::to_parts`] for component access, including the raw public key.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
 pub struct Xpub {
     /// The network kind this key is to be used on
-    pub network: NetworkKind,
+    network: NetworkKind,
     /// How many derivations this key is from the master (which is 0)
-    pub depth: u8,
+    depth: u8,
     /// Fingerprint of the parent key
-    pub parent_fingerprint: Fingerprint,
+    parent_fingerprint: Fingerprint,
     /// Child number of the key used to derive from parent (0 for master)
-    pub child_number: ChildNumber,
+    child_number: ChildNumber,
     /// Public key
-    pub public_key: secp256k1::PublicKey,
+    public_key: secp256k1::PublicKey,
     /// Chain code
-    pub chain_code: ChainCode,
+    chain_code: ChainCode,
 }
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpub, "a BIP-0032 extended public key");
+
+/// Unchecked components of an [`Xpriv`].
+///
+/// [`Xpriv::from_parts`] checks master-key metadata, but does not verify ancestry or derivation.
+/// `Debug` hides only the private-key field; metadata, including the chain code, remains visible.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_key_expression::bip32::{Xpriv, XprivParts};
+/// use bitcoin_key_expression::secp256k1::SecretKey;
+///
+/// let key: Xpriv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi".parse().unwrap();
+/// let parts = XprivParts {
+///     private_key: SecretKey::from_secret_bytes([1; 32]).unwrap(),
+///     ..key.to_parts()
+/// };
+/// let rebuilt = Xpriv::from_parts(parts).unwrap();
+/// assert_eq!(rebuilt.to_parts(), parts);
+/// ```
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub struct XprivParts {
+    /// The network this key is to be used on.
+    pub network: NetworkKind,
+    /// The number of derivations from the master key.
+    pub depth: u8,
+    /// Fingerprint of the parent key (zero for a master key).
+    pub parent_fingerprint: Fingerprint,
+    /// Child number used to derive this key (normal zero for a master key).
+    pub child_number: ChildNumber,
+    /// Private key.
+    pub private_key: secp256k1::SecretKey,
+    /// Chain code.
+    pub chain_code: ChainCode,
+}
+
+impl fmt::Debug for XprivParts {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("XprivParts")
+            .field("network", &self.network)
+            .field("depth", &self.depth)
+            .field("parent_fingerprint", &self.parent_fingerprint)
+            .field("child_number", &self.child_number)
+            .field("chain_code", &self.chain_code)
+            .field("private_key", &"[SecretKey]")
+            .finish()
+    }
+}
+
+/// Unchecked components of an [`Xpub`].
+///
+/// [`Xpub::from_parts`] checks master-key metadata, but does not verify ancestry or derivation.
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub struct XpubParts {
+    /// The network this key is to be used on.
+    pub network: NetworkKind,
+    /// The number of derivations from the master key.
+    pub depth: u8,
+    /// Fingerprint of the parent key (zero for a master key).
+    pub parent_fingerprint: Fingerprint,
+    /// Child number used to derive this key (normal zero for a master key).
+    pub child_number: ChildNumber,
+    /// Public key.
+    pub public_key: secp256k1::PublicKey,
+    /// Chain code.
+    pub chain_code: ChainCode,
+}
 
 /// Tweak data for deriving a BIP-0032 child xpub.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -729,6 +803,53 @@ impl fmt::Debug for RelativeDerivationPath {
 pub type KeySource = (Fingerprint, RelativeDerivationPath);
 
 impl Xpriv {
+    /// Constructs an extended private key from its components.
+    ///
+    /// Only master-key metadata is checked; ancestry and derivation are not verified.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if depth is zero and the parent fingerprint is nonzero or the child number
+    /// is not [`ChildNumber::ZERO_NORMAL`]. The fingerprint is checked first.
+    pub fn from_parts(parts: XprivParts) -> Result<Self, InvalidXkeyPartsError> {
+        validate_xkey_metadata(parts.depth, parts.parent_fingerprint, parts.child_number)?;
+        Ok(Self {
+            network: parts.network,
+            depth: parts.depth,
+            parent_fingerprint: parts.parent_fingerprint,
+            child_number: parts.child_number,
+            private_key: parts.private_key,
+            chain_code: parts.chain_code,
+        })
+    }
+
+    /// Returns the components of this extended private key, including the raw private key.
+    pub fn to_parts(self) -> XprivParts {
+        XprivParts {
+            network: self.network,
+            depth: self.depth,
+            parent_fingerprint: self.parent_fingerprint,
+            child_number: self.child_number,
+            private_key: self.private_key,
+            chain_code: self.chain_code,
+        }
+    }
+
+    /// Returns the network this key is to be used on.
+    pub fn network(&self) -> NetworkKind { self.network }
+
+    /// Returns the number of derivations from the master key.
+    pub fn depth(&self) -> u8 { self.depth }
+
+    /// Returns the parent key's fingerprint.
+    pub fn parent_fingerprint(&self) -> Fingerprint { self.parent_fingerprint }
+
+    /// Returns the child number used to derive this key.
+    pub fn child_number(&self) -> ChildNumber { self.child_number }
+
+    /// Returns a reference to the chain code.
+    pub fn chain_code(&self) -> &ChainCode { &self.chain_code }
+
     /// Constructs a new master key from a [`Bip32Seed`].
     #[allow(clippy::missing_panics_doc)]
     pub fn new_master(network: impl Into<NetworkKind>, seed: impl AsRef<Bip32Seed>) -> Self {
@@ -893,6 +1014,53 @@ impl Xpriv {
 }
 
 impl Xpub {
+    /// Constructs an extended public key from its components.
+    ///
+    /// Only master-key metadata is checked; ancestry and derivation are not verified.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if depth is zero and the parent fingerprint is nonzero or the child number
+    /// is not [`ChildNumber::ZERO_NORMAL`]. The fingerprint is checked first.
+    pub fn from_parts(parts: XpubParts) -> Result<Self, InvalidXkeyPartsError> {
+        validate_xkey_metadata(parts.depth, parts.parent_fingerprint, parts.child_number)?;
+        Ok(Self {
+            network: parts.network,
+            depth: parts.depth,
+            parent_fingerprint: parts.parent_fingerprint,
+            child_number: parts.child_number,
+            public_key: parts.public_key,
+            chain_code: parts.chain_code,
+        })
+    }
+
+    /// Returns the components of this extended public key, including the raw public key.
+    pub fn to_parts(self) -> XpubParts {
+        XpubParts {
+            network: self.network,
+            depth: self.depth,
+            parent_fingerprint: self.parent_fingerprint,
+            child_number: self.child_number,
+            public_key: self.public_key,
+            chain_code: self.chain_code,
+        }
+    }
+
+    /// Returns the network this key is to be used on.
+    pub fn network(&self) -> NetworkKind { self.network }
+
+    /// Returns the number of derivations from the master key.
+    pub fn depth(&self) -> u8 { self.depth }
+
+    /// Returns the parent key's fingerprint.
+    pub fn parent_fingerprint(&self) -> Fingerprint { self.parent_fingerprint }
+
+    /// Returns the child number used to derive this key.
+    pub fn child_number(&self) -> ChildNumber { self.child_number }
+
+    /// Returns a reference to the chain code.
+    pub fn chain_code(&self) -> &ChainCode { &self.chain_code }
+
     /// Constructs a new extended public key from an extended private key.
     #[deprecated(since = "TBD", note = "use `from_xpriv()` instead")]
     pub fn from_priv(sk: &Xpriv) -> Self { Self::from_xpriv(sk) }
@@ -1112,6 +1280,24 @@ impl From<&Xpub> for XKeyIdentifier {
     fn from(key: &Xpub) -> Self { key.identifier() }
 }
 
+fn validate_xkey_metadata(
+    depth: u8,
+    parent_fingerprint: Fingerprint,
+    child_number: ChildNumber,
+) -> Result<(), InvalidXkeyPartsError> {
+    if depth == 0 {
+        if parent_fingerprint != Fingerprint::default() {
+            return Err(InvalidXkeyPartsError::NonZeroParentFingerprintForMasterKey(
+                parent_fingerprint,
+            ));
+        }
+        if child_number != ChildNumber::ZERO_NORMAL {
+            return Err(InvalidXkeyPartsError::NonZeroChildNumberForMasterKey(child_number));
+        }
+    }
+    Ok(())
+}
+
 // Helps unify decoding
 struct Common {
     network: [u8; 4],
@@ -1139,21 +1325,20 @@ impl Common {
         let (&child_number, data) = data.split_array::<4, 65>();
         let (&chain_code, &key) = data.split_array::<32, 33>();
 
-        if depth == 0 {
-            if parent_fingerprint != [0u8; 4] {
-                return Err(XkeyDecodeError::NonZeroParentFingerprintForMasterKey);
-            }
-
-            if child_number != [0u8; 4] {
-                return Err(XkeyDecodeError::NonZeroChildNumberForMasterKey);
-            }
-        }
+        let parent_fingerprint = parent_fingerprint.into();
+        let child_number = u32::from_be_bytes(child_number).into();
+        validate_xkey_metadata(depth, parent_fingerprint, child_number).map_err(|e| match e {
+            InvalidXkeyPartsError::NonZeroParentFingerprintForMasterKey(_) =>
+                XkeyDecodeError::NonZeroParentFingerprintForMasterKey,
+            InvalidXkeyPartsError::NonZeroChildNumberForMasterKey(_) =>
+                XkeyDecodeError::NonZeroChildNumberForMasterKey,
+        })?;
 
         Ok(Self {
             network,
             depth,
-            parent_fingerprint: parent_fingerprint.into(),
-            child_number: u32::from_be_bytes(child_number).into(),
+            parent_fingerprint,
+            child_number,
             chain_code: chain_code.into(),
             key,
         })
@@ -1166,6 +1351,43 @@ pub mod error {
     use core::fmt;
 
     use internals::write_err;
+
+    use super::{ChildNumber, Fingerprint};
+
+    /// Invalid metadata in the components of a BIP-0032 extended key.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum InvalidXkeyPartsError {
+        /// Non-zero parent fingerprint for a master key (depth zero).
+        NonZeroParentFingerprintForMasterKey(Fingerprint),
+        /// Child number other than normal zero for a master key (depth zero).
+        NonZeroChildNumberForMasterKey(ChildNumber),
+    }
+
+    impl From<Infallible> for InvalidXkeyPartsError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidXkeyPartsError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::NonZeroParentFingerprintForMasterKey(_) => None,
+                Self::NonZeroChildNumberForMasterKey(_) => None,
+            }
+        }
+    }
+
+    impl fmt::Display for InvalidXkeyPartsError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::NonZeroParentFingerprintForMasterKey(fingerprint) =>
+                    write!(f, "non-zero parent fingerprint in master key: {}", fingerprint),
+                Self::NonZeroChildNumberForMasterKey(child_number) =>
+                    write!(f, "non-zero child number in master key: {}", child_number),
+            }
+        }
+    }
 
     /// Error decoding common fields of a BIP-0032 extended key.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1701,6 +1923,34 @@ impl<'a> Arbitrary<'a> for ChildNumber {
 }
 
 #[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for XpubParts {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            network: u.arbitrary()?,
+            depth: u.arbitrary()?,
+            parent_fingerprint: u.arbitrary()?,
+            child_number: u.arbitrary()?,
+            public_key: u.arbitrary()?,
+            chain_code: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for XprivParts {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            network: u.arbitrary()?,
+            depth: u.arbitrary()?,
+            parent_fingerprint: u.arbitrary()?,
+            child_number: u.arbitrary()?,
+            private_key: u.arbitrary()?,
+            chain_code: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Xpub {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let depth = u.arbitrary()?;
@@ -1749,6 +1999,141 @@ mod tests {
 
     use super::*;
 
+    #[test]
+    fn xkey_parts_reject_invalid_master_metadata() {
+        let xpriv = Xpriv::new_master(NetworkKind::Main, [1; 32]).to_parts();
+        let xpub = Xpriv::from_parts(xpriv).unwrap().to_xpub().to_parts();
+        for (parent_fingerprint, child_number, expected) in [
+            (
+                Fingerprint::from([1; 4]),
+                ChildNumber::ZERO_NORMAL,
+                InvalidXkeyPartsError::NonZeroParentFingerprintForMasterKey(Fingerprint::from(
+                    [1; 4],
+                )),
+            ),
+            (
+                Fingerprint::default(),
+                ChildNumber::ONE_NORMAL,
+                InvalidXkeyPartsError::NonZeroChildNumberForMasterKey(ChildNumber::ONE_NORMAL),
+            ),
+            (
+                Fingerprint::default(),
+                ChildNumber::ZERO_HARDENED,
+                InvalidXkeyPartsError::NonZeroChildNumberForMasterKey(ChildNumber::ZERO_HARDENED),
+            ),
+            (
+                Fingerprint::from([1; 4]),
+                ChildNumber::ZERO_HARDENED,
+                InvalidXkeyPartsError::NonZeroParentFingerprintForMasterKey(Fingerprint::from(
+                    [1; 4],
+                )),
+            ),
+        ] {
+            assert_eq!(
+                Xpriv::from_parts(XprivParts { parent_fingerprint, child_number, ..xpriv })
+                    .unwrap_err(),
+                expected
+            );
+            assert_eq!(
+                Xpub::from_parts(XpubParts { parent_fingerprint, child_number, ..xpub })
+                    .unwrap_err(),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn xkey_parts_accept_unrestricted_nonmaster_metadata() {
+        let xpriv = Xpriv::new_master(NetworkKind::Test, [1; 32]).to_parts();
+        let xpub = Xpriv::from_parts(xpriv).unwrap().to_xpub().to_parts();
+        for (depth, parent_fingerprint, child_number) in [
+            (0, Fingerprint::default(), ChildNumber::ZERO_NORMAL), // Valid master control.
+            (1, Fingerprint::default(), ChildNumber::ZERO_NORMAL),
+            (u8::MAX, Fingerprint::from([0xff; 4]), ChildNumber::from_raw(u32::MAX)),
+        ] {
+            let private_parts = XprivParts {
+                depth,
+                parent_fingerprint,
+                child_number,
+                chain_code: ChainCode::from([0; 32]),
+                ..xpriv
+            };
+            let public_parts = XpubParts {
+                depth,
+                parent_fingerprint,
+                child_number,
+                chain_code: ChainCode::from([0; 32]),
+                ..xpub
+            };
+            let private_key = Xpriv::from_parts(private_parts).unwrap();
+            let public_key = Xpub::from_parts(public_parts).unwrap();
+            assert_eq!(private_key.to_parts(), private_parts);
+            assert_eq!(public_key.to_parts(), public_parts);
+            assert_eq!(Xpriv::decode(&private_key.encode()), Ok(private_key));
+            assert_eq!(Xpub::decode(&public_key.encode()), Ok(public_key));
+        }
+    }
+
+    #[test]
+    fn decode_checks_master_metadata_before_version_and_key() {
+        let mut data = [0; 78];
+        data[9..13].copy_from_slice(&u32::from(ChildNumber::ZERO_HARDENED).to_be_bytes());
+        // Invalid private-key prefix and public-key encoding, regardless of version.
+        data[45] = 1;
+        for (parent_fingerprint, expected) in [
+            ([1; 4], XkeyDecodeError::NonZeroParentFingerprintForMasterKey),
+            ([0; 4], XkeyDecodeError::NonZeroChildNumberForMasterKey),
+        ] {
+            data[5..9].copy_from_slice(&parent_fingerprint);
+            for version in [[0; 4], VERSION_BYTES_MAINNET_PRIVATE, VERSION_BYTES_MAINNET_PUBLIC] {
+                data[..4].copy_from_slice(&version);
+                assert_eq!(Xpriv::decode(&data), Err(XprivDecodeError::Xkey(expected.clone())));
+                assert_eq!(Xpub::decode(&data), Err(XpubDecodeError::Xkey(expected.clone())));
+            }
+        }
+        data[..4].fill(0);
+        data[9..13].fill(0);
+        assert_eq!(Xpriv::decode(&data), Err(XprivDecodeError::UnknownVersion([0; 4])));
+        assert_eq!(Xpub::decode(&data), Err(XpubDecodeError::UnknownVersion([0; 4])));
+    }
+
+    #[test]
+    fn xpriv_debug_redacts_private_key() {
+        let parts = XprivParts {
+            network: NetworkKind::Main,
+            depth: 0,
+            parent_fingerprint: Fingerprint::default(),
+            child_number: ChildNumber::ZERO_NORMAL,
+            private_key: secp256k1::SecretKey::from_secret_bytes([1; 32]).unwrap(),
+            chain_code: ChainCode::from([3; 32]),
+        };
+        let other_parts = XprivParts {
+            private_key: secp256k1::SecretKey::from_secret_bytes([2; 32]).unwrap(),
+            ..parts
+        };
+        let xpriv = Xpriv::from_parts(parts).unwrap();
+        let other_key = Xpriv::from_parts(other_parts).unwrap();
+
+        assert_eq!(format!("{:?}", parts), format!("{:?}", other_parts));
+        assert_eq!(format!("{:#?}", parts), format!("{:#?}", other_parts));
+        assert_eq!(format!("{:?}", xpriv), format!("{:?}", other_key));
+        assert_eq!(format!("{:#?}", xpriv), format!("{:#?}", other_key));
+        for other_metadata in [
+            XprivParts { network: NetworkKind::Test, ..parts },
+            XprivParts { depth: 1, ..parts },
+            XprivParts { parent_fingerprint: Fingerprint::from([1; 4]), ..parts },
+            XprivParts { child_number: ChildNumber::ONE_NORMAL, ..parts },
+            XprivParts { chain_code: ChainCode::from([4; 32]), ..parts },
+        ] {
+            assert_ne!(format!("{:?}", parts), format!("{:?}", other_metadata));
+            assert_ne!(format!("{:#?}", parts), format!("{:#?}", other_metadata));
+        }
+
+        let other_depth = Xpriv::from_parts(XprivParts { depth: 1, ..parts }).unwrap();
+        assert_ne!(format!("{:?}", xpriv), format!("{:?}", other_depth));
+        assert_ne!(format!("{:#?}", xpriv), format!("{:#?}", other_depth));
+    }
+
     #[cfg(feature = "arbitrary")]
     #[test]
     fn arbitrary_master_xpub() {
@@ -1757,9 +2142,9 @@ mod tests {
         data[..2].fill(0);
         let xpub = Xpub::arbitrary(&mut Unstructured::new(&data)).unwrap();
 
-        assert_eq!(xpub.depth, 0);
-        assert_eq!(xpub.parent_fingerprint, Fingerprint::default());
-        assert_eq!(xpub.child_number, ChildNumber::ZERO_NORMAL);
+        assert_eq!(xpub.depth(), 0);
+        assert_eq!(xpub.parent_fingerprint(), Fingerprint::default());
+        assert_eq!(xpub.child_number(), ChildNumber::ZERO_NORMAL);
         assert_eq!(Xpub::decode(&xpub.encode()).unwrap(), xpub);
     }
 
@@ -1769,9 +2154,9 @@ mod tests {
         let data = [1; 128];
         let xpub = Xpub::arbitrary(&mut Unstructured::new(&data)).unwrap();
 
-        assert_eq!(xpub.depth, 1);
-        assert_eq!(xpub.parent_fingerprint, Fingerprint::from_byte_array([1; 4]));
-        assert_eq!(xpub.child_number, ChildNumber::from_raw(0x0101_0101));
+        assert_eq!(xpub.depth(), 1);
+        assert_eq!(xpub.parent_fingerprint(), Fingerprint::from_byte_array([1; 4]));
+        assert_eq!(xpub.child_number(), ChildNumber::from_raw(0x0101_0101));
         assert_eq!(Xpub::decode(&xpub.encode()).unwrap(), xpub);
     }
 
@@ -2026,7 +2411,7 @@ mod tests {
             sk = sk.derive_child(num).unwrap();
             if num.is_normal() {
                 let tweak = pk.derive_child_tweak(num).unwrap();
-                assert_eq!(tweak.chain_code, Xpub::from_xpriv(&sk).chain_code);
+                assert_eq!(&tweak.chain_code, Xpub::from_xpriv(&sk).chain_code());
 
                 let pk2 = pk.derive_child(num).unwrap();
                 pk = Xpub::from_xpriv(&sk);
@@ -2044,6 +2429,8 @@ mod tests {
         }
 
         // Check result against expected base58
+        let sk = Xpriv::from_parts(sk.to_parts()).unwrap();
+        let pk = Xpub::from_parts(pk.to_parts()).unwrap();
         assert_eq!(&sk.to_string()[..], expected_sk);
         assert_eq!(&pk.to_string()[..], expected_pk);
         // Check decoded base58 against result
@@ -2360,26 +2747,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
     fn schnorr_broken_privkey_zeros() {
-        /* this is how we generate key:
-        let mut sk = secp256k1::key::ONE_KEY;
-
-        let zeros = [0u8; 32];
-        unsafe {
-            sk.as_mut_ptr().copy_from(zeros.as_ptr(), 32);
-        }
-
-        let xpriv = Xpriv {
-            network: NetworkKind::Main,
-            depth: 0,
-            parent_fingerprint: Default::default(),
-            child_number: ChildNumber::ZERO_NORMAL,
-            private_key: sk,
-            chain_code: ChainCode::from([0u8; 32])
-        };
-
-        println!("{}", xpriv);
-         */
-
         // Xpriv having secret key set to all zeros
         let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx";
         xpriv_str.parse::<Xpriv>().unwrap();

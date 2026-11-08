@@ -4,6 +4,8 @@
 
 - `pow`'s internal `U256` helper (used only by `U256Wrapper` byte-array conversions) is now sourced
   from `bitcoin-internals` instead of a duplicated `include!` module.
+- BREAKING: `bip32::Xpriv`/`Xpub` fields are private; use metadata getters, checked `from_parts`
+  construction, and `to_parts` for raw-key access (or `to_public_key` for the public-key wrapper).
 
 ## [0.33.0-beta] - 2026-02-17
 
