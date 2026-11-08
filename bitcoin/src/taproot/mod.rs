@@ -25,7 +25,7 @@ use crate::crypto::key::{
     SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey,
 };
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
-use crate::{hex, TaprootLeaf, TaprootLeafBuf, TapScript, TapScriptBuf};
+use crate::{hex, TapScript, TapScriptBuf, TaprootLeaf, TaprootLeafBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.
 #[rustfmt::skip]
@@ -144,24 +144,19 @@ impl<S: AsRef<TaprootLeaf>> LeafScript<S> {
 
 impl<'a> From<&'a TapScript> for LeafScript<&'a TaprootLeaf> {
     fn from(value: &'a TapScript) -> Self {
-        Self {
-            version: LeafVersion::TapScript,
-            script: value.as_ref(),
-        }
+        Self { version: LeafVersion::TapScript, script: value.as_ref() }
     }
 }
 
 impl From<TapScriptBuf> for LeafScript<TaprootLeafBuf> {
     fn from(value: TapScriptBuf) -> Self {
-        Self {
-            version: LeafVersion::TapScript,
-            script: value.into(),
-        }
+        Self { version: LeafVersion::TapScript, script: value.into() }
     }
 }
 
 // type alias for versioned leaf script corresponding Merkle proof
-type ScriptMerkleProofMap = BTreeMap<(TaprootLeafBuf, LeafVersion), BTreeSet<TaprootMerkleBranchBuf>>;
+type ScriptMerkleProofMap =
+    BTreeMap<(TaprootLeafBuf, LeafVersion), BTreeSet<TaprootMerkleBranchBuf>>;
 
 /// Represents Taproot spending information.
 ///
@@ -300,7 +295,10 @@ impl TaprootSpendInfo {
     ///
     /// - If there are multiple control blocks possible, returns the shortest one.
     /// - If the script is not contained in the [`TaprootSpendInfo`], returns `None`.
-    pub fn control_block(&self, script_ver: &(TaprootLeafBuf, LeafVersion)) -> Option<ControlBlock> {
+    pub fn control_block(
+        &self,
+        script_ver: &(TaprootLeafBuf, LeafVersion),
+    ) -> Option<ControlBlock> {
         let merkle_branch_set = self.script_map.get(script_ver)?;
         // Choose the smallest one amongst the multiple script maps
         let smallest = merkle_branch_set
@@ -402,8 +400,10 @@ impl TaprootBuilder {
     {
         let mut node_weights = BinaryHeap::<(Reverse<u32>, NodeInfo)>::new();
         for (p, leaf) in script_weights {
-            node_weights
-                .push((Reverse(p), NodeInfo::new_leaf_with_ver(leaf.into(), LeafVersion::TapScript)));
+            node_weights.push((
+                Reverse(p),
+                NodeInfo::new_leaf_with_ver(leaf.into(), LeafVersion::TapScript),
+            ));
         }
         if node_weights.is_empty() {
             return Err(TaprootBuilderError::EmptyTree);

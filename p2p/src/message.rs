@@ -1272,9 +1272,7 @@ enum V1NetworkMessageDecoderState {
 }
 
 impl Default for V1NetworkMessageDecoderState {
-    fn default() -> Self {
-        Self::Header { header_decoder: V1MessageHeaderDecoder::default() }
-    }
+    fn default() -> Self { Self::Header { header_decoder: V1MessageHeaderDecoder::default() } }
 }
 
 /// Decoder for [`V1NetworkMessage`].
