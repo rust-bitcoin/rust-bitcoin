@@ -241,6 +241,14 @@ pub mod as_sat {
                 }
 
                 #[inline]
+                fn visit_unit<E>(self) -> Result<Self::Value, E>
+                where
+                    E: de::Error,
+                {
+                    Ok(None)
+                }
+
+                #[inline]
                 fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
                 where
                     D: Deserializer<'de>,
@@ -422,6 +430,14 @@ pub mod as_btc {
                 }
 
                 #[inline]
+                fn visit_unit<E>(self) -> Result<Self::Value, E>
+                where
+                    E: de::Error,
+                {
+                    Ok(None)
+                }
+
+                #[inline]
                 fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
                 where
                     D: Deserializer<'de>,
@@ -589,6 +605,14 @@ pub mod as_str {
 
                 #[inline]
                 fn visit_none<E>(self) -> Result<Self::Value, E>
+                where
+                    E: de::Error,
+                {
+                    Ok(None)
+                }
+
+                #[inline]
+                fn visit_unit<E>(self) -> Result<Self::Value, E>
                 where
                     E: de::Error,
                 {
