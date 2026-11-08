@@ -229,21 +229,15 @@ impl TryFrom<&WitnessScript> for WScriptHash {
 }
 
 impl AsRef<TaprootLeaf> for TapScript {
-    fn as_ref(&self) -> &TaprootLeaf {
-        TaprootLeaf::from_bytes(self.as_bytes())
-    }
+    fn as_ref(&self) -> &TaprootLeaf { TaprootLeaf::from_bytes(self.as_bytes()) }
 }
 
 impl AsRef<TaprootLeaf> for TapScriptBuf {
-    fn as_ref(&self) -> &TaprootLeaf {
-        TaprootLeaf::from_bytes(self.as_bytes())
-    }
+    fn as_ref(&self) -> &TaprootLeaf { TaprootLeaf::from_bytes(self.as_bytes()) }
 }
 
 impl From<TapScriptBuf> for TaprootLeafBuf {
-    fn from(value: TapScriptBuf) -> Self {
-        Self::from_bytes(value.into_bytes())
-    }
+    fn from(value: TapScriptBuf) -> Self { Self::from_bytes(value.into_bytes()) }
 }
 
 /// Borrows the entire witness script as `ScriptCode`.
