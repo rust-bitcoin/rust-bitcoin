@@ -952,9 +952,10 @@ impl Xpriv {
     /// * [`XprivDecodeError::InvalidPrivateKeyPrefix`] if the private key bytes don't start with zero.
     /// * [`XprivDecodeError::Secp256k1`] if the private key bytes are not a valid secp secret key.
     pub fn decode(data: &[u8]) -> Result<Self, XprivDecodeError> {
-        let data: &[u8; 78] = data.try_into().map_err(|_| {
-            XprivDecodeError::Xkey(XkeyDecodeError::WrongExtendedKeyLength(data.len()))
-        })?;
+        let data: &[u8; 78] = data
+            .try_into()
+            .map_err(|_| XkeyDecodeError::WrongExtendedKeyLength(data.len()))
+            .map_err(XprivDecodeError::Xkey)?;
         Self::from_byte_array(data)
     }
 
@@ -1173,9 +1174,10 @@ impl Xpub {
     /// * [`XpubDecodeError::UnknownVersion`] if the decoded network value is not main or testnet.
     /// * [`XpubDecodeError::Secp256k1`] if the public key bytes are not a valid secp public key.
     pub fn decode(data: &[u8]) -> Result<Self, XpubDecodeError> {
-        let data: &[u8; 78] = data.try_into().map_err(|_| {
-            XpubDecodeError::Xkey(XkeyDecodeError::WrongExtendedKeyLength(data.len()))
-        })?;
+        let data: &[u8; 78] = data
+            .try_into()
+            .map_err(|_| XkeyDecodeError::WrongExtendedKeyLength(data.len()))
+            .map_err(XpubDecodeError::Xkey)?;
         Self::from_byte_array(data)
     }
 
