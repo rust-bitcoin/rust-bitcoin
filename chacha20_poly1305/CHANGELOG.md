@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-06
+
+* [BREAKING] Drop `Copy` from `Error` [#6894](https://github.com/rust-bitcoin/rust-bitcoin/pull/6894).
+* A lot of work was done under the hood for SIMD support.
+  * ChaCha20: Accelerate `apply_keystream` on aarch64 using Neon SIMD [#6855](https://github.com/rust-bitcoin/rust-bitcoin/pull/6855).
+  * ChaCha20: Add 4-block parallel processing on x86 with SSE2 [#6932](https://github.com/rust-bitcoin/rust-bitcoin/pull/6932).
+  * ChaCha20: Add 8-block parallel processing on x86 with AVX2 [#6980](https://github.com/rust-bitcoin/rust-bitcoin/pull/6980).
+  * Poly1305: Add 4-block parallel processing on aarch64 with Neon [#7149](https://github.com/rust-bitcoin/rust-bitcoin/pull/7149).
+  * Poly1305: Add 4-block parallel processing on x86 with AVX2 [#7145](https://github.com/rust-bitcoin/rust-bitcoin/pull/7145).
+
 ## [0.2.1] - 2026-07-28
 
 * Use constant-time equality for Poly1305 tag verification [#6125](https://github.com/rust-bitcoin/rust-bitcoin/pull/6125).
@@ -26,7 +36,8 @@
 
 * Initial release to create the chacha20-poly1305 crate.
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/chacha20-poly1305-0.2.1...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/chacha20-poly1305-0.3.0...HEAD
+[0.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/chacha20-poly1305-0.2.1...chacha20-poly1305-0.3.0
 [0.2.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/chacha20-poly1305-0.2.0...chacha20-poly1305-0.2.1
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/chacha20-poly1305-0.1.2...chacha20-poly1305-0.2.0
 [0.1.2]: https://github.com/rust-bitcoin/rust-bitcoin/compare/chacha20-poly1305-0.1.1...chacha20-poly1305-0.1.2
