@@ -3,3 +3,4 @@
 doc-valid-idents = ["SegWit", "OpenSSL"]
 
 avoid-breaking-exported-api = false
+trivial-copy-size-limit = 32
