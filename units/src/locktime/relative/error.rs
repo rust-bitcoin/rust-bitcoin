@@ -288,8 +288,8 @@ impl std::error::Error for InvalidHeightError {
 pub struct InvalidTimeError {
     /// The `chain_tip` argument.
     pub(crate) chain_tip: crate::BlockMtp,
-    /// The `utxo_mined_at` argument.
-    pub(crate) utxo_mined_at: crate::BlockMtp,
+    /// The `utxo_prev_block_mtp` argument.
+    pub(crate) utxo_prev_block_mtp: crate::BlockMtp,
 }
 
 impl From<Infallible> for InvalidTimeError {
@@ -300,7 +300,7 @@ impl From<Infallible> for InvalidTimeError {
 impl fmt::Display for InvalidTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_mined_at: {}", self.chain_tip, self.utxo_mined_at
+        write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_prev_block_mtp: {}", self.chain_tip, self.utxo_prev_block_mtp
         )
     }
 }
@@ -309,7 +309,7 @@ impl fmt::Display for InvalidTimeError {
 impl std::error::Error for InvalidTimeError {
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { chain_tip: _, utxo_mined_at: _ } = self;
+        let Self { chain_tip: _, utxo_prev_block_mtp: _ } = self;
         None
     }
 }
