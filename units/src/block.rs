@@ -248,7 +248,8 @@ crate::decoder_newtype! {
 impl_u32_wrapper! {
     /// An unsigned block interval.
     ///
-    /// Block interval is an integer type representing a difference between the heights of two blocks.
+    /// Block interval is an integer type representing a difference between the heights of two
+    /// blocks.
     ///
     /// This type is not meant for constructing relative block count based timelocks. It is a
     /// general purpose block interval abstraction. For locktimes please see
@@ -350,7 +351,8 @@ impl BlockMtp {
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Constructs a [`BlockMtp`] by computing the median-time-past from the last 11 block timestamps.
+    /// Constructs a [`BlockMtp`] by computing the median-time-past from the last 11 block
+    /// timestamps.
     ///
     /// Because block timestamps are not monotonic, this function internally sorts them;
     /// it is therefore not important what order they appear in the array; use whatever
@@ -427,7 +429,8 @@ impl BlockMtpInterval {
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
-    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding down.
+    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding
+    /// down.
     ///
     /// Relative timelock MTP intervals have a resolution of 512 seconds, while
     /// [`BlockMtpInterval`], like all block timestamp types, has a one-second resolution.
@@ -443,7 +446,8 @@ impl BlockMtpInterval {
         relative::NumberOf512Seconds::from_seconds_floor(self.to_u32())
     }
 
-    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding up.
+    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding
+    /// up.
     ///
     /// Relative timelock MTP intervals have a resolution of 512 seconds, while
     /// [`BlockMtpInterval`], like all block timestamp types, has a one-second resolution.

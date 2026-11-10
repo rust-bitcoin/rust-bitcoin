@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides type [`LockTime`] that implements the logic around `nSequence`/`OP_CHECKSEQUENCEVERIFY`.
+//! Provides type [`LockTime`] that implements the logic around
+//! `nSequence`/`OP_CHECKSEQUENCEVERIFY`.
 //!
 //! There are two types of lock time: lock by block count and lock by time, distinguished by whether
 //! bit 22 of the `u32` consensus value is set. To support these we provide the [`NumberOfBlocks`]
@@ -32,7 +33,8 @@ pub use self::error::{
     TimeOverflowError,
 };
 
-/// A relative lock time value, representing either a count of blocks or time (512 second intervals).
+/// A relative lock time value, representing either a count of blocks or time (512 second
+/// intervals).
 ///
 /// Used for sequence numbers (`nSequence` in Bitcoin Core and `TxIn::sequence`
 /// in `rust-bitcoin`) and also for the argument to opcode `OP_CHECKSEQUENCEVERIFY`.
@@ -308,7 +310,8 @@ impl LockTime {
     /// # use bitcoin_units::Sequence;
     ///
     /// # let required_height = 100;       // 100 blocks.
-    /// # let lock = Sequence::from_block_count(required_height).to_relative_lock_time().expect("valid height");
+    /// # let lock = Sequence::from_block_count(required_height).to_relative_lock_time();
+    /// # let lock = lock.expect("valid height");
     /// # let test_sequence = Sequence::from_block_count(required_height + 10);
     ///
     /// let satisfied = match test_sequence.to_relative_lock_time() {

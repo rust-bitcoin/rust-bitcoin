@@ -476,12 +476,12 @@ pub mod error {
     /// Error with rich context returned when a string can't be parsed as an integer.
     ///
     /// This is an extension of [`core::num::ParseIntError`], which carries the input that failed to
-    /// parse as well as type information. As a result it provides very informative error messages that
-    /// make it easier to understand the problem and correct mistakes.
+    /// parse as well as type information. As a result it provides very informative error messages
+    /// that make it easier to understand the problem and correct mistakes.
     ///
-    /// Note that this is larger than the type from `core` so if it's passed through a deep call stack
-    /// in a performance-critical application you may want to box it or throw away the context by
-    /// converting to `core` type.
+    /// Note that this is larger than the type from `core` so if it's passed through a deep call
+    /// stack in a performance-critical application you may want to box it or throw away the context
+    /// by converting to `core` type.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct ParseIntError {
@@ -527,11 +527,13 @@ pub mod error {
         fn as_ref(&self) -> &core::num::ParseIntError { &self.source }
     }
 
-    /// Error returned when parsing an integer from a hex string that is supposed to contain a prefix.
+    /// Error returned when parsing an integer from a hex string that is supposed to contain a
+    /// prefix.
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub struct PrefixedHexError(pub(super) PrefixedHexErrorInner);
 
-    /// Error returned when parsing an integer from a hex string that is supposed to contain a prefix.
+    /// Error returned when parsing an integer from a hex string that is supposed to contain a
+    /// prefix.
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub(super) enum PrefixedHexErrorInner {
         /// Hex string is missing prefix.
@@ -570,7 +572,8 @@ pub mod error {
         }
     }
 
-    /// Error returned when parsing an integer from a hex string that is not supposed to contain a prefix.
+    /// Error returned when parsing an integer from a hex string that is not supposed to contain a
+    /// prefix.
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub struct UnprefixedHexError(pub(super) UnprefixedHexErrorInner);
 

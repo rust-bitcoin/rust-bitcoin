@@ -84,7 +84,8 @@ mod sealed {
 }
 
 pub mod as_sat {
-    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as real numbers denominated in satoshi.
+    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as real numbers denominated in
+    //! satoshi.
     //!
     //! Use with `#[serde(with = "amount::serde::as_sat")]`.
     //!
@@ -342,7 +343,8 @@ pub mod as_sat {
 
 #[cfg(feature = "alloc")]
 pub mod as_btc {
-    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as JSON numbers denominated in BTC.
+    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as JSON numbers denominated in
+    //! BTC.
     //!
     //! Use with `#[serde(with = "amount::serde::as_btc")]`.
     //!
@@ -522,7 +524,8 @@ pub mod as_btc {
 
 #[cfg(feature = "alloc")]
 pub mod as_str {
-    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as a JSON string denominated in BTC.
+    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as a JSON string denominated in
+    //! BTC.
     //!
     //! Use with `#[serde(with = "amount::serde::as_str")]`.
     //!

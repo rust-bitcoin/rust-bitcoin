@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides type [`LockTime`] that implements the logic around `nLockTime`/`OP_CHECKLOCKTIMEVERIFY`.
+//! Provides type [`LockTime`] that implements the logic around
+//! `nLockTime`/`OP_CHECKLOCKTIMEVERIFY`.
 //!
 //! There are two types of lock time: lock by height and lock by time, distinguished by
 //! whether [`LockTime`] < [`LOCK_TIME_THRESHOLD`]. To support these we provide the [`Height`] and

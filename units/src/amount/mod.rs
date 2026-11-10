@@ -194,8 +194,8 @@ impl Denomination {
     }
 }
 
-/// These forms are ambiguous and could have many meanings. For example, M could denote Mega or Milli.
-/// If any of these forms are used, an error type [`PossiblyConfusingDenominationError`] is
+/// These forms are ambiguous and could have many meanings. For example, M could denote Mega or
+/// Milli. If any of these forms are used, an error type [`PossiblyConfusingDenominationError`] is
 /// returned.
 const CONFUSING_FORMS: [&str; 6] = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
 
@@ -644,7 +644,8 @@ fn fmt_satoshi_in(
 ///
 /// Note: This implementation is currently **unstable**. The only thing that we can promise is that
 /// unless the precision is changed, this will display an accurate, human-readable number, and the
-/// default serialization (one with unmodified [`fmt::Formatter`] options) will round-trip with [`FromStr`].
+/// default serialization (one with unmodified [`fmt::Formatter`] options) will round-trip with
+/// [`FromStr`].
 ///
 /// See [`Amount::display_in`] and [`Amount::display_dynamic`] on how to construct this.
 #[derive(Debug, Clone)]

@@ -24,14 +24,15 @@ pub use self::error::BlockTimeDecoderError;
 mod encapsulate {
     /// A Bitcoin block timestamp.
     ///
-    /// > Each block contains a Unix time timestamp. In addition to serving as a source of variation for
-    /// > the block hash, they also make it more difficult for an adversary to manipulate the block chain.
+    /// > Each block contains a Unix time timestamp. In addition to serving as a source of variation
+    /// > for the block hash, they also make it more difficult for an adversary to manipulate the
+    /// > block chain.
     /// >
     /// > A timestamp is accepted as valid if it is greater than the median timestamp of previous 11
     /// > blocks, and less than the network-adjusted time + 2 hours. "Network-adjusted time" is the
-    /// > median of the timestamps returned by all nodes connected to you. As a result block timestamps
-    /// > are not exactly accurate, and they do not need to be. Block times are accurate only to within
-    /// > an hour or two.
+    /// > median of the timestamps returned by all nodes connected to you. As a result block
+    /// > timestamps are not exactly accurate, and they do not need to be. Block times are accurate
+    /// > only to within an hour or two.
     ///
     /// ref: <https://en.bitcoin.it/wiki/Block_timestamp>
     #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
