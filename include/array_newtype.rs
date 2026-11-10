@@ -139,9 +139,14 @@ macro_rules! impl_array_newtype_stringify {
 pub(crate) use impl_array_newtype_stringify;
 
 /// Implements standard array methods for a given wrapper type.
+///
+/// Crates with an optional `alloc` feature should pass the attribute that gates the allocating
+/// methods (e.g. `to_vec`) as a trailing argument:
+///
+/// `impl_array_newtype!(Foo, u8, 32, #[cfg(feature = "alloc")]);`
 #[allow(unused_macros)]
 macro_rules! impl_array_newtype {
-    ($thing:ident, $ty:ty, $len:literal) => {
+    ($thing:ident, $ty:ty, $len:literal $(, #[$alloc_attr:meta])?) => {
         impl $thing {
             /// Constructs a new `Self` by wrapping `bytes`.
             #[inline]
@@ -164,6 +169,7 @@ macro_rules! impl_array_newtype {
 
             /// Copies the underlying bytes into a new `Vec`.
             #[inline]
+            $(#[$alloc_attr])?
             pub fn to_vec(self) -> alloc::vec::Vec<u8> { self.0.to_vec() }
 
             /// Returns a slice of the underlying bytes.
