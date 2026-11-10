@@ -24,6 +24,12 @@ low_level_import_usage() {
     local crates=("units" "primitives")
     local found_violation=false
     local violations;
+    # An added line where the import is the first thing on it, `use`, `pub use`
+    # or `pub(crate) use`. But comments that mention `use units::` do not match
+    # because the line must start with `use` or `pub`, not `//`.
+    local import="^\+\s*(pub(\([a-z]+\))? )?use"
+    # An added line that is a plain `pub use`, a re-export, which is allowed.
+    local reexport="^\+\s*pub use"
 
     # Determine the base branch - common CI environment variables.
     local base_branch="$REMOTE/master"
@@ -34,7 +40,7 @@ low_level_import_usage() {
     fi
 
     for crate in "${crates[@]}"; do
-        violations=$(git diff "$base_branch"...HEAD -- '*.rs' | grep "^+" | grep -E "use ${crate}::" | grep -v "pub use ${crate}::" || true)
+        violations=$(git diff "$base_branch"...HEAD -- '*.rs' | grep -E "$import ${crate}::" | grep -vE "$reexport ${crate}::" || true)
         if [[ -n "$violations" ]]; then
             say_err "invalid import statement: '${violations:1}'"
             found_violation=true
