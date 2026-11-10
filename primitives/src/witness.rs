@@ -281,6 +281,26 @@ impl Witness {
     #[inline]
     pub fn last(&self) -> Option<&[u8]> { self.get_back(0) }
 
+    /// Removes the last element from the witness and returns it, or [`None`] if it is empty.
+    pub fn pop(&mut self) -> Option<Vec<u8>> {
+        let last_index = self.witness_elements.checked_sub(1)?;
+        let start = decode_cursor(&self.content, self.indices_start, last_index)?;
+
+        // Skip the compact size prefix to find where the element data begins.
+        let mut slice = &self.content[start..];
+        decode_unchecked(&mut slice);
+        let data_start = self.content.len() - slice.len();
+        let element = self.content[data_start..self.indices_start].to_vec();
+
+        // Drop the last cursor, then the element (with its prefix), keeping the index area last.
+        self.content.truncate(self.content.len() - 4);
+        self.content.drain(start..self.indices_start);
+        self.indices_start = start;
+        self.witness_elements = last_index;
+
+        Some(element)
+    }
+
     /// Retrieves an element from the end of the witness by its reverse index.
     ///
     /// `index` is 0-based from the end, where 0 is the last element, 1 is the second-to-last, etc.
@@ -1258,6 +1278,25 @@ mod tests {
             assert_eq!(iter.len(), i);
             iter.next();
         }
+    }
+
+    #[test]
+    fn pop_removes_last_element() {
+        let mut witness = Witness::from_slice(&[b"sig".as_slice(), b"", b"witness_script"]);
+
+        assert_eq!(witness.pop(), Some(b"witness_script".to_vec()));
+        assert_eq!(witness.len(), 2);
+        assert_eq!(witness.to_vec(), vec![b"sig".to_vec(), vec![]]);
+
+        // The witness is still usable after a pop.
+        witness.push(b"new");
+        assert_eq!(witness.to_vec(), vec![b"sig".to_vec(), vec![], b"new".to_vec()]);
+
+        assert_eq!(witness.pop(), Some(b"new".to_vec()));
+        assert_eq!(witness.pop(), Some(vec![]));
+        assert_eq!(witness.pop(), Some(b"sig".to_vec()));
+        assert_eq!(witness.pop(), None);
+        assert!(witness.is_empty());
     }
 
     #[test]
