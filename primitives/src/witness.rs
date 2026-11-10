@@ -281,6 +281,24 @@ impl Witness {
     #[inline]
     pub fn last(&self) -> Option<&[u8]> { self.get_back(0) }
 
+    /// Removes the last element from the witness, if any.
+    ///
+    /// Call [`Witness::last`] first if you need to inspect the element before removing it.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn pop(&mut self) {
+        let Some(last_index) = self.witness_elements.checked_sub(1) else {
+            return;
+        };
+        let start = decode_cursor(&self.content, self.indices_start, last_index)
+            .expect("cursor for valid index is always present");
+
+        // Drop the last cursor, then the element (with its prefix), keeping the index area last.
+        self.content.truncate(self.content.len() - 4);
+        self.content.drain(start..self.indices_start);
+        self.indices_start = start;
+        self.witness_elements = last_index;
+    }
+
     /// Retrieves an element from the end of the witness by its reverse index.
     ///
     /// `index` is 0-based from the end, where 0 is the last element, 1 is the second-to-last, etc.
@@ -1260,6 +1278,33 @@ mod tests {
             assert_eq!(iter.len(), i);
             iter.next();
         }
+    }
+
+    #[test]
+    fn pop_removes_last_element() {
+        let mut witness = Witness::from_slice(&[b"sig".as_slice(), b"", b"witness_script"]);
+
+        assert_eq!(witness.last(), Some(b"witness_script".as_slice()));
+        witness.pop();
+        assert_eq!(witness.len(), 2);
+        assert_eq!(witness.to_vec(), vec![b"sig".to_vec(), vec![]]);
+
+        // The witness is still usable after a pop.
+        witness.push(b"new");
+        assert_eq!(witness.to_vec(), vec![b"sig".to_vec(), vec![], b"new".to_vec()]);
+
+        assert_eq!(witness.last(), Some(b"new".as_slice()));
+        witness.pop();
+        assert_eq!(witness.last(), Some(b"".as_slice()));
+        witness.pop();
+        assert_eq!(witness.last(), Some(b"sig".as_slice()));
+        witness.pop();
+        assert_eq!(witness.last(), None);
+        assert!(witness.is_empty());
+
+        // Popping an empty witness is a no-op.
+        witness.pop();
+        assert!(witness.is_empty());
     }
 
     #[test]
