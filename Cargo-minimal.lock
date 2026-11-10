@@ -53,9 +53,10 @@ dependencies = [
  "base64",
  "bech32",
  "bincode",
- "bitcoin-consensus-encoding",
+ "bitcoin-consensus-encoding 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitcoin-io",
- "bitcoin-units",
+ "bitcoin-units 0.1.101",
+ "bitcoin-units 1.0.0",
  "bitcoin_hashes",
  "bitcoinconsensus",
  "hex-conservative 0.2.2",
@@ -73,7 +74,17 @@ version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9daa31138eb443d5751b207f3f64154e2bb09cd59960562ccc7a7112be38147f"
 dependencies = [
- "bitcoin-internals",
+ "bitcoin-internals 0.7.0",
+ "hex-conservative 1.1.0",
+ "serde",
+]
+
+[[package]]
+name = "bitcoin-consensus-encoding"
+version = "1.3.0"
+source = "git+https://github.com/tcharding/rust-bitcoin?branch=push-puzmtlnlttlr#39c4150e80af1f0aea646458f40fbbaf91c8066a"
+dependencies = [
+ "bitcoin-internals 0.8.1",
  "hex-conservative 1.1.0",
  "serde",
 ]
@@ -85,10 +96,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8bea3a9f0cfece4564e37cb49a38cc245ca5184719e50d7d0dda3268722c4e2"
 
 [[package]]
+name = "bitcoin-internals"
+version = "0.8.1"
+source = "git+https://github.com/tcharding/rust-bitcoin?branch=push-puzmtlnlttlr#39c4150e80af1f0aea646458f40fbbaf91c8066a"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "bitcoin-io"
 version = "0.1.101"
 dependencies = [
- "bitcoin-consensus-encoding",
+ "bitcoin-consensus-encoding 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -96,10 +115,21 @@ name = "bitcoin-units"
 version = "0.1.101"
 dependencies = [
  "arbitrary",
- "bitcoin-consensus-encoding",
+ "bitcoin-consensus-encoding 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitcoin-units 1.0.0",
  "serde",
  "serde_json",
  "serde_test",
+]
+
+[[package]]
+name = "bitcoin-units"
+version = "1.0.0"
+source = "git+https://github.com/tcharding/rust-bitcoin?branch=push-puzmtlnlttlr#39c4150e80af1f0aea646458f40fbbaf91c8066a"
+dependencies = [
+ "bitcoin-consensus-encoding 1.3.0 (git+https://github.com/tcharding/rust-bitcoin?branch=push-puzmtlnlttlr)",
+ "bitcoin-internals 0.8.1",
+ "serde",
 ]
 
 [[package]]
