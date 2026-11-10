@@ -95,8 +95,8 @@ impl Sequence {
     ///
     /// Some other references to the term:
     /// - `CTxIn::SEQUENCE_FINAL` in the Bitcoin Core code.
-    /// - [BIP-0112]: "BIP-0068 prevents a non-final transaction from being selected for inclusion in a
-    ///   block until the corresponding input has reached the specified age"
+    /// - [BIP-0112]: "BIP-0068 prevents a non-final transaction from being selected for inclusion
+    ///   in a block until the corresponding input has reached the specified age"
     ///
     /// [BIP-0112]: <https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki>
     #[inline]

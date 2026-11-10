@@ -476,12 +476,12 @@ pub mod error {
     /// Error with rich context returned when a string can't be parsed as an integer.
     ///
     /// This is an extension of [`core::num::ParseIntError`], which carries the input that failed to
-    /// parse as well as type information. As a result it provides very informative error messages that
-    /// make it easier to understand the problem and correct mistakes.
+    /// parse as well as type information. As a result it provides very informative error messages
+    /// that make it easier to understand the problem and correct mistakes.
     ///
-    /// Note that this is larger than the type from `core` so if it's passed through a deep call stack
-    /// in a performance-critical application you may want to box it or throw away the context by
-    /// converting to `core` type.
+    /// Note that this is larger than the type from `core` so if it's passed through a deep call
+    /// stack in a performance-critical application you may want to box it or throw away the context
+    /// by converting to `core` type.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct ParseIntError {
