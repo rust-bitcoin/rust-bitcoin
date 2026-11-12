@@ -92,7 +92,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-units"
-version = "0.1.101"
+version = "0.1.102"
 dependencies = [
  "arbitrary",
  "bitcoin-consensus-encoding",

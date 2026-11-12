@@ -1,3 +1,7 @@
+# 0.1.102 - 2026-11-11
+
+* Deprecate `Denomination::MicroBitcoin` [#7188](https://github.com/rust-bitcoin/rust-bitcoin/pull/7188)
+
 # 0.1.100 - 2026-05-26
 
 **Bump the MSRV to Rust 1.74.0**
