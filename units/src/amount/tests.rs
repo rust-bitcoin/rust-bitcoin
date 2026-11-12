@@ -600,7 +600,7 @@ fn to_string() {
     assert_eq!(ssat(-42).to_string_with_denomination(D::Bitcoin), "-0.00000042 BTC");
 }
 
-// May help identify a problem sooner
+// May help identify a problem sooner.
 #[test]
 #[cfg(feature = "alloc")]
 fn repeat_char() {

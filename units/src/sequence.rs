@@ -190,7 +190,7 @@ impl Sequence {
         Ok(Self::from_512_second_intervals(intervals.to_512_second_intervals()))
     }
 
-    /// Constructs a new sequence from a u32 value.
+    /// Constructs a new sequence from a `u32` value.
     #[inline]
     pub fn from_consensus(n: u32) -> Self { Self(n) }
 

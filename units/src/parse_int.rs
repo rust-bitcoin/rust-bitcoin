@@ -113,7 +113,7 @@ fn int<T: Integer, S: AsRef<str> + error::BoundedInput>(s: S) -> Result<T, Parse
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
 /// * `inner` - the inner integer type to be provided to `fn`. Must implement [`Integer`].
-/// * `fn`: the infallible conversion function to call to convert from an integer.
+/// * `fn` - the infallible conversion function to call to convert from an integer.
 ///
 /// # Errors
 ///
@@ -182,7 +182,7 @@ pub(crate) use impl_parse_str_from_int_infallible;
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
 /// * `err` - the error type returned by `$inner_fn` (implies returned by [`FromStr`] and
 ///   [`TryFrom`]).
-/// * `inner_fn`: the fallible conversion function to call to convert from a string reference.
+/// * `inner_fn` - the fallible conversion function to call to convert from a string reference.
 ///
 /// # Errors
 ///
@@ -259,7 +259,7 @@ pub(crate) fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> 
     Ok(s)
 }
 
-/// Macro to generate parsing functions for a given unsigned type
+/// Macro to generate parsing functions for a given unsigned type.
 macro_rules! parse_hex_for {
     (
         $int_type:ty, $bits:literal;
@@ -486,7 +486,7 @@ pub mod error {
     #[non_exhaustive]
     pub struct ParseIntError {
         pub(crate) input: InputString,
-        // for displaying - see Display impl with nice error message below
+        // For displaying - see Display impl with nice error message below.
         pub(crate) bits: u16,
         // We could represent this as a single bit, but it wouldn't actually decrease the cost of moving
         // the struct because String contains pointers so there will be padding of bits at least
@@ -650,7 +650,7 @@ pub mod error {
         }
     }
 
-    /// Error when hex string contains a prefix (e.g. 0x).
+    /// Error when hex string contains a prefix (e.g. `0x`).
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub(super) struct ContainsPrefixError {
         hex: InputString,

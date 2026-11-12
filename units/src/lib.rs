@@ -106,6 +106,6 @@ pub use self::{
     weight::Weight
 };
 
-// decoder_newtype! macro
+// The `decoder_newtype!` macro.
 #[cfg(feature = "encoding")]
 include!("../include/decoder_newtype.rs");

@@ -146,7 +146,7 @@ impl fmt::Display for ParseHeightError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for ParseHeightError {
-    // To be consistent with `write_err` we need to **not** return source if overflow occurred
+    // To be consistent with `write_err` we need to **not** return source if overflow occurred.
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { self.0.source() }
 }
@@ -174,7 +174,7 @@ impl fmt::Display for ParseTimeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for ParseTimeError {
-    // To be consistent with `write_err` we need to **not** return source if overflow occurred
+    // To be consistent with `write_err` we need to **not** return source if overflow occurred.
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { self.0.source() }
 }
@@ -187,14 +187,13 @@ impl From<ParseError> for ParseTimeError {
 /// Internal - common representation for height and time.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub(super) enum ParseError {
-    /// Error parsing prefixed hex
+    /// Error parsing prefixed hex.
     PrefixedHex(PrefixedHexError),
-    /// Error parsing unprefixed hex
+    /// Error parsing unprefixed hex.
     UnprefixedHex(UnprefixedHexError),
-    // Error parsing decimal
+    /// Error parsing decimal.
     ParseInt(ParseIntError),
-    // unit implied by outer type
-    // we use i64 to have nicer messages for negative values
+    /// Unit implied by outer type. We use i64 to have nicer messages for negative values.
     Conversion(i64),
 }
 
@@ -281,7 +280,7 @@ impl ParseError {
         }
     }
 
-    // To be consistent with `write_err` we need to **not** return source if overflow occurred
+    // To be consistent with `write_err` we need to **not** return source if overflow occurred.
     #[inline]
     #[cfg(feature = "std")]
     pub(super) fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {

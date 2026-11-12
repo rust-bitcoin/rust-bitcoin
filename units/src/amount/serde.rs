@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-// methods are implementation of a standardized serde-specific signature
+// Methods are implementation of a standardized serde-specific signature.
 #![allow(missing_docs)]
 #![allow(clippy::missing_errors_doc)]
 
@@ -125,7 +125,7 @@ pub mod as_sat {
             }
         }
 
-        // We use custom visitor to have better control over error messages
+        // We use custom visitor to have better control over error messages.
         struct Visitor<T>(PhantomData<fn() -> T>);
 
         impl<'de, T> serde::de::Visitor<'de> for Visitor<T>

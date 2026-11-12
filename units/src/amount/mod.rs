@@ -454,7 +454,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     Ok((&s[..i], s[j..].parse().map_err(ParseErrorInner::Denomination).map_err(ParseError)?))
 }
 
-/// Options given by [`fmt::Formatter`]
+/// Options given by [`fmt::Formatter`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 struct FormatOptions {
     fill: char,
@@ -639,8 +639,8 @@ fn fmt_satoshi_in(
 ///
 /// This provides richer interface than [`fmt::Formatter`]:
 ///
-/// * Ability to select denomination
-/// * Show or hide denomination
+/// * Ability to select denomination.
+/// * Show or hide denomination.
 /// * Dynamically-selected denomination - show in sats if less than 1 BTC.
 ///
 /// However, this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
@@ -653,11 +653,11 @@ fn fmt_satoshi_in(
 /// See [`Amount::display_in`] and [`Amount::display_dynamic`] on how to construct this.
 #[derive(Debug, Clone)]
 pub struct Display {
-    /// Absolute value of satoshis to display (sign is below)
+    /// Absolute value of satoshis to display (sign is below).
     sats_abs: u64,
-    /// The sign
+    /// The sign.
     is_negative: bool,
-    /// How to display the value
+    /// How to display the value.
     style: DisplayStyle,
 }
 

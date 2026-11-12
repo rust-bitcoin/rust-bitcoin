@@ -27,7 +27,7 @@
 /// ## Attributes
 ///
 /// You can add arbitrary doc comments or attributes to the struct definition and the new function.
-/// Note that the new function always has #[inline].
+/// Note that the new function always has `#[inline]`.
 ///
 /// # Examples
 ///

@@ -167,7 +167,7 @@ impl BlockHeight {
 
     /// Saturating integer addition.
     ///
-    /// Computes self + rhs, saturating at [`BlockHeight::MAX`] instead of overflowing.
+    /// Computes `self + rhs`, saturating at [`BlockHeight::MAX`] instead of overflowing.
     #[inline]
     #[must_use]
     pub const fn saturating_add(self, rhs: BlockHeightInterval) -> Self {
@@ -176,7 +176,7 @@ impl BlockHeight {
 
     /// Saturating integer subtraction.
     ///
-    /// Computes self - rhs, saturating at [`BlockHeight::MIN`] instead of overflowing.
+    /// Computes `self - rhs`, saturating at [`BlockHeight::MIN`] instead of overflowing.
     #[inline]
     #[must_use]
     pub const fn saturating_sub(self, rhs: BlockHeightInterval) -> Self {
