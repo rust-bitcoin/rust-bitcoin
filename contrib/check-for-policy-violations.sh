@@ -34,8 +34,8 @@ low_level_import_usage() {
 
     # Determine the base branch - common CI environment variables.
     local base_branch="$REMOTE/master"
-    if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
-        base_branch="$GITHUB_BASE_REF"
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        base_branch="origin/${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
     elif [[ -n "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-}" ]]; then
         base_branch="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
     fi
