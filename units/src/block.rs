@@ -295,7 +295,7 @@ crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockHeightInterval);
 impl From<relative::NumberOfBlocks> for BlockHeightInterval {
     /// Converts a [`locktime::relative::NumberOfBlocks`] to a [`BlockHeightInterval`].
     ///
-    /// A relative locktime block count has a maximum value of `u16::MAX` where as a
+    /// A relative locktime block count has a maximum value of `u16::MAX` whereas a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not
     /// interchangeable.
     #[inline]
@@ -307,7 +307,7 @@ impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
 
     /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::NumberOfBlocks`].
     ///
-    /// A relative locktime block count has a maximum value of `u16::MAX` where as a
+    /// A relative locktime block count has a maximum value of `u16::MAX` whereas a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not
     /// interchangeable.
     #[inline]
@@ -911,7 +911,7 @@ mod tests {
         assert!(matches!(error, BlockHeightDecoderError(UnexpectedEofError { .. })));
     }
 
-    // Test a impl_u32_wrapper! type serde serialisation roundtrip.
+    // Test an impl_u32_wrapper! type serde serialisation roundtrip.
     macro_rules! serde_roundtrip_test {
         { $test_name:tt, $typ:ident } => {
             #[test]

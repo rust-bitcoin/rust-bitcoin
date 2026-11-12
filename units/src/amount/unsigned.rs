@@ -133,7 +133,7 @@ impl Amount {
 
     /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
     ///
-    /// Accepts an `u32` which is guaranteed to be in range for the type, but which can only
+    /// Accepts a `u32` which is guaranteed to be in range for the type, but which can only
     /// represent roughly 0 to 42.95 BTC.
     #[inline]
     #[allow(clippy::missing_panics_doc)]
