@@ -25,6 +25,7 @@ low_level_import_usage() {
     local pairs=("primitives:units" "bitcoin:units" "bitcoin:primitives")
     local found_violation=false
     local violations;
+    local diff;
     # An added line where the import is the first thing on it, `use`, `pub use`
     # or `pub(crate) use`. But comments that mention `use units::` do not match
     # because the line must start with `use` or `pub`, not `//`.
@@ -45,8 +46,9 @@ low_level_import_usage() {
         local dir="${pair%%:*}"
         local crate="${pair##*:}"
 
+        diff=$(git diff "$base_branch"...HEAD -- "$dir/src/*.rs") || err "git diff against '$base_branch' failed"
         # Lines the patch adds to the importing crate that import from the low level one.
-        violations=$(git diff "$base_branch"...HEAD -- "$dir/src/*.rs" | grep -E "$import ${crate}::" | grep -vE "$reexport ${crate}::" || true)
+        violations=$(echo "$diff" | grep -E "$import ${crate}::" | grep -vE "$reexport ${crate}::" || true)
         if [[ -n "$violations" ]]; then
             # Drop the leading `+` of the diff line.
             say_err "invalid import statement: '${violations:1}'"
