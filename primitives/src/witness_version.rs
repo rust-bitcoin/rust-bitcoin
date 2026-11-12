@@ -14,10 +14,10 @@ use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use units::parse_int;
 
 use crate::opcodes::all::{OP_1, OP_16};
 use crate::opcodes::{Opcode, OP_PUSHBYTES_0};
+use crate::parse_int;
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -232,7 +232,8 @@ pub mod error {
     use core::fmt;
 
     use internals::write_err;
-    use units::parse_int::ParseIntError;
+
+    use crate::parse_int::ParseIntError;
 
     /// Error parsing [`WitnessVersion`] from a string.
     ///
