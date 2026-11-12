@@ -554,7 +554,7 @@ mod tests {
 
         // Test validation failure with invalid coinbase
         let non_coinbase_tx = Transaction {
-            version: primitives::transaction::Version::TWO,
+            version: crate::transaction::Version::TWO,
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![TxIn {
                 previous_output: OutPoint {

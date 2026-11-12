@@ -93,12 +93,11 @@ mod tests {
     use addresses::witness_program::WitnessProgram;
     use crypto::key::{FullPublicKey, LegacyPublicKey, PubkeyHash, XOnlyPublicKey};
     use hex::hex;
-    use primitives::witness_version::WitnessVersion;
 
     use super::*;
     use crate::network::params;
     use crate::script::ScriptHash;
-    use crate::{RedeemScriptBuf, ScriptPubKeyBuf, WitnessScriptBuf};
+    use crate::{RedeemScriptBuf, ScriptPubKeyBuf, WitnessScriptBuf, WitnessVersion};
 
     fn roundtrips(addr: &Address, params: AddressParams) {
         assert_eq!(

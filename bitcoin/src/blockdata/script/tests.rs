@@ -16,7 +16,7 @@ use crate::script::witness_version::WitnessVersion;
 use crate::{opcodes, Amount, FeeRate};
 
 // Tests should compile and pass no matter what these are.
-type Tag = primitives::script::ScriptSigTag;
+type Tag = crate::script::ScriptSigTag;
 type Script = crate::ScriptSig;
 type ScriptBuf = crate::ScriptSigBuf;
 
@@ -312,7 +312,7 @@ fn script_generators() {
 
 #[test]
 fn script_builder_verify() {
-    type Builder = super::Builder<primitives::script::ScriptPubKeyTag>;
+    type Builder = super::Builder<crate::script::ScriptPubKeyTag>;
 
     let simple = Builder::new().push_verify().into_script();
     assert_eq!(simple.to_hex_string_no_length_prefix(), "69");
