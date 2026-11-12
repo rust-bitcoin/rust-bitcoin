@@ -352,7 +352,7 @@ impl std::error::Error for BadPositionError {
     }
 }
 
-/// An error during amount parsing.
+/// An error during denomination parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ParseDenominationError {

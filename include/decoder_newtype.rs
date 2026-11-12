@@ -17,12 +17,12 @@
 /// * `fn new` - a custom constructor. If provided, this macro also generates a [`Default`]
 ///   impl that calls through to `new()`. You may specify any visibility and/or make the function
 ///   const. If omitted, the resulting type will not have a new function or a [`Default`] impl.
-/// * `fn map_push_bytes_err` - a custom error mapping function to tranform any error from the inner
+/// * `fn map_push_bytes_err` - a custom error mapping function to transform any error from the inner
 ///   decoder's `push_bytes` to the wrapper decoder's error type. If omitted, the macro assumes
 ///   the error type is a single value newtype that directly wraps the inner error.
 ///
 /// Both `fn new` and `fn map_push_bytes_err` are independently optional, giving four possible forms.
-/// Due to limitations in macros, the order must be `new`, `push_bytes_err`, then `end`.
+/// Due to limitations in macros, the order must be `new`, `map_push_bytes_err`, then `end`.
 ///
 /// ## Attributes
 ///
@@ -31,7 +31,7 @@
 ///
 /// # Examples
 ///
-/// Minimal form (no `new`, no `push_bytes_err`):
+/// Minimal form (no `new`, no `map_push_bytes_err`):
 ///
 /// ```ignore
 /// decoder_newtype! {
@@ -86,7 +86,7 @@
 /// }
 /// ```
 macro_rules! decoder_newtype {
-    // Arm 1: without new, without push_bytes_err
+    // Arm 1: without new, without map_push_bytes_err.
     (
         $(#[$($struct_attr:tt)*])*
         $vis:vis struct $name:ident($decoder:ty);
@@ -101,7 +101,7 @@ macro_rules! decoder_newtype {
             ($result_name: $result_ty) -> Result<$output, $err> $end_impl
         }
     };
-    // Arm 2: with new, without push_bytes_err
+    // Arm 2: with new, without map_push_bytes_err.
     (
         $(#[$($struct_attr:tt)*])*
         $vis:vis struct $name:ident($decoder:ty);
@@ -122,7 +122,7 @@ macro_rules! decoder_newtype {
             $new_vis $(const $($const)?)? fn new() -> Self $new_impl
         }
     };
-    // Arm 3: without new, with push_bytes_err
+    // Arm 3: without new, with map_push_bytes_err.
     (
         $(#[$($struct_attr:tt)*])*
         $vis:vis struct $name:ident($decoder:ty);
@@ -138,7 +138,7 @@ macro_rules! decoder_newtype {
             ($result_name: $result_ty) -> Result<$output, $err> $end_impl
         }
     };
-    // Arm 4: with new, with push_bytes_err
+    // Arm 4: with new, with map_push_bytes_err.
     (
         $(#[$($struct_attr:tt)*])*
         $vis:vis struct $name:ident($decoder:ty);

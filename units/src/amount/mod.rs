@@ -637,7 +637,7 @@ fn fmt_satoshi_in(
 
 /// A helper/builder that displays amount with specified settings.
 ///
-/// This provides richer interface than [`fmt::Formatter`]:
+/// This provides a richer interface than [`fmt::Formatter`]:
 ///
 /// * Ability to select denomination.
 /// * Show or hide denomination.

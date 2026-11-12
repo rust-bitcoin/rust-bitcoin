@@ -9,7 +9,7 @@
 //! other values. Note however that such calculations truncate (as for integer division).
 //!
 //! We provide `fee.div_by_weight_ceil(weight)` to calculate a minimum threshold fee rate
-//! required to pay at least `fee` for transaction with `weight`.
+//! required to pay at least `fee` for a transaction with `weight`.
 //!
 //! We support various [`core::ops`] traits all of which return [`NumOpResult<T>`].
 //!

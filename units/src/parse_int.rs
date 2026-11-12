@@ -9,7 +9,7 @@ use core::str::FromStr;
 pub use self::error::{ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 /// Not strictly necessary but serves as a lint - avoids weird behavior if someone accidentally
-/// passes non-integer to the `parse()` function.
+/// passes a non-integer to the `parse()` function.
 // This trait is not dyn-compatible because `FromStr` is not dyn-compatible.
 pub trait Integer:
     FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized + sealed::Sealed
@@ -94,7 +94,7 @@ fn int<T: Integer, S: AsRef<str> + error::BoundedInput>(s: S) -> Result<T, Parse
     })
 }
 
-/// Implements standard parsing traits for `$type` by calling `parse::int`.
+/// Implements standard parsing traits for `$to` by calling the `parse_int::int_from_*` functions.
 ///
 /// Once the string is converted to an integer the infallible conversion function `fn` is used to
 /// construct the type `to`.
@@ -111,7 +111,7 @@ fn int<T: Integer, S: AsRef<str> + error::BoundedInput>(s: S) -> Result<T, Parse
 ///
 /// # Parameters
 ///
-/// * `to` - the type converted to e.g., `impl From<&str> for $to`.
+/// * `to` - the type converted to e.g., `impl TryFrom<&str> for $to`.
 /// * `inner` - the inner integer type to be provided to `fn`. Must implement [`Integer`].
 /// * `fn` - the infallible conversion function to call to convert from an integer.
 ///
@@ -165,7 +165,7 @@ macro_rules! impl_parse_str_from_int_infallible {
 }
 pub(crate) use impl_parse_str_from_int_infallible;
 
-/// Implements standard parsing traits for `$type` by calling through to `$inner_fn`.
+/// Implements standard parsing traits for `$to` by calling through to `$inner_fn`.
 ///
 /// Implements:
 ///
@@ -179,7 +179,7 @@ pub(crate) use impl_parse_str_from_int_infallible;
 ///
 /// # Parameters
 ///
-/// * `to` - the type converted to e.g., `impl From<&str> for $to`.
+/// * `to` - the type converted to e.g., `impl TryFrom<&str> for $to`.
 /// * `err` - the error type returned by `$inner_fn` (implies returned by [`FromStr`] and
 ///   [`TryFrom`]).
 /// * `inner_fn` - the fallible conversion function to call to convert from a string reference.

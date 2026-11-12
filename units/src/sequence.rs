@@ -129,8 +129,8 @@ impl Sequence {
     ///
     /// # Errors
     ///
-    /// If the input string is not a valid hex representation of a locktime or it does not include
-    /// the `0x` prefix.
+    /// If the input string is not a valid hex representation of a sequence number or it does not
+    /// include the `0x` prefix.
     #[inline]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse_int::hex_u32_prefixed(s)?;
@@ -141,8 +141,8 @@ impl Sequence {
     ///
     /// # Errors
     ///
-    /// If the input string is not a valid hex representation of a locktime or if it includes the
-    /// `0x` prefix.
+    /// If the input string is not a valid hex representation of a sequence number or if it
+    /// includes the `0x` prefix.
     #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse_int::hex_u32_unprefixed(s)?;
@@ -238,7 +238,7 @@ impl fmt::Display for Sequence {
 impl fmt::Debug for Sequence {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // 10 because its 8 digits + 2 for the '0x'
+        // 10 because it's 8 digits + 2 for the '0x'
         write!(f, "Sequence({:#010x})", self.0)
     }
 }
