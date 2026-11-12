@@ -21,7 +21,8 @@ main() {
 # Greps patch for imports that violate the policy, returns true if an
 # violations are found.
 low_level_import_usage() {
-    local crates=("units" "primitives")
+    # Crate doing the import and the low level crate it re-exports.
+    local pairs=("primitives:units" "bitcoin:units" "bitcoin:primitives")
     local found_violation=false
     local violations;
     # An added line where the import is the first thing on it, `use`, `pub use`
@@ -39,9 +40,15 @@ low_level_import_usage() {
         base_branch="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
     fi
 
-    for crate in "${crates[@]}"; do
-        violations=$(git diff "$base_branch"...HEAD -- '*.rs' | grep -E "$import ${crate}::" | grep -vE "$reexport ${crate}::" || true)
+    for pair in "${pairs[@]}"; do
+        # Split the pair at the colon, importing crate first, low level crate second.
+        local dir="${pair%%:*}"
+        local crate="${pair##*:}"
+
+        # Lines the patch adds to the importing crate that import from the low level one.
+        violations=$(git diff "$base_branch"...HEAD -- "$dir/src/*.rs" | grep -E "$import ${crate}::" | grep -vE "$reexport ${crate}::" || true)
         if [[ -n "$violations" ]]; then
+            # Drop the leading `+` of the diff line.
             say_err "invalid import statement: '${violations:1}'"
             found_violation=true
         fi
