@@ -192,7 +192,9 @@ crate::decoder_newtype! {
 /// ref: <https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki>
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UserAgent {
-    user_agent: String,
+    // Raw bytes exactly as sent by the peer. Untrusted: may be non-UTF-8 or contain control
+    // characters. Use `Display` for a sanitized view.
+    user_agent: Vec<u8>,
 }
 
 encoding::encoder_newtype_exact! {
@@ -205,7 +207,7 @@ impl encoding::Encode for UserAgent {
     type Encoder<'e> = UserAgentEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        UserAgentEncoder::new(PrefixedBytesEncoder::new(self.user_agent.as_bytes()))
+        UserAgentEncoder::new(PrefixedBytesEncoder::new(&self.user_agent))
     }
 }
 
@@ -223,9 +225,7 @@ crate::decoder_newtype! {
     fn end(
         result: Result<Vec<u8>, encoding::ByteVecDecoderError>
     ) -> Result<UserAgent, UserAgentDecoderError> {
-        let bytes = result.map_err(UserAgentDecoderError::Decoder)?;
-        let user_agent =
-            String::from_utf8(bytes).map_err(|_| UserAgentDecoderError::InvalidUtf8)?;
+        let user_agent = result.map_err(UserAgentDecoderError::Decoder)?;
         Ok(UserAgent { user_agent })
     }
 }
@@ -238,6 +238,10 @@ impl encoding::Decode for UserAgent {
 
 impl UserAgent {
     const MAX_USER_AGENT_LEN: usize = 256;
+    /// Punctuation kept when sanitizing a user agent for display.
+    ///
+    /// Inspired by Bitcoin Core's `SAFE_CHARS_DEFAULT`.
+    const SAFE_PUNCTUATION: &'static [u8] = b" .,;-_/:?@()";
 
     fn panic_invalid_chars(agent_str: &str) {
         assert!(
@@ -246,36 +250,33 @@ impl UserAgent {
         );
     }
 
-    fn panic_max_len(agent_str: &str) {
-        assert!(
-            agent_str.chars().count() <= Self::MAX_USER_AGENT_LEN,
-            "user agent cannot exceed 256 characters."
-        );
+    fn panic_max_len(agent: &[u8]) {
+        assert!(agent.len() <= Self::MAX_USER_AGENT_LEN, "user agent cannot exceed 256 bytes.");
     }
     /// Builds a new user agent from the lowest level client software. For example: `Satoshi` is
     /// used by Bitcoin Core.
     ///
     /// # Panics
     ///
-    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 characters.
+    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 bytes.
     pub fn new<S: AsRef<str>>(client_name: S, client_version: &UserAgentVersion) -> Self {
         let parsed_name = client_name.as_ref();
         Self::panic_invalid_chars(parsed_name);
         let agent = format!("/{parsed_name}:{client_version}/");
-        Self::panic_max_len(&agent);
-        Self { user_agent: agent }
+        Self::panic_max_len(agent.as_bytes());
+        Self { user_agent: agent.into_bytes() }
     }
 
     /// Builds a user agent, ignoring BIP-0014 recommendations.
     pub fn from_nonstandard<S: ToString>(agent: &S) -> Self {
-        Self { user_agent: agent.to_string() }
+        Self { user_agent: agent.to_string().into_bytes() }
     }
 
     /// Adds a client to the user agent string. Examples may include the name of a wallet software.
     ///
     /// # Panics
     ///
-    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 characters.
+    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 bytes.
     #[must_use]
     pub fn add_client<S: AsRef<str>>(
         mut self,
@@ -285,18 +286,37 @@ impl UserAgent {
         let parsed_name = client_name.as_ref();
         Self::panic_invalid_chars(parsed_name);
         let agent = format!("{parsed_name}:{client_version}/");
-        self.user_agent.push_str(&agent);
+        self.user_agent.extend_from_slice(agent.as_bytes());
         Self::panic_max_len(&self.user_agent);
         self
     }
 }
 
-impl std::fmt::Display for UserAgent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { self.user_agent.fmt(f) }
+impl UserAgent {
+    /// Returns the user agent bytes exactly as they were sent by the peer.
+    ///
+    /// # Warning
+    ///
+    /// These bytes are **untrusted**: they may not be valid UTF-8 and may contain control
+    /// characters or other content unsafe to log or display. Prefer the sanitized [`Display`]
+    /// output unless the exact bytes are required.
+    ///
+    /// [`Display`]: std::fmt::Display
+    pub fn raw_bytes(&self) -> &[u8] { &self.user_agent }
 }
 
-impl From<UserAgent> for String {
-    fn from(agent: UserAgent) -> Self { agent.user_agent }
+/// Displays a sanitized view of the user agent: only ASCII alphanumerics and a small set of safe
+/// punctuation are kept, everything else is dropped. Use [`UserAgent::raw_bytes`] for the original.
+impl std::fmt::Display for UserAgent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let sanitized: String = self
+            .user_agent
+            .iter()
+            .filter(|b| b.is_ascii_alphanumeric() || Self::SAFE_PUNCTUATION.contains(b))
+            .map(|b| char::from(*b))
+            .collect();
+        f.pad(&sanitized)
+    }
 }
 
 /// A software version field for inclusion in a user agent specified by BIP-0014.
@@ -915,6 +935,14 @@ mod tests {
     }
 
     #[test]
+    fn user_agent_non_utf8_is_sanitized() {
+        let raw = [0x06_u8, b'/', 0xff, b'a', 0xc3, 0xa9, b'/'];
+        let agent: UserAgent =
+            encoding::decode_from_slice(&raw).expect("non-UTF-8 user agent must decode");
+        assert_eq!(agent.to_string(), "/a/");
+    }
+
+    #[test]
     fn user_agent() {
         let client_name = "Satoshi";
         let client_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
@@ -959,5 +987,19 @@ mod tests {
             revision: 0,
         });
         UserAgent::new(client_name, &client_version);
+    }
+
+    #[test]
+    fn user_agent_preserves_raw_bytes() {
+        // "/Satoshi:é[x]/" with a UTF-8 "é" (0xc3 0xa9), plus an invalid byte 0xff.
+        let raw: Vec<u8> = b"/Satoshi:\xc3\xa9[x]\xff/".to_vec();
+        let mut encoded = Vec::from([u8::try_from(raw.len()).unwrap()]);
+        encoded.extend_from_slice(&raw);
+
+        let agent: UserAgent = encoding::decode_from_slice(&encoded).unwrap();
+
+        assert_eq!(agent.raw_bytes(), raw.as_slice());
+        assert_eq!(agent.to_string(), "/Satoshi:x/");
+        assert_eq!(encoding::encode_to_vec(&agent), encoded);
     }
 }
