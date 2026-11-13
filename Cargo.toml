@@ -7,7 +7,7 @@ resolver = "2"
 rbmt.version = "0.5.4"
 rbmt.lock.lockfiles = ["minimal", "recent"]
 rbmt.toolchains.nightly = "nightly-2026-11-07"
-rbmt.toolchains.stable = "1.99.1"
+rbmt.toolchains.stable = "1.100.0"
 
 [workspace.dependencies]
 # Commented out to avoid messing up with MSRV, it gets uncommented in CI or you can uncomment it before running creusot
