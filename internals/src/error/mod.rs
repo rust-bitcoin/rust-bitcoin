@@ -26,6 +26,39 @@ pub trait ErrorExt: std::error::Error + 'static {
 #[cfg(feature = "std")]
 impl<T: std::error::Error + 'static> ErrorExt for T {}
 
+#[doc(hidden)]
+/// Indicates whether `T` implements `core::error::Error`.
+///
+/// A const is picked when `T` implements the trait, otherwise the lookup falls back to
+/// [`NotError::IMPLEMENTS_ERROR`]. This is a variant of dtolnay's [autoref specialization].
+///
+/// [autoref specialization]: <https://github.com/dtolnay/case-studies/tree/master/autoref-specialization>
+pub struct IsError<T: ?Sized>(core::marker::PhantomData<T>);
+
+crate::rust_version::rust_version! {
+    if >= 1.81 {
+        impl<T: ?Sized + core::error::Error> IsError<T> {
+            /// `T` implements `core::error::Error`.
+            pub const IMPLEMENTS_ERROR: bool = true;
+        }
+    } else {
+        #[cfg(feature = "std")]
+        impl<T: ?Sized + std::error::Error> IsError<T> {
+            /// `T` implements `std::error::Error`.
+            pub const IMPLEMENTS_ERROR: bool = true;
+        }
+    }
+}
+
+#[doc(hidden)]
+/// Fallback of [`IsError`] for types that do not implement `core::error::Error`.
+pub trait NotError {
+    /// The type does not implement `core::error::Error`.
+    const IMPLEMENTS_ERROR: bool = false;
+}
+
+impl<T: ?Sized> NotError for IsError<T> {}
+
 /// Wraps an `Error` impl to builds against whichever `Error` trait is available, if any.
 ///
 /// The macro imports the chosen module as `error`, write the trait as `error::Error`.
@@ -70,14 +103,20 @@ macro_rules! impl_std_error {
                 const _: () = {
                     use core::error;
 
-                    $($item)*
+                    $(
+                        #[cfg_attr(docsrs, doc(cfg(any(feature = "std", version("1.81.0")))))]
+                        $item
+                    )*
                 };
             } else {
                 #[cfg(feature = "std")]
                 const _: () = {
                     use std::error;
 
-                    $($item)*
+                    $(
+                        #[cfg_attr(docsrs, doc(cfg(any(feature = "std", version("1.81.0")))))]
+                        $item
+                    )*
                 };
             }
         }
@@ -88,11 +127,15 @@ macro_rules! impl_std_error {
 ///
 /// If `std` feature is OFF appends error source (delimited by `: `). We do this because
 /// `e.source()` is only available in std builds, without this macro the error source is lost for
-/// no-std builds.
+/// no-std builds. Nothing is appended if `Self` implements `core::error::Error` (Rust 1.81+),
+/// where `source()` is available.
 ///
-/// Note: will not compile on std if $source doesn't implement [`std::error::Error`]. This is
-/// intentional because if it doesn't the macro MUST NOT be used. However this check is very rarely
-/// imprecise so if you know what you're doing you can use the unchecked version.
+/// Requirements to use this macro:
+/// - It must be called from inside an `impl` block of the error type, because the macro uses
+///   `Self` to check whether the error implements `Error`.
+/// - `$source` must implement [`std::error::Error`], otherwise it will not compile on std. This is
+///   intentional because if it doesn't the macro MUST NOT be used. However this check is very
+///   rarely imprecise so if you know what you're doing you can use the unchecked version.
 #[macro_export]
 macro_rules! write_err {
     ($writer:expr, $string:literal $(, $args:expr)*; $source:expr) => {
@@ -112,7 +155,14 @@ macro_rules! write_err {
             }
             #[cfg(not(feature = "std"))]
             {
-                write!($writer, concat!($string, ": {}") $(, $args)*, $source)
+                #[allow(unused_imports)]
+                use $crate::error::NotError as _;
+
+                if $crate::error::IsError::<Self>::IMPLEMENTS_ERROR {
+                    write!($writer, $string $(, $args)*)
+                } else {
+                    write!($writer, concat!($string, ": {}") $(, $args)*, $source)
+                }
             }
         }
     }
@@ -163,7 +213,7 @@ mod tests {
     struct Leaf;
 
     impl fmt::Display for Leaf {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("leaf") }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("source") }
     }
 
     impl_std_error! {
@@ -178,13 +228,42 @@ mod tests {
     struct Wrapper(Leaf);
 
     impl fmt::Display for Wrapper {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("wrapper") }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write_err!(f, "message"; self.0) }
     }
 
     impl_std_error! {
         impl error::Error for Wrapper {
             fn source(&self) -> Option<&(dyn error::Error + 'static)> { Some(&self.0) }
         }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn write_err_appends_source_without_error_impl() {
+        use alloc::string::ToString as _;
+
+        /// Implements `Error` only with `std`.
+        #[derive(Debug)]
+        struct StdOnly(Leaf);
+
+        impl fmt::Display for StdOnly {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write_err!(f, "message"; self.0)
+            }
+        }
+
+        #[cfg(feature = "std")]
+        impl std::error::Error for StdOnly {}
+
+        let expected = if cfg!(feature = "std") { "message" } else { "message: source" };
+        assert_eq!(StdOnly(Leaf).to_string(), expected);
+
+        // `Wrapper` implements `Error` on Rust 1.81+, and on older compilers only with `std`.
+        let wrapper_is_error = crate::rust_version::rust_version! {
+            if >= 1.81 { true } else { cfg!(feature = "std") }
+        };
+        let expected = if wrapper_is_error { "message" } else { "message: source" };
+        assert_eq!(Wrapper(Leaf).to_string(), expected);
     }
 
     #[test]
