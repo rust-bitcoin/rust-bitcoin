@@ -4,7 +4,9 @@
 
 use encoding::{ArrayDecoder, ArrayEncoder, Decoder2, Encoder2};
 
-use crate::message_erlay::error::SendTxRcnClDecoderError;
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::SendTxRcnClDecoderError;
 
 /// Announce support for the transaction reconciliation protocol.
 ///

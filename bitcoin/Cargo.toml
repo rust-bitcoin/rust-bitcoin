@@ -12,7 +12,7 @@ keywords = [ "crypto", "bitcoin" ]
 readme = "../README.md"
 edition = "2021"
 rust-version = "1.74.0"
-exclude = ["tests", "contrib"]
+exclude = ["api", "tests", "contrib"]
 
 # If you change features or optional dependencies in any way please update the "# Cargo features" section in lib.rs as well.
 [features]
@@ -109,3 +109,7 @@ exact_features = [
 
 [package.metadata.rbmt.prerelease]
 enabled = true
+
+[package.metadata.rbmt.api]
+enabled = true
+private = ["bitcoin_internals"]
