@@ -22,7 +22,7 @@ extern crate hashes;
 
 extern crate hex;
 
-pub extern crate secp256k1;
+pub use crypto::secp256k1;
 
 #[cfg(feature = "serde")]
 extern crate serde;

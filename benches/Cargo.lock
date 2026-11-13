@@ -163,7 +163,6 @@ dependencies = [
  "bitcoin-network-kind",
  "bitcoin_hashes",
  "hex-conservative",
- "secp256k1",
  "serde",
 ]
 
