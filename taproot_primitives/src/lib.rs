@@ -12,6 +12,8 @@
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
+#![allow(clippy::trivially_copy_pass_by_ref)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
+#![allow(clippy::wrong_self_convention)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
