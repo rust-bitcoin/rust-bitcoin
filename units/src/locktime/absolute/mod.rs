@@ -394,9 +394,6 @@ impl LockTime {
     ///     (L::Seconds(n), L::Seconds(lock_time)) => n <= lock_time,
     ///     _ => panic!("invalid comparison"),
     /// };
-    ///
-    /// // Or, if you have Rust 1.53 or greater
-    /// // let is_satisfied = n.partial_cmp(&lock_time).expect("invalid comparison").is_le();
     /// ```
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
