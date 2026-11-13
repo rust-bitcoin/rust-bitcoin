@@ -154,7 +154,7 @@ impl Amount {
     ///
     /// # Errors
     ///
-    /// If the amount is too precise, negative, or greater than 21,000,000.
+    /// If the amount is too precise, negative, or greater than [`Amount::MAX`] (21,000,000 BTC).
     ///
     /// # Examples
     ///
@@ -198,7 +198,7 @@ impl Amount {
     ///
     /// # Errors
     ///
-    /// If the amount is too precise, negative, or greater than 21,000,000.
+    /// If the amount is too precise, negative, or greater than [`Amount::MAX`] (21,000,000 BTC).
     #[inline]
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Self, ParseAmountError> {
         let (is_neg, amount) =

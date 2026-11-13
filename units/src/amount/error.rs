@@ -136,7 +136,7 @@ impl OutOfRangeError {
         }
     }
 
-    /// Returns `true` if the type that was attempted to be parsed is signed (`SignedAmount`).
+    /// Returns `true` if the type that was attempted to be parsed is signed ([`SignedAmount`]).
     ///
     /// This can be used to hint to users to enter non-negative values specifically.
     pub fn is_signed(&self) -> bool { self.is_signed }

@@ -780,11 +780,12 @@ impl<'de> Deserialize<'de> for MedianTimePast {
     }
 }
 
-/// Returns `true` if `n` is a block height i.e., less than 500,000,000.
+/// Returns `true` if `n` is a block height i.e., less than [`LOCK_TIME_THRESHOLD`] (500,000,000).
 #[inline]
 pub const fn is_block_height(n: u32) -> bool { n < LOCK_TIME_THRESHOLD }
 
-/// Returns `true` if `n` is a UNIX timestamp i.e., greater than or equal to 500,000,000.
+/// Returns `true` if `n` is a UNIX timestamp i.e., greater than or equal to
+/// [`LOCK_TIME_THRESHOLD`] (500,000,000).
 #[inline]
 pub const fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
 
