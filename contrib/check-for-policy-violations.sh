@@ -21,21 +21,36 @@ main() {
 # Greps patch for imports that violate the policy, returns true if an
 # violations are found.
 low_level_import_usage() {
-    local crates=("units" "primitives")
+    # Crate doing the import and the low level crate it re-exports.
+    local pairs=("primitives:units" "bitcoin:units" "bitcoin:primitives")
     local found_violation=false
     local violations;
+    local diff;
+    # An added line where the import is the first thing on it, `use`, `pub use`
+    # or `pub(crate) use`. But comments that mention `use units::` do not match
+    # because the line must start with `use` or `pub`, not `//`.
+    local import="^\+\s*(pub(\([a-z]+\))? )?use"
+    # An added line that is a plain `pub use`, a re-export, which is allowed.
+    local reexport="^\+\s*pub use"
 
     # Determine the base branch - common CI environment variables.
     local base_branch="$REMOTE/master"
-    if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
-        base_branch="$GITHUB_BASE_REF"
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        base_branch="origin/${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
     elif [[ -n "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-}" ]]; then
         base_branch="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
     fi
 
-    for crate in "${crates[@]}"; do
-        violations=$(git diff "$base_branch"...HEAD -- '*.rs' | grep "^+" | grep -E "use ${crate}::" | grep -v "pub use ${crate}::" || true)
+    for pair in "${pairs[@]}"; do
+        # Split the pair at the colon, importing crate first, low level crate second.
+        local dir="${pair%%:*}"
+        local crate="${pair##*:}"
+
+        diff=$(git diff "$base_branch"...HEAD -- "$dir/src/*.rs") || err "git diff against '$base_branch' failed"
+        # Lines the patch adds to the importing crate that import from the low level one.
+        violations=$(echo "$diff" | grep -E "$import ${crate}::" | grep -vE "$reexport ${crate}::" || true)
         if [[ -n "$violations" ]]; then
+            # Drop the leading `+` of the diff line.
             say_err "invalid import statement: '${violations:1}'"
             found_violation=true
         fi
