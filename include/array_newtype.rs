@@ -16,8 +16,8 @@ macro_rules! impl_array_newtype_stringify {
             ///
             /// # Errors
             ///
-            /// Returns an error if `s` contains invalid characters or has incorrect length. (Should be
-            /// `N * 2`.)
+            /// Returns an error if `s` contains invalid characters or has incorrect length. (Should
+            /// be `N * 2`.)
             pub fn from_hex(s: &str) -> Result<Self, $crate::hex::DecodeFixedLengthBytesError> {
                 Ok($t($crate::hex::decode_to_array(s)?))
             }

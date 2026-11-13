@@ -66,7 +66,8 @@ impl Weight {
     /// The minimum transaction weight for a valid serialized transaction.
     pub const MIN_TRANSACTION: Self = Self::from_wu(Self::WITNESS_SCALE_FACTOR * 60);
 
-    /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
+    /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow
+    /// occurred.
     #[inline]
     pub const fn from_kwu(wu: u64) -> Option<Self> {
         let Some(wu) = wu.checked_mul(1000) else { return None };

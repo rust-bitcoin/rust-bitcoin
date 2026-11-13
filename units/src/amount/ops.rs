@@ -280,7 +280,8 @@ impl ops::Neg for NumOpResult<SignedAmount> {
     fn neg(self) -> Self::Output { self.map(ops::Neg::neg) }
 }
 
-/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow
+/// occurs.
 impl core::iter::Sum<Amount> for NumOpResult<Amount> {
     fn sum<I>(mut iter: I) -> Self
     where
@@ -291,7 +292,8 @@ impl core::iter::Sum<Amount> for NumOpResult<Amount> {
     }
 }
 
-/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow
+/// occurs.
 impl<'a> core::iter::Sum<&'a Amount> for NumOpResult<Amount> {
     fn sum<I>(mut iter: I) -> Self
     where
@@ -302,7 +304,8 @@ impl<'a> core::iter::Sum<&'a Amount> for NumOpResult<Amount> {
     }
 }
 
-/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow
+/// occurs.
 impl core::iter::Sum<Self> for NumOpResult<Amount> {
     fn sum<I>(mut iter: I) -> Self
     where
@@ -313,7 +316,8 @@ impl core::iter::Sum<Self> for NumOpResult<Amount> {
         Self::from_result(result)
     }
 }
-/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow
+/// occurs.
 impl<'a> core::iter::Sum<&'a Self> for NumOpResult<Amount> {
     fn sum<I>(mut iter: I) -> Self
     where
@@ -325,7 +329,8 @@ impl<'a> core::iter::Sum<&'a Self> for NumOpResult<Amount> {
     }
 }
 
-/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow
+/// occurs.
 impl core::iter::Sum<SignedAmount> for NumOpResult<SignedAmount> {
     fn sum<I>(mut iter: I) -> Self
     where
@@ -336,7 +341,8 @@ impl core::iter::Sum<SignedAmount> for NumOpResult<SignedAmount> {
     }
 }
 
-/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow
+/// occurs.
 impl<'a> core::iter::Sum<&'a SignedAmount> for NumOpResult<SignedAmount> {
     fn sum<I>(mut iter: I) -> Self
     where
@@ -347,7 +353,8 @@ impl<'a> core::iter::Sum<&'a SignedAmount> for NumOpResult<SignedAmount> {
     }
 }
 
-/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow
+/// occurs.
 impl core::iter::Sum<Self> for NumOpResult<SignedAmount> {
     fn sum<I>(mut iter: I) -> Self
     where
@@ -360,7 +367,8 @@ impl core::iter::Sum<Self> for NumOpResult<SignedAmount> {
     }
 }
 
-/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow occurs.
+/// Note: it's unspecified how many items from the iterator this implementation consumes if overflow
+/// occurs.
 impl<'a> core::iter::Sum<&'a Self> for NumOpResult<SignedAmount> {
     fn sum<I>(mut iter: I) -> Self
     where

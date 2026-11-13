@@ -50,7 +50,8 @@ pub mod as_sat_per_kwu_floor {
     }
 
     pub mod opt {
-        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per 1000 weight units.
+        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per 1000 weight
+        //! units.
         //!
         //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::opt")]`.
 
@@ -106,7 +107,8 @@ pub mod as_sat_per_kwu_floor {
 
     #[cfg(feature = "alloc")]
     pub mod vec {
-        //! Serialize and deserialize [`Vec<FeeRate>`] denominated in satoshis per 1000 weight units.
+        //! Serialize and deserialize [`Vec<FeeRate>`] denominated in satoshis per 1000 weight
+        //! units.
         //!
         //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::vec")]`.
 

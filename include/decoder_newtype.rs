@@ -21,7 +21,8 @@
 ///   decoder's `push_bytes` to the wrapper decoder's error type. If omitted, the macro assumes
 ///   the error type is a single value newtype that directly wraps the inner error.
 ///
-/// Both `fn new` and `fn map_push_bytes_err` are independently optional, giving four possible forms.
+/// Both `fn new` and `fn map_push_bytes_err` are independently optional, giving four possible
+/// forms.
 /// Due to limitations in macros, the order must be `new`, `push_bytes_err`, then `end`.
 ///
 /// ## Attributes
@@ -57,7 +58,9 @@
 ///     /// Constructs a new [`BlockHeight`] decoder.
 ///     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 ///
-///     fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<BlockHeight, BlockHeightDecoderError> {
+///     fn end(
+///         result: Result<[u8; 4], encoding::UnexpectedEofError>,
+///     ) -> Result<BlockHeight, BlockHeightDecoderError> {
 ///         let value = result.map_err(BlockHeightDecoderError)?;
 ///         let n = u32::from_le_bytes(value);
 ///         Ok(BlockHeight::from_u32(n))
@@ -77,9 +80,13 @@
 ///     }
 ///
 ///     fn end(
-///         result: Result<<HeaderInnerDecoder as Decoder>::Output, <HeaderInnerDecoder as Decoder>::Error>
+///         result: Result<
+///             <HeaderInnerDecoder as Decoder>::Output,
+///             <HeaderInnerDecoder as Decoder>::Error,
+///         >,
 ///     ) -> Result<Header, HeaderDecoderError> {
-///         let (version, prev_blockhash, merkle_root, time, bits, nonce) = result.map_err(Self::from_inner)?;
+///         let (version, prev_blockhash, merkle_root, time, bits, nonce) =
+///             result.map_err(Self::from_inner)?;
 ///         let nonce = u32::from_le_bytes(nonce);
 ///         Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
 ///     }

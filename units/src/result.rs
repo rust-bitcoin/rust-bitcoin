@@ -18,8 +18,8 @@ pub use self::error::NumOpError;
 /// Result of a mathematical operation on two numeric types.
 ///
 /// In order to prevent overflow we provide a custom result type that is similar to the normal
-/// [`core::result::Result`] but implements mathematical operations (e.g. [`core::ops::Add`]) so that
-/// math operations can be chained ergonomically. This is very similar to how `NaN` works.
+/// [`core::result::Result`] but implements mathematical operations (e.g. [`core::ops::Add`]) so
+/// that math operations can be chained ergonomically. This is very similar to how `NaN` works.
 ///
 /// [`NumOpResult`] is a monadic type that contains [`Valid`] and [`Error`] (similar to [`Ok`] and
 /// [`Err`]). It supports a subset of functions similar to [`Result`] (e.g. [`unwrap`]).
@@ -77,8 +77,9 @@ pub use self::error::NumOpError;
 ///     NumOpResult::Error(e) => {
 ///         // And something else if the addition overflowed.
 ///         //
-///         // This branch could be hit since `max_fee` came from some previous calculation. And if
-///         // an input to that calculation was from the user then overflow could be an attack vector.
+///         // This branch could be hit since `max_fee` came from some previous calculation. And
+///         // if an input to that calculation was from the user then overflow could be an attack
+///         // vector.
 ///         return Err(e);
 ///     }
 /// };
