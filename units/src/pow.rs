@@ -300,7 +300,7 @@ impl Target {
     ///
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
-    /// block with this target (see `Self::difficulty`).
+    /// block with this target.
     ///
     /// When validating a chain, Bitcoin Core counts a zero target as zero work. Use
     /// `.unwrap_or(Work::ZERO)` to match that behavior.
@@ -677,7 +677,6 @@ trait U256Ext: Sized {
 impl U256Ext for U256 {
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> { parse_int::hex_u256_prefixed(s) }
 
-    /// Constructs a new [`U256`] from an unprefixed hex string.
     #[inline]
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         parse_int::hex_u256_unprefixed(s)
