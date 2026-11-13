@@ -708,14 +708,15 @@ impl fmt::Display for ParseU256Error {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseU256Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::Overflow => None,
-            Self::Empty => None,
-            Self::InvalidEncoding(ref e) => Some(e),
-            Self::InvalidDigit(ref e) => Some(e),
+crate::impl_std_error! {
+    impl error::Error for ParseU256Error {
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            match self {
+                Self::Overflow => None,
+                Self::Empty => None,
+                Self::InvalidEncoding(ref e) => Some(e),
+                Self::InvalidDigit(ref e) => Some(e),
+            }
         }
     }
 }
