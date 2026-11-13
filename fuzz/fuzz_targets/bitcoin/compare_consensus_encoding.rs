@@ -154,6 +154,15 @@ fn addrv2_payload_should_skip(data: &[u8]) -> bool {
     .unwrap_or(false)
 }
 
+/// Returns `true` if `data` is too short for the old bitcoin 0.32 `VersionMessage`
+/// decoder.
+///
+/// Old bitcoin 0.32 requires all fields (minimum 86 bytes). The new decoder
+/// only requires the first four fields (46 bytes) and defaults the rest.
+/// Skip short payloads where the old decoder cannot succeed, preventing a
+/// spurious panic in the encode comparison.
+fn version_message_should_skip(data: &[u8]) -> bool { data.len() < 86 }
+
 /// Returns `true` if `V1NetworkMessage` carries a command that only the master decodes.
 fn v1_network_message_should_skip(data: &[u8]) -> bool {
     const MASTER_ONLY: &[&str] = &["sendtxrcncl", "feature"];
@@ -212,7 +221,9 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, p2p::message_filter::FilterHeader, bitcoin_0_32::bip158::FilterHeader);
     compare_encoding!(data, p2p::message_network::Reject, bitcoin_0_32::p2p::message_network::Reject);
     compare_encoding!(data, p2p::message_network::RejectReason, bitcoin_0_32::p2p::message_network::RejectReason);
-    compare_encoding!(data, p2p::message_network::VersionMessage, bitcoin_0_32::p2p::message_network::VersionMessage);
+    if !version_message_should_skip(data) {
+        compare_encoding!(data, p2p::message_network::VersionMessage, bitcoin_0_32::p2p::message_network::VersionMessage);
+    }
 
     // Types that only exist in new bitcoin, but can encode the same as some known type
     compare_encoding!(data, p2p::ProtocolVersion, u32);
