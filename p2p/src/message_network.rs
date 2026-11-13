@@ -224,8 +224,11 @@ crate::decoder_newtype! {
         result: Result<Vec<u8>, encoding::ByteVecDecoderError>
     ) -> Result<UserAgent, UserAgentDecoderError> {
         let bytes = result.map_err(UserAgentDecoderError::Decoder)?;
-        let user_agent =
-            String::from_utf8(bytes).map_err(|_| UserAgentDecoderError::InvalidUtf8)?;
+        let user_agent = bytes
+            .iter()
+            .filter(|b| b.is_ascii_alphanumeric() || UserAgent::SAFE_PUNCTUATION.contains(b))
+            .map(|b| char::from(*b))
+            .collect();
         Ok(UserAgent { user_agent })
     }
 }
@@ -238,6 +241,7 @@ impl encoding::Decode for UserAgent {
 
 impl UserAgent {
     const MAX_USER_AGENT_LEN: usize = 256;
+    const SAFE_PUNCTUATION: &'static [u8] = b" .,;-_/:?@()";
 
     fn panic_invalid_chars(agent_str: &str) {
         assert!(
@@ -912,6 +916,14 @@ mod tests {
         let alert_hex = hex!("60010000000000000000000000ffffff7f00000000ffffff7ffeffff7f01ffffff7f00000000ffffff7f00ffffff7f002f555247454e543a20416c657274206b657920636f6d70726f6d697365642c207570677261646520726571756972656400");
         let alert: Alert = encoding::decode_from_slice(&alert_hex).unwrap();
         assert!(alert.is_final_alert());
+    }
+
+    #[test]
+    fn user_agent_non_utf8_is_sanitized() {
+        let raw = [0x06_u8, b'/', 0xff, b'a', 0xc3, 0xa9, b'/'];
+        let agent: UserAgent =
+            encoding::decode_from_slice(&raw).expect("non-UTF-8 user agent must decode");
+        assert_eq!(agent.to_string(), "/a/");
     }
 
     #[test]
