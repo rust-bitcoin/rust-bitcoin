@@ -294,7 +294,7 @@ impl fmt::Display for InvalidCharacterError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.invalid_char {
             '.' => f.write_str("there is more than one decimal separator (dot) in the input"),
-            '-' => f.write_str("there is more than one minus sign (-) in the input"),
+            '-' => f.write_str("there is a minus sign (-) after the first character of the input"),
             c => write!(
                 f,
                 "the character '{}' at position {} is not a valid digit",
@@ -330,14 +330,11 @@ impl fmt::Display for BadPositionError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.char {
-            '_' => match self.position {
-                0 => f.write_str("the input amount is prefixed with an underscore (_)"),
-                // Position 1 can only occur when the amount begins with a minus (-), since an underscore
-                // at position 0 will cause an error with position 0, and this error marks the position of
-                // the second underscore.
-                1 => f.write_str("the input amount is prefixed with an underscore (_)"),
-                _ => f.write_str("there are consecutive underscores (_) in the input"),
-            },
+            '_' => write!(
+                f,
+                "the underscore (_) at position {} does not come in between two digits",
+                self.position
+            ),
             c => write!(f, "The character '{}' is at a bad position: {}", c, self.position),
         }
     }
@@ -462,7 +459,7 @@ impl From<Infallible> for PossiblyConfusingDenominationError {
 impl fmt::Display for PossiblyConfusingDenominationError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: possibly confusing denomination - we intentionally do not support 'M' and 'P' so as to not confuse mega/milli and peta/pico", self.0.display_cannot_parse("bitcoin denomination"))
+        write!(f, "{}: possibly confusing denomination - we intentionally do not support capitalized SI prefixes because, for example, 'M' could mean mega or milli", self.0.display_cannot_parse("bitcoin denomination"))
     }
 }
 
