@@ -209,7 +209,7 @@ More specifically an error should
 - implement Display using `write_err!()` macro if a variant contains an inner error source.
 - have `Error` suffix on error types (structs and enums).
 - not have `Error` suffix on enum variants.
-- implement `std::error::Error` if they are public (feature gated on "std").
+- implement `Error` through the `impl_std_error!()` macro if they are public.
 - have messages in lower case, except for proper nouns and variable names.
 - implement `From<Infallible>`, see [P-ERROR-INFALLIBLE](#frominfallible-p-error-infallible).
 - destructure `self` in `source` when it returns `None`, see [P-ERROR-SOURCE](#source-p-error-source).
@@ -244,11 +244,12 @@ All public error types should implement `From<Infallible>` to allow callers to s
 When `source` returns `None`, destructure `self` first, so that when adding a field later, it fails to compile and nobody forgets to update `source`.
 
 ```rust
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { input: _, bits: _ } = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for Error {
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self { input: _, bits: _ } = self;
+            None
+        }
     }
 }
 ```
