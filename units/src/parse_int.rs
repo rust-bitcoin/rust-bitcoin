@@ -900,6 +900,14 @@ mod tests {
     }
 
     #[test]
+    fn parse_u256_from_hex_invalid_digit_reports_bit_length() {
+        for s in ["g", "g00000000000000000000000000000000", "00000000000000000000000000000000g"] {
+            let error = hex_u256_unchecked(s).unwrap_err();
+            assert_eq!(error.bits, 256);
+        }
+    }
+
+    #[test]
     #[cfg(feature = "alloc")]
     fn missing_prefix_error_display_escapes_control_characters() {
         let e = hex_u32_prefixed("bad\nlevel=INFO accepted=true").unwrap_err().to_string();
