@@ -417,9 +417,10 @@ pub struct BlockTransactionsRequest {
 }
 
 impl BlockTransactionsRequest {
-    /// Build a request for a [`BlockHash`] and implicitly sort the indices on construction.
+    /// Build a request for a [`BlockHash`], sorting and deduplicating the indices on construction.
     pub fn from_unsorted_indices(block_hash: BlockHash, mut indexes: Vec<usize>) -> Self {
         indexes.sort_unstable();
+        indexes.dedup();
         let mut offsets = Vec::with_capacity(indexes.len());
         let mut last_idx = 0;
         for idx in indexes {
@@ -963,6 +964,31 @@ mod test {
                 raw.extend(errorcase);
                 assert!(encoding::decode_from_slice::<BlockTransactionsRequest>(&raw).is_err());
             }
+        }
+    }
+
+    #[test]
+    fn unsorted_indices_deduplicate() {
+        let block_hash = BlockHash::from_byte_array([0; 32]);
+        let cases = [
+            (vec![], vec![]),
+            (vec![2], vec![2]),
+            (vec![0, 2, 4], vec![0, 2, 4]),
+            (vec![4, 2, 0], vec![0, 2, 4]),
+            (vec![2, 2], vec![2]),
+            (vec![0, 0, 0], vec![0]),
+            (vec![4, 2, 2, 4, 0], vec![0, 2, 4]),
+        ];
+
+        for (input, expected) in cases {
+            let request = BlockTransactionsRequest::from_unsorted_indices(block_hash, input);
+            let expected_request =
+                BlockTransactionsRequest::from_indices_unchecked(block_hash, expected.clone());
+            assert_eq!(request.indices().unwrap(), expected);
+            assert_eq!(
+                encoding::encode_to_vec(&request),
+                encoding::encode_to_vec(&expected_request)
+            );
         }
     }
 
