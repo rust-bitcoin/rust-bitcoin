@@ -26,6 +26,64 @@ pub trait ErrorExt: std::error::Error + 'static {
 #[cfg(feature = "std")]
 impl<T: std::error::Error + 'static> ErrorExt for T {}
 
+/// Wraps an `Error` impl to builds against whichever `Error` trait is available, if any.
+///
+/// The macro imports the chosen module as `error`, write the trait as `error::Error`.
+///
+/// The `Error` trait can only be implemented in the following situations:
+/// - `core::error::Error` when building with Rust 1.81 or later.
+/// - `std::error::Error` for older compilers, with `std` feature enabled.
+///
+/// In all other cases, the macro silently ignores whatever is written inside the block.
+///
+/// # Examples
+///
+/// ```
+/// # use core::fmt;
+/// #[derive(Debug)]
+/// pub struct InnerError;
+/// # impl fmt::Display for InnerError {
+/// #     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("inner") }
+/// # }
+///
+/// #[derive(Debug)]
+/// pub struct OuterError(InnerError);
+/// # impl fmt::Display for OuterError {
+/// #     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("outer") }
+/// # }
+///
+/// bitcoin_internals::impl_std_error! {
+///     impl error::Error for InnerError {}
+/// }
+///
+/// bitcoin_internals::impl_std_error! {
+///     impl error::Error for OuterError {
+///         fn source(&self) -> Option<&(dyn error::Error + 'static)> { Some(&self.0) }
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! impl_std_error {
+    ($($item:item)*) => {
+        $crate::rust_version::rust_version! {
+            if >= 1.81 {
+                const _: () = {
+                    use core::error;
+
+                    $($item)*
+                };
+            } else {
+                #[cfg(feature = "std")]
+                const _: () = {
+                    use std::error;
+
+                    $($item)*
+                };
+            }
+        }
+    }
+}
+
 /// Formats error.
 ///
 /// If `std` feature is OFF appends error source (delimited by `: `). We do this because
@@ -83,6 +141,79 @@ macro_rules! write_err_unchecked_source {
             #[cfg(not(feature = "std"))]
             {
                 write!($writer, concat!($string, ": {}") $(, $args)*, $source)
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use core::fmt;
+    use core::marker::PhantomData;
+
+    struct Probe<T>(PhantomData<T>);
+
+    trait NotExpanded {
+        fn expanded() -> bool { false }
+    }
+
+    impl<T> NotExpanded for Probe<T> {}
+
+    #[derive(Debug)]
+    struct Leaf;
+
+    impl fmt::Display for Leaf {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("leaf") }
+    }
+
+    impl_std_error! {
+        impl error::Error for Leaf {}
+
+        impl Probe<Leaf> {
+            fn expanded() -> bool { true }
+        }
+    }
+
+    #[derive(Debug)]
+    struct Wrapper(Leaf);
+
+    impl fmt::Display for Wrapper {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("wrapper") }
+    }
+
+    impl_std_error! {
+        impl error::Error for Wrapper {
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> { Some(&self.0) }
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn impl_std_error_std() {
+        use std::error::Error as _;
+
+        assert!(Probe::<Leaf>::expanded());
+        assert!(!Probe::<Wrapper>::expanded());
+        assert!(Leaf.source().is_none());
+        assert!(Wrapper(Leaf).source().unwrap().is::<Leaf>());
+    }
+
+    crate::rust_version::rust_version! {
+        if >= 1.81 {
+            #[test]
+            fn impl_std_error_core() {
+                use core::error::Error as _;
+
+                assert!(Probe::<Leaf>::expanded());
+                assert!(!Probe::<Wrapper>::expanded());
+                assert!(Leaf.source().is_none());
+                assert!(Wrapper(Leaf).source().unwrap().is::<Leaf>());
+            }
+        } else {
+            #[test]
+            #[cfg(not(feature = "std"))]
+            fn impl_std_error_none() {
+                assert!(!Probe::<Leaf>::expanded());
             }
         }
     }
