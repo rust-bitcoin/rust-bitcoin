@@ -379,7 +379,7 @@ impl fmt::Display for AddressInner {
 pub enum KnownHrp {
     /// The main Bitcoin network.
     Mainnet,
-    /// The test networks, testnet (testnet3), testnet4, and signet.
+    /// The test networks, testnet (testnet3), testnet4, testnet5, and signet.
     Testnets,
     /// The regtest network.
     Regtest,
@@ -437,6 +437,9 @@ impl AddressParams {
 
     /// The address parameters of the testnet4 network.
     pub const TESTNET4: Self = Self { network_kind: NetworkKind::Test, hrp: KnownHrp::Testnets };
+
+    /// The address parameters of the testnet5 network.
+    pub const TESTNET5: Self = Self { network_kind: NetworkKind::Test, hrp: KnownHrp::Testnets };
 
     /// The address parameters of the signet network.
     pub const SIGNET: Self = Self { network_kind: NetworkKind::Test, hrp: KnownHrp::Testnets };

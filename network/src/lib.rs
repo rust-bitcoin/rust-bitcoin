@@ -97,6 +97,8 @@ pub enum TestnetVersion {
     V3,
     /// Testnet version 4.
     V4,
+    /// Testnet version 5 (BIP 95).
+    V5,
 }
 
 impl Network {
@@ -110,6 +112,7 @@ impl Network {
             // For user-side compatibility, testnet3 is retained as test
             Self::Testnet(TestnetVersion::V3) => "test",
             Self::Testnet(TestnetVersion::V4) => "testnet4",
+            Self::Testnet(TestnetVersion::V5) => "testnet5",
             Self::Signet => "signet",
             Self::Regtest => "regtest",
         }
@@ -132,6 +135,7 @@ impl Network {
             "main" => Self::Bitcoin,
             "test" => Self::Testnet(TestnetVersion::V3),
             "testnet4" => Self::Testnet(TestnetVersion::V4),
+            "testnet5" => Self::Testnet(TestnetVersion::V5),
             "signet" => Self::Signet,
             "regtest" => Self::Regtest,
             _ => return Err(ParseNetworkError(InputString::from(core_arg))),
@@ -145,6 +149,7 @@ impl Network {
             Self::Bitcoin => "bitcoin",
             Self::Testnet(TestnetVersion::V3) => "testnet",
             Self::Testnet(TestnetVersion::V4) => "testnet4",
+            Self::Testnet(TestnetVersion::V5) => "testnet5",
             Self::Signet => "signet",
             Self::Regtest => "regtest",
         }
@@ -168,6 +173,7 @@ impl FromStr for Network {
             // For user-side compatibility, testnet3 is retained as testnet
             "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
             "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
+            "testnet5" => Ok(Self::Testnet(TestnetVersion::V5)),
             "signet" => Ok(Self::Signet),
             "regtest" => Ok(Self::Regtest),
             _ => Err(ParseNetworkError(InputString::from(s))),
@@ -264,7 +270,7 @@ pub mod as_core_arg {
                 Network::from_core_arg(s).map_err(|_| {
                     E::invalid_value(
                         serde::de::Unexpected::Str(s),
-                        &"bitcoin network encoded as a string (either main, test, testnet4, signet or regtest)",
+                        &"bitcoin network encoded as a string (either main, test, testnet4, testnet5, signet or regtest)",
                     )
                 })
             }
@@ -272,7 +278,7 @@ pub mod as_core_arg {
             fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                 write!(
                     formatter,
-                    "bitcoin network encoded as a string (either main, test, testnet4, signet or regtest)"
+                    "bitcoin network encoded as a string (either main, test, testnet4, testnet5, signet or regtest)"
                 )
             }
         }
@@ -339,12 +345,14 @@ mod tests {
         assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
         assert_eq!(Network::Testnet(TestnetVersion::V3).to_string(), "testnet");
         assert_eq!(Network::Testnet(TestnetVersion::V4).to_string(), "testnet4");
+        assert_eq!(Network::Testnet(TestnetVersion::V5).to_string(), "testnet5");
         assert_eq!(Network::Regtest.to_string(), "regtest");
         assert_eq!(Network::Signet.to_string(), "signet");
 
         assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
         assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet(TestnetVersion::V3));
         assert_eq!("testnet4".parse::<Network>().unwrap(), Network::Testnet(TestnetVersion::V4));
+        assert_eq!("testnet5".parse::<Network>().unwrap(), Network::Testnet(TestnetVersion::V5));
         assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
         assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);
         assert!("fakenet".parse::<Network>().is_err());
@@ -361,6 +369,7 @@ mod tests {
             (Bitcoin, "bitcoin"),
             (Testnet(TestnetVersion::V3), "testnet"),
             (Testnet(TestnetVersion::V4), "testnet4"),
+            (Testnet(TestnetVersion::V5), "testnet5"),
             (Signet, "signet"),
             (Regtest, "regtest"),
         ];
@@ -383,6 +392,7 @@ mod tests {
             (Network::Bitcoin, "main"),
             (Network::Testnet(TestnetVersion::V3), "test"),
             (Network::Testnet(TestnetVersion::V4), "testnet4"),
+            (Network::Testnet(TestnetVersion::V5), "testnet5"),
             (Network::Regtest, "regtest"),
             (Network::Signet, "signet"),
         ];
