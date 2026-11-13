@@ -417,7 +417,12 @@ impl std::error::Error for MissingDenominationError {
 /// Error returned when parsing an unknown denomination.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct UnknownDenominationError(pub(super) InputString);
+pub struct UnknownDenominationError {
+    /// The string that failed to parse.
+    pub(super) input: InputString,
+    /// Whether the input was a micro-bitcoin form, which has been deprecated.
+    pub(super) is_micro_bitcoin: bool,
+}
 
 impl From<Infallible> for UnknownDenominationError {
     #[inline]
@@ -427,7 +432,11 @@ impl From<Infallible> for UnknownDenominationError {
 impl fmt::Display for UnknownDenominationError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.unknown_variant("bitcoin denomination", f)
+        self.input.unknown_variant("bitcoin denomination", f)?;
+        if self.is_micro_bitcoin {
+            f.write_str(", micro bitcoin must be expressed as bits")?;
+        }
+        Ok(())
     }
 }
 
@@ -435,7 +444,7 @@ impl fmt::Display for UnknownDenominationError {
 impl std::error::Error for UnknownDenominationError {
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self(_) = self;
+        let Self { input: _, is_micro_bitcoin: _ } = self;
         None
     }
 }

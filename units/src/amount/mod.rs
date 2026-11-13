@@ -89,9 +89,11 @@ pub use self::unsigned::{AmountDecoder, AmountEncoder};
 ///
 /// # Accepted Denominations
 ///
-/// All upper or lower case, excluding SI prefixes c, m and u (or µ) which must be lower case.
-/// - Singular: BTC, cBTC, mBTC, uBTC
+/// All upper or lower case, excluding SI prefixes c and m which must be lower case.
+/// - Singular: BTC, cBTC, mBTC
 /// - Plural or singular: sat, satoshi, bit
+///
+/// We no longer parse "uBTC" and "µBTC". Please use "bits" instead.
 ///
 /// # Note
 ///
@@ -109,7 +111,6 @@ pub use self::unsigned::{AmountDecoder, AmountEncoder};
 ///     ("1 BTC", 100_000_000),
 ///     ("1 cBTC", 1_000_000),
 ///     ("1 mBTC", 100_000),
-///     ("1 uBTC", 100),
 ///     ("1 bit", 100),
 ///     ("1 sat", 1),
 /// ];
@@ -131,9 +132,8 @@ pub enum Denomination {
     CentiBitcoin,
     /// mBTC (1 mBTC = 100,000 satoshi).
     MilliBitcoin,
-    /// µBTC (1 µBTC = 100 satoshi).
-    MicroBitcoin,
-    /// bits (bits = µBTC).
+    /// bits (1 bit = 1 µBTC = 100 satoshi).
+    #[doc(alias("MicroBitcoin", "uBTC", "µBTC"))]
     Bit,
     /// satoshi (1 BTC = 100,000,000 satoshi).
     Satoshi,
@@ -157,7 +157,6 @@ impl Denomination {
             Self::Bitcoin => -8,
             Self::CentiBitcoin => -6,
             Self::MilliBitcoin => -5,
-            Self::MicroBitcoin => -2,
             Self::Bit => -2,
             Self::Satoshi => 0,
             Self::_DoNotUse(infallible) => match infallible {},
@@ -171,7 +170,6 @@ impl Denomination {
             Self::Bitcoin => "BTC",
             Self::CentiBitcoin => "cBTC",
             Self::MilliBitcoin => "mBTC",
-            Self::MicroBitcoin => "uBTC",
             Self::Bit => "bits",
             Self::Satoshi => "satoshi",
             Self::_DoNotUse(infallible) => match infallible {},
@@ -185,7 +183,6 @@ impl Denomination {
             "BTC" | "btc" => Some(Self::Bitcoin),
             "cBTC" | "cbtc" => Some(Self::CentiBitcoin),
             "mBTC" | "mbtc" => Some(Self::MilliBitcoin),
-            "uBTC" | "ubtc" | "µBTC" | "µbtc" => Some(Self::MicroBitcoin),
             "bit" | "bits" | "BIT" | "BITS" => Some(Self::Bit),
             "SATOSHI" | "satoshi" | "SATOSHIS" | "satoshis" | "SAT" | "sat" | "SATS" | "sats" =>
                 Some(Self::Satoshi),
@@ -197,7 +194,10 @@ impl Denomination {
 /// These forms are ambiguous and could have many meanings. For example, M could denote Mega or Milli.
 /// If any of these forms are used, an error type [`PossiblyConfusingDenominationError`] is
 /// returned.
-const CONFUSING_FORMS: [&str; 6] = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
+const CONFUSING_FORMS: [&str; 4] = ["CBTC", "Cbtc", "MBTC", "Mbtc"];
+
+/// Forms of micro-bitcoin, which has been deprecated.
+const MICRO_BITCOIN_FORMS: [&str; 6] = ["uBTC", "ubtc", "µBTC", "µbtc", "UBTC", "Ubtc"];
 
 impl fmt::Display for Denomination {
     #[inline]
@@ -212,7 +212,7 @@ impl FromStr for Denomination {
     /// # Errors
     ///
     /// - [`ParseDenominationError::PossiblyConfusing`]: If the denomination begins with a capital
-    ///   letter that could be confused with centi, milli, or micro-bitcoin.
+    ///   letter that could be confused with centi or milli-bitcoin.
     /// - [`ParseDenominationError::Unknown`]: If an unknown denomination is used.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::ParseDenominationError as E;
@@ -223,7 +223,11 @@ impl FromStr for Denomination {
 
         let form = Self::forms(s);
 
-        form.ok_or_else(|| UnknownDenominationError(s.into())).map_err(E::Unknown)
+        form.ok_or_else(|| UnknownDenominationError {
+            input: s.into(),
+            is_micro_bitcoin: MICRO_BITCOIN_FORMS.contains(&s),
+        })
+        .map_err(E::Unknown)
     }
 }
 
@@ -702,13 +706,12 @@ enum DisplayStyle {
 impl<'a> Arbitrary<'a> for Denomination {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let choice = u.int_in_range(0..=5)?;
+        let choice = u.int_in_range(0..=4)?;
         match choice {
             0 => Ok(Self::Bitcoin),
             1 => Ok(Self::CentiBitcoin),
             2 => Ok(Self::MilliBitcoin),
-            3 => Ok(Self::MicroBitcoin),
-            4 => Ok(Self::Bit),
+            3 => Ok(Self::Bit),
             _ => Ok(Self::Satoshi),
         }
     }
