@@ -194,7 +194,7 @@ impl Sequence {
     #[inline]
     pub fn from_consensus(n: u32) -> Self { Self(n) }
 
-    /// Returns the inner 32-bit integer value of Sequence.
+    /// Returns the inner 32-bit integer value of [`Sequence`].
     #[inline]
     pub const fn to_consensus_u32(self) -> u32 { self.0 }
 
