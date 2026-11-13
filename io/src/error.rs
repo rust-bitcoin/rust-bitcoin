@@ -198,8 +198,12 @@ define_errorkind!(
     WriteZero,
     /// This operation was interrupted.
     Interrupted,
+    /// This operation is unsupported on this platform.
+    Unsupported,
     /// An error returned when an operation could not be completed because an "end of file" was reached prematurely.
     UnexpectedEof,
+    /// An operation could not be completed, because it failed to allocate enough memory.
+    OutOfMemory,
     // Note: Any time we bump the MSRV any new error kinds should be added here!
     /// A custom error that does not fall under any other I/O error kind
     Other
