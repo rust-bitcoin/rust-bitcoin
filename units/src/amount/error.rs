@@ -42,15 +42,17 @@ impl fmt::Display for ParseError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self.0 {
-            ParseErrorInner::Amount(ref e) => Some(e),
-            ParseErrorInner::Denomination(ref e) => Some(e),
-            // We consider this to not be a source because it currently doesn't contain useful info.
-            ParseErrorInner::MissingDenomination(ref e) => Some(e),
+internals::impl_std_error! {
+    impl error::Error for ParseError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            match self.0 {
+                ParseErrorInner::Amount(ref e) => Some(e),
+                ParseErrorInner::Denomination(ref e) => Some(e),
+                // We consider this to not be a source because it currently doesn't contain useful
+                // info.
+                ParseErrorInner::MissingDenomination(ref e) => Some(e),
+            }
         }
     }
 }
@@ -101,20 +103,21 @@ impl fmt::Display for ParseAmountError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseAmountError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseAmountErrorInner as E;
+internals::impl_std_error! {
+    impl error::Error for ParseAmountError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            use ParseAmountErrorInner as E;
 
-        match self.0 {
-            E::TooPrecise(ref error) => Some(error),
-            E::OutOfRange(ref error) => Some(error),
-            E::MissingDigits(ref error) => Some(error),
-            E::InvalidCharacter(ref error) => Some(error),
-            E::BadPosition(ref error) => Some(error),
-            E::PrefixedHex(ref error) => Some(error),
-            E::UnprefixedHex(ref error) => Some(error),
+            match self.0 {
+                E::TooPrecise(ref error) => Some(error),
+                E::OutOfRange(ref error) => Some(error),
+                E::MissingDigits(ref error) => Some(error),
+                E::InvalidCharacter(ref error) => Some(error),
+                E::BadPosition(ref error) => Some(error),
+                E::PrefixedHex(ref error) => Some(error),
+                E::UnprefixedHex(ref error) => Some(error),
+            }
         }
     }
 }
@@ -189,12 +192,13 @@ impl fmt::Display for OutOfRangeError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for OutOfRangeError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { is_signed: _, is_greater_than_max: _ } = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for OutOfRangeError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self { is_signed: _, is_greater_than_max: _ } = self;
+            None
+        }
     }
 }
 
@@ -223,12 +227,13 @@ impl fmt::Display for TooPreciseError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for TooPreciseError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { position: _ } = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for TooPreciseError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self { position: _ } = self;
+            None
+        }
     }
 }
 
@@ -261,12 +266,13 @@ impl fmt::Display for MissingDigitsError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for MissingDigitsError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { kind: _ } = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for MissingDigitsError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self { kind: _ } = self;
+            None
+        }
     }
 }
 
@@ -305,12 +311,13 @@ impl fmt::Display for InvalidCharacterError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidCharacterError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { invalid_char: _, position: _ } = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for InvalidCharacterError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self { invalid_char: _, position: _ } = self;
+            None
+        }
     }
 }
 
@@ -343,12 +350,13 @@ impl fmt::Display for BadPositionError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for BadPositionError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { char: _, position: _ } = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for BadPositionError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self { char: _, position: _ } = self;
+            None
+        }
     }
 }
 
@@ -377,13 +385,14 @@ impl fmt::Display for ParseDenominationError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseDenominationError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            Self::Unknown(ref e) => Some(e),
-            Self::PossiblyConfusing(ref e) => Some(e),
+internals::impl_std_error! {
+    impl error::Error for ParseDenominationError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            match *self {
+                Self::Unknown(ref e) => Some(e),
+                Self::PossiblyConfusing(ref e) => Some(e),
+            }
         }
     }
 }
@@ -405,12 +414,13 @@ impl fmt::Display for MissingDenominationError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for MissingDenominationError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self {} = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for MissingDenominationError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self {} = self;
+            None
+        }
     }
 }
 
@@ -440,12 +450,13 @@ impl fmt::Display for UnknownDenominationError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for UnknownDenominationError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { input: _, is_micro_bitcoin: _ } = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for UnknownDenominationError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self { input: _, is_micro_bitcoin: _ } = self;
+            None
+        }
     }
 }
 
@@ -466,12 +477,13 @@ impl fmt::Display for PossiblyConfusingDenominationError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for PossiblyConfusingDenominationError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self(_) = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for PossiblyConfusingDenominationError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 }
 
@@ -528,15 +540,16 @@ impl fmt::Display for AmountDecoderError {
 }
 
 #[cfg(feature = "encoding")]
-#[cfg(feature = "std")]
-impl std::error::Error for AmountDecoderError {
-    #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use AmountDecoderErrorInner as E;
+internals::impl_std_error! {
+    impl error::Error for AmountDecoderError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            use AmountDecoderErrorInner as E;
 
-        match self.0 {
-            E::UnexpectedEof(ref e) => Some(e),
-            E::OutOfRange(ref e) => Some(e),
+            match self.0 {
+                E::UnexpectedEof(ref e) => Some(e),
+                E::OutOfRange(ref e) => Some(e),
+            }
         }
     }
 }

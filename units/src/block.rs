@@ -672,12 +672,13 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for BlockCountOverflowError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self(_) = self;
-            None
+    internals::impl_std_error! {
+        impl error::Error for BlockCountOverflowError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+                let Self(_) = self;
+                None
+            }
         }
     }
 
@@ -703,10 +704,11 @@ pub mod error {
     }
 
     #[cfg(feature = "encoding")]
-    #[cfg(feature = "std")]
-    impl std::error::Error for BlockHeightDecoderError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    internals::impl_std_error! {
+        impl error::Error for BlockHeightDecoderError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> { Some(&self.0) }
+        }
     }
 }
 
