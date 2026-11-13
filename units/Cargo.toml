@@ -41,7 +41,7 @@ workspace = true
 
 [package.metadata.rbmt.api]
 features = [["alloc"]]
-private = ["bitcoin_internals"]
+private = ["internals"]
 
 [package.metadata.rbmt.test]
 exact_features = [

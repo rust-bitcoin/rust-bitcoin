@@ -103,6 +103,8 @@ jobs:
           persist-credentials: false
           fetch-depth: 0 # History required for API diff.
       - uses: ./.github/actions/setup-rbmt
+      - name: "Check private dependency leak"
+        run: cargo rbmt api
       - name: "Run API check"
         id: api_check
         env:

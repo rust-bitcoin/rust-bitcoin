@@ -50,3 +50,6 @@ workspace = true
 exact_features = [
     ["std", "serde"],
 ]
+
+[package.metadata.rbmt.api]
+private = ["internals"]
