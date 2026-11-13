@@ -10,7 +10,9 @@ use core::str::FromStr;
 
 use encoding::{ByteVecDecoder, Decode, Decoder2, Encoder2, PrefixedBytesEncoder};
 
-use self::error::{
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::{
     FeatureDataDecoderError, FeatureDataError, FeatureDecoderError, FeatureIdDecoderError,
     FeatureIdError,
 };
