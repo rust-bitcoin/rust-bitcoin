@@ -12,6 +12,8 @@ use core::fmt;
 use core::str::FromStr;
 
 use bech32::Fe32;
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
 use units::{parse, ParseIntError};
 
 use crate::blockdata::opcodes::all::*;
@@ -76,6 +78,20 @@ impl WitnessVersion {
     /// Converts this witness version to a GF32 field element.
     pub fn to_fe(self) -> Fe32 {
         Fe32::try_from(self.to_num()).expect("0-16 are valid fe32 values")
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::witness_version::WitnessVersion {
+        stable::witness_version::WitnessVersion::try_from(self.to_num())
+            .expect("pre-1.0 WitnessVersion guarantees a valid version number")
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::witness_version::WitnessVersion) -> Self {
+        Self::try_from(stable.to_num())
+            .expect("stable WitnessVersion guarantees a valid version number")
     }
 }
 

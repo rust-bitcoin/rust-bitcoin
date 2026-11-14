@@ -12,6 +12,8 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
 #[cfg(feature = "encoding")]
 use encoding::{
     BytesEncoder, CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder, DecoderStatus,
@@ -788,6 +790,16 @@ impl Witness {
     /// [Script::is_p2wsh](crate::blockdata::script::Script::is_p2wsh) to
     /// check whether this is actually a P2WSH witness.
     pub fn witness_script(&self) -> Option<&Script> { self.last().map(Script::from_bytes) }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::Witness { self.iter().collect() }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Witness) -> Self {
+        Self::from_slice(&stable.iter().collect::<Vec<_>>())
+    }
 }
 
 impl Index<usize> for Witness {

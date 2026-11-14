@@ -13,6 +13,8 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
 #[cfg(feature = "encoding")]
 use encoding::{ArrayDecoder, Decoder2, Decoder6, Encoder2, PrefixedSliceEncoder, VecDecoder};
 use hashes::{sha256d, Hash, HashEngine};
@@ -24,7 +26,7 @@ use crate::blockdata::transaction::{Transaction, Txid, Wtxid};
 use crate::consensus::{encode, Decodable, Encodable, Params};
 #[cfg(feature = "encoding")]
 use crate::internal_macros::write_err;
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+use crate::internal_macros::{impl_compat_hash, impl_consensus_encoding, impl_hashencode};
 use crate::pow::{CompactTarget, Target, Work};
 #[cfg(feature = "encoding")]
 use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
@@ -47,6 +49,10 @@ hashes::hash_newtype! {
 impl_hashencode!(BlockHash);
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
+impl_compat_hash!(BlockHash, stable::BlockHash);
+impl_compat_hash!(TxMerkleNode, stable::merkle_tree::TxMerkleNode);
+impl_compat_hash!(WitnessMerkleNode, stable::merkle_tree::WitnessMerkleNode);
+impl_compat_hash!(WitnessCommitment, stable::WitnessCommitment);
 
 #[cfg(feature = "encoding")]
 impl encoding::Encode for BlockHash {
@@ -308,6 +314,32 @@ impl Header {
 
     /// Returns the total work of the block.
     pub fn work(&self) -> Work { self.target().to_work() }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::BlockHeader {
+        stable::BlockHeader {
+            version: self.version.to_stable(),
+            prev_blockhash: self.prev_blockhash.to_stable(),
+            merkle_root: self.merkle_root.to_stable(),
+            time: stable::BlockTime::from_u32(self.time),
+            bits: self.bits.to_stable(),
+            nonce: self.nonce,
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::BlockHeader) -> Self {
+        Self {
+            version: Version::from_stable(stable.version),
+            prev_blockhash: BlockHash::from_stable(stable.prev_blockhash),
+            merkle_root: TxMerkleNode::from_stable(stable.merkle_root),
+            time: stable.time.to_u32(),
+            bits: CompactTarget::from_stable(stable.bits),
+            nonce: stable.nonce,
+        }
+    }
 }
 
 impl fmt::Debug for Header {
@@ -533,6 +565,18 @@ impl Version {
 
         // The bit is set if signalling a soft fork.
         (self.0 as u32 & Self::VERSION_BITS_MASK) & (1 << bit) > 0
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::BlockVersion {
+        stable::BlockVersion::from_consensus(self.to_consensus())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::BlockVersion) -> Self {
+        Self::from_consensus(stable.to_consensus())
     }
 }
 
@@ -780,6 +824,36 @@ impl Block {
                 }
             }
             _ => Err(Bip34Error::NotPresent),
+        }
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// The pre-1.0 block type is not validated so the stable block is unchecked.
+    ///
+    /// # Errors
+    ///
+    /// Errors if any unstable output value is outside the range of the stable amount type
+    /// ([`stable::Amount::MAX`]).
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> Result<stable::Block, stable::amount::OutOfRangeError> {
+        let transactions =
+            self.txdata.into_iter().map(Transaction::to_stable).collect::<Result<_, _>>()?;
+
+        Ok(stable::Block::new_unchecked(self.header.to_stable(), transactions))
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    ///
+    /// Only an unchecked stable block can be converted. To convert a checked block use
+    /// [`Header::from_stable`] and [`Transaction::from_stable`] on its header and transactions.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Block) -> Self {
+        let (header, transactions) = stable.into_parts();
+
+        Self {
+            header: Header::from_stable(header),
+            txdata: transactions.into_iter().map(Transaction::from_stable).collect(),
         }
     }
 }

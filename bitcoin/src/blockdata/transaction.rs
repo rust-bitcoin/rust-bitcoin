@@ -17,6 +17,8 @@ use core::mem;
 use core::str::FromStr;
 use core::{cmp, fmt};
 
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
 #[cfg(feature = "encoding")]
 use encoding::{
     ArrayEncoder, BytesEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder2, Encoder3,
@@ -44,7 +46,9 @@ use crate::blockdata::witness::{WitnessDecoder, WitnessDecoderError, WitnessEnco
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode, write_err};
+use crate::internal_macros::{
+    impl_compat_hash, impl_consensus_encoding, impl_hashencode, write_err,
+};
 use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
@@ -72,6 +76,8 @@ hashes::hash_newtype! {
 }
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
+impl_compat_hash!(Txid, stable::Txid);
+impl_compat_hash!(Wtxid, stable::Wtxid);
 
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
@@ -124,6 +130,18 @@ impl OutPoint {
     /// ```
     #[inline]
     pub fn is_null(&self) -> bool { *self == OutPoint::null() }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::OutPoint {
+        stable::OutPoint { txid: self.txid.to_stable(), vout: self.vout }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::OutPoint) -> Self {
+        Self { txid: Txid::from_stable(stable.txid), vout: stable.vout }
+    }
 }
 
 impl Default for OutPoint {
@@ -313,6 +331,28 @@ impl TxIn {
     ///
     /// Total size includes the witness data (for base size see [`Self::base_size`]).
     pub fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::TxIn {
+        stable::TxIn {
+            previous_output: self.previous_output.to_stable(),
+            script_sig: self.script_sig.to_stable(),
+            sequence: self.sequence.to_stable(),
+            witness: self.witness.to_stable(),
+        }
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::TxIn) -> Self {
+        Self {
+            previous_output: OutPoint::from_stable(stable.previous_output),
+            script_sig: ScriptBuf::from_stable(stable.script_sig),
+            sequence: Sequence::from_stable(stable.sequence),
+            witness: Witness::from_stable(stable.witness),
+        }
+    }
 }
 
 impl Default for TxIn {
@@ -516,6 +556,18 @@ impl Sequence {
         }
     }
 
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::Sequence {
+        stable::Sequence::from_consensus(self.to_consensus_u32())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Sequence) -> Self {
+        Self::from_consensus(stable.to_consensus_u32())
+    }
+
     /// Returns the low 16 bits from sequence number.
     ///
     /// BIP-68 only uses the low 16 bits for relative lock value.
@@ -710,6 +762,29 @@ impl TxOut {
     /// [`minimal_non_dust`]: TxOut::minimal_non_dust
     pub fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
         TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the unstable output value is outside the range of the stable amount type
+    /// ([`stable::Amount::MAX`]). This is always the case for [`TxOut::NULL`].
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> Result<stable::TxOut, stable::amount::OutOfRangeError> {
+        Ok(stable::TxOut {
+            amount: self.value.to_stable()?,
+            script_pubkey: self.script_pubkey.to_stable(),
+        })
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::TxOut) -> Self {
+        Self {
+            value: Amount::from_stable(stable.amount),
+            script_pubkey: ScriptBuf::from_stable(stable.script_pubkey),
+        }
     }
 }
 
@@ -1160,6 +1235,35 @@ impl Transaction {
             .get(output_index)
             .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
     }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// # Errors
+    ///
+    /// Errors if any unstable output value is outside the range of the stable amount type
+    /// ([`stable::Amount::MAX`]).
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> Result<stable::Transaction, stable::amount::OutOfRangeError> {
+        let outputs = self.output.into_iter().map(TxOut::to_stable).collect::<Result<_, _>>()?;
+
+        Ok(stable::Transaction {
+            version: self.version.to_stable(),
+            lock_time: self.lock_time.to_stable(),
+            inputs: self.input.into_iter().map(TxIn::to_stable).collect(),
+            outputs,
+        })
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Transaction) -> Self {
+        Self {
+            version: Version::from_stable(stable.version),
+            lock_time: absolute::LockTime::from_stable(stable.lock_time),
+            input: stable.inputs.into_iter().map(TxIn::from_stable).collect(),
+            output: stable.outputs.into_iter().map(TxOut::from_stable).collect(),
+        }
+    }
 }
 
 /// Error attempting to do an out of bounds access on the transaction inputs vector.
@@ -1247,6 +1351,22 @@ impl Version {
 
     /// Returns true if this transaction version number is considered standard.
     pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// The stable version is unsigned whereas the pre-1.0 version is signed. A negative version
+    /// converts to the stable version that has the same consensus encoding.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::TransactionVersion {
+        stable::TransactionVersion::maybe_non_standard(self.0 as u32)
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    ///
+    /// The stable version is unsigned whereas the pre-1.0 version is signed. A version above
+    /// `i32::MAX` converts to the negative version that has the same consensus encoding.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::TransactionVersion) -> Self { Self(stable.to_u32() as i32) }
 }
 
 impl Encodable for Version {
