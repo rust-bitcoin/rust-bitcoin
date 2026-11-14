@@ -838,6 +838,18 @@ fn instructions_are_fused() {
 }
 
 #[test]
+fn instruction_push_bytes_lifetime() {
+    fn extract_push(script: &Script) -> Option<&PushBytes> {
+        let instruction = script.instructions().next()?.ok()?;
+        instruction.push_bytes()
+    }
+
+    let script = Script::builder().push_slice(b"hello").into_script();
+    let push = extract_push(&script);
+    assert_eq!(push.unwrap().as_bytes(), b"hello");
+}
+
+#[test]
 fn script_extend() {
     fn cmp_scripts(new_script: &Script, orig_script: &[Instruction<'_>]) {
         let mut new_instr = new_script.instructions();
