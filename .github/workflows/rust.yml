@@ -117,6 +117,12 @@ jobs:
         with:
           name: api-diff
           path: api-diff
+      # `cargo rbmt api` exits with 0 on no API change, 1 on a tool error, 2 on an API diff and 3
+      # on a private dependency leak. 0 and 2 should pass the job, 1 (error) and 3 (private
+      # dependency leak) should fail.
+      - name: "Fail on private dependency leak"
+        if: steps.api_check.outputs.exit_code != '0' && steps.api_check.outputs.exit_code != '2'
+        run: exit 1
 
   Bench:
     runs-on: ubuntu-24.04
