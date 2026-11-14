@@ -17,6 +17,7 @@ use core::{fmt, slice};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use crypto::key::{FullPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
+use crypto::secp256k1;
 use hashes::{hash160, hash_newtype, sha256, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
 use network::NetworkKind;
@@ -1376,6 +1377,7 @@ pub mod error {
     use core::convert::Infallible;
     use core::fmt;
 
+    use crypto::secp256k1;
     use internals::write_err;
 
     use super::{ChildNumber, Fingerprint};
