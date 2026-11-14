@@ -272,13 +272,6 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
     fn payload(&self) -> &[u8] { &self.bytes.as_ref()[usize::from(self.payload_offset)..] }
 }
 
-#[cfg(feature = "alloc")]
-impl TryFrom<Vec<u8>> for BasicFilter<Vec<u8>> {
-    type Error = DecodeError;
-
-    fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> { Self::from_bytes(bytes) }
-}
-
 impl<B: AsRef<[u8]>> AsRef<[u8]> for BasicFilter<B> {
     fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
