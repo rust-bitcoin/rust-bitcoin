@@ -78,6 +78,8 @@ use encoding::{Decoder2, Encoder2, PrefixedSliceEncoder, VecDecoder};
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use hashes::HashEngine as _;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(feature = "hex")]
 use crate::hex_codec::HexPrimitive;
@@ -945,7 +947,6 @@ impl From<&Header> for BlockHash {
 /// * [BIP-0009 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
 /// * [BIP-0034 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version(i32);
 
 impl Version {
@@ -1026,6 +1027,28 @@ impl fmt::Binary for Version {
 impl Default for Version {
     #[inline]
     fn default() -> Self { Self::NO_SOFT_FORK_SIGNALLING }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for Version {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        i32::serialize(&self.to_consensus(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Version {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_consensus(i32::deserialize(d)?))
+    }
 }
 
 impl encoding::Encode for Version {
