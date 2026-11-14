@@ -1111,7 +1111,7 @@ impl Amount {
     /// # Errors
     ///
     /// Errors if the unstable amount is outside the range of the stable amount type
-    /// ([`stable::Amount::MAX_MONEY`]).
+    /// ([`stable::Amount::MAX`]).
     #[cfg(feature = "compat")]
     pub fn to_stable(self) -> Result<stable::Amount, stable::amount::OutOfRangeError> {
         stable::Amount::from_sat(self.to_sat())

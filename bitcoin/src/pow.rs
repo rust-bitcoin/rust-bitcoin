@@ -471,7 +471,7 @@ impl CompactTarget {
     /// Converts a stable type to a pre-1.0 type.
     #[cfg(feature = "compat")]
     pub fn from_stable(stable: stable::CompactTarget) -> Self {
-        Self::from_consensus(stable.to_consensus())
+        Self::from_consensus(stable.to_consensus_u32())
     }
 }
 
