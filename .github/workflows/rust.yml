@@ -51,12 +51,18 @@ jobs:
         run: |
           target=$(cargo metadata --format-version 1 --no-deps | jq -r .target_directory)
           for profile in "$target"/*/ "$target"/*/*/; do
-            [ -d "$profile.fingerprint" ] || continue
+            [ -f "$profile.cargo-lock" ] || continue
             for dep_info in "$profile"deps/*.d; do
               grep -qs '^[^/#]' "$dep_info" || continue
               hash=${dep_info%.d}
               hash=${hash##*-}
               rm -rf "$profile".fingerprint/*-"$hash" "$profile"deps/*-"$hash" "$profile"deps/*-"$hash".*
+            done
+            for build_dir in "$profile"build/*/*/; do
+              build_id=${build_dir%/}
+              build_id=${build_id##*/}
+              grep -qs '^[^/#]' "$build_dir"out/*-"$build_id".d || continue
+              rm -rf "$build_dir"
             done
             find "$profile" -maxdepth 1 -type f ! -name .cargo-lock -delete
             rm -rf "$profile"examples "$profile"incremental
