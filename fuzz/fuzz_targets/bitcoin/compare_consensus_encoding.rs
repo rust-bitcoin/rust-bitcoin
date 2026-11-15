@@ -218,7 +218,11 @@ fn do_test(data: &[u8]) {
     compare_encoding!(data, p2p::ProtocolVersion, u32);
     compare_encoding!(data, p2p::address::AddrV1Message, (u32, bitcoin_0_32::p2p::Address));
     compare_encoding!(data, p2p::message::AddrPayload, Vec<(u32, bitcoin_0_32::p2p::Address)>);
-    compare_encoding!(data, p2p::message::NetworkHeader, (bitcoin_0_32::block::Header, u8));
+    // The tuple decoder does not enforce the headers-message transaction count.
+    // Keep malformed counts covered by the RawNetworkMessage comparison below.
+    if !matches!(data.get(80), Some(1..=255)) {
+        compare_encoding!(data, p2p::message::NetworkHeader, (bitcoin_0_32::block::Header, u8));
+    }
     compare_encoding!(data, p2p::message::Ping, u64);
     compare_encoding!(data, p2p::message::Pong, u64);
     // Skip messages unknown to bitcoin 0.32, which never fails them, while master
@@ -272,6 +276,20 @@ mod tests {
                 out.push(b);
                 b = 0;
             }
+        }
+    }
+
+    #[test]
+    fn network_header_transaction_counts() {
+        let mut bytes = Vec::new();
+        extend_vec_from_hex(
+            "00a0ab20247d4d9f582f9750344cdf62c46d81d046be960340960100000000000000000070f96945530651135839d8adc3f40e595118ec74c7ad81a3d17bb022e554fb0c937f4268743702177ad05f92",
+            &mut bytes,
+        );
+        bytes.push(0);
+        for count in [0, 1, 255] {
+            bytes[80] = count;
+            super::do_test(&bytes);
         }
     }
 
