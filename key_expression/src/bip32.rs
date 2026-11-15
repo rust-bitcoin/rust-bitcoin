@@ -827,10 +827,55 @@ impl fmt::Debug for RelativeDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self, f) }
 }
 
-/// Full information on the used extended public key: fingerprint of the
-/// master extended public key and a derivation path from it.
+/// A key's origin: the master key fingerprint and the relative derivation path from it.
+///
+/// The fingerprint is an identifier, not authenticated proof of ancestry. The path has no `m`
+/// prefix; an empty path is valid and refers to the master key itself.
+///
+/// With `serde`, this uses the same `(fingerprint, path)` tuple representation as the former
+/// `KeySource` alias in both human-readable and binary formats, not a named-field object.
+///
+/// ```
+/// use bitcoin_key_expression::bip32::KeyOrigin;
+///
+/// let origin = KeyOrigin {
+///     fingerprint: "d34db33f".parse().unwrap(),
+///     path: "84'/0'/0'/0/1".parse().unwrap(),
+/// };
+/// assert_eq!(origin.path.len(), 5);
+/// ```
 #[cfg(feature = "alloc")]
-pub type KeySource = (Fingerprint, RelativeDerivationPath);
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct KeyOrigin {
+    /// The master key's fingerprint.
+    pub fingerprint: Fingerprint,
+    /// The relative derivation path from the master key.
+    pub path: RelativeDerivationPath,
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "serde")]
+impl serde::Serialize for KeyOrigin {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        (&self.fingerprint, &self.path).serialize(serializer)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for KeyOrigin {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let (fingerprint, path) =
+            <(Fingerprint, RelativeDerivationPath)>::deserialize(deserializer)?;
+        Ok(Self { fingerprint, path })
+    }
+}
 
 impl Xpriv {
     /// Constructs an extended private key from its components.
@@ -1879,6 +1924,14 @@ impl<'a> Arbitrary<'a> for AbsoluteDerivationPath {
     }
 }
 
+#[cfg(feature = "alloc")]
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for KeyOrigin {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self { fingerprint: u.arbitrary()?, path: u.arbitrary()? })
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Fingerprint {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -2684,6 +2737,28 @@ mod tests {
     pub fn encode_decode_derivation_paths() {
         serde_round_trip!("0'/1".parse::<RelativeDerivationPath>().unwrap());
         serde_round_trip!("m/0'/1".parse::<AbsoluteDerivationPath>().unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn key_origin_serde_tuple_compatibility() {
+        for path in ["", "84'/0/1'"] {
+            let tuple = (
+                Fingerprint::from([1u8, 2, 3, 42]),
+                path.parse::<RelativeDerivationPath>().unwrap(),
+            );
+            let origin = KeyOrigin { fingerprint: tuple.0, path: tuple.1.clone() };
+
+            let tuple_json = serde_json::to_string(&tuple).unwrap();
+            let origin_json = serde_json::to_string(&origin).unwrap();
+            assert_eq!(tuple_json, origin_json);
+            assert_eq!(serde_json::from_str::<KeyOrigin>(&tuple_json).unwrap(), origin);
+
+            let tuple_bytes = bincode::serialize(&tuple).unwrap();
+            let origin_bytes = bincode::serialize(&origin).unwrap();
+            assert_eq!(tuple_bytes, origin_bytes);
+            assert_eq!(bincode::deserialize::<KeyOrigin>(&tuple_bytes).unwrap(), origin);
+        }
     }
 
     #[test]
