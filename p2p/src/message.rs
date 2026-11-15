@@ -1270,8 +1270,13 @@ impl encoding::Decoder for NetworkMessageDecoder {
             Self::AddrV2(d) => d.read_limit(),
             Self::SendTxRcnCl(d) => d.read_limit(),
             Self::Feature(d) => d.read_limit(),
-            Self::Verack | Self::SendHeaders | Self::MemPool | Self::GetAddr | Self::WtxidRelay
-            | Self::FilterClear | Self::SendAddrV2 => 0,
+            Self::Verack
+            | Self::SendHeaders
+            | Self::MemPool
+            | Self::GetAddr
+            | Self::WtxidRelay
+            | Self::FilterClear
+            | Self::SendAddrV2 => 0,
             Self::Unknown { buffer, .. } => MAX_MSG_SIZE - buffer.len(),
         }
     }
@@ -1844,6 +1849,8 @@ pub mod error {
     use core::fmt;
 
     use internals::write_err;
+    use primitives::block::BlockDecoderError;
+    use primitives::transaction::TransactionDecoderError;
 
     use crate::bip152::{
         BlockTransactionsDecoderError, BlockTransactionsRequestDecoderError,
@@ -1859,9 +1866,9 @@ pub mod error {
         CFCheckptDecoderError, CFHeadersDecoderError, CFilterDecoderError,
         GetCFCheckptDecoderError, GetCFHeadersDecoderError, GetCFiltersDecoderError,
     };
-    use crate::message_network::{AlertDecoderError, RejectDecoderError, VersionMessageDecoderError};
-    use primitives::block::BlockDecoderError;
-    use primitives::transaction::TransactionDecoderError;
+    use crate::message_network::{
+        AlertDecoderError, RejectDecoderError, VersionMessageDecoderError,
+    };
 
     /// Error decoding a [`CommandString`].
     ///
