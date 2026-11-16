@@ -1140,6 +1140,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
     type Error = NetworkMessageDecoderError;
 
     #[inline]
+    #[rustfmt::skip] // Keep one decoder per line.
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         match self {
             Self::Version(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Version(e))),
@@ -1191,6 +1192,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
     }
 
     #[inline]
+    #[rustfmt::skip] // Keep one decoder per line.
     fn end(self) -> Result<Self::Output, Self::Error> {
         match self {
             Self::Version(d) => Ok(NetworkMessage::Version(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Version(e)))?)),
@@ -2129,6 +2131,7 @@ pub mod error {
     }
 
     impl fmt::Display for NetworkMessageDecoderError {
+        #[rustfmt::skip] // Keep one variant per line.
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self.0 {
                 NetworkMessageDecoderErrorInner::Version(ref e) => write_err!(f, "error decoding message payload"; e),
