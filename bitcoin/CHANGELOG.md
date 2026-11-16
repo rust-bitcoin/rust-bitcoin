@@ -1,5 +1,14 @@
 # unreleased
 
+# 0.32.103 - 2026-10-10
+
+- Backport: Fix witness commitment check (BIP-141) [#6250](https://github.com/rust-bitcoin/rust-bitcoin/pull/6703)
+- Bump `consensus_encoding` to `1.1` and use prefixed encoders [#6550](https://github.com/rust-bitcoin/rust-bitcoin/pull/6550)
+- Enable alloc and hex in encoding dep [#6659](https://github.com/rust-bitcoin/rust-bitcoin/pull/6659)
+- Backport: `secp256k1` `global-context` feature re-export [#6889](https://github.com/rust-bitcoin/rust-bitcoin/pull/6889)
+- Backport: Exact size encodable to block and transaction [#7052](https://github.com/rust-bitcoin/rust-bitcoin/pull/7052)
+- Backport: `TapTree` tweaks to make it easier to implement an encoder [#7108](https://github.com/rust-bitcoin/rust-bitcoin/pull/7108)
+
 # 0.32.102 - 2026-07-06
 
 - Backport: Make `SendCmpct` idempotent [#6525](https://github.com/rust-bitcoin/rust-bitcoin/pull/6525)
@@ -33,6 +42,14 @@ leave room for a bunch of secuity releases up to this number if needed.
 - The would like to later support ergonomic conversion to other 1.0 types (from `bitcoin-units`, and
   and `bitcoin-primitives`) without forcing the whole ecosystem to upgrade.
 - Opens the door to the possibility of doing releases and then using the semver trick.
+
+# 0.32.12 - 2026-10-10
+
+- Backport: Fix witness commitment check (BIP-141) [#6250](https://github.com/rust-bitcoin/rust-bitcoin/pull/6703)
+
+# 0.32.11 - 2026-07-14
+
+- Backport: Make `SendCmpct` idempotent [#6527](https://github.com/rust-bitcoin/rust-bitcoin/pull/6527)
 
 # 0.32.10 - 2026-04-23
 
