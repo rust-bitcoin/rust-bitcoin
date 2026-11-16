@@ -7,6 +7,8 @@ use core::ops::{Div, Mul};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -113,6 +115,23 @@ impl FeeRate {
     /// `Self::fee_wu(weight)`.
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
         Weight::from_vb(vb).and_then(|w| self.fee_wu(w))
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// Internally the `FeeRate` now uses sats/MvB (was sats/kwu). This means in `self` exceeds
+    /// `u64::MAX / 4_000` then conversion will overflow. To handle this we saturate to MAX.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::FeeRate {
+        // Ok to loose precision because the original type is explicitly sats/kwu.
+        stable::FeeRate::from_sat_per_kwu(self.to_sat_per_kwu()).unwrap_or(stable::FeeRate::MAX)
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::FeeRate) -> Self {
+        // Ok to loose precision because the original type is explicitly sats/kwu.
+        Self::from_sat_per_kwu(stable.to_sat_per_kwu_floor())
     }
 }
 

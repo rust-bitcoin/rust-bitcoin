@@ -2,6 +2,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
 use secp256k1::XOnlyPublicKey;
 
 use crate::blockdata::locktime::absolute;
@@ -126,6 +128,24 @@ impl Builder {
 
     /// Returns script bytes
     pub fn as_bytes(&self) -> &[u8] { self.0.as_bytes() }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// Stable builders are tagged with the role of the script they build e.g.,
+    /// [`stable::ScriptPubKeyBuf`]. The pre-1.0 type has no tag so the caller selects `T`,
+    /// typically by way of type inference.
+    #[cfg(feature = "compat")]
+    pub fn to_stable<T>(self) -> stable::script::Builder<T> {
+        stable::script::Builder::from(self.into_bytes())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    ///
+    /// The pre-1.0 type has no tag so `T` is discarded.
+    #[cfg(feature = "compat")]
+    pub fn from_stable<T>(stable: stable::script::Builder<T>) -> Self {
+        Self::from(stable.into_script().into_bytes())
+    }
 }
 
 impl Default for Builder {

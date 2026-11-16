@@ -4,6 +4,9 @@
 
 use core::ops::{Deref, DerefMut};
 
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
+
 #[allow(unused)]
 use crate::prelude::*;
 
@@ -290,6 +293,18 @@ impl PushBytes {
 
     /// Returns true if the buffer contains zero bytes.
     pub fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(&self) -> &stable::script::PushBytes {
+        self.as_bytes().try_into().expect("pre-1.0 PushBytes guarantees a valid length")
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: &stable::script::PushBytes) -> &Self {
+        stable.as_bytes().try_into().expect("stable PushBytes guarantees a valid length")
+    }
 }
 
 impl PushBytesBuf {
@@ -301,6 +316,18 @@ impl PushBytesBuf {
 
     /// Returns true if the buffer contains zero bytes.
     pub fn is_empty(&self) -> bool { self.inner().is_empty() }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::script::PushBytesBuf {
+        Vec::from(self).try_into().expect("pre-1.0 PushBytesBuf guarantees a valid length")
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::script::PushBytesBuf) -> Self {
+        Vec::from(stable).try_into().expect("stable PushBytesBuf guarantees a valid length")
+    }
 }
 
 impl AsRef<[u8]> for PushBytes {
