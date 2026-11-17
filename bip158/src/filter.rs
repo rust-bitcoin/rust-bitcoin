@@ -7,7 +7,7 @@
 //! [`BasicFilter`] for construction and query operations.
 
 #[cfg(feature = "alloc")]
-use alloc::{collections::BTreeSet, vec::Vec};
+use alloc::{borrow::Cow, collections::BTreeSet, vec::Vec};
 use core::cmp::{self, Ordering};
 
 use encoding::{decode_from_slice_unbounded_with_decoder, CompactSizeU64Decoder};
@@ -65,13 +65,13 @@ impl BasicFilter<Vec<u8>> {
         F: FnMut(&OutPoint) -> Result<S, E>,
         S: AsRef<ScriptPubKey>,
     {
-        let mut elements = BTreeSet::<Vec<u8>>::new();
+        let mut elements = BTreeSet::<Cow<'_, [u8]>>::new();
 
         for transaction in block.transactions() {
             for output in &transaction.outputs {
                 let script = &output.script_pubkey;
                 if !script.is_empty() && !script.is_op_return() {
-                    elements.insert(script.to_vec());
+                    elements.insert(Cow::Borrowed(script.as_bytes()));
                 }
             }
         }
@@ -84,7 +84,7 @@ impl BasicFilter<Vec<u8>> {
             let script = prevout_script(outpoint).map_err(BuildError::Prevout)?;
             let script = script.as_ref();
             if !script.is_empty() {
-                elements.insert(script.to_vec());
+                elements.insert(Cow::Owned(script.to_vec()));
             }
         }
 
@@ -94,7 +94,7 @@ impl BasicFilter<Vec<u8>> {
         Ok(Self::from_elements(block.block_hash(), &elements))
     }
 
-    fn from_elements(block_hash: BlockHash, elements: &BTreeSet<Vec<u8>>) -> Self {
+    fn from_elements(block_hash: BlockHash, elements: &BTreeSet<Cow<'_, [u8]>>) -> Self {
         let count = elements.len();
         let range = count as u64 * u64::from(BASIC_FILTER_M);
         let key = SipHashKey::from_block_hash(block_hash);
@@ -270,13 +270,6 @@ impl<B: AsRef<[u8]>> BasicFilter<B> {
     }
 
     fn payload(&self) -> &[u8] { &self.bytes.as_ref()[usize::from(self.payload_offset)..] }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<Vec<u8>> for BasicFilter<Vec<u8>> {
-    type Error = DecodeError;
-
-    fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> { Self::from_bytes(bytes) }
 }
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for BasicFilter<B> {
@@ -605,7 +598,7 @@ mod tests {
     #[test]
     fn nonzero_padding_is_accepted() {
         let mut elements = BTreeSet::new();
-        elements.insert(b"element".to_vec());
+        elements.insert(Cow::Borrowed(b"element".as_slice()));
         let block_hash = BlockHash::from_byte_array([42; 32]);
         let filter = BasicFilter::from_elements(block_hash, &elements);
         let mut bytes = filter.into_bytes();
@@ -616,9 +609,9 @@ mod tests {
     #[test]
     fn round_trip_and_query() {
         let mut elements = BTreeSet::new();
-        elements.insert(b"first".to_vec());
-        elements.insert(b"second".to_vec());
-        elements.insert(b"third".to_vec());
+        elements.insert(Cow::Borrowed(b"first".as_slice()));
+        elements.insert(Cow::Borrowed(b"second".as_slice()));
+        elements.insert(Cow::Borrowed(b"third".as_slice()));
         let block_hash = BlockHash::from_byte_array([7; 32]);
         let filter = BasicFilter::from_elements(block_hash, &elements);
         let reparsed = BasicFilter::from_bytes(filter.clone().into_bytes()).unwrap();
