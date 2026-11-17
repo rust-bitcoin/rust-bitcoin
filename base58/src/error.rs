@@ -9,7 +9,7 @@ use internals::write_err;
 
 /// An error occurred during base58 decoding (with checksum).
 #[cfg(feature = "alloc")]
-#[deprecated(since = "TBD", note = "use DecodeCheckError instead")]
+#[deprecated(since = "0.6.0", note = "use DecodeCheckError instead")]
 pub type Error = DecodeCheckError;
 
 #[cfg(feature = "alloc")]

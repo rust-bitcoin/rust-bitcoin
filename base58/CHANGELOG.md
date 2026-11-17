@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-17
+
+- Simplify `CapacityExceeded` error [#6929](https://github.com/rust-bitcoin/rust-bitcoin/pull/6929)
+- Remove the no-alloc decode limit in `decode_check_to_array` [#6824](https://github.com/rust-bitcoin/rust-bitcoin/pull/6824)
+- Saturate the reserve len multiplication [#6858](https://github.com/rust-bitcoin/rust-bitcoin/pull/6858)
+- Simplify and flatten error types [#6779](https://github.com/rust-bitcoin/rust-bitcoin/pull/6779)
+- Remove all non-Infallible `From` impls on `DecodeCheckError` [#6764](https://github.com/rust-bitcoin/rust-bitcoin/pull/6764)
+- Remove `is_empty` from `Base58CkString` [#6780](https://github.com/rust-bitcoin/rust-bitcoin/pull/6780)
+- Drop `decode` function [#6679](https://github.com/rust-bitcoin/rust-bitcoin/pull/6679)
+
 ## [0.5.0] - 2026-08-03
 
 - Replace encoding functions with optional-alloc `Base58CkString` [6505](https://github.com/rust-bitcoin/rust-bitcoin/pull/6505)
