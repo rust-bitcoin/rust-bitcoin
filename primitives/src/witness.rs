@@ -925,10 +925,86 @@ impl Default for Witness {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Witness {
-    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let arbitrary_bytes = Vec::<Vec<u8>>::arbitrary(u)?;
-        Ok(Self::from_slice(&arbitrary_bytes))
+        use crate::opcodes::all::{OP_1, OP_CHECKSIG};
+        use crate::script::{Builder, WitnessScriptBuf};
+
+        // Mirrors constants in `taproot_primitives`, which `primitives` does not depend on.
+        const TAPROOT_ANNEX_PREFIX: u8 = 0x50;
+        const TAPROOT_LEAF_TAPSCRIPT: u8 = 0xc0;
+        const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
+        const TAPROOT_CONTROL_NODE_SIZE: usize = 32;
+        const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
+
+        fn compressed_public_key(u: &mut Unstructured<'_>) -> arbitrary::Result<[u8; 33]> {
+            let mut public_key: [u8; 33] = u.arbitrary()?;
+            public_key[0] = 0x02 | (public_key[0] & 1);
+            Ok(public_key)
+        }
+
+        fn control_block(u: &mut Unstructured<'_>) -> arbitrary::Result<Vec<u8>> {
+            let depth = u.int_in_range(0..=TAPROOT_CONTROL_MAX_NODE_COUNT)?;
+            let mut control_block =
+                alloc::vec![0; TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * depth];
+            u.fill_buffer(&mut control_block)?;
+            control_block[0] = TAPROOT_LEAF_TAPSCRIPT | (control_block[0] & 1);
+            Ok(control_block)
+        }
+
+        fn annex(u: &mut Unstructured<'_>) -> arbitrary::Result<Vec<u8>> {
+            let mut annex = Vec::from([TAPROOT_ANNEX_PREFIX]);
+            annex.extend_from_slice(u.arbitrary()?);
+            Ok(annex)
+        }
+
+        // Equally weight common spend templates and an unrestricted stack. Templates have
+        // common shapes but not necessarily valid signatures or keys. Fixed size elements
+        // are zero filled once the data is exhausted rather than returning an error.
+        let mut witness = Self::new();
+        match u.int_in_range(0..=8)? {
+            0 => {}
+            // P2WPKH: ECDSA signature, compressed public key.
+            1 => {
+                witness.push(u.arbitrary::<[u8; 72]>()?);
+                witness.push(compressed_public_key(u)?);
+            }
+            // P2WSH: ECDSA signature, `<public key> OP_CHECKSIG` witness script.
+            2 => {
+                witness.push(u.arbitrary::<[u8; 72]>()?);
+                let script: WitnessScriptBuf = Builder::new()
+                    .push_slice(compressed_public_key(u)?)
+                    .push_opcode(OP_CHECKSIG)
+                    .into_script();
+                witness.push(script.as_bytes());
+            }
+            // Taproot key path: Schnorr signature with default sighash.
+            3 => witness.push(u.arbitrary::<[u8; 64]>()?),
+            // Taproot key path: Schnorr signature with explicit sighash byte.
+            4 => witness.push(u.arbitrary::<[u8; 65]>()?),
+            // Taproot key path with annex.
+            5 => {
+                witness.push(u.arbitrary::<[u8; 64]>()?);
+                witness.push(annex(u)?);
+            }
+            // Taproot script path: `OP_1` leaf script and control block.
+            6 => {
+                witness.push([OP_1.to_u8()]);
+                witness.push(control_block(u)?);
+            }
+            // Taproot script path with annex.
+            7 => {
+                witness.push([OP_1.to_u8()]);
+                witness.push(control_block(u)?);
+                witness.push(annex(u)?);
+            }
+            _ => {
+                // Borrow whole elements rather than consuming a continuation byte per data byte.
+                for element in u.arbitrary_iter::<&[u8]>()? {
+                    witness.push(element?);
+                }
+            }
+        }
+        Ok(witness)
     }
 }
 
