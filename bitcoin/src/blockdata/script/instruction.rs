@@ -22,8 +22,8 @@ impl<'a> Instruction<'a> {
     }
 
     /// Returns the pushed bytes if the instruction is a data push.
-    pub fn push_bytes(&self) -> Option<&PushBytes> {
-        match self {
+    pub fn push_bytes(&self) -> Option<&'a PushBytes> {
+        match *self {
             Instruction::Op(_) => None,
             Instruction::PushBytes(bytes) => Some(bytes),
         }
