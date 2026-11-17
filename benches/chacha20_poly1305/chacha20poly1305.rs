@@ -23,7 +23,7 @@ fn bench_chacha20poly1305(c: &mut Criterion) {
         g.bench_function(BenchmarkId::new("encrypt_no_aad", size), |b| {
             b.iter(|| {
                 let mut buf = pt.clone();
-                let cipher = ChaCha20Poly1305::new(key, nonce);
+                let cipher = ChaCha20Poly1305::new(key.clone(), nonce);
                 let tag = cipher.encrypt(black_box(&mut buf), None);
                 black_box(tag);
             });
@@ -32,19 +32,19 @@ fn bench_chacha20poly1305(c: &mut Criterion) {
         g.bench_function(BenchmarkId::new("encrypt_with_aad", size), |b| {
             b.iter(|| {
                 let mut buf = pt.clone();
-                let cipher = ChaCha20Poly1305::new(key, nonce);
+                let cipher = ChaCha20Poly1305::new(key.clone(), nonce);
                 let tag = cipher.encrypt(black_box(&mut buf), Some(aad));
                 black_box(tag);
             });
         });
 
         let mut ct = pt.clone();
-        let tag = ChaCha20Poly1305::new(key, nonce).encrypt(&mut ct, Some(aad));
+        let tag = ChaCha20Poly1305::new(key.clone(), nonce).encrypt(&mut ct, Some(aad));
 
         g.bench_function(BenchmarkId::new("decrypt_ok", size), |b| {
             b.iter(|| {
                 let mut buf = ct.clone();
-                let cipher = ChaCha20Poly1305::new(key, nonce);
+                let cipher = ChaCha20Poly1305::new(key.clone(), nonce);
                 let res = cipher.decrypt(black_box(&mut buf), tag, Some(aad));
                 res.unwrap();
                 black_box(());

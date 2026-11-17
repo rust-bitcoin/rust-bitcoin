@@ -295,7 +295,7 @@ mod tests {
         // Compares the SSE2 4-block processing with the single block processing.
         for start in [0u32, 1, 42, 1_000, u32::MAX - 3] {
             let mut sse2_ks = [0u8; 4 * 64];
-            apply_4_blocks(&mut sse2_ks, &key, &nonce, start);
+            apply_4_blocks(&mut sse2_ks, &cipher.key, &nonce, start);
 
             let mut scalar_ks = [0u8; 4 * 64];
             for i in 0u32..4 {
