@@ -3,6 +3,7 @@
 //! The `ChaCha20` stream cipher from RFC8439.
 
 use core::ops::BitXor;
+use core::sync::atomic::{compiler_fence, Ordering};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
@@ -28,6 +29,20 @@ pub struct Key(pub(super) [u8; 32]);
 impl Key {
     /// Constructs a new key.
     pub const fn new(key: [u8; 32]) -> Self { Self(key) }
+
+    fn non_secure_erase(&mut self) {
+        for b in &mut self.0 {
+            // SAFETY: `&mut self` returns valid memory.
+            unsafe {
+                core::ptr::write_volatile(b, 0);
+            }
+        }
+        compiler_fence(Ordering::SeqCst);
+    }
+}
+
+impl Drop for Key {
+    fn drop(&mut self) { self.non_secure_erase(); }
 }
 
 /// A 96-bit initialization vector (IV), or nonce.
