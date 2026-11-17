@@ -17,7 +17,7 @@ exclude = ["tests", "contrib"]
 default = ["std"]
 std = ["alloc", "base58/std", "crypto/std", "hashes/std", "hex/std", "internals/std", "network/std", "serde?/std"]
 alloc = ["base58/alloc", "crypto/alloc", "hashes/alloc", "hex/alloc", "internals/alloc", "network/alloc", "serde?/alloc"]
-serde = ["dep:serde", "hashes/serde", "internals/serde", "crypto/serde"]
+serde = ["dep:serde", "hashes/serde", "internals/serde", "crypto/serde", "network/serde"]
 arbitrary = ["crypto/arbitrary", "dep:arbitrary", "hashes/arbitrary", "network/arbitrary"]
 
 [dependencies]
