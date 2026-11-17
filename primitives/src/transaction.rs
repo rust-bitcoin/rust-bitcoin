@@ -1677,13 +1677,22 @@ impl<'a> Arbitrary<'a> for Transaction {
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxIn {
-    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        // Equally weight legacy, native SegWit, and unrestricted inputs.
+        let (has_script_sig, has_witness) = match u.int_in_range(0..=2)? {
+            0 => (true, false),
+            1 => (false, true),
+            _ => (true, true),
+        };
         Ok(Self {
             previous_output: OutPoint::arbitrary(u)?,
-            script_sig: ScriptSigBuf::arbitrary(u)?,
+            script_sig: if has_script_sig {
+                ScriptSigBuf::arbitrary(u)?
+            } else {
+                ScriptSigBuf::new()
+            },
             sequence: Sequence::arbitrary(u)?,
-            witness: Witness::arbitrary(u)?,
+            witness: if has_witness { Witness::arbitrary(u)? } else { Witness::new() },
         })
     }
 }
