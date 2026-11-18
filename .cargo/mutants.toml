@@ -7,7 +7,9 @@ exclude_re = [
     "impl Arbitrary",
     "impl Debug",
     "impl fmt::Debug",
-    ".*Error",
+    "Error>::", # Trait impls of error types
+    "Error<.*>>::", # Trait impls of generic error types
+    "Error::", # Methods of error types
     "deserialize", # Skip serde mutation tests
     "serde_details::<impl de::Visitor<'_>", # Skip serde mutation tests
     "Iterator", # Mutating operations in an iterator can result in an infinite loop
@@ -41,6 +43,7 @@ exclude_re = [
     "primitives/.* Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
     "primitives/.* Block<Checked>::cached_witness_root", # Skip getters
     "primitives/.* Block<Checked>::transactions", # Skip getters
+    "primitives/.* <impl PushBytesErrorReport for core::convert::Infallible>::input_len", # Uninhabited type, cannot be called
     "primitives/.* Script::to_bytes", # Deprecated
     "primitives/.* decode_cursor", # Mutating operations in decode_cursor can result in an infinite loop
     "primitives/.* fmt_debug", # Mutants from formatting/display changes
