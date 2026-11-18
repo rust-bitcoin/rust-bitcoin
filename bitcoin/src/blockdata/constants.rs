@@ -73,6 +73,8 @@ const GENESIS_OUTPUT_PK: [u8; 65] = [
 #[rustfmt::skip]
 const TESTNET4_GENESIS_OUTPUT_PK: [u8; 33] = [0x00; 33];
 
+const TESTNET5_GENESIS_EXTRANONCE: [u8; 8] = [0x95, 0xeb, 0xf7, 0x6a, 0x02, 0x00, 0x00, 0x00];
+
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
 fn bitcoin_genesis_tx(params: &Params) -> Transaction {
     // Base
@@ -94,6 +96,23 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
                 script::Builder::new().push_slice(TESTNET4_GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script(),
 
             ),
+            Network::Testnet(TestnetVersion::V5) => {
+                let message: &script::PushBytes = b"2026-11-14 975744 0000000000000000000123e2681e2f82acdcb9430a15eec24cc85b400691d479"
+                    .as_slice()
+                    .try_into()
+                    .expect("82-byte genesis message fits in a script push");
+                (
+                    script::Builder::new()
+                        .push_int_unchecked(486604799)
+                        .push_int_non_minimal(4)
+                        .push_slice(message)
+                        .into_script(),
+                    script::Builder::new()
+                        .push_opcode(OP_RETURN)
+                        .push_slice(TESTNET5_GENESIS_EXTRANONCE)
+                        .into_script(),
+                )
+            },
             _ => (
                 script::Builder::new()
                 .push_int_unchecked(486604799)
@@ -158,6 +177,18 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
                 time: BlockTime::from_u32(1714777860),
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 393743547,
+            },
+            transactions,
+        )
+        .assume_checked(witness_root),
+        Network::Testnet(TestnetVersion::V5) => Block::new_unchecked(
+            block::Header {
+                version: block::Version::from_consensus(0x2230c000),
+                prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
+                merkle_root,
+                time: BlockTime::from_u32(1794632593),
+                bits: CompactTarget::from_consensus(0x1a0fffff),
+                nonce: 0x653d9131,
             },
             transactions,
         )
@@ -230,6 +261,11 @@ impl ChainHash {
         67, 240, 139, 218, 176, 80, 227, 91, 86, 124, 134, 75, 145, 244, 127, 80, 174, 114, 90,
         226, 222, 83, 188, 251, 186, 242, 132, 218, 0, 0, 0, 0,
     ]);
+    /// `ChainHash` for Bitcoin testnet5.
+    pub const TESTNET5: Self = Self([
+        151, 212, 145, 74, 103, 13, 32, 75, 71, 106, 255, 111, 253, 70, 69, 61, 51, 28, 220, 82,
+        50, 125, 126, 99, 193, 8, 0, 0, 0, 0, 0, 0,
+    ]);
     /// `ChainHash` for Bitcoin signet.
     pub const SIGNET: Self = Self([
         246, 30, 238, 59, 99, 163, 128, 164, 119, 160, 99, 175, 50, 178, 187, 201, 124, 159, 249,
@@ -250,6 +286,7 @@ impl ChainHash {
             Network::Bitcoin => Self::BITCOIN,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(TestnetVersion::V5) => Self::TESTNET5,
             Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
@@ -265,6 +302,7 @@ impl ChainHash {
             Network::Bitcoin => Self::BITCOIN,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(TestnetVersion::V5) => Self::TESTNET5,
             Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
@@ -385,6 +423,68 @@ mod test {
         );
     }
 
+    #[test]
+    fn testnet5_genesis_first_transaction() {
+        let gen = bitcoin_genesis_tx(&Params::TESTNET5);
+
+        assert_eq!(gen.version, transaction::Version::ONE);
+        assert_eq!(gen.inputs.len(), 1);
+        assert_eq!(gen.inputs[0].previous_output, OutPoint::COINBASE_PREVOUT);
+        assert_eq!(encode_to_vec(gen.inputs[0].script_sig.as_script()),
+                   hex!("5b04ffff001d01044c52323032362d31312d3134203937353734342030303030303030303030303030303030303030313233653236383165326638326163646362393433306131356565633234636338356234303036393164343739"));
+        assert_eq!(gen.inputs[0].sequence, Sequence::MAX);
+        assert!(gen.inputs[0].witness.is_empty());
+        assert_eq!(gen.outputs.len(), 1);
+        assert_eq!(
+            encode_to_vec(gen.outputs[0].script_pubkey.as_script()),
+            hex!("0a6a0895ebf76a02000000")
+        );
+        assert_eq!(gen.outputs[0].amount, Amount::FIFTY_BTC);
+        assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
+        assert_eq!(
+            gen.compute_txid().to_string(),
+            "8c5899b65c5b0834adb17af314e22a9bf067e7ed8144c37967b5ec56b5a6e28d"
+        );
+    }
+
+    #[test]
+    fn testnet5_genesis_full_block() {
+        use crate::block::HeaderExt as _;
+
+        let gen = genesis_block(&params::TESTNET5);
+        assert_eq!(gen.header().version, block::Version::from_consensus(0x2230c000));
+        assert_eq!(gen.header().prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
+        assert_eq!(
+            gen.header().merkle_root.to_string(),
+            "8c5899b65c5b0834adb17af314e22a9bf067e7ed8144c37967b5ec56b5a6e28d"
+        );
+        assert_eq!(gen.header().time, BlockTime::from_u32(1794632593));
+        assert_eq!(gen.header().bits, CompactTarget::from_consensus(0x1a0fffff));
+        assert_eq!(gen.header().nonce, 0x653d9131);
+        assert_eq!(
+            gen.block_hash().to_string(),
+            "00000000000008c1637e7d3252dc1c333d4546fd6fff6a474b200d674a91d497"
+        );
+        assert_eq!(
+            gen.header().validate_pow(Params::TESTNET5.max_attainable_target),
+            Ok(gen.block_hash())
+        );
+    }
+
+    #[test]
+    fn testnet5_chain_hash() {
+        use crate::network::NetworkExt as _;
+
+        const CHAIN_HASH: ChainHash =
+            ChainHash::using_genesis_block_const(Network::Testnet(TestnetVersion::V5));
+        let network = Network::Testnet(TestnetVersion::V5);
+        assert_eq!(CHAIN_HASH, ChainHash::TESTNET5);
+        assert_eq!(ChainHash::using_genesis_block(network), ChainHash::TESTNET5);
+        assert_eq!(network.chain_hash(), ChainHash::TESTNET5);
+        assert_eq!(Network::try_from(ChainHash::TESTNET5), Ok(network));
+        assert_eq!(Network::from_chain_hash(ChainHash::TESTNET5), Some(network));
+    }
+
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array
     // representing the genesis block is the same as that created by hashing the genesis block.
     fn chain_hash_and_genesis_block(network: Network) {
@@ -407,6 +507,7 @@ mod test {
             Network::Bitcoin => {},
             Network::Testnet(TestnetVersion::V3) => {},
             Network::Testnet(TestnetVersion::V4) => {},
+            Network::Testnet(TestnetVersion::V5) => {},
             Network::Signet => {},
             Network::Regtest => {},
             _ => panic!("update ChainHash::using_genesis_block and chain_hash_and_genesis_block with new variants"),
@@ -428,6 +529,7 @@ mod test {
         mainnet_chain_hash_genesis_block, Network::Bitcoin;
         testnet_chain_hash_genesis_block, Network::Testnet(TestnetVersion::V3);
         testnet4_chain_hash_genesis_block, Network::Testnet(TestnetVersion::V4);
+        testnet5_chain_hash_genesis_block, Network::Testnet(TestnetVersion::V5);
         signet_chain_hash_genesis_block, Network::Signet;
         regtest_chain_hash_genesis_block, Network::Regtest;
     }
