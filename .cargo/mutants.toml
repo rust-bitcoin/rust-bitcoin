@@ -19,7 +19,10 @@ exclude_re = [
     # ----------------------------------Crate-specific exclusions----------------------------------
     # units
     # src/amount/mod.rs
-    "units/.* parse_signed_to_satoshi", # Can't kill all mutants since there is no denomination smaller than Satoshi
+    "units/.* delete match arm Ok\\(0\\) in parse_signed_to_satoshi", # Unreachable, the input always has a dot here so it never parses as 0
+    "units/.* replace - with \\+ in parse_signed_to_satoshi", # last_n is 0 for Satoshi, the only denomination that gets here
+    "units/.* max_decimals <= 0 with false in parse_signed_to_satoshi", # Unreachable, a Satoshi amount is cut at the dot before the loop
+    "units/.* decimals\\.is_none\\(\\) with true in parse_signed_to_satoshi", # Always true, the first arm returns when decimals is set
     "units/.* replace > with < in fmt_satoshi_in", # Unreachable, needs a denomination bigger than BTC and none exists
     "units/.* replace > with == in fmt_satoshi_in", # Unreachable, needs a denomination bigger than BTC and none exists
     "units/.* replace > with >= in fmt_satoshi_in", # Unreachable, needs a denomination bigger than BTC and none exists

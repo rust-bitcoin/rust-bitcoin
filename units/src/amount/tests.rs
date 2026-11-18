@@ -937,6 +937,48 @@ fn from_str() {
             position: 1,
         }))),
     );
+    case(
+        "1.1_.1 BTC",
+        &Err(parse_err(ParseAmountErrorInner::InvalidCharacter(InvalidCharacterError {
+            invalid_char: '.',
+            position: 4,
+        }))),
+    );
+    scase(
+        "-1.1.1 BTC",
+        &Err(parse_err(ParseAmountErrorInner::InvalidCharacter(InvalidCharacterError {
+            invalid_char: '.',
+            position: 4,
+        }))),
+    );
+    case(
+        "1_.5 BTC",
+        &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
+            char: '_',
+            position: 1,
+        }))),
+    );
+    scase(
+        "-1_.5 BTC",
+        &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
+            char: '_',
+            position: 2,
+        }))),
+    );
+    case(
+        "1_ BTC",
+        &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
+            char: '_',
+            position: 1,
+        }))),
+    );
+    scase(
+        "-1_ BTC",
+        &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
+            char: '_',
+            position: 2,
+        }))),
+    );
 
     ok_case(".5 bits", sat(50));
     ok_scase("-.5 bits", ssat(-50));
