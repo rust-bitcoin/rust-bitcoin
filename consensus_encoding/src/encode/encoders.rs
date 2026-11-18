@@ -229,7 +229,7 @@ macro_rules! define_encoder_n {
             fn current_chunk(&self) -> &[u8] {
                 match self.cur_idx {
                     $($enc_idx => self.$enc_field.current_chunk(),)*
-                    _ => &[],
+                    _ => unreachable!("index never reaches this value"),
                 }
             }
 
@@ -248,7 +248,7 @@ macro_rules! define_encoder_n {
                         };
                     }
                 )*
-                EncoderStatus::Finished
+                unreachable!("index never reaches this value")
             }
         }
 
