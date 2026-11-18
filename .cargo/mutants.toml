@@ -21,7 +21,8 @@ exclude_re = [
     # src/amount/mod.rs
     "units/.* parse_signed_to_satoshi", # Can't kill all mutants since there is no denomination smaller than Satoshi
     "units/.* fmt_satoshi_in", # Related to formatting/display
-    "units/.* dec_width", # Replacing num /= 10 with num %=10 in a loop causes a timeout due to infinite loop
+    "units/.* replace /= with %= in dec_width", # Replacing /= with %= causes an infinite loop
+    "units/.* replace == with != in dec_width", # Replacing == with != causes an infinite loop
     # src/locktime/relative.rs
     "units/.* replace \\| with \\^ in LockTime::to_consensus_u32", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
     "units/.* replace \\| with \\^ in Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
