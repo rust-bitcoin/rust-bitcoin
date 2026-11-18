@@ -122,21 +122,21 @@ pub use self::unsigned::{AmountDecoder, AmountEncoder};
 /// }
 /// # Ok::<_, amount::OutOfRangeError>(())
 /// ```
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 #[allow(clippy::doc_markdown)]
 pub enum Denomination {
-    /// BTC (1 BTC = 100,000,000 satoshi).
-    Bitcoin,
-    /// cBTC (1 cBTC = 1,000,000 satoshi).
-    CentiBitcoin,
-    /// mBTC (1 mBTC = 100,000 satoshi).
-    MilliBitcoin,
+    /// satoshi (1 BTC = 100,000,000 satoshi).
+    Satoshi,
     /// bits (1 bit = 1 µBTC = 100 satoshi).
     #[doc(alias("MicroBitcoin", "uBTC", "µBTC"))]
     Bit,
-    /// satoshi (1 BTC = 100,000,000 satoshi).
-    Satoshi,
+    /// mBTC (1 mBTC = 100,000 satoshi).
+    MilliBitcoin,
+    /// cBTC (1 cBTC = 1,000,000 satoshi).
+    CentiBitcoin,
+    /// BTC (1 BTC = 100,000,000 satoshi).
+    Bitcoin,
     /// Stops users from casting this enum to an integer.
     // May get removed if one day Rust supports disabling casts natively.
     #[doc(hidden)]
