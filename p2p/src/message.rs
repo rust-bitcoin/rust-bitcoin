@@ -18,8 +18,7 @@ use encoding::{
 };
 use hashes::{sha256d, HashEngine};
 use primitives::block::{self, Header, HeaderDecoder, HeaderEncoder};
-use primitives::transaction;
-use units::{Amount, FeeRate};
+use primitives::{transaction, Amount, FeeRate};
 
 use self::error::{NetworkMessageDecoderErrorInner, V1NetworkMessageDecoderErrorInner};
 use crate::address::{AddrV1Message, AddrV2Message, AddrV2MessageDecoderError};
@@ -2060,7 +2059,7 @@ pub mod error {
         /// If an error of this variant is thrown while decoding a `V1NetworkMessage`, the message
         /// should be ignored.
         ///
-        /// [`Amount::MAX`]: units::Amount::MAX
+        /// [`Amount::MAX`]: primitives::Amount::MAX
         InvalidFeeRate(u64),
     }
 
@@ -2464,8 +2463,7 @@ mod test {
     use encoding::Decoder;
     use hex::hex;
     use primitives::transaction::{Transaction, Txid};
-    use primitives::{Block, BlockHash};
-    use units::BlockHeight;
+    use primitives::{Block, BlockHash, BlockHeight};
 
     use super::*;
     use crate::address::{AddrV2, Address};
@@ -2968,7 +2966,7 @@ mod test {
 
     #[test]
     fn fee_filter_decode_edge_cases() {
-        let max_money = units::Amount::MAX.to_sat();
+        let max_money = primitives::Amount::MAX.to_sat();
 
         // 0 to Amount::MAX is valid
         let bytes = 0u64.to_le_bytes();

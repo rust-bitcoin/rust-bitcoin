@@ -13,10 +13,10 @@ use encoding::{
     Encoder4, PrefixedBytesEncoder, PrefixedSliceEncoder, VecDecoder,
 };
 use hashes::{sha256d, HashEngine};
-use primitives::block::{BlockHashDecoder, BlockHashEncoder};
-use primitives::BlockHash;
-use units::block::{BlockHeightDecoder, BlockHeightEncoder};
-use units::BlockHeight;
+use primitives::block::{
+    BlockHashDecoder, BlockHashEncoder, BlockHeightDecoder, BlockHeightEncoder,
+};
+use primitives::{BlockHash, BlockHeight};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
