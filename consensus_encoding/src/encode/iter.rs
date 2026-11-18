@@ -69,29 +69,7 @@ where
             Some(enc) => EncoderState::Encoding { current: enc, remaining: iter },
             None => EncoderState::Done,
         };
-        let mut this = Self { state };
-        this.skip_empty();
-        this
-    }
-
-    fn skip_empty(&mut self) {
-        let EncoderState::Encoding { current, remaining } = &mut self.state else {
-            return;
-        };
-
-        loop {
-            if !current.current_chunk().is_empty() {
-                return;
-            }
-            if current.advance().has_finished() {
-                if let Some(next) = remaining.next() {
-                    *current = next;
-                } else {
-                    self.state = EncoderState::Done;
-                    return;
-                }
-            }
-        }
+        Self { state }
     }
 }
 
@@ -139,22 +117,16 @@ where
             return EncoderStatus::Finished;
         };
 
-        loop {
-            if current.advance().has_more() {
-                return EncoderStatus::HasMore;
-            }
+        if current.advance().has_more() {
+            return EncoderStatus::HasMore;
+        }
 
-            if let Some(next) = remaining.next() {
-                *current = next;
-                // If the next encoder is empty, skip in order to maintain `Encoder` contract
-                // that it must return non-empty bytes or the encoder must be `Done`
-                if !current.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.state = EncoderState::Done;
-                return EncoderStatus::Finished;
-            }
+        if let Some(next) = remaining.next() {
+            *current = next;
+            EncoderStatus::HasMore
+        } else {
+            self.state = EncoderState::Done;
+            EncoderStatus::Finished
         }
     }
 }

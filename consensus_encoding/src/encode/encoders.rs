@@ -224,21 +224,6 @@ macro_rules! define_encoder_n {
             }
         }
 
-        impl<$($enc_ty: Encoder,)*> $name<$($enc_ty,)*> {
-            #[inline]
-            fn skip_empty(&mut self) {
-                $(
-                    if self.cur_idx == $enc_idx {
-                        if self.$enc_field.current_chunk().is_empty() {
-                            self.cur_idx += 1;
-                        } else {
-                            return;
-                        }
-                    }
-                )*
-            }
-        }
-
         impl<$($enc_ty: Encoder,)*> Encoder for $name<$($enc_ty,)*> {
             #[inline]
             fn current_chunk(&self) -> &[u8] {
@@ -252,22 +237,10 @@ macro_rules! define_encoder_n {
             fn advance(&mut self) -> EncoderStatus {
                 $(
                     if self.cur_idx == $enc_idx {
-                        if self.$enc_field.current_chunk().is_empty() {
-                            self.cur_idx += 1;
-                            self.skip_empty();
-                            return if self.cur_idx == $idx_limit {
-                                EncoderStatus::Finished
-                            } else {
-                                EncoderStatus::HasMore
-                            };
-                        }
-                        if self.$enc_field.advance().has_more()
-                            && !self.$enc_field.current_chunk().is_empty()
-                        {
+                        if self.$enc_field.advance().has_more() {
                             return EncoderStatus::HasMore;
                         }
                         self.cur_idx += 1;
-                        self.skip_empty();
                         return if self.cur_idx == $idx_limit {
                             EncoderStatus::Finished
                         } else {
