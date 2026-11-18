@@ -757,6 +757,7 @@ check_format_non_negative! {
     btc_check_fmt_non_negative_52, 100_000_001, "{:^12}", " 1.00000001 ";
     btc_check_fmt_non_negative_53, 100_000_001, "{:^12.9}", "1.000000010 ";
     btc_check_fmt_non_negative_54, 100_000_001, "{:^13.9}", " 1.000000010 ";
+    btc_check_fmt_non_negative_55, 100_000_001, "{:^20}", "     1.00000001     ";
 }
 
 check_format_non_negative_show_denom! {

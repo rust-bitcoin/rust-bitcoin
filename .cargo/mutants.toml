@@ -20,7 +20,11 @@ exclude_re = [
     # units
     # src/amount/mod.rs
     "units/.* parse_signed_to_satoshi", # Can't kill all mutants since there is no denomination smaller than Satoshi
-    "units/.* fmt_satoshi_in", # Related to formatting/display
+    "units/.* replace > with < in fmt_satoshi_in", # Unreachable, needs a denomination bigger than BTC and none exists
+    "units/.* replace > with == in fmt_satoshi_in", # Unreachable, needs a denomination bigger than BTC and none exists
+    "units/.* replace > with >= in fmt_satoshi_in", # Unreachable, needs a denomination bigger than BTC and none exists
+    "units/.* replace \\+ with - in fmt_satoshi_in", # The exponent added is zero unless a denomination is bigger than BTC
+    "units/.* replace < with <= in fmt_satoshi_in", # With num_width == width the padding is zero either way
     "units/.* replace /= with %= in dec_width", # Replacing /= with %= causes an infinite loop
     "units/.* replace == with != in dec_width", # Replacing == with != causes an infinite loop
     # src/locktime/relative.rs
