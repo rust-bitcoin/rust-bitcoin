@@ -10,7 +10,7 @@ keywords = ["bitcoin", "types"]
 readme = "README.md"
 edition = "2021"
 rust-version = "1.74.0"
-exclude = ["tests", "contrib"]
+exclude = ["api", "tests", "contrib"]
 
 [features]
 default = ["std", "hex"]
@@ -38,3 +38,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true
+
+[package.metadata.rbmt.api]
+enabled = true
+private = ["bitcoin_internals"]

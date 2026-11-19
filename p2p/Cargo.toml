@@ -11,7 +11,7 @@ keywords = ["bitcoin", "peer-to-peer"]
 readme = "README.md"
 edition = "2021"
 rust-version = "1.74.0"
-exclude = ["tests", "contrib"]
+exclude = ["api", "tests", "contrib"]
 
 [features]
 default = ["std"]
@@ -50,3 +50,7 @@ workspace = true
 exact_features = [
     ["std", "serde"],
 ]
+
+[package.metadata.rbmt.api]
+enabled = true
+private = ["bitcoin_internals"]
