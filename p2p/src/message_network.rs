@@ -247,17 +247,14 @@ impl UserAgent {
     }
 
     fn panic_max_len(agent_str: &str) {
-        assert!(
-            agent_str.chars().count() <= Self::MAX_USER_AGENT_LEN,
-            "user agent cannot exceed 256 characters."
-        );
+        assert!(agent_str.len() <= Self::MAX_USER_AGENT_LEN, "user agent cannot exceed 256 bytes.");
     }
     /// Builds a new user agent from the lowest level client software. For example: `Satoshi` is
     /// used by Bitcoin Core.
     ///
     /// # Panics
     ///
-    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 characters.
+    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 bytes.
     pub fn new<S: AsRef<str>>(client_name: S, client_version: &UserAgentVersion) -> Self {
         let parsed_name = client_name.as_ref();
         Self::panic_invalid_chars(parsed_name);
@@ -275,7 +272,7 @@ impl UserAgent {
     ///
     /// # Panics
     ///
-    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 characters.
+    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 bytes.
     #[must_use]
     pub fn add_client<S: AsRef<str>>(
         mut self,
@@ -947,6 +944,47 @@ mod tests {
         let wallet_version = wallet_version.push_comment("24");
         let user_agent = user_agent.add_client(wallet_name, &wallet_version);
         assert_eq!("/BitcoinJ:20110128/Electrum:0.9.0(Ubuntu; 24)/", user_agent.to_string());
+    }
+
+    #[test]
+    fn user_agent_max_bytes() {
+        let version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 1,
+            minor: 0,
+            revision: 0,
+        });
+        // The slashes, colon, and version occupy eight bytes.
+        for name in ["a".repeat(248), "é".repeat(124)] {
+            let agent = UserAgent::new(name, &version);
+            assert_eq!(agent.to_string().len(), 256);
+        }
+        // Appending a client adds seven bytes of formatting.
+        let agent = UserAgent::new("a", &version).add_client("é".repeat(120), &version);
+        assert_eq!(agent.to_string().len(), 256);
+        let version = version.push_comment("é".repeat(123));
+        assert_eq!(UserAgent::new("", &version).to_string().len(), 256);
+    }
+
+    #[test]
+    #[should_panic(expected = "user agent cannot exceed 256 bytes.")]
+    fn user_agent_new_exceeds_max_bytes() {
+        let version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 1,
+            minor: 0,
+            revision: 0,
+        });
+        UserAgent::new(format!("{}a", "é".repeat(124)), &version);
+    }
+
+    #[test]
+    #[should_panic(expected = "user agent cannot exceed 256 bytes.")]
+    fn user_agent_add_client_exceeds_max_bytes() {
+        let version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 1,
+            minor: 0,
+            revision: 0,
+        });
+        let _ = UserAgent::new("a", &version).add_client(format!("{}a", "é".repeat(120)), &version);
     }
 
     #[test]
