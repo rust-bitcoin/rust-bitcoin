@@ -61,24 +61,24 @@ impl U256 {
         out
     }
 
-    fn is_zero(&self) -> bool { self.0 == 0 && self.1 == 0 }
+    fn is_zero(self) -> bool { self.0 == 0 && self.1 == 0 }
 
     /// Returns `true` if `self` is equal to [`U256::MAX`].
-    pub fn is_max(&self) -> bool { self.0 == u128::MAX && self.1 == u128::MAX }
+    pub fn is_max(self) -> bool { self.0 == u128::MAX && self.1 == u128::MAX }
 
     /// Returns the low 32 bits.
-    pub fn low_u32(&self) -> u32 { self.low_u128() as u32 }
+    pub fn low_u32(self) -> u32 { self.low_u128() as u32 }
 
     /// Returns the low 64 bits.
-    pub fn low_u64(&self) -> u64 { self.low_u128() as u64 }
+    pub fn low_u64(self) -> u64 { self.low_u128() as u64 }
 
     /// Returns the low 128 bits.
-    fn low_u128(&self) -> u128 { self.1 }
+    fn low_u128(self) -> u128 { self.1 }
 
     /// Returns this `U256` as a `u128` saturating to `u128::MAX` if `self` is too big.
     // Mutagen gives false positive because >= and > both return u128::MAX
-    pub fn saturating_to_u128(&self) -> u128 {
-        if *self > Self::from(u128::MAX) {
+    pub fn saturating_to_u128(self) -> u128 {
+        if self > Self::from(u128::MAX) {
             u128::MAX
         } else {
             self.low_u128()
@@ -86,7 +86,7 @@ impl U256 {
     }
 
     /// Returns the least number of bits needed to represent the number.
-    pub fn bits(&self) -> u32 {
+    pub fn bits(self) -> u32 {
         if self.0 > 0 {
             256 - self.0.leading_zeros()
         } else {
@@ -254,7 +254,7 @@ impl U256 {
 
     /// Returns `self` incremented by 1 wrapping around at the boundary of the type.
     #[must_use = "this returns the result of the increment, without modifying the original"]
-    pub fn wrapping_inc(&self) -> Self {
+    pub fn wrapping_inc(self) -> Self {
         let mut ret = Self::ZERO;
 
         ret.1 = self.1.wrapping_add(1);
@@ -320,13 +320,13 @@ impl U256 {
 
     /// Format `self` to `f` as a decimal when value is known to be non-zero.
     #[allow(clippy::indexing_slicing)]
-    fn fmt_decimal(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt_decimal(self, f: &mut fmt::Formatter) -> fmt::Result {
         const DIGITS: usize = 78; // U256::MAX has 78 base 10 digits.
         const TEN: U256 = U256(0, 10);
 
         let mut buf = [0_u8; DIGITS];
         let mut i = DIGITS - 1; // We loop backwards.
-        let mut cur = *self;
+        let mut cur = self;
 
         loop {
             let digit = (cur % TEN).low_u128() as u8; // Cast after rem 10 is lossless.
@@ -751,7 +751,7 @@ mod tests {
 
     /// Test-only helpers for [`U256`].
     impl U256 {
-        fn bit_at(&self, index: usize) -> bool {
+        fn bit_at(self, index: usize) -> bool {
             assert!(index <= 255, "index out of bounds");
 
             let word = if index < 128 { self.1 } else { self.0 };

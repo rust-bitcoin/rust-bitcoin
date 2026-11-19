@@ -43,7 +43,7 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
     fn from_leaf(leaf: Self::Leaf) -> Self;
     /// Combines two nodes to get a single node. The final node of a tree is called the "root".
     #[must_use]
-    fn combine(&self, other: &Self) -> Self;
+    fn combine(self, other: Self) -> Self;
 
     /// Computes the Merkle root from an iterator of leaves.
     ///
@@ -86,7 +86,7 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
                         return None;
                     }
                     debug_assert_eq!(left.0, right.0);
-                    stack.push((left.0 + 1, left.1.combine(&right.1)));
+                    stack.push((left.0 + 1, left.1.combine(right.1)));
                     n >>= 1;
                 }
             }
@@ -108,9 +108,9 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
                 let left = stack.pop().unwrap();
                 while right.0 != left.0 {
                     assert!(right.0 < left.0);
-                    right = (right.0 + 1, right.1.combine(&right.1)); // combine with self
+                    right = (right.0 + 1, right.1.combine(right.1)); // combine with self
                 }
-                stack.push((left.0 + 1, left.1.combine(&right.1)));
+                stack.push((left.0 + 1, left.1.combine(right.1)));
             }
 
             stack.pop().map(|(_, h)| h)
@@ -167,7 +167,7 @@ impl MerkleNode for TxMerkleNode {
     fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 
     #[inline]
-    fn combine(&self, other: &Self) -> Self {
+    fn combine(self, other: Self) -> Self {
         let mut encoder = sha256d::Hash::engine();
         encoder.input(self.as_byte_array());
         encoder.input(other.as_byte_array());
@@ -187,7 +187,7 @@ impl MerkleNode for WitnessMerkleNode {
     fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 
     #[inline]
-    fn combine(&self, other: &Self) -> Self {
+    fn combine(self, other: Self) -> Self {
         let mut encoder = sha256d::Hash::engine();
         encoder.input(self.as_byte_array());
         encoder.input(other.as_byte_array());
@@ -233,7 +233,7 @@ mod tests {
     fn tx_merkle_node_two_leaves() {
         let (leaf1, node1) = make_leaf_node(1);
         let (leaf2, node2) = make_leaf_node(2);
-        let combined = node1.combine(&node2);
+        let combined = node1.combine(node2);
 
         let root = TxMerkleNode::calculate_root([leaf1, leaf2]);
         assert_eq!(root, Some(combined));
@@ -264,15 +264,15 @@ mod tests {
         let (leaf7, node7) = make_leaf_node(7);
 
         // Combine leaf nodes
-        let subtree_a = node1.combine(&node2);
-        let subtree_b = node3.combine(&node4);
-        let subtree_c = node5.combine(&node6);
-        let subtree_d = node7.combine(&node7); // doubled
+        let subtree_a = node1.combine(node2);
+        let subtree_b = node3.combine(node4);
+        let subtree_c = node5.combine(node6);
+        let subtree_d = node7.combine(node7); // doubled
 
         // Combine the subtrees
-        let subtree_ab = subtree_a.combine(&subtree_b);
-        let subtree_cd = subtree_c.combine(&subtree_d);
-        let expected = subtree_ab.combine(&subtree_cd);
+        let subtree_ab = subtree_a.combine(subtree_b);
+        let subtree_cd = subtree_c.combine(subtree_d);
+        let expected = subtree_ab.combine(subtree_cd);
 
         let root = TxMerkleNode::calculate_root([leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7]);
         assert_eq!(root, Some(expected));
@@ -290,7 +290,7 @@ mod tests {
 
         // Combine the leaves into a tree, ordered from left-to-right in the initial vector.
         while level.len() > 1 {
-            level = level.chunks(2).map(|chunk| chunk[0].combine(&chunk[1])).collect();
+            level = level.chunks(2).map(|chunk| chunk[0].combine(chunk[1])).collect();
         }
 
         // Take the final node, which should be the root of the full tree.
@@ -360,7 +360,7 @@ mod tests {
 
         fn from_leaf(leaf: Self::Leaf) -> Self { Self(leaf.0) }
 
-        fn combine(&self, other: &Self) -> Self {
+        fn combine(self, other: Self) -> Self {
             let mut engine = hashes::sha256d::Hash::engine();
             engine.input(&self.0);
             engine.input(&other.0);
@@ -421,6 +421,6 @@ mod tests {
         // Verify ordering matters: combine(a, b) != combine(b, a).
         let (_, node1) = make_leaf_node(10);
         let (_, node2) = make_leaf_node(20);
-        assert_ne!(node1.combine(&node2), node2.combine(&node1));
+        assert_ne!(node1.combine(node2), node2.combine(node1));
     }
 }

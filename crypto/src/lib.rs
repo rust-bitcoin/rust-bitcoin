@@ -8,6 +8,9 @@
 // Coding conventions.
 #![warn(deprecated_in_future)]
 #![warn(missing_docs)]
+#![allow(clippy::trivially_copy_pass_by_ref)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
+#![allow(clippy::wrong_self_convention)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
+#![allow(clippy::enum_variant_names)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

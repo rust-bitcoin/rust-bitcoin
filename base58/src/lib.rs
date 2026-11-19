@@ -45,6 +45,7 @@
 #![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::incompatible_msrv)] // Has FPs and we're testing it which is more reliable anyway.
+#![allow(clippy::unnecessary_wraps)] // https://github.com/rust-bitcoin/rust-bitcoin/issues/7186
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

@@ -338,7 +338,7 @@ impl PartialMerkleTree {
                 left
             };
             // Combine subhashes
-            left.combine(&right)
+            left.combine(right)
         }
     }
 
@@ -425,7 +425,7 @@ impl PartialMerkleTree {
                 right = left;
             }
             // and combine them before returning
-            Ok(left.combine(&right))
+            Ok(left.combine(right))
         }
     }
 }
