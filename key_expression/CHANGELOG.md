@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- BREAKING: Remove `bip32::KeySource` in favor of `bip32::KeyOrigin`. Replace `(fingerprint, path)`
+  construction with `KeyOrigin { fingerprint, path }` and `.0`/`.1` access with `.fingerprint`/`.path`.
+  The serde tuple representation is unchanged.
 - Make `Xpriv` debug formatting redact the private-key field consistently with and without `std`.
 - Add checked `XprivParts`/`XpubParts` construction, xkey metadata getters, and a `secp256k1` crate re-export.
 - BREAKING: Make `Xpriv`/`Xpub` fields private; use metadata getters, checked `from_parts` construction,

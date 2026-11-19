@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- BREAKING: Remove `bip32::KeySource` in favor of `bip32::KeyOrigin`. Replace `(fingerprint, path)`
+  construction with `KeyOrigin { fingerprint, path }` and `.0`/`.1` access with `.fingerprint`/`.path`.
+  The serde tuple representation is unchanged.
 - `pow`'s internal `U256` helper (used only by `U256Wrapper` byte-array conversions) is now sourced
   from `bitcoin-internals` instead of a duplicated `include!` module.
 - BREAKING: `bip32::Xpriv`/`Xpub` fields are private; use metadata getters, checked `from_parts`
