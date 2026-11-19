@@ -198,6 +198,7 @@ fn composite_encoders_skip_empty_components() {
         ArrayEncoder::<0>::without_length_prefix([]),
         ArrayEncoder::without_length_prefix([1]),
     );
+    assert_eq!(encoder2.current_chunk(), [1]);
     check_encoder(&mut encoder2, &[1]);
 
     let mut encoder3 = Encoder3::new(
@@ -205,6 +206,7 @@ fn composite_encoders_skip_empty_components() {
         ArrayEncoder::without_length_prefix([2]),
         ArrayEncoder::<0>::without_length_prefix([]),
     );
+    assert_eq!(encoder3.current_chunk(), [2]);
     check_encoder(&mut encoder3, &[2]);
 
     let mut encoder4 = Encoder4::new(
@@ -213,6 +215,7 @@ fn composite_encoders_skip_empty_components() {
         ArrayEncoder::<0>::without_length_prefix([]),
         ArrayEncoder::without_length_prefix([4]),
     );
+    assert_eq!(encoder4.current_chunk(), [3]);
     check_encoder(&mut encoder4, &[3, 4]);
 
     let mut encoder6 = Encoder6::new(
@@ -223,7 +226,19 @@ fn composite_encoders_skip_empty_components() {
         ArrayEncoder::<0>::without_length_prefix([]),
         ArrayEncoder::without_length_prefix([7]),
     );
+    assert_eq!(encoder6.current_chunk(), [5]);
     check_encoder(&mut encoder6, &[5, 6, 7]);
+}
+
+#[test]
+fn encoder2_with_empty_first_component_returns_first_non_empty_chunk() {
+    let mut encoder = Encoder2::new(
+        BytesEncoder::without_length_prefix(&[]),
+        BytesEncoder::without_length_prefix(&[1, 2, 3]),
+    );
+
+    assert_eq!(encoder.current_chunk(), [1, 2, 3]);
+    check_encoder(&mut encoder, &[1, 2, 3]);
 }
 
 #[test]
