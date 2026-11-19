@@ -229,19 +229,23 @@ impl TryFrom<&WitnessScript> for WScriptHash {
 }
 
 impl AsRef<TaprootLeaf> for TapScript {
+    #[inline]
     fn as_ref(&self) -> &TaprootLeaf { TaprootLeaf::from_bytes(self.as_bytes()) }
 }
 
 impl AsRef<TaprootLeaf> for TapScriptBuf {
+    #[inline]
     fn as_ref(&self) -> &TaprootLeaf { TaprootLeaf::from_bytes(self.as_bytes()) }
 }
 
 impl From<TapScriptBuf> for TaprootLeafBuf {
+    #[inline]
     fn from(value: TapScriptBuf) -> Self { Self::from_bytes(value.into_bytes()) }
 }
 
 /// Borrows the entire witness script as `ScriptCode`.
 impl AsRef<ScriptCode> for WitnessScript {
+    #[inline]
     fn as_ref(&self) -> &ScriptCode { ScriptCode::from_bytes(self.as_bytes()) }
 }
 
@@ -255,10 +259,12 @@ impl AsRef<ScriptCode> for WitnessScriptBuf {
 
 /// Borrows the entire redeem script as `ScriptCode`.
 impl AsRef<ScriptCode> for RedeemScript {
+    #[inline]
     fn as_ref(&self) -> &ScriptCode { ScriptCode::from_bytes(self.as_bytes()) }
 }
 
 impl AsRef<ScriptCode> for RedeemScriptBuf {
+    #[inline]
     fn as_ref(&self) -> &ScriptCode {
         let redeem_script: &RedeemScript = self.as_script();
         redeem_script.as_ref()
@@ -267,10 +273,12 @@ impl AsRef<ScriptCode> for RedeemScriptBuf {
 
 /// Borrows the entire script pubkey as `ScriptCode`.
 impl AsRef<ScriptCode> for ScriptPubKey {
+    #[inline]
     fn as_ref(&self) -> &ScriptCode { ScriptCode::from_bytes(self.as_bytes()) }
 }
 
 impl AsRef<ScriptCode> for ScriptPubKeyBuf {
+    #[inline]
     fn as_ref(&self) -> &ScriptCode {
         let script_pub_key: &ScriptPubKey = self.as_script();
         script_pub_key.as_ref()

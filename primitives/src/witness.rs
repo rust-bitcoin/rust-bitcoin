@@ -208,6 +208,7 @@ impl Witness {
     /// assert_eq!(witness.size(), 108);
     /// assert_eq!(Witness::new().size(), 1); // 1 byte for the '0' encoded as compact size.
     /// ```
+    #[inline]
     pub fn size(&self) -> usize {
         // `indices_start` is the length of every serialized element, each with its own compact
         // size length prefix. Using it keeps the count in sync with the encoding even for a
