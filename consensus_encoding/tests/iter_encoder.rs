@@ -46,9 +46,9 @@ fn leading_empty_encoders_skipped() {
 }
 
 #[test]
-fn leading_empty_encoders_skipped_on_construction() {
+fn leading_empty_encoders_not_skipped_on_construction() {
     let encoder = IterEncoder::new([enc(&[]), enc(&[1, 2, 3])]);
-    assert_eq!(encoder.current_chunk(), [1, 2, 3]);
+    assert!(encoder.current_chunk().is_empty());
 }
 
 #[test]

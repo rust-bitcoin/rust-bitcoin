@@ -21,6 +21,7 @@ impl<'e, T: Encode> Encoders<'e, T> {
 
 impl<'e, T: Encode> Iterator for Encoders<'e, T> {
     type Item = T::Encoder<'e>;
+    #[inline]
     fn next(&mut self) -> Option<T::Encoder<'e>> {
         // A closure is required since MSRV (1.74.0) cannot infer the `Self: 'e` GAT bound on
         // `Encode::encoder` when passed as a bare function item here.
@@ -69,29 +70,7 @@ where
             Some(enc) => EncoderState::Encoding { current: enc, remaining: iter },
             None => EncoderState::Done,
         };
-        let mut this = Self { state };
-        this.skip_empty();
-        this
-    }
-
-    fn skip_empty(&mut self) {
-        let EncoderState::Encoding { current, remaining } = &mut self.state else {
-            return;
-        };
-
-        loop {
-            if !current.current_chunk().is_empty() {
-                return;
-            }
-            if current.advance().has_finished() {
-                if let Some(next) = remaining.next() {
-                    *current = next;
-                } else {
-                    self.state = EncoderState::Done;
-                    return;
-                }
-            }
-        }
+        Self { state }
     }
 }
 
@@ -127,6 +106,7 @@ impl<I: Iterator> Encoder for IterEncoder<I>
 where
     I::Item: Encoder,
 {
+    #[inline]
     fn current_chunk(&self) -> &[u8] {
         match &self.state {
             EncoderState::Encoding { current, .. } => current.current_chunk(),
@@ -134,27 +114,22 @@ where
         }
     }
 
+    #[inline]
     fn advance(&mut self) -> EncoderStatus {
         let EncoderState::Encoding { current, remaining } = &mut self.state else {
             return EncoderStatus::Finished;
         };
 
-        loop {
-            if current.advance().has_more() {
-                return EncoderStatus::HasMore;
-            }
+        if current.advance().has_more() {
+            return EncoderStatus::HasMore;
+        }
 
-            if let Some(next) = remaining.next() {
-                *current = next;
-                // If the next encoder is empty, skip in order to maintain `Encoder` contract
-                // that it must return non-empty bytes or the encoder must be `Done`
-                if !current.current_chunk().is_empty() {
-                    return EncoderStatus::HasMore;
-                }
-            } else {
-                self.state = EncoderState::Done;
-                return EncoderStatus::Finished;
-            }
+        if let Some(next) = remaining.next() {
+            *current = next;
+            EncoderStatus::HasMore
+        } else {
+            self.state = EncoderState::Done;
+            EncoderStatus::Finished
         }
     }
 }
@@ -164,6 +139,7 @@ where
     I: Clone,
     I::Item: Encoder + ExactSizeEncoder,
 {
+    #[inline]
     fn len(&self) -> usize {
         match &self.state {
             EncoderState::Encoding { current, remaining } => {

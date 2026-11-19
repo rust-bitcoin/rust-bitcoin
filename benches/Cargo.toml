@@ -22,6 +22,12 @@ use_self = "warn"
 [workspace.metadata.rbmt.toolchains]
 stable = "1.97.1"
 
+# Benchmark the most optimized code so that measurements reflect the cost of
+# the abstractions under test rather than cross-crate inlining boundaries.
+[profile.bench]
+lto = "fat"
+codegen-units = 1
+
 [[bench]]
 name = "base58ck"
 path = "base58/base58ck.rs"
@@ -52,12 +58,10 @@ name = "merkle_tree"
 path = "bitcoin/merkle_tree.rs"
 harness = false
 
-
 [[bench]]
 name = "bip158"
 path = "bip158/basic_filter.rs"
 harness = false
-
 
 [[bench]]
 name = "chacha20poly1305"
@@ -68,7 +72,6 @@ harness = false
 name = "chacha20"
 path = "chacha20_poly1305/chacha20.rs"
 harness = false
-
 
 [[bench]]
 name = "cmp"

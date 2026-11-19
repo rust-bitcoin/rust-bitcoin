@@ -27,8 +27,10 @@ impl<'sl> BytesEncoder<'sl> {
 }
 
 impl Encoder for BytesEncoder<'_> {
+    #[inline]
     fn current_chunk(&self) -> &[u8] { self.sl }
 
+    #[inline]
     fn advance(&mut self) -> EncoderStatus { EncoderStatus::Finished }
 }
 
@@ -145,7 +147,9 @@ where
 }
 
 impl<T: Encode> Encoder for SliceEncoder<'_, T> {
+    #[inline]
     fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+    #[inline]
     fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
@@ -224,27 +228,12 @@ macro_rules! define_encoder_n {
             }
         }
 
-        impl<$($enc_ty: Encoder,)*> $name<$($enc_ty,)*> {
-            #[inline]
-            fn skip_empty(&mut self) {
-                $(
-                    if self.cur_idx == $enc_idx {
-                        if self.$enc_field.current_chunk().is_empty() {
-                            self.cur_idx += 1;
-                        } else {
-                            return;
-                        }
-                    }
-                )*
-            }
-        }
-
         impl<$($enc_ty: Encoder,)*> Encoder for $name<$($enc_ty,)*> {
             #[inline]
             fn current_chunk(&self) -> &[u8] {
                 match self.cur_idx {
                     $($enc_idx => self.$enc_field.current_chunk(),)*
-                    _ => &[],
+                    _ => unreachable!("index never reaches this value"),
                 }
             }
 
@@ -252,22 +241,10 @@ macro_rules! define_encoder_n {
             fn advance(&mut self) -> EncoderStatus {
                 $(
                     if self.cur_idx == $enc_idx {
-                        if self.$enc_field.current_chunk().is_empty() {
-                            self.cur_idx += 1;
-                            self.skip_empty();
-                            return if self.cur_idx == $idx_limit {
-                                EncoderStatus::Finished
-                            } else {
-                                EncoderStatus::HasMore
-                            };
-                        }
-                        if self.$enc_field.advance().has_more()
-                            && !self.$enc_field.current_chunk().is_empty()
-                        {
+                        if self.$enc_field.advance().has_more() {
                             return EncoderStatus::HasMore;
                         }
                         self.cur_idx += 1;
-                        self.skip_empty();
                         return if self.cur_idx == $idx_limit {
                             EncoderStatus::Finished
                         } else {
@@ -275,7 +252,7 @@ macro_rules! define_encoder_n {
                         };
                     }
                 )*
-                EncoderStatus::Finished
+                unreachable!("index never reaches this value")
             }
         }
 
