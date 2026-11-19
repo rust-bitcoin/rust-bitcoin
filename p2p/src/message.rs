@@ -21,7 +21,10 @@ use primitives::block::{self, Header, HeaderDecoder, HeaderEncoder};
 use primitives::transaction;
 use units::{Amount, FeeRate};
 
-use self::error::{NetworkMessageDecoderErrorInner, V1NetworkMessageDecoderErrorInner};
+use self::error::{
+    NetworkHeaderDecoderErrorInner, NetworkMessageDecoderErrorInner,
+    V1NetworkMessageDecoderErrorInner,
+};
 use crate::address::{AddrV1Message, AddrV2Message, AddrV2MessageDecoderError};
 use crate::bip434::{Feature, FeatureDecoder};
 use crate::merkle_tree::MerkleBlock;
@@ -1541,7 +1544,7 @@ fn v2_command_byte(payload: &NetworkMessage) -> (u8, Option<CommandString>) {
 pub struct NetworkHeader {
     /// Block header.
     pub header: block::Header,
-    /// Length of transaction list.
+    /// Length of transaction list. Must be zero when decoding.
     pub length: u8,
 }
 
@@ -1574,11 +1577,25 @@ crate::decoder_newtype! {
     #[derive(Debug, Default, Clone)]
     pub struct NetworkHeaderDecoder(NetworkHeaderInnerDecoder);
 
+    fn map_push_bytes_err(
+        err: <NetworkHeaderInnerDecoder as encoding::Decoder>::Error
+    ) -> NetworkHeaderDecoderError {
+        NetworkHeaderDecoderError(NetworkHeaderDecoderErrorInner::Decode(err))
+    }
+
     fn end(
         result: Result<(Header, [u8; 1]), <NetworkHeaderInnerDecoder as encoding::Decoder>::Error>
     ) -> Result<NetworkHeader, NetworkHeaderDecoderError> {
-        let (header, length) = result.map_err(NetworkHeaderDecoderError)?;
-        Ok(NetworkHeader { header, length: u8::from_le_bytes(length) })
+        let (header, length) = result.map_err(|e|
+            NetworkHeaderDecoderError(NetworkHeaderDecoderErrorInner::Decode(e))
+        )?;
+        let length = u8::from_le_bytes(length);
+        if length != 0 {
+            return Err(NetworkHeaderDecoderError(
+                NetworkHeaderDecoderErrorInner::InvalidTransactionCount(length)
+            ));
+        }
+        Ok(NetworkHeader { header, length })
     }
 }
 
@@ -2311,9 +2328,13 @@ pub mod error {
     ///
     /// [`NetworkHeader`]: super::NetworkHeader
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct NetworkHeaderDecoderError(
-        pub(super) <super::NetworkHeaderInnerDecoder as encoding::Decoder>::Error,
-    );
+    pub struct NetworkHeaderDecoderError(pub(super) NetworkHeaderDecoderErrorInner);
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(super) enum NetworkHeaderDecoderErrorInner {
+        Decode(<super::NetworkHeaderInnerDecoder as encoding::Decoder>::Error),
+        InvalidTransactionCount(u8),
+    }
 
     impl From<Infallible> for NetworkHeaderDecoderError {
         fn from(never: Infallible) -> Self { match never {} }
@@ -2321,13 +2342,26 @@ pub mod error {
 
     impl fmt::Display for NetworkHeaderDecoderError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write_err!(f, "network header error"; self.0)
+            match self.0 {
+                NetworkHeaderDecoderErrorInner::Decode(ref e) =>
+                    write_err!(f, "network header error"; e),
+                NetworkHeaderDecoderErrorInner::InvalidTransactionCount(count) => write!(
+                    f,
+                    "headers message must not contain transactions (transaction count: {})",
+                    count
+                ),
+            }
         }
     }
 
     #[cfg(feature = "std")]
     impl std::error::Error for NetworkHeaderDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self.0 {
+                NetworkHeaderDecoderErrorInner::Decode(ref e) => Some(e),
+                NetworkHeaderDecoderErrorInner::InvalidTransactionCount(_) => None,
+            }
+        }
     }
 
     /// An error decoding a [`HeadersMessage`] message.
@@ -2949,6 +2983,71 @@ mod test {
         let header_900_002 = NetworkHeader { header: block_900_002, length: 0 };
         let headers_message = HeadersMessage(vec![header_900_000, header_900_001, header_900_002]);
         assert!(headers_message.is_connected());
+    }
+
+    #[test]
+    fn network_header_decode_transaction_count() {
+        let header: Header = encoding::decode_from_slice(
+            &hex!("00a0ab20247d4d9f582f9750344cdf62c46d81d046be960340960100000000000000000070f96945530651135839d8adc3f40e595118ec74c7ad81a3d17bb022e554fb0c937f4268743702177ad05f92"),
+        ).unwrap();
+        let network_header = NetworkHeader::from_header(header);
+        let mut bytes = encoding::encode_to_vec(&network_header);
+        assert_eq!(bytes.len(), 81);
+        assert_eq!(encoding::decode_from_slice::<NetworkHeader>(&bytes).unwrap(), network_header);
+
+        for length in [1, 255] {
+            bytes[80] = length;
+            let err = encoding::decode_from_slice::<NetworkHeader>(&bytes).unwrap_err();
+            assert!(matches!(
+                err,
+                encoding::DecodeError::Parse(NetworkHeaderDecoderError(
+                    NetworkHeaderDecoderErrorInner::InvalidTransactionCount(count)
+                )) if count == length
+            ));
+        }
+
+        // Both a truncated header and a missing transaction count must still fail.
+        for len in [79, 80] {
+            let err = encoding::decode_from_slice::<NetworkHeader>(&bytes[..len]).unwrap_err();
+            assert!(matches!(
+                err,
+                encoding::DecodeError::Parse(NetworkHeaderDecoderError(
+                    NetworkHeaderDecoderErrorInner::Decode(_)
+                ))
+            ));
+        }
+    }
+
+    #[test]
+    fn headers_message_decode_transaction_count() {
+        let header: Header = encoding::decode_from_slice(
+            &hex!("00a0ab20247d4d9f582f9750344cdf62c46d81d046be960340960100000000000000000070f96945530651135839d8adc3f40e595118ec74c7ad81a3d17bb022e554fb0c937f4268743702177ad05f92"),
+        ).unwrap();
+
+        for length in [0, 1, 255] {
+            // Keep the first entry valid to check validation of subsequent entries too.
+            let headers = HeadersMessage(vec![
+                NetworkHeader::from_header(header),
+                NetworkHeader { header, length },
+            ]);
+            let bytes = encoding::encode_to_vec(&headers);
+            assert_eq!(encoding::decode_from_slice::<HeadersMessage>(&bytes).is_ok(), length == 0);
+
+            let payload = NetworkMessage::Headers(headers);
+            let v1 = V1NetworkMessage::new(Magic::BITCOIN, payload.clone());
+            let bytes = encoding::encode_to_vec(&v1);
+            assert_eq!(
+                encoding::decode_from_slice::<V1NetworkMessage>(&bytes).is_ok(),
+                length == 0
+            );
+
+            let v2 = V2NetworkMessage::new(payload);
+            let bytes = encoding::encode_to_vec(&v2);
+            assert_eq!(
+                encoding::decode_from_slice::<V2NetworkMessage>(&bytes).is_ok(),
+                length == 0
+            );
+        }
     }
 
     #[test]
