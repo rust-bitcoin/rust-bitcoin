@@ -138,11 +138,6 @@ impl<T> Script<T> {
     #[inline]
     pub fn to_vec(&self) -> Vec<u8> { self.as_bytes().to_owned() }
 
-    /// Returns a copy of the script data.
-    #[inline]
-    #[deprecated(since = "0.101.0", note = "use to_vec instead")]
-    pub fn to_bytes(&self) -> Vec<u8> { self.to_vec() }
-
     /// Consensus encodes the script as lower-case hex.
     ///
     /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
@@ -194,17 +189,6 @@ impl<T> Script<T> {
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf::from_bytes(Vec::from(inner))
     }
-
-    /// Gets the hex representation of this script.
-    ///
-    /// # Returns
-    ///
-    /// Just the script bytes in hexadecimal **not** consensus encoding of the script i.e., the
-    /// string will not include a length prefix.
-    #[cfg(feature = "hex")]
-    #[inline]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
     /// Constructs a new script builder.
     pub fn builder() -> Builder<T> { Builder::new() }
