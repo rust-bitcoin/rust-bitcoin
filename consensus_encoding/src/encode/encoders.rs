@@ -11,7 +11,7 @@
 
 use core::fmt;
 
-use super::iter::{Encoders, IterEncoder};
+use super::iter::{Encoders, IterEncoder, NonEmptyIterEncoder};
 use super::{Encode, Encoder, EncoderStatus, ExactSizeEncoder};
 use crate::CompactSizeEncoder;
 
@@ -49,6 +49,14 @@ impl<'sl> PrefixedBytesEncoder<'sl> {
             CompactSizeEncoder::new(sl.len()),
             BytesEncoder::without_length_prefix(sl),
         ))
+    }
+
+    /// Returns the number of bytes used to encode a byte slice of given `len` minus one.
+    ///
+    /// Intended for use in `encoded_tail_len`.
+    #[inline]
+    pub const fn encoded_tail_len(len: usize) -> usize {
+        CompactSizeEncoder::encoded_tail_size(len) + len
     }
 }
 
@@ -157,17 +165,62 @@ where
     fn len(&self) -> usize { self.0.len() }
 }
 
+/// An encoder for a list of consensus encodable types.
+///
+/// This is same as `SliceEncoder` except more performant in exchange for fallible construction.
+/// You should use this one instead whenever possible and just skip encoding if `None` is returned.
+pub struct NonEmptySliceEncoder<'e, T: Encode>(NonEmptyIterEncoder<'e, core::slice::Iter<'e, T>, T>);
+
+impl<'e, T: Encode> NonEmptySliceEncoder<'e, T> {
+    /// Constructs an encoder which encodes the slice _without_ adding the length prefix.
+    ///
+    /// To encode with a length prefix, use [`PrefixedNonEmptySliceEncoder`] instead.
+    pub fn without_length_prefix(sl: &'e [T]) -> Option<Self> { Some(Self(NonEmptyIterEncoder::new(sl)?)) }
+}
+
+impl<'e, T: Encode + 'e> fmt::Debug for NonEmptySliceEncoder<'e, T>
+where
+    T::Encoder<'e>: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("NonEmptySliceEncoder").field(&self.0).finish()
+    }
+}
+
+// Manual impl rather than #[derive(Clone)] because derive would constrain `where T: Clone`,
+// but `T` itself is never cloned, only the associated type `T::Encoder<'e>`.
+impl<'e, T: Encode + 'e> Clone for NonEmptySliceEncoder<'e, T>
+where
+    T::Encoder<'e>: Clone,
+{
+    fn clone(&self) -> Self { Self(self.0.clone()) }
+}
+
+impl<T: Encode> Encoder for NonEmptySliceEncoder<'_, T> {
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+}
+
+impl<'e, T: Encode> ExactSizeEncoder for NonEmptySliceEncoder<'e, T>
+where
+    T::Encoder<'e>: ExactSizeEncoder,
+{
+    #[inline]
+    fn len(&self) -> usize { self.0.len() }
+}
+
 /// An encoder for a list of consensus encodable types, including a length prefix.
-pub struct PrefixedSliceEncoder<'e, T: Encode>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, T>>);
+pub struct PrefixedSliceEncoder<'e, T: Encode>(PrefixedSliceEncoderState<'e, T>);
 
 impl<'e, T: Encode> PrefixedSliceEncoder<'e, T> {
     /// Constructs an encoder which encodes the slice, adding the length prefix.
     #[inline]
     pub fn new(sl: &'e [T]) -> Self {
-        Self(Encoder2::new(
-            CompactSizeEncoder::new(sl.len()),
-            SliceEncoder::without_length_prefix(sl),
-        ))
+        let state = PrefixedSliceEncoderState::Len {
+            encoder: CompactSizeEncoder::new(sl.len()),
+            slice: sl
+        };
+        Self(state)
     }
 }
 
@@ -176,7 +229,16 @@ where
     T::Encoder<'e>: fmt::Debug,
 {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.0.fmt(f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.0 {
+            PrefixedSliceEncoderState::Len { encoder, slice: _ } => {
+                f.debug_struct("PrefixedSliceEncoderState::Len").field("encoder", encoder).finish()
+            },
+            PrefixedSliceEncoderState::Slice(encoder) => {
+                f.debug_tuple("PrefixedSliceEncoderState::Slice").field(encoder).finish()
+            },
+        }
+    }
 }
 
 impl<'e, T: Encode + 'e> Clone for PrefixedSliceEncoder<'e, T>
@@ -184,15 +246,51 @@ where
     T::Encoder<'e>: Clone,
 {
     #[inline]
-    fn clone(&self) -> Self { Self(self.0.clone()) }
+    fn clone(&self) -> Self {
+        match &self.0 {
+            PrefixedSliceEncoderState::Len { encoder, slice } => {
+                let state = PrefixedSliceEncoderState::Len {
+                    encoder: encoder.clone(),
+                    slice,
+                };
+                Self(state)
+            },
+            PrefixedSliceEncoderState::Slice(encoder) => {
+                Self(PrefixedSliceEncoderState::Slice(encoder.clone()))
+            },
+        }
+    }
 }
 
 impl<T: Encode> Encoder for PrefixedSliceEncoder<'_, T> {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+    fn current_chunk(&self) -> &[u8] {
+        match &self.0 {
+            PrefixedSliceEncoderState::Len { encoder, slice: _ } => encoder.current_chunk(),
+            PrefixedSliceEncoderState::Slice(encoder) => encoder.current_chunk(),
+        }
+    }
 
     #[inline]
-    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+    fn advance(&mut self) -> EncoderStatus {
+        match &mut self.0 {
+            PrefixedSliceEncoderState::Len { encoder, slice } => {
+                match encoder.advance() {
+                    EncoderStatus::HasMore => EncoderStatus::HasMore,
+                    EncoderStatus::Finished => {
+                        match NonEmptySliceEncoder::without_length_prefix(slice) {
+                            Some(encoder) => {
+                                self.0 = PrefixedSliceEncoderState::Slice(encoder);
+                                EncoderStatus::HasMore
+                            },
+                            None => EncoderStatus::Finished,
+                        }
+                    },
+                }
+            },
+            PrefixedSliceEncoderState::Slice(encoder) => encoder.advance(),
+        }
+    }
 }
 
 impl<'e, T: Encode> ExactSizeEncoder for PrefixedSliceEncoder<'e, T>
@@ -200,7 +298,22 @@ where
     T::Encoder<'e>: ExactSizeEncoder,
 {
     #[inline]
-    fn len(&self) -> usize { self.0.len() }
+    fn len(&self) -> usize {
+        match &self.0 {
+            PrefixedSliceEncoderState::Len { encoder, slice } => {
+                encoder.len() + match NonEmptyIterEncoder::new(*slice) {
+                    Some(encoder) => encoder.len(),
+                    None => 0,
+                }
+            },
+            PrefixedSliceEncoderState::Slice(encoder) => encoder.len(),
+        }
+    }
+}
+
+enum PrefixedSliceEncoderState<'e, T: Encode> {
+    Len { encoder: CompactSizeEncoder, slice: &'e [T] },
+    Slice(NonEmptySliceEncoder<'e, T>),
 }
 
 /// Helper macro to define an unrolled `EncoderN` composite encoder.
