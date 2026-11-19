@@ -1745,13 +1745,22 @@ impl<'a> Arbitrary<'a> for Transaction {
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxIn {
-    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        // Equally weight legacy, native SegWit, and unrestricted inputs.
+        let (has_script_sig, has_witness) = match u.int_in_range(0..=2)? {
+            0 => (true, false),
+            1 => (false, true),
+            _ => (true, true),
+        };
         Ok(Self {
             previous_output: OutPoint::arbitrary(u)?,
-            script_sig: ScriptSigBuf::arbitrary(u)?,
+            script_sig: if has_script_sig {
+                ScriptSigBuf::arbitrary(u)?
+            } else {
+                ScriptSigBuf::new()
+            },
             sequence: Sequence::arbitrary(u)?,
-            witness: Witness::arbitrary(u)?,
+            witness: if has_witness { Witness::arbitrary(u)? } else { Witness::new() },
         })
     }
 }
@@ -1759,9 +1768,72 @@ impl<'a> Arbitrary<'a> for TxIn {
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxOut {
-    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self { amount: Amount::arbitrary(u)?, script_pubkey: ScriptPubKeyBuf::arbitrary(u)? })
+        use crate::opcodes::all::{
+            OP_16, OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160, OP_RETURN,
+        };
+        use crate::opcodes::{OP_PUSHDATA1, OP_PUSHDATA2, OP_PUSHDATA4};
+        use crate::script::{new_witness_program_unchecked, Builder, ScriptHash, WScriptHash};
+        use crate::witness_version::WitnessVersion;
+
+        // Equally weight common output templates and an unrestricted script. Template data is
+        // zero filled once the data is exhausted rather than returning an error.
+        let choice = u.int_in_range(0..=9)?;
+        let amount = Amount::arbitrary(u)?;
+        let script_pubkey = match choice {
+            0 => ScriptPubKeyBuf::new(),
+            // P2PK with a compressed public key.
+            1 => {
+                let mut public_key: [u8; 33] = u.arbitrary()?;
+                public_key[0] = 0x02 | (public_key[0] & 1);
+                Builder::new().push_slice(public_key).push_opcode(OP_CHECKSIG).into_script()
+            }
+            2 => Builder::new()
+                .push_opcode(OP_DUP)
+                .push_opcode(OP_HASH160)
+                .push_slice(u.arbitrary::<[u8; 20]>()?)
+                .push_opcode(OP_EQUALVERIFY)
+                .push_opcode(OP_CHECKSIG)
+                .into_script(),
+            3 => ScriptPubKeyBuf::new_p2sh(ScriptHash::from_byte_array(u.arbitrary()?)),
+            4 => new_witness_program_unchecked(WitnessVersion::V0, u.arbitrary::<[u8; 20]>()?),
+            5 => ScriptPubKeyBuf::new_p2wsh(WScriptHash::from_byte_array(u.arbitrary()?)),
+            6 => new_witness_program_unchecked(WitnessVersion::V1, u.arbitrary::<[u8; 32]>()?),
+            7 => ScriptPubKeyBuf::new_p2a(),
+            // `OP_RETURN` followed by any push-only opcode, including `OP_RESERVED` and
+            // non-minimal pushes, to exercise null data parsers.
+            8 => {
+                let opcode = u.int_in_range(0..=OP_16.to_u8())?;
+                let mut bytes = Vec::from([OP_RETURN.to_u8(), opcode]);
+                let len = match opcode {
+                    0..=75 => usize::from(opcode),
+                    OP_PUSHDATA1 => {
+                        let len = u8::try_from(u.arbitrary_len::<u8>()?).unwrap_or(u8::MAX);
+                        bytes.push(len);
+                        usize::from(len)
+                    }
+                    OP_PUSHDATA2 => {
+                        let len = u16::try_from(u.arbitrary_len::<u8>()?).unwrap_or(u16::MAX);
+                        bytes.extend_from_slice(&len.to_le_bytes());
+                        usize::from(len)
+                    }
+                    OP_PUSHDATA4 => {
+                        let len = u32::try_from(u.arbitrary_len::<u8>()?).unwrap_or(u32::MAX);
+                        bytes.extend_from_slice(&len.to_le_bytes());
+                        // Lossless because `len` came from a `usize`.
+                        usize::try_from(len).unwrap_or(usize::MAX)
+                    }
+                    _ => 0,
+                };
+                let start = bytes.len();
+                bytes.resize(start + len, 0);
+                u.fill_buffer(&mut bytes[start..])?;
+                ScriptPubKeyBuf::from_bytes(bytes)
+            }
+            // Borrow the whole script rather than consuming a continuation byte per data byte.
+            _ => ScriptPubKeyBuf::from_bytes(u.arbitrary::<&[u8]>()?.to_vec()),
+        };
+        Ok(Self { amount, script_pubkey })
     }
 }
 
