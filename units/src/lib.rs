@@ -59,6 +59,7 @@
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin/rust-bitcoin>
 
 #![no_std]
+#![cfg_attr(docsrs, feature(doc_cfg, cfg_version))]
 // Coding conventions.
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
