@@ -46,7 +46,7 @@ low_level_import_usage() {
         local dir="${pair%%:*}"
         local crate="${pair##*:}"
 
-        diff=$(git diff "$base_branch"...HEAD -- "$dir/src/*.rs") || err "git diff against '$base_branch' failed"
+        diff=$(git diff "$(git merge-base "$base_branch" HEAD)" -- "$dir/src/*.rs") || err "git diff against '$base_branch' failed"
         # Lines the patch adds to the importing crate that import from the low level one.
         violations=$(echo "$diff" | grep -E "$import ${crate}::" | grep -vE "$reexport ${crate}::" || true)
         if [[ -n "$violations" ]]; then
