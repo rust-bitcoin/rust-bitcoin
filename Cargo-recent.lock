@@ -250,7 +250,6 @@ dependencies = [
  "bitcoin-internals 0.8.2",
  "bitcoin-network-kind",
  "bitcoin-primitives",
- "bitcoin-units 0.7.0",
  "bitcoin_hashes 1.2.0",
  "hex-conservative 1.1.0",
  "serde",
