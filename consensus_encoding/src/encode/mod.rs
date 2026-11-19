@@ -125,9 +125,11 @@ pub enum EncoderStatus {
 
 impl EncoderStatus {
     /// Returns `true` if `self` is `HasMore`, `false` otherwise.
+    #[inline]
     pub fn has_more(&self) -> bool { matches!(self, Self::HasMore) }
 
     /// Returns `true` if `self` is `Finished`, `false` otherwise.
+    #[inline]
     pub fn has_finished(&self) -> bool { matches!(self, Self::Finished) }
 }
 
@@ -315,6 +317,7 @@ pub trait ExactSizeEncoder: Encoder {
     ///
     /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned
     /// `EncoderStatus::Finished`.
+    #[inline]
     fn is_empty(&self) -> bool { self.len() == 0 }
 }
 
@@ -476,13 +479,16 @@ pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) 
 }
 
 impl<T: Encoder> Encoder for Option<T> {
+    #[inline]
     fn current_chunk(&self) -> &[u8] { self.as_ref().map_or(&[], Encoder::current_chunk) }
 
+    #[inline]
     fn advance(&mut self) -> EncoderStatus {
         self.as_mut().map_or(EncoderStatus::Finished, Encoder::advance)
     }
 }
 
 impl<T: ExactSizeEncoder> ExactSizeEncoder for Option<T> {
+    #[inline]
     fn len(&self) -> usize { self.as_ref().map_or(0, T::len) }
 }
