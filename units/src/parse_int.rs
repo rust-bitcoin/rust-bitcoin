@@ -390,16 +390,20 @@ pub(crate) fn hex_u256_unchecked(s: &str) -> Result<internals::u256::U256, Parse
             })
             .map(internals::u256::U256::from);
     }
+    let whole_input = |error: ParseIntError| {
+        let (input, truncated) = error::BoundedInput::into_bounded_input(s);
+        ParseIntError { input, bits: 256, is_signed: false, truncated, source: error.source }
+    };
     let (high, low) = if digits.len() <= 32 {
-        let low = hex_u128_unchecked(s)?;
+        let low = hex_u128_unchecked(s).map_err(whole_input)?;
         (0, low)
     } else {
         let high_len = digits.len() - 32;
         let high_s = &digits[..high_len];
         let low_s = &digits[high_len..];
 
-        let high = hex_u128_unchecked(high_s)?;
-        let low = hex_u128_unchecked(low_s)?;
+        let high = hex_u128_unchecked(high_s).map_err(whole_input)?;
+        let low = hex_u128_unchecked(low_s).map_err(whole_input)?;
         (high, low)
     };
 
@@ -893,6 +897,14 @@ mod tests {
     fn parse_u256_from_hex_non_ascii_reports_bit_length() {
         let error = hex_u256_unchecked("é0000000000000000000000000000000").unwrap_err();
         assert_eq!(error.bits, 256);
+    }
+
+    #[test]
+    fn parse_u256_from_hex_invalid_digit_reports_bit_length() {
+        for s in ["g", "g00000000000000000000000000000000", "00000000000000000000000000000000g"] {
+            let error = hex_u256_unchecked(s).unwrap_err();
+            assert_eq!(error.bits, 256);
+        }
     }
 
     #[test]
