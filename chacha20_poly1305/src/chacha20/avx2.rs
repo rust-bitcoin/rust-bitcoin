@@ -333,7 +333,7 @@ mod tests {
         for start in [0u32, 1, 42, 1_000, u32::MAX - 7] {
             let mut avx2_ks = [0u8; 8 * 64];
             // SAFETY: AVX2 support was detected above.
-            unsafe { apply_8_blocks(&mut avx2_ks, &key, &nonce, start) };
+            unsafe { apply_8_blocks(&mut avx2_ks, &cipher.key, &nonce, start) };
 
             let mut scalar_ks = [0u8; 8 * 64];
             for i in 0u32..8 {

@@ -416,7 +416,7 @@ mod tests {
         // Compares the neon 4-block processing with the single block processing.
         for start in [0u32, 1, 42, 1_000, u32::MAX - 3] {
             let mut neon_ks = [0u8; 4 * 64];
-            apply_4_blocks(&mut neon_ks, &key, &nonce, start);
+            apply_4_blocks(&mut neon_ks, &cipher.key, &nonce, start);
 
             let mut scalar_ks = [0u8; 4 * 64];
             for i in 0u32..4 {
@@ -441,7 +441,7 @@ mod tests {
             let (lo, hi) = neon_ks.split_at_mut(4 * 64);
             let chunk_lo = <&mut [u8; 4 * 64]>::try_from(lo).unwrap();
             let chunk_hi = <&mut [u8; 4 * 64]>::try_from(hi).unwrap();
-            apply_8_blocks(chunk_lo, chunk_hi, &key, &nonce, start);
+            apply_8_blocks(chunk_lo, chunk_hi, &cipher.key, &nonce, start);
             let mut scalar_ks = [0u8; 8 * 64];
             for i in 0u32..8 {
                 let ks = cipher.get_keystream(start + i);

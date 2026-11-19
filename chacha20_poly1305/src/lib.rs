@@ -33,7 +33,7 @@ pub use self::error::Error;
 const ZEROES: [u8; 16] = [0u8; 16];
 
 /// Encrypt and decrypt content along with an authentication tag.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChaCha20Poly1305 {
     key: Key,
     nonce: Nonce,
@@ -54,6 +54,8 @@ impl ChaCha20Poly1305 {
     ///
     /// The 16-byte authentication tag.
     pub fn encrypt(self, content: &mut [u8], aad: Option<&[u8]>) -> [u8; 16] {
+        #[cfg(chacha20_poly1305_fuzz)]
+        let poly_key = self.key.0;
         let mut chacha = ChaCha20::new_from_block(self.key, self.nonce, 1);
         chacha.apply_keystream(content);
         #[cfg(not(chacha20_poly1305_fuzz))]
@@ -63,8 +65,6 @@ impl ChaCha20Poly1305 {
             k.copy_from_slice(&keystream[..32]);
             k
         };
-        #[cfg(chacha20_poly1305_fuzz)]
-        let poly_key = self.key.0;
         let mut poly = Poly1305::new(poly_key);
         let aad = aad.unwrap_or(&[]);
         // AAD and ciphertext are padded if not 16-byte aligned.
@@ -103,16 +103,16 @@ impl ChaCha20Poly1305 {
         tag: [u8; 16],
         aad: Option<&[u8]>,
     ) -> Result<(), Error> {
+        #[cfg(chacha20_poly1305_fuzz)]
+        let poly_key = self.key.0;
+        let mut chacha = ChaCha20::new_from_block(self.key, self.nonce, 1);
         #[cfg(not(chacha20_poly1305_fuzz))]
         let poly_key = {
-            let chacha = ChaCha20::new_from_block(self.key, self.nonce, 0);
             let keystream = chacha.get_keystream(0);
             let mut k = [0u8; 32];
             k.copy_from_slice(&keystream[..32]);
             k
         };
-        #[cfg(chacha20_poly1305_fuzz)]
-        let poly_key = self.key.0;
         let mut poly = Poly1305::new(poly_key);
         let aad = aad.unwrap_or(&[]);
         poly.input(aad);
@@ -132,7 +132,6 @@ impl ChaCha20Poly1305 {
         let derived_tag = poly.tag();
 
         if constant_time_eq(&derived_tag, &tag) {
-            let mut chacha = ChaCha20::new_from_block(self.key, self.nonce, 1);
             chacha.apply_keystream(content);
             Ok(())
         } else {

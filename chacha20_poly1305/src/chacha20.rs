@@ -3,6 +3,7 @@
 //! The `ChaCha20` stream cipher from RFC8439.
 
 use core::ops::BitXor;
+use core::sync::atomic::{compiler_fence, Ordering};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
@@ -22,12 +23,26 @@ const WORD_4: u32 = 0x6b20_6574;
 const CHACHA_BLOCKSIZE: usize = 64;
 
 /// A 256-bit secret key shared by the parties communicating.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Key(pub(super) [u8; 32]);
 
 impl Key {
     /// Constructs a new key.
     pub const fn new(key: [u8; 32]) -> Self { Self(key) }
+
+    fn non_secure_erase(&mut self) {
+        for b in &mut self.0 {
+            // SAFETY: `&mut self` returns valid memory.
+            unsafe {
+                core::ptr::write_volatile(b, 0);
+            }
+        }
+        compiler_fence(Ordering::SeqCst);
+    }
+}
+
+impl Drop for Key {
+    fn drop(&mut self) { self.non_secure_erase(); }
 }
 
 /// A 96-bit initialization vector (IV), or nonce.
@@ -158,7 +173,7 @@ struct State {
 
 impl State {
     /// New prepared state.
-    const fn new(key: Key, nonce: Nonce, count: u32) -> Self {
+    const fn new(key: &Key, nonce: Nonce, count: u32) -> Self {
         // Hardcoding indexes to keep the function const.
         let k0 = u32::from_le_bytes([key.0[0], key.0[1], key.0[2], key.0[3]]);
         let k1 = u32::from_le_bytes([key.0[4], key.0[5], key.0[6], key.0[7]]);
@@ -260,7 +275,7 @@ impl State {
 ///
 /// The 20-round IETF version uses a 96-bit nonce and 32-bit block counter. This is the
 /// variant used in the Bitcoin ecosystem, including BIP-0324.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChaCha20 {
     /// Secret key shared by the parties communicating.
     key: Key,
@@ -289,7 +304,7 @@ impl ChaCha20 {
     #[cfg(not(chacha20_poly1305_fuzz))]
     #[inline(always)]
     fn keystream_at_block(&self, block: u32) -> [u8; 64] {
-        let mut state = State::new(self.key, self.nonce, block);
+        let mut state = State::new(&self.key, self.nonce, block);
         state.chacha_block();
         state.keystream()
     }
@@ -471,7 +486,7 @@ mod tests {
         let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
         let nonce = Nonce(hex!("000000090000004a00000000"));
         let count = 1;
-        let state = State::new(key, nonce, count);
+        let state = State::new(&key, nonce, count);
         assert_eq!(state.matrix[1].0[0].to_be_bytes().to_lower_hex_string(), "03020100");
         assert_eq!(state.matrix[2].0[2].to_be_bytes().to_lower_hex_string(), "1b1a1918");
         assert_eq!(state.matrix[3].0[2].to_be_bytes().to_lower_hex_string(), "4a000000");
@@ -484,7 +499,7 @@ mod tests {
         let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
         let nonce = Nonce(hex!("000000090000004a00000000"));
         let count = 1;
-        let mut chacha = ChaCha20::new(key, nonce, count);
+        let mut chacha = ChaCha20::new(key.clone(), nonce, count);
         let mut binding = [8; 3];
         chacha.apply_keystream(&mut binding[..]);
         let mut chacha = ChaCha20::new(key, nonce, count);
@@ -497,7 +512,7 @@ mod tests {
         let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
         let nonce = Nonce(hex!("000000090000004a00000000"));
         let count = 1;
-        let mut chacha = ChaCha20::new(key, nonce, count);
+        let mut chacha = ChaCha20::new(key.clone(), nonce, count);
         let mut binding = [8; 64];
         chacha.apply_keystream(&mut binding[..]);
         let mut chacha = ChaCha20::new(key, nonce, count);
@@ -511,7 +526,7 @@ mod tests {
         let key = Key(hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
         let nonce = Nonce(hex!("000000000000004a00000000"));
         let count = 64;
-        let mut chacha = ChaCha20::new(key, nonce, count);
+        let mut chacha = ChaCha20::new(key.clone(), nonce, count);
         let mut binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
         let to = binding;
         chacha.apply_keystream(&mut binding[..]);
@@ -528,7 +543,7 @@ mod tests {
         let key = Key(hex!("0000000000000000000000000000000000000000000000000000000000000001"));
         let nonce = Nonce(hex!("000000000000000000000002"));
         let count = 64;
-        let mut chacha = ChaCha20::new(key, nonce, count);
+        let mut chacha = ChaCha20::new(key.clone(), nonce, count);
         let mut binding = *b"Any submission to the IETF intended by the Contributor for publication as all or part of an IETF Internet-Draft or RFC and any statement made within the context of an IETF activity is considered an \"IETF Contribution\". Such statements include oral statements in IETF sessions, as well as written and electronic communications made at any time or place, which are addressed to";
         let to = binding;
         chacha.apply_keystream(&mut binding[..]);
@@ -548,7 +563,7 @@ mod tests {
         let key = Key(hex!("1c9240a5eb55d38af333888604f6b5f0473917c1402b80099dca5cbc207075c0"));
         let nonce = Nonce(hex!("000000000000000000000001"));
         let count = 1792;
-        let mut chacha = ChaCha20::new(key, nonce, count);
+        let mut chacha = ChaCha20::new(key.clone(), nonce, count);
         let mut binding = hex!("49eee0dc249040cdc5408f4705bcdd8147c68de6b18fd7cb090e6e22481fbfb85cf71e8ac123f2d4194b010f4ea443ce01c667da03911890a5a48e4503b32dac7492d35347c8dd25536c0203870d110c58e31218fd2a5b400c30f0b83f43ceae653a7d7cf454aacc3397c377bac570ded7d513a565c45f0f461a0d97b5f3bb3c840f2bc5aaeaf26cc9b50cee15f37dbe9f7b5aa6ae4f83b6794941f45818cb867f300ef87d4436ea75eb8884403cad4f6f316baa5de5a5c52166e9a7e3b2158878f679a15947124e9f9f641aa0225b08be7c36c22b66331bdd6071f7478c61c3da8a781e16fa1e8681a6172aa7b5c2e7a4c742f1cf6acab445cff393f0e7eaf6f4e633438493a5679b165858800f2b5c2474757f9581b7307a33a7f794873227105d144c4329dd26bd3e3c0efe0ea510ea6b64fd73c6edeca8c9bfb3ba0b4d0770fc16fd791ed7c5494e1c8b8d791bb1ecca60094c6ad50949460088228dceeab11711de42d223c17211f55073044047f95de7a726b17eb03f58c152ab12679d3f434b68d49c6838078a2d3ef3af6a4bf9e5316922f9a669c69c969a1235951d95d5ddbebf935324fdebc20a64b077006f88c43718697cd74192554c03a19a4b15e5df7f373372c18b1067a3015794257b38717edd1ecc7355d28eeb07ddf1da58b14790fe422172a3547aa040ec9fddc6846ecaaee368b49de478ff57f2f81b03a131d9de8df5229cdd20a41e27b1764f4455e29ba19cfe54f7271bf4de02f51b55485cdc214b9e4b6eed4623dc65b2cf795f28e09e8be74c9d8affc1a628b865698a4529ef7485de79c708ae30b0f4a31d5141abcecbf6b5d86de085e198b343bb86830aa0f5b7040bfa711fb0f6d9130015f0c7eb0d5a9fd7b96c651422456e45323e7e601a12978214fbaa0422faa0e57e8c7802485d78335a7caddb29cebb8b61a4b742e2ac8b1ad92f0b8b622183357ead73c2b56c10263807e5c73680e2231261f5484b2bc5df15d98701aaac1e7cad73781863e08b9f81d8126a2810be04688a097c1b1c8366804780e8fd351c976fae491066ccc6d8cc3a8491207772e424d2379fc5c92594105f40006499dcaed72109785015ac5fc62ca20ba939876e6dabde085116c713e9eaed068e2cf8378cf0a6968d43b69837b243eddedf891ae7eb9da17b0b77b0e275c0f198d98055c93491d159e84b0fc1a94b7a840620a85dfad1de70562f9e919c20b324d8843de18c7e6252e5444b9fc29303ea2b59c5fa3f912bbb23f5b27bf538afb3ee63dc7bd1ffaa8bab826b3704eb74be79b98390ef205946ffe9973e2feeb66418384c7a4af961e89aa1b501a647d311d4ced3914988c7b84db1b9076d1672ae465e03a14bb60230a83da9072a7c19e76287e3822f6fe109d99497eadd589eae767e35e5b4da7ef4def73287cd93bf115611be0874e169ade2d7f886758a3ca4be70a71bfc0b442a7635ea5d8581af85eba01c61c2f74fa5dc027ff695406e8a9af35d256e143a22c9371ceb46543fa591c2b58cfe530897321bb23027fe255ddc0887d0e5941ad4f1fed6b4a3e674813c1bb731a722fdd4dd204e7c51b06073b89cac91907e01b0e18a2f751c532a982a06529552b2e9252e4ce25a00b213810377660da599da4e8cacf313532745af6446dcea23da97d1ab7d6c30961fbc0634180b5e2135118d4ce02de950167481a8b434b97242a6ccbcca348327105b68458f52220c553d297ce3c0660542915f58fe4a62d98ca9041904a9084b57fc6753087cbc668ab0b69f92d6417c5b2a007972");
         let to = binding;
         chacha.apply_keystream(&mut binding[..]);
@@ -581,7 +596,7 @@ mod tests {
         let nonce = Nonce(hex!("000000000000004a00000000"));
 
         // Create two instances, one for a full single pass and one for chunked partial calls.
-        let mut chacha_full = ChaCha20::new(key, nonce, 0);
+        let mut chacha_full = ChaCha20::new(key.clone(), nonce, 0);
         let mut chacha_chunked = ChaCha20::new(key, nonce, 0);
 
         // Test data that crosses block boundaries.
