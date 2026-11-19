@@ -1358,9 +1358,10 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                 // Clamp given bytes so decoder doesn't overread.
                 let remaining = (*payload_len - *bytes_consumed).min(bytes.len());
                 let mut clamped_bytes = &(*bytes)[..remaining];
-                let status = payload_decoder.push_bytes(&mut clamped_bytes).map_err(|e| {
-                    V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload(e))
-                })?;
+                let status = payload_decoder
+                    .push_bytes(&mut clamped_bytes)
+                    .map_err(V1NetworkMessageDecoderErrorInner::Payload)
+                    .map_err(V1NetworkMessageDecoderError)?;
                 // Track bytes consumed and their checksum.
                 let consumed = remaining - clamped_bytes.len();
                 checksum_engine.input(&(*bytes)[..consumed]);
@@ -1398,9 +1399,10 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                         },
                     ));
                 }
-                let payload = payload_decoder.end().map_err(|e| {
-                    V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload(e))
-                })?;
+                let payload = payload_decoder
+                    .end()
+                    .map_err(V1NetworkMessageDecoderErrorInner::Payload)
+                    .map_err(V1NetworkMessageDecoderError)?;
 
                 let hash_bytes = checksum_engine.finalize().to_byte_array();
                 let expected_checksum =
