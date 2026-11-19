@@ -51,6 +51,7 @@ pub enum Denomination {
     /// mBTC
     MilliBitcoin,
     /// uBTC
+    #[deprecated(since = "0.1.102", note = "use `Bit` instead")]
     MicroBitcoin,
     /// nBTC
     NanoBitcoin,
@@ -64,6 +65,7 @@ pub enum Denomination {
     MilliSatoshi,
 }
 
+#[allow(deprecated)] // `MicroBitcoin` still has to format and parse.
 impl Denomination {
     /// Convenience alias for `Denomination::Bitcoin`.
     pub const BTC: Self = Denomination::Bitcoin;
@@ -1997,6 +1999,7 @@ impl<'a> Arbitrary<'a> for Amount {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Denomination {
+    #[allow(deprecated)]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=5)?;
         match choice {
@@ -2716,6 +2719,7 @@ mod tests {
         ok_scase(&format!("{} SAT", i64::MIN), SignedAmount::from_sat(i64::MIN));
     }
 
+    #[allow(deprecated)]
     #[cfg(feature = "alloc")]
     #[test]
     #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
@@ -2803,6 +2807,7 @@ mod tests {
         );
     }
 
+    #[allow(deprecated)]
     #[cfg(feature = "alloc")]
     #[test]
     fn to_string_with_denomination_from_str_roundtrip() {
