@@ -957,6 +957,14 @@ mod tests {
     }
 
     #[test]
+    fn invalid_target_is_zero_on_256_bit_shift() {
+        // An exponent of 0x23 shifts the mantissa by 8 * (35 - 3) = 256 bits, which overflow to zero.
+        let bits = CompactTarget::from_consensus(0x2301_0000);
+        let error = Target::from_compact(bits).unwrap_err();
+        assert_eq!(error.invalid_target(), Target::ZERO);
+    }
+
+    #[test]
     fn from_compact_errors_on_negative_and_overflow() {
         for bits in [0x0492_3456, 0x2101_0000, 0x2300_0001] {
             assert!(Target::try_from(CompactTarget::from_consensus(bits)).is_err());

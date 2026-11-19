@@ -757,6 +757,7 @@ check_format_non_negative! {
     btc_check_fmt_non_negative_52, 100_000_001, "{:^12}", " 1.00000001 ";
     btc_check_fmt_non_negative_53, 100_000_001, "{:^12.9}", "1.000000010 ";
     btc_check_fmt_non_negative_54, 100_000_001, "{:^13.9}", " 1.000000010 ";
+    btc_check_fmt_non_negative_55, 100_000_001, "{:^20}", "     1.00000001     ";
 }
 
 check_format_non_negative_show_denom! {
@@ -934,6 +935,48 @@ fn from_str() {
         &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
             char: '_',
             position: 1,
+        }))),
+    );
+    case(
+        "1.1_.1 BTC",
+        &Err(parse_err(ParseAmountErrorInner::InvalidCharacter(InvalidCharacterError {
+            invalid_char: '.',
+            position: 4,
+        }))),
+    );
+    scase(
+        "-1.1.1 BTC",
+        &Err(parse_err(ParseAmountErrorInner::InvalidCharacter(InvalidCharacterError {
+            invalid_char: '.',
+            position: 4,
+        }))),
+    );
+    case(
+        "1_.5 BTC",
+        &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
+            char: '_',
+            position: 1,
+        }))),
+    );
+    scase(
+        "-1_.5 BTC",
+        &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
+            char: '_',
+            position: 2,
+        }))),
+    );
+    case(
+        "1_ BTC",
+        &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
+            char: '_',
+            position: 1,
+        }))),
+    );
+    scase(
+        "-1_ BTC",
+        &Err(parse_err(ParseAmountErrorInner::BadPosition(BadPositionError {
+            char: '_',
+            position: 2,
         }))),
     );
 
