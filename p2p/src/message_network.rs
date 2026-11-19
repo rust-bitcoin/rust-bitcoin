@@ -13,7 +13,7 @@ use alloc::vec::Vec;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decoder4, Encoder4, PrefixedBytesEncoder,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, Decoder3, Encoder4, PrefixedBytesEncoder,
 };
 use hashes::sha256d;
 
@@ -457,8 +457,14 @@ pub struct Reject {
     pub ccode: RejectReason,
     /// reason of rejection
     pub reason: Cow<'static, str>,
-    /// reference to rejected item
-    pub hash: sha256d::Hash,
+    /// reference to rejected item (absent for Malformed and Obsolete)
+    pub hash: Option<sha256d::Hash>,
+}
+
+impl Reject {
+    /// Returns `true` if the reject includes extra data (a txid or block hash).
+    fn message_has_extra_data(message: &str) -> bool { message == "tx" || message == "block" }
+    fn has_extra_data(&self) -> bool { Self::message_has_extra_data(&self.message) }
 }
 
 encoding::encoder_newtype_exact! {
@@ -469,7 +475,7 @@ encoding::encoder_newtype_exact! {
             PrefixedBytesEncoder<'e>,
             RejectReasonEncoder<'e>,
             PrefixedBytesEncoder<'e>,
-            ArrayEncoder<32>,
+            Option<ArrayEncoder<32>>,
         >
     );
 }
@@ -482,52 +488,120 @@ impl encoding::Encode for Reject {
             PrefixedBytesEncoder::new(self.message.as_bytes()),
             self.ccode.encoder(),
             PrefixedBytesEncoder::new(self.reason.as_bytes()),
-            ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
+            self.hash.map(|h| ArrayEncoder::without_length_prefix(h.to_byte_array())),
         ))
     }
 }
 
-type RejectInnerDecoder =
-    Decoder4<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder, ArrayDecoder<32>>;
+/// Decodes the required fields of a [`Reject`] message.
+type RejectRequiredDecoder = Decoder3<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder>;
 
-crate::decoder_newtype! {
-    /// The decoder type for a [`Reject`] message.
-    #[derive(Debug, Default, Clone)]
-    pub struct RejectDecoder(RejectInnerDecoder);
+/// The decoder type for a [`Reject`] message.
+#[derive(Debug, Default, Clone)]
+pub struct RejectDecoder {
+    state: RejectDecoderState,
+}
 
-    fn map_push_bytes_err(err: <RejectInnerDecoder as encoding::Decoder>::Error) -> RejectDecoderError {
-        RejectDecoderError::Decoder(err)
+#[derive(Debug, Clone)]
+enum RejectDecoderState {
+    /// Decoding message, ccode, and reason.
+    Required(RejectRequiredDecoder),
+    /// Decoding the hash field.
+    Hash(Reject, ArrayDecoder<32>),
+    /// All fields decoded.
+    Done(Reject),
+    /// Decoder has failed.
+    Failed,
+}
+
+impl Default for RejectDecoderState {
+    fn default() -> Self {
+        Self::Required(Decoder3::new(
+            ByteVecDecoder::new(),
+            RejectReasonDecoder(ArrayDecoder::new()),
+            ByteVecDecoder::new(),
+        ))
+    }
+}
+
+impl encoding::Decoder for RejectDecoder {
+    type Output = Reject;
+    type Error = RejectDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
+        loop {
+            match &mut self.state {
+                RejectDecoderState::Required(d) => {
+                    if d.push_bytes(bytes).map_err(RejectDecoderError::Decoder)?.needs_more() {
+                        return Ok(encoding::DecoderStatus::NeedsMore);
+                    }
+                    let old = core::mem::replace(&mut self.state, RejectDecoderState::Failed);
+                    if let RejectDecoderState::Required(d) = old {
+                        let (message, ccode, reason) =
+                            d.end().map_err(RejectDecoderError::Decoder)?;
+                        let message = String::from_utf8(message)
+                            .map_err(|_| RejectDecoderError::InvalidUtf8)
+                            .map(Cow::Owned)?;
+                        let reason = String::from_utf8(reason)
+                            .map_err(|_| RejectDecoderError::InvalidUtf8)
+                            .map(Cow::Owned)?;
+                        let reject = Reject { message, ccode, reason, hash: None };
+                        if reject.has_extra_data() {
+                            self.state = RejectDecoderState::Hash(reject, ArrayDecoder::new());
+                        } else {
+                            self.state = RejectDecoderState::Done(reject);
+                            return Ok(encoding::DecoderStatus::Ready);
+                        }
+                    }
+                }
+                RejectDecoderState::Hash(_, d) => {
+                    if d.push_bytes(bytes).map_err(RejectDecoderError::HashData)?.needs_more() {
+                        return Ok(encoding::DecoderStatus::NeedsMore);
+                    }
+                    let old = core::mem::replace(&mut self.state, RejectDecoderState::Failed);
+                    if let RejectDecoderState::Hash(mut reject, d) = old {
+                        let hash_bytes = d.end().map_err(RejectDecoderError::HashData)?;
+                        reject.hash = Some(sha256d::Hash::from_byte_array(hash_bytes));
+                        self.state = RejectDecoderState::Done(reject);
+                    }
+                    return Ok(encoding::DecoderStatus::Ready);
+                }
+                RejectDecoderState::Done(_) => {
+                    return Ok(encoding::DecoderStatus::Ready);
+                }
+                RejectDecoderState::Failed => {
+                    panic!("use of failed decoder");
+                }
+            }
+        }
     }
 
-    fn end(
-        result: Result<
-            <RejectInnerDecoder as encoding::Decoder>::Output,
-            <RejectInnerDecoder as encoding::Decoder>::Error,
-        >
-    ) -> Result<Reject, RejectDecoderError> {
-        let (message, ccode, reason, hash) = result.map_err(RejectDecoderError::Decoder)?;
-        let message = String::from_utf8(message)
-            .map_err(|_| RejectDecoderError::InvalidUtf8)
-            .map(Cow::Owned)?;
-        let reason = String::from_utf8(reason)
-            .map_err(|_| RejectDecoderError::InvalidUtf8)
-            .map(Cow::Owned)?;
-        let hash = sha256d::Hash::from_byte_array(hash);
-        Ok(Reject { message, ccode, reason, hash })
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        match self.state {
+            RejectDecoderState::Required(d) =>
+                Err(RejectDecoderError::Decoder(d.end().unwrap_err())),
+            RejectDecoderState::Hash(_, d) =>
+                Err(RejectDecoderError::HashData(d.end().unwrap_err())),
+            RejectDecoderState::Done(reject) => Ok(reject),
+            RejectDecoderState::Failed => {
+                panic!("use of failed decoder");
+            }
+        }
+    }
+
+    fn read_limit(&self) -> usize {
+        match &self.state {
+            RejectDecoderState::Required(d) => d.read_limit(),
+            RejectDecoderState::Hash(_, d) => d.read_limit(),
+            RejectDecoderState::Done(_) | RejectDecoderState::Failed => 0,
+        }
     }
 }
 
 impl encoding::Decode for Reject {
     type Decoder = RejectDecoder;
 
-    fn decoder() -> Self::Decoder {
-        RejectDecoder(Decoder4::new(
-            ByteVecDecoder::new(),
-            RejectReason::decoder(),
-            ByteVecDecoder::new(),
-            ArrayDecoder::new(),
-        ))
-    }
+    fn decoder() -> Self::Decoder { RejectDecoder::default() }
 }
 
 /// A deprecated message type that was used to notify users of system changes. Due to a number of
@@ -688,8 +762,10 @@ pub mod error {
     /// [`Reject`]: super::Reject
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum RejectDecoderError {
-        /// Inner decoder error.
-        Decoder(<super::RejectInnerDecoder as encoding::Decoder>::Error),
+        /// Error from the required fields sub-decoder.
+        Decoder(<super::RejectRequiredDecoder as encoding::Decoder>::Error),
+        /// Error from the hash (extra data) sub-decoder.
+        HashData(encoding::UnexpectedEofError),
         /// Invalid UTF-8 string.
         InvalidUtf8,
     }
@@ -702,6 +778,7 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
                 Self::Decoder(d) => write_err!(f, "reject error"; d),
+                Self::HashData(e) => write_err!(f, "reject hash data"; e),
                 Self::InvalidUtf8 => write!(f, "invalid utf-8"),
             }
         }
@@ -712,6 +789,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::Decoder(d) => Some(d),
+                Self::HashData(e) => Some(e),
                 Self::InvalidUtf8 => None,
             }
         }
@@ -814,12 +892,14 @@ impl<'a> Arbitrary<'a> for RejectReason {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Reject {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            message: u.arbitrary::<String>()?.into(),
-            ccode: u.arbitrary()?,
-            reason: u.arbitrary::<String>()?.into(),
-            hash: sha256d::Hash::from_byte_array(u.arbitrary()?),
-        })
+        let message: Cow<'static, str> = u.arbitrary::<String>()?.into();
+        let ccode: RejectReason = u.arbitrary()?;
+        let hash = if Self::message_has_extra_data(&message) {
+            Some(sha256d::Hash::from_byte_array(u.arbitrary()?))
+        } else {
+            None
+        };
+        Ok(Self { message, ccode, reason: u.arbitrary::<String>()?.into(), hash })
     }
 }
 
@@ -889,7 +969,7 @@ mod tests {
             "0470f4f2dc4191221b59884bcffaaf00932748ab46356a80413c0b86d354df05"
                 .parse::<sha256d::Hash>()
                 .unwrap(),
-            conflict.hash
+            conflict.hash.unwrap()
         );
 
         let nonfinal = decode_result_nonfinal.unwrap();
@@ -900,11 +980,29 @@ mod tests {
             "0b46a539138b5fde4e341b37f2d945c23d41193b30caa7fcbd8bdb836cbe9b25"
                 .parse::<sha256d::Hash>()
                 .unwrap(),
-            nonfinal.hash
+            nonfinal.hash.unwrap()
         );
 
         assert_eq!(encoding::encode_to_vec(&conflict), reject_tx_conflict);
         assert_eq!(encoding::encode_to_vec(&nonfinal), reject_tx_nonfinal);
+    }
+
+    #[test]
+    fn reject_message_without_hash_test() {
+        let reject = Reject {
+            message: "version".into(),
+            ccode: RejectReason::Malformed,
+            reason: "error parsing message".into(),
+            hash: None,
+        };
+
+        let decoded: Reject = encoding::decode_from_slice(&encoding::encode_to_vec(&reject))
+            .expect("round-trip decode failed");
+
+        assert_eq!(decoded.message, "version");
+        assert_eq!(decoded.ccode, RejectReason::Malformed);
+        assert_eq!(decoded.reason, "error parsing message");
+        assert!(decoded.hash.is_none());
     }
 
     #[test]
