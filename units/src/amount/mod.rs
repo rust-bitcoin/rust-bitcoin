@@ -192,8 +192,7 @@ impl Denomination {
 }
 
 /// These forms are ambiguous and could have many meanings. For example, M could denote Mega or Milli.
-/// If any of these forms are used, an error type [`PossiblyConfusingDenominationError`] is
-/// returned.
+/// If any of these forms are used, an error type [`PossiblyConfusingDenominationError`] is returned.
 const CONFUSING_FORMS: [&str; 4] = ["CBTC", "Cbtc", "MBTC", "Mbtc"];
 
 /// Forms of micro-bitcoin, which has been deprecated.
