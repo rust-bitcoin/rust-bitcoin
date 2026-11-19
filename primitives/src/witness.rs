@@ -44,6 +44,7 @@
 //! ```
 
 use core::fmt;
+use core::iter::FusedIterator;
 use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
@@ -279,6 +280,24 @@ impl Witness {
     /// Returns the last element in the witness, if any.
     #[inline]
     pub fn last(&self) -> Option<&[u8]> { self.get_back(0) }
+
+    /// Removes the last element from the witness, if any.
+    ///
+    /// Call [`Witness::last`] first if you need to inspect the element before removing it.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn pop(&mut self) {
+        let Some(last_index) = self.witness_elements.checked_sub(1) else {
+            return;
+        };
+        let start = decode_cursor(&self.content, self.indices_start, last_index)
+            .expect("cursor for valid index is always present");
+
+        // Drop the last cursor, then the element (with its prefix), keeping the index area last.
+        self.content.truncate(self.content.len() - 4);
+        self.content.drain(start..self.indices_start);
+        self.indices_start = start;
+        self.witness_elements = last_index;
+    }
 
     /// Retrieves an element from the end of the witness by its reverse index.
     ///
@@ -772,6 +791,25 @@ impl<'a> Iterator for Iter<'a> {
 
 impl ExactSizeIterator for Iter<'_> {}
 
+impl<'a> DoubleEndedIterator for Iter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let total_count = (self.inner.len() - self.indices_start) / 4;
+        if self.current_index >= total_count {
+            return None;
+        }
+        let index = decode_cursor(self.inner, self.indices_start, total_count - 1)
+            .expect("cursor for valid index is always present");
+        let mut slice = &self.inner[index..]; // Start of element.
+        let element_len = decode_unchecked(&mut slice);
+        let end = cast_to_usize_if_valid(element_len)
+            .expect("element length is valid");
+        self.inner = &self.inner[..self.inner.len() - 4];
+        Some(&slice[..end])
+    }
+}
+
+impl FusedIterator for Iter<'_> {}
+
 impl<'a> IntoIterator for &'a Witness {
     type IntoIter = Iter<'a>;
     type Item = &'a [u8];
@@ -1240,6 +1278,88 @@ mod tests {
             assert_eq!(iter.len(), i);
             iter.next();
         }
+    }
+
+    #[test]
+    fn pop_removes_last_element() {
+        let mut witness = Witness::from_slice(&[b"sig".as_slice(), b"", b"witness_script"]);
+
+        assert_eq!(witness.last(), Some(b"witness_script".as_slice()));
+        witness.pop();
+        assert_eq!(witness.len(), 2);
+        assert_eq!(witness.to_vec(), vec![b"sig".to_vec(), vec![]]);
+
+        // The witness is still usable after a pop.
+        witness.push(b"new");
+        assert_eq!(witness.to_vec(), vec![b"sig".to_vec(), vec![], b"new".to_vec()]);
+
+        assert_eq!(witness.last(), Some(b"new".as_slice()));
+        witness.pop();
+        assert_eq!(witness.last(), Some(b"".as_slice()));
+        witness.pop();
+        assert_eq!(witness.last(), Some(b"sig".as_slice()));
+        witness.pop();
+        assert_eq!(witness.last(), None);
+        assert!(witness.is_empty());
+
+        // Popping an empty witness is a no-op.
+        witness.pop();
+        assert!(witness.is_empty());
+    }
+
+    #[test]
+    fn iter_rev() {
+        // Uneven element lengths so that decoding the wrong cursor or the
+        // wrong element length yields a different order than expected.
+        let witness = Witness::from_slice(&[b"".as_slice(), &[1u8], &[7u8; 5]]);
+
+        assert_eq!(
+            witness.iter().rev().collect::<Vec<_>>(),
+            vec![&[7u8; 5] as &[u8], &[1u8], b"" as &[u8]]
+        );
+
+        // Single-element and empty witnesses.
+        let witness = Witness::from_slice(&[b"a".as_slice()]);
+        assert_eq!(witness.iter().rev().collect::<Vec<_>>(), vec![b"a".as_slice()]);
+        assert_eq!(Witness::new().iter().rev().collect::<Vec<_>>(), Vec::<&[u8]>::new());
+    }
+
+    #[test]
+    fn iter_next_back_exhaustion() {
+        let witness = Witness::from_slice(&[b"".as_slice(), &[1u8], &[7u8; 5]]);
+
+        // Draining from the front must not resurrect elements from the back.
+        let mut iter = witness.iter();
+        for want in [b"" as &[u8], &[1u8], &[7u8; 5]] {
+            assert_eq!(iter.next(), Some(want));
+        }
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next_back(), None);
+
+        // Draining from the back must exhaust cleanly too.
+        let mut iter = witness.iter();
+        for want in [&[7u8; 5] as &[u8], &[1u8], b"" as &[u8]] {
+            assert_eq!(iter.next_back(), Some(want));
+        }
+        assert_eq!(iter.next_back(), None);
+        assert_eq!(iter.next(), None);
+
+        // Empty witness: `next_back` must return `None` without panicking.
+        let empty = Witness::new();
+        let mut iter = empty.iter();
+        assert_eq!(iter.next_back(), None);
+    }
+
+    #[test]
+    fn iter_mixed_next_and_next_back() {
+        let witness = Witness::from_slice(&[b"a".as_slice(), b"bb", b"ccc"]);
+        let mut iter = witness.iter();
+
+        assert_eq!(iter.next(), Some(b"a".as_slice()));
+        assert_eq!(iter.next_back(), Some(b"ccc".as_slice()));
+        assert_eq!(iter.next(), Some(b"bb".as_slice()));
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next_back(), None);
     }
 
     #[test]
