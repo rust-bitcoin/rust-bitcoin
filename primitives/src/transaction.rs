@@ -75,9 +75,6 @@ use hashes::sha256d;
 use internals::array::ArrayExt as _;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-#[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
-use units::parse_int;
 
 #[cfg(feature = "alloc")]
 use self::error::TransactionDecoderErrorInner;
@@ -88,6 +85,9 @@ use crate::amount::{AmountDecoder, AmountEncoder};
 use crate::hex_codec::HexPrimitive;
 #[cfg(feature = "alloc")]
 use crate::locktime::absolute::{LockTimeDecoder, LockTimeEncoder};
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+use crate::parse_int;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]

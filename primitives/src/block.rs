@@ -1532,11 +1532,11 @@ mod tests {
                     vout: 0,
                 },
                 script_sig: crate::ScriptSigBuf::new(),
-                sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
+                sequence: crate::Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: crate::Witness::new(),
             }],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::ONE_BTC,
+                amount: crate::Amount::ONE_BTC,
                 script_pubkey: crate::ScriptPubKeyBuf::new(),
             }],
         };
@@ -1561,7 +1561,7 @@ mod tests {
                 lock_time: crate::absolute::LockTime::ZERO,
                 inputs: vec![coinbase_in],
                 outputs: vec![crate::TxOut {
-                    amount: units::Amount::MIN,
+                    amount: crate::Amount::MIN,
                     script_pubkey: crate::ScriptPubKeyBuf::new(),
                 }],
             }],
@@ -1650,7 +1650,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::ZERO,
+                amount: crate::Amount::ZERO,
                 script_pubkey: crate::script::ScriptBuf::from_bytes(script),
             }],
         };
@@ -1870,7 +1870,7 @@ mod tests {
         let block: u32 = 741_521;
         let transactions = vec![Transaction {
             version: crate::transaction::Version::ONE,
-            lock_time: units::absolute::LockTime::from_height(block).unwrap(),
+            lock_time: crate::absolute::LockTime::from_height(block).unwrap(),
             inputs: vec![crate::transaction::TxIn {
                 previous_output: crate::transaction::OutPoint::COINBASE_PREVOUT,
                 // Coinbase scriptSig must be 2-100 bytes
@@ -1879,7 +1879,7 @@ mod tests {
                 witness: crate::witness::Witness::new(),
             }],
             outputs: vec![crate::transaction::TxOut {
-                amount: units::Amount::ONE_SAT,
+                amount: crate::Amount::ONE_SAT,
                 script_pubkey: crate::script::ScriptPubKeyBuf::new(),
             }],
         }];
@@ -1977,7 +1977,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: commitment_script,
             }],
         };
@@ -1999,11 +1999,11 @@ mod tests {
                     vout: 0,
                 },
                 script_sig: crate::ScriptSigBuf::new(),
-                sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
+                sequence: crate::Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: crate::Witness::new(),
             }],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::ScriptPubKeyBuf::new(),
             }],
         };
@@ -2023,7 +2023,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![txin],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 // Empty scriptbuf means there is no witness commitment due to no magic bytes.
                 script_pubkey: crate::script::ScriptBuf::new(),
             }],
@@ -2046,11 +2046,11 @@ mod tests {
                     vout: 0,
                 },
                 script_sig: crate::ScriptSigBuf::new(),
-                sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
+                sequence: crate::Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: crate::Witness::from_slice(&[&[11_u8; 32][..]]),
             }],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::ScriptPubKeyBuf::new(),
             }],
         };
@@ -2087,7 +2087,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![txin],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
             }],
         };
@@ -2097,7 +2097,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::new(),
             }],
         };
@@ -2121,7 +2121,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::new(),
             }],
         };
@@ -2161,7 +2161,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![txin],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
             }],
         };
@@ -2170,7 +2170,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::new(),
             }],
         };
@@ -2210,7 +2210,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![txin],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
             }],
         };
@@ -2220,7 +2220,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::new(),
             }],
         };
@@ -2257,7 +2257,7 @@ mod tests {
         let mut script = Vec::from(WITNESS_COMMITMENT_MAGIC);
         script.extend_from_slice(commitment.as_byte_array());
         coinbase.outputs.push(crate::TxOut {
-            amount: units::Amount::MIN,
+            amount: crate::Amount::MIN,
             script_pubkey: crate::script::ScriptBuf::from_bytes(script),
         });
 
@@ -2288,7 +2288,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![txin],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
             }],
         };
@@ -2298,7 +2298,7 @@ mod tests {
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
+                amount: crate::Amount::MIN,
                 script_pubkey: crate::script::ScriptBuf::new(),
             }],
         };
@@ -2408,7 +2408,7 @@ mod tests {
                     witness: crate::Witness::new(),
                 }],
                 outputs: vec![crate::TxOut {
-                    amount: units::Amount::ZERO,
+                    amount: crate::Amount::ZERO,
                     script_pubkey: crate::ScriptPubKeyBuf::new(),
                 }],
             }
@@ -2444,7 +2444,7 @@ mod tests {
                 witness: crate::Witness::new(),
             }],
             outputs: vec![crate::TxOut {
-                amount: units::Amount::ZERO,
+                amount: crate::Amount::ZERO,
                 script_pubkey: crate::ScriptPubKeyBuf::new(),
             }],
         };
