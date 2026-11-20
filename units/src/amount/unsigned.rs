@@ -17,7 +17,7 @@ use super::error::AmountDecoderError;
 use super::error::{ParseAmountErrorInner, ParseErrorInner};
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
-    OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
+    NegativeAmountError, OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
 use crate::result::{MathErrorKind, MathOp, NumOpError as E, NumOpResult};
 use crate::{parse_int, FeeRate, Weight};
@@ -90,7 +90,7 @@ mod encapsulate {
         #[inline]
         pub const fn from_sat(satoshi: u64) -> Result<Self, OutOfRangeError> {
             if satoshi > Self::MAX.to_sat() {
-                Err(OutOfRangeError { is_signed: false, is_greater_than_max: true })
+                Err(OutOfRangeError::too_big())
             } else {
                 Ok(Self(satoshi))
             }
@@ -204,11 +204,11 @@ impl Amount {
         let (is_neg, amount) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
         if is_neg {
-            return Err(OutOfRangeError::negative())
-                .map_err(ParseAmountErrorInner::OutOfRange)
+            return Err(NegativeAmountError)
+                .map_err(ParseAmountErrorInner::Negative)
                 .map_err(ParseAmountError);
         }
-        Self::try_from(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
+        Self::try_from(amount).map_err(ParseAmountErrorInner::Negative).map_err(ParseAmountError)
     }
 
     /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
@@ -286,8 +286,8 @@ impl Amount {
     #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
         if value < 0.0 {
-            return Err(OutOfRangeError::negative())
-                .map_err(ParseAmountErrorInner::OutOfRange)
+            return Err(NegativeAmountError)
+                .map_err(ParseAmountErrorInner::Negative)
                 .map_err(ParseAmountError);
         }
         // This is inefficient, but the safest way to deal with this. The parsing logic is safe.
@@ -633,7 +633,7 @@ impl FromStr for Amount {
 }
 
 impl TryFrom<SignedAmount> for Amount {
-    type Error = OutOfRangeError;
+    type Error = NegativeAmountError;
 
     #[inline]
     fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }
