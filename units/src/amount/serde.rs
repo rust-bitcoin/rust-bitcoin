@@ -299,9 +299,9 @@ pub mod as_sat {
         {
             fn expecting<T: AmountOps>() -> &'static str {
                 if T::is_signed(super::super::Token) {
-                    "an sequence of integers between -2100000000000000 and 2100000000000000 inclusive"
+                    "a sequence of integers between -2100000000000000 and 2100000000000000 inclusive"
                 } else {
-                    "an sequence of integers between 0 and 2100000000000000 inclusive"
+                    "a sequence of integers between 0 and 2100000000000000 inclusive"
                 }
             }
 
