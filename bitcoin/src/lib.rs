@@ -178,7 +178,7 @@ pub type PublicKey = LegacyPublicKey;
 
 // Re-export modules directly from lower level crates
 #[doc(inline)]
-pub use key_expression::bip32;
+pub use ::key_expression::{bip32, key_expression};
 
 #[doc(inline)]
 pub use crate::{
