@@ -148,18 +148,21 @@ impl<'a> Arbitrary<'a> for EncodedXpriv {
 /// The payload follows BIP-0032. Only the two standard public-key versions can be converted to
 /// [`Xpub`]. This type does not infer a network or script policy from other versions.
 ///
+/// Use this type to import and re-export keys that use nonstandard version bytes, such as a
+/// `zpub` from another wallet. For derivation with a standard `xpub` or `tpub`, convert to
+/// [`Xpub`] with [`TryFrom`].
+///
 /// # Examples
 ///
 /// ```
 /// use bitcoin_key_expression::bip32::{EncodedXpub, Xpub};
 ///
-/// let xpub: Xpub = "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8".parse().unwrap();
-/// let mut bytes = xpub.encode();
-/// let version = [0x12, 0x34, 0x56, 0x78];
-/// bytes[..4].copy_from_slice(&version);
-/// let encoded = EncodedXpub::from_byte_array(&bytes).unwrap();
-/// assert_eq!(encoded.version_bytes(), version);
-/// assert_eq!(encoded.encode(), bytes);
+/// let imported = "zpub6jftahH18ngZxUuv6oSniLNrBCSSE1B4EEU59bwTCEt8x6aS6b2mdfLxbS4QS53g\
+///                 85SWWP6wexqeer516433gYpZQoJie2tcMYdJ1SYYYAL";
+/// let encoded: EncodedXpub = imported.parse().unwrap();
+/// let version = encoded.version_bytes();
+/// assert_eq!(version, [0x04, 0xb2, 0x47, 0x46]);
+/// assert_eq!(encoded.to_string(), imported);
 /// assert_eq!(Xpub::try_from(encoded).unwrap_err().version_bytes(), version);
 /// ```
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
