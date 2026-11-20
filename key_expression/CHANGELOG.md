@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- BIP-0380: Add `key_expression::PublicKeyExpression` for compressed, uncompressed, and BIP-0386
+  x-only public keys with an optional key origin. Supports parsing, canonical formatting, and string
+  serde.
 - BREAKING: Remove `bip32::KeySource` in favor of `bip32::KeyOrigin`. Replace `(fingerprint, path)`
   construction with `KeyOrigin { fingerprint, path }` and `.0`/`.1` access with `.fingerprint`/`.path`.
   The serde tuple representation is unchanged.

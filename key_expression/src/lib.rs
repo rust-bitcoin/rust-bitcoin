@@ -18,6 +18,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+/// Re-export the `bitcoin-crypto` crate.
+pub extern crate crypto;
+
 extern crate hashes;
 
 extern crate hex;
@@ -35,3 +38,5 @@ include!("../include/array_newtype.rs");
 include!("../include/newtype.rs");
 
 pub mod bip32;
+#[cfg(feature = "alloc")]
+pub mod key_expression;
