@@ -828,10 +828,11 @@ impl fmt::Debug for RelativeDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self, f) }
 }
 
-/// A key's origin: the master key fingerprint and the relative derivation path from it.
+/// A key's origin: the starting key's fingerprint and the relative derivation path from it.
 ///
-/// The fingerprint is an identifier, not authenticated proof of ancestry. The path has no `m`
-/// prefix; an empty path is valid and refers to the master key itself.
+/// [BIP-0380] defines the fingerprint as that of the key where derivation starts, which need
+/// not be a master key. The fingerprint does not authenticate ancestry. The path has no `m`
+/// prefix; an empty path refers to the starting key itself.
 ///
 /// With `serde`, this uses the same `(fingerprint, path)` tuple representation as the former
 /// `KeySource` alias in both human-readable and binary formats, not a named-field object.
@@ -845,12 +846,14 @@ impl fmt::Debug for RelativeDerivationPath {
 /// };
 /// assert_eq!(origin.path.len(), 5);
 /// ```
+///
+/// [BIP-0380]: <https://github.com/bitcoin/bips/blob/master/bip-0380.mediawiki#key-expressions>
 #[cfg(feature = "alloc")]
 #[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct KeyOrigin {
-    /// The master key's fingerprint.
+    /// The fingerprint of the key where derivation starts.
     pub fingerprint: Fingerprint,
-    /// The relative derivation path from the master key.
+    /// The relative derivation path from the starting key.
     pub path: RelativeDerivationPath,
 }
 
