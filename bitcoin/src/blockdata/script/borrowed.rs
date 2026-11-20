@@ -397,12 +397,18 @@ impl Script {
     /// Get redeemScript following BIP16 rules regarding P2SH spending.
     ///
     /// This does not guarantee that this represents a P2SH input [`Script`].
-    /// It merely gets the last push of the script. Use
-    /// [`Script::is_p2sh`](crate::blockdata::script::Script::is_p2sh) on the
+    /// It merely gets the last push of the script.
+    ///
+    /// Returns `None` if the script is not push only (see [`Script::is_push_only`]),
+    /// matching Bitcoin Core's `IsPushOnly` check. This means `OP_RESERVED` and the
+    /// `OP_PUSHNUM` opcodes are allowed before the final push. Also returns `None` if
+    /// the last instruction is not a data push.
+    ///
+    /// Use [`Script::is_p2sh`](crate::blockdata::script::Script::is_p2sh) on the
     /// scriptPubKey to check whether it is actually a P2SH script.
     pub fn redeem_script(&self) -> Option<&Script> {
         // Script must consist entirely of pushes.
-        if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
+        if !self.is_push_only() {
             return None;
         }
 
