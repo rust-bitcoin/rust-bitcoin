@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-// methods are implementation of a standardized serde-specific signature
+// Methods are implementation of a standardized serde-specific signature.
 #![allow(missing_docs)]
 #![allow(clippy::missing_errors_doc)]
 
@@ -84,7 +84,7 @@ mod sealed {
 }
 
 pub mod as_sat {
-    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as real numbers denominated in satoshi.
+    //! Serializes and deserializes [`Amount`] and [`SignedAmount`] as real numbers denominated in satoshi.
     //!
     //! Use with `#[serde(with = "amount::serde::as_sat")]`.
     //!
@@ -125,7 +125,7 @@ pub mod as_sat {
             }
         }
 
-        // We use custom visitor to have better control over error messages
+        // We use custom visitor to have better control over error messages.
         struct Visitor<T>(PhantomData<fn() -> T>);
 
         impl<'de, T> serde::de::Visitor<'de> for Visitor<T>
@@ -181,7 +181,7 @@ pub mod as_sat {
     }
 
     pub mod opt {
-        //! Serialize and deserialize [`Option<Amount>`] and [`Option<SignedAmount>`] as real
+        //! Serializes and deserializes [`Option<Amount>`] and [`Option<SignedAmount>`] as real
         //! numbers denominated in satoshi.
         //!
         //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
@@ -262,7 +262,7 @@ pub mod as_sat {
 
     #[cfg(feature = "alloc")]
     pub mod vec {
-        //! Serialize and deserialize [`Vec<Amount>`] and [`Vec<SignedAmount>`] as real numbers
+        //! Serializes and deserializes [`Vec<Amount>`] and [`Vec<SignedAmount>`] as real numbers
         //! denominated in satoshi.
         //!
         //! Use with `#[serde(with = "amount::serde::as_sat::vec")]`.
@@ -299,9 +299,9 @@ pub mod as_sat {
         {
             fn expecting<T: AmountOps>() -> &'static str {
                 if T::is_signed(super::super::Token) {
-                    "an sequence of integers between -2100000000000000 and 2100000000000000 inclusive"
+                    "a sequence of integers between -2100000000000000 and 2100000000000000 inclusive"
                 } else {
-                    "an sequence of integers between 0 and 2100000000000000 inclusive"
+                    "a sequence of integers between 0 and 2100000000000000 inclusive"
                 }
             }
 
@@ -346,7 +346,7 @@ pub mod as_sat {
 
 #[cfg(feature = "alloc")]
 pub mod as_btc {
-    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as JSON numbers denominated in BTC.
+    //! Serializes and deserializes [`Amount`] and [`SignedAmount`] as JSON numbers denominated in BTC.
     //!
     //! Use with `#[serde(with = "amount::serde::as_btc")]`.
     //!
@@ -382,7 +382,7 @@ pub mod as_btc {
     }
 
     pub mod opt {
-        //! Serialize and deserialize [`Option<Amount>`] and [`Option<SignedAmount>`] as JSON
+        //! Serializes and deserializes [`Option<Amount>`] and [`Option<SignedAmount>`] as JSON
         //! numbers denominated in BTC.
         //!
         //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
@@ -454,7 +454,7 @@ pub mod as_btc {
     }
 
     pub mod vec {
-        //! Serialize and deserialize [`Vec<Amount>`] and [`Vec<SignedAmount>`] as JSON numbers
+        //! Serializes and deserializes [`Vec<Amount>`] and [`Vec<SignedAmount>`] as JSON numbers
         //! denominated in BTC.
         //!
         //! Use with `#[serde(with = "amount::serde::as_btc::vec")]`.
@@ -530,7 +530,7 @@ pub mod as_btc {
 
 #[cfg(feature = "alloc")]
 pub mod as_str {
-    //! Serialize and deserialize [`Amount`] and [`SignedAmount`] as a JSON string denominated in BTC.
+    //! Serializes and deserializes [`Amount`] and [`SignedAmount`] as a JSON string denominated in BTC.
     //!
     //! Use with `#[serde(with = "amount::serde::as_str")]`.
     //!
@@ -568,7 +568,7 @@ pub mod as_str {
     }
 
     pub mod opt {
-        //! Serialize and deserialize [`Option<Amount>`] and [`Option<SignedAmount>`] as a JSON
+        //! Serializes and deserializes [`Option<Amount>`] and [`Option<SignedAmount>`] as a JSON
         //! string denominated in BTC.
         //!
         //! Use with `#[serde(default, with = "amount::serde::as_str::opt")]`.
@@ -640,7 +640,7 @@ pub mod as_str {
     }
 
     pub mod vec {
-        //! Serialize and deserialize [`Vec<Amount>`] and [`Vec<SignedAmount>`] as JSON strings
+        //! Serializes and deserializes [`Vec<Amount>`] and [`Vec<SignedAmount>`] as JSON strings
         //! denominated in BTC.
         //!
         //! Use with `#[serde(with = "amount::serde::as_str::vec")]`.

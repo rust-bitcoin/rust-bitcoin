@@ -23,7 +23,7 @@ pub use self::error::{
     InvalidCompactTargetError, ParseTargetError, ParseWorkError, ZeroConversionError,
 };
 
-/// Implement traits and methods shared by [`Target`] and [`Work`].
+/// Implements traits and methods shared by [`Target`] and [`Work`].
 macro_rules! do_impl {
     ($ty:ident, $err_ty:ident) => {
         impl $ty {
@@ -278,7 +278,7 @@ impl Target {
     /// Computes the compact value from a [`Target`] representation.
     ///
     /// The compact form is by definition lossy, this means that
-    /// `t == Target::from_compact(t.to_compact_lossy())` does not always hold.
+    /// `Ok(t) == Target::from_compact(t.to_compact_lossy())` does not always hold.
     pub fn to_compact_lossy(self) -> CompactTarget {
         let mut size = self.0.bits().div_ceil(8);
         let mut compact = if size <= 3 {
@@ -300,7 +300,7 @@ impl Target {
     ///
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
-    /// block with this target (see `Self::difficulty`).
+    /// block with this target.
     ///
     /// When validating a chain, Bitcoin Core counts a zero target as zero work. Use
     /// `.unwrap_or(Work::ZERO)` to match that behavior.
@@ -677,7 +677,6 @@ trait U256Ext: Sized {
 impl U256Ext for U256 {
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> { parse_int::hex_u256_prefixed(s) }
 
-    /// Constructs a new [`U256`] from an unprefixed hex string.
     #[inline]
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         parse_int::hex_u256_unprefixed(s)

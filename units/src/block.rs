@@ -167,7 +167,7 @@ impl BlockHeight {
 
     /// Saturating integer addition.
     ///
-    /// Computes self + rhs, saturating at [`BlockHeight::MAX`] instead of overflowing.
+    /// Computes `self + rhs`, saturating at [`BlockHeight::MAX`] instead of overflowing.
     #[inline]
     #[must_use]
     pub const fn saturating_add(self, rhs: BlockHeightInterval) -> Self {
@@ -176,7 +176,7 @@ impl BlockHeight {
 
     /// Saturating integer subtraction.
     ///
-    /// Computes self - rhs, saturating at [`BlockHeight::MIN`] instead of overflowing.
+    /// Computes `self - rhs`, saturating at [`BlockHeight::MIN`] instead of overflowing.
     #[inline]
     #[must_use]
     pub const fn saturating_sub(self, rhs: BlockHeightInterval) -> Self {
@@ -295,7 +295,7 @@ crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockHeightInterval);
 impl From<relative::NumberOfBlocks> for BlockHeightInterval {
     /// Converts a [`locktime::relative::NumberOfBlocks`] to a [`BlockHeightInterval`].
     ///
-    /// A relative locktime block count has a maximum value of `u16::MAX` where as a
+    /// A relative locktime block count has a maximum value of `u16::MAX` whereas a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not
     /// interchangeable.
     #[inline]
@@ -307,7 +307,7 @@ impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
 
     /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::NumberOfBlocks`].
     ///
-    /// A relative locktime block count has a maximum value of `u16::MAX` where as a
+    /// A relative locktime block count has a maximum value of `u16::MAX` whereas a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not
     /// interchangeable.
     #[inline]
@@ -542,7 +542,7 @@ crate::internal_macros::impl_op_for_references! {
         }
     }
 
-    // height - height = interval
+    // mtp - mtp = interval
     impl ops::Sub<BlockMtp> for BlockMtp {
         type Output = BlockMtpInterval;
 
@@ -553,7 +553,7 @@ crate::internal_macros::impl_op_for_references! {
         }
     }
 
-    // height + interval = height
+    // mtp + interval = mtp
     impl ops::Add<BlockMtpInterval> for BlockMtp {
         type Output = BlockMtp;
 
@@ -564,7 +564,7 @@ crate::internal_macros::impl_op_for_references! {
         }
     }
 
-    // height - interval = height
+    // mtp - interval = mtp
     impl ops::Sub<BlockMtpInterval> for BlockMtp {
         type Output = BlockMtp;
 
@@ -911,7 +911,7 @@ mod tests {
         assert!(matches!(error, BlockHeightDecoderError(UnexpectedEofError { .. })));
     }
 
-    // Test a impl_u32_wrapper! type serde serialisation roundtrip.
+    // Test an impl_u32_wrapper! type serde serialisation roundtrip.
     macro_rules! serde_roundtrip_test {
         { $test_name:tt, $typ:ident } => {
             #[test]

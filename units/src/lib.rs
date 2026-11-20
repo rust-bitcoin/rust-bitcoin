@@ -35,7 +35,7 @@
 //! # MSRV
 //!
 //! This crate supports Rust 1.74, however some of its dependencies may not do so or may require
-//! pinning. Similarly, some features may require newer Rust version (implicitly or explicitly).
+//! pinning. Similarly, some features may require a newer Rust version (implicitly or explicitly).
 //!
 //! ## Policy
 //!
@@ -106,6 +106,6 @@ pub use self::{
     weight::Weight
 };
 
-// decoder_newtype! macro
+// The `decoder_newtype!` macro.
 #[cfg(feature = "encoding")]
 include!("../include/decoder_newtype.rs");

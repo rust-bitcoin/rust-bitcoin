@@ -427,9 +427,9 @@ impl SignedAmount {
 
     /// Returns a number representing the sign of this [`SignedAmount`].
     ///
-    /// - `0` if the amount is zero
-    /// - `1` if the amount is positive
-    /// - `-1` if the amount is negative
+    /// - `0` if the amount is zero.
+    /// - `1` if the amount is positive.
+    /// - `-1` if the amount is negative.
     #[inline]
     #[must_use]
     pub fn signum(self) -> i64 { self.to_sat().signum() }

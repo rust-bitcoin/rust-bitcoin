@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Calculate transaction fee ([`Amount`]) from a [`FeeRate`] and [`Weight`].
+//! Calculates transaction fee ([`Amount`]) from a [`FeeRate`] and [`Weight`].
 //!
 //! The total fee for a transaction can be calculated by multiplying the transaction weight by the
 //! fee rate used to send the transaction.
@@ -9,7 +9,7 @@
 //! other values. Note however that such calculations truncate (as for integer division).
 //!
 //! We provide `fee.div_by_weight_ceil(weight)` to calculate a minimum threshold fee rate
-//! required to pay at least `fee` for transaction with `weight`.
+//! required to pay at least `fee` for a transaction with `weight`.
 //!
 //! We support various [`core::ops`] traits all of which return [`NumOpResult<T>`].
 //!

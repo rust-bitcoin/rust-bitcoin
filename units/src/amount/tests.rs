@@ -600,7 +600,7 @@ fn to_string() {
     assert_eq!(ssat(-42).to_string_with_denomination(D::Bitcoin), "-0.00000042 BTC");
 }
 
-// May help identify a problem sooner
+// May help identify a problem sooner.
 #[test]
 #[cfg(feature = "alloc")]
 fn repeat_char() {
@@ -1583,7 +1583,7 @@ fn signed_amount_div_nonzero() {
     let divisor = NonZeroI64::new(4).unwrap();
     let result = signed / divisor;
     assert_eq!(result, ssat(-25));
-    //checking also for &T/U, T/&Uvariant
+    //checking also for &T/U, T/&U variant
     assert_eq!(&signed / divisor, ssat(-25));
     assert_eq!(signed / &divisor, ssat(-25));
 }

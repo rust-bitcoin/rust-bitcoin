@@ -30,7 +30,7 @@ pub use self::error::{
 #[doc(no_inline)]
 pub use self::error::LockTimeDecoderError;
 
-/// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
+/// The threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
 /// [`LockTime`] values _below_ the threshold are interpreted as block heights, values _above_ (or
 /// equal to) the threshold are interpreted as block times (UNIX timestamp, seconds since epoch).
@@ -114,7 +114,7 @@ pub enum LockTime {
 
 impl LockTime {
     /// If transaction lock time is set to zero it is ignored, in other words a
-    /// transaction with nLocktime==0 is able to be included immediately in any block.
+    /// transaction with nLockTime==0 is able to be included immediately in any block.
     pub const ZERO: Self = Self::Blocks(Height::ZERO);
 
     /// The number of bytes that the locktime contributes to the size of a transaction.
@@ -223,7 +223,7 @@ impl LockTime {
     /// # Note
     ///
     /// If the locktime is set to an MTP `t`, the transaction can be included in a block only if
-    /// the MTP of last recent 11 blocks is greater than `t`.
+    /// the MTP of the last 11 blocks is greater than `t`.
     ///
     /// It is possible to broadcast the transaction once the MTP is greater than `t`. See BIP-0113.
     ///
@@ -266,13 +266,13 @@ impl LockTime {
     #[inline]
     pub const fn is_block_time(self) -> bool { !self.is_block_height() }
 
-    /// Returns `true` if this timelock constraint is satisfied by the respective `height`/`time`.
+    /// Returns `true` if this timelock constraint is satisfied by the respective `height`/`mtp`.
     ///
     /// If `self` is a blockheight based lock then it is checked against `height` and if `self` is a
-    /// blocktime based lock it is checked against `time`.
+    /// blocktime based lock it is checked against `mtp`.
     ///
     /// A 'timelock constraint' refers to the `n` from `n OP_CHECKLOCKTIMEVERIFY`, this constraint
-    /// is satisfied if a transaction with `nLockTime` set to `height`/`time` is valid.
+    /// is satisfied if a transaction with `nLockTime` set to `height`/`mtp` is valid.
     ///
     /// If `height` and `mtp` represent the current chain tip then a transaction with this
     /// locktime can be broadcast for inclusion in the next block.
@@ -346,8 +346,8 @@ impl LockTime {
     /// This function serves multiple purposes:
     ///
     /// * When evaluating `OP_CHECKLOCKTIMEVERIFY` the argument must be less than or equal to the
-    ///   transactions nLockTime. If using this function to validate a script `self` is the argument
-    ///   to `CLTV` and `other` is the transaction nLockTime.
+    ///   transaction's nLockTime. If using this function to validate a script `self` is the
+    ///   argument to `CLTV` and `other` is the transaction nLockTime.
     ///
     /// * If you wish to check a lock time against various other locks e.g., filtering out locks
     ///   which cannot be satisfied. Can also be used to remove the smaller value of two
@@ -375,8 +375,8 @@ impl LockTime {
     ///
     /// # Warning
     ///
-    /// Do not compare values return by this method. The whole point of the [`LockTime`] type is to
-    /// assist in doing correct comparisons. Either use [`is_satisfied_by`],
+    /// Do not compare values returned by this method. The whole point of the [`LockTime`] type is
+    /// to assist in doing correct comparisons. Either use [`is_satisfied_by`],
     /// [`is_satisfied_by_time`], or use the pattern below:
     ///
     /// [`is_satisfied_by`]: Self::is_satisfied_by
@@ -394,9 +394,6 @@ impl LockTime {
     ///     (L::Seconds(n), L::Seconds(lock_time)) => n <= lock_time,
     ///     _ => panic!("invalid comparison"),
     /// };
-    ///
-    /// // Or, if you have Rust 1.53 or greater
-    /// // let is_satisfied = n.partial_cmp(&lock_time).expect("invalid comparison").is_le();
     /// ```
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
@@ -585,7 +582,7 @@ impl Height {
 
     /// Returns `true` if a transaction with this locktime can be included in the next block.
     ///
-    /// `self` is value of the [`LockTime`] and if `height` is the current chain tip then
+    /// `self` is the value of the [`LockTime`] and if `height` is the current chain tip then
     /// a transaction with this lock can be broadcast for inclusion in the next block.
     #[inline]
     pub fn is_satisfied_by(self, height: Self) -> bool {
@@ -780,11 +777,12 @@ impl<'de> Deserialize<'de> for MedianTimePast {
     }
 }
 
-/// Returns `true` if `n` is a block height i.e., less than 500,000,000.
+/// Returns `true` if `n` is a block height i.e., less than [`LOCK_TIME_THRESHOLD`] (500,000,000).
 #[inline]
 pub const fn is_block_height(n: u32) -> bool { n < LOCK_TIME_THRESHOLD }
 
-/// Returns `true` if `n` is a UNIX timestamp i.e., greater than or equal to 500,000,000.
+/// Returns `true` if `n` is a UNIX timestamp i.e., greater than or equal to
+/// [`LOCK_TIME_THRESHOLD`] (500,000,000).
 #[inline]
 pub const fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
 

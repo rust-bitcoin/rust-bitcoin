@@ -136,7 +136,7 @@ impl OutOfRangeError {
         }
     }
 
-    /// Returns `true` if the type that was attempted to be parsed is signed (`SignedAmount`).
+    /// Returns `true` if the type that was attempted to be parsed is signed ([`SignedAmount`]).
     ///
     /// This can be used to hint to users to enter non-negative values specifically.
     pub fn is_signed(&self) -> bool { self.is_signed }
@@ -352,7 +352,7 @@ impl std::error::Error for BadPositionError {
     }
 }
 
-/// An error during amount parsing.
+/// An error during denomination parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ParseDenominationError {

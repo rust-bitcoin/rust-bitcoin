@@ -246,7 +246,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     }
 }
 
-// Implement Add/Sub on NumOpResults for all wrapped types that already implement Add/Sub on themselves
+// Implement Add/Sub on NumOpResults for all wrapped types that already implement Add/Sub on themselves.
 crate::internal_macros::impl_op_for_references! {
     impl<T> ops::Add<NumOpResult<T>> for NumOpResult<T>
     where
@@ -302,7 +302,7 @@ crate::internal_macros::impl_op_for_references! {
     }
 }
 
-// Generates checked addition and subtraction assignments for wrapped numeric types.
+/// Generates checked addition and subtraction assignments for wrapped numeric types.
 macro_rules! impl_checked_assign {
     ($ty:ty, $is_negative:expr) => {
         impl ops::AddAssign<$ty> for NumOpResult<$ty> {
@@ -464,11 +464,8 @@ impl fmt::Display for MathOp {
 /// The kind of error that happened during a mathematical operation failure.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum MathErrorKind {
-    // The result overflowed.
-    Overflow {
-        op: MathOp,
-        is_negative: bool,
-    },
+    /// The result overflowed.
+    Overflow { op: MathOp, is_negative: bool },
     /// A division by zero was performed.
     DivByZero,
     /// A remainder by zero was performed.
