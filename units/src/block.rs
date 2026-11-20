@@ -542,7 +542,7 @@ crate::internal_macros::impl_op_for_references! {
         }
     }
 
-    // height - height = interval
+    // mtp - mtp = interval
     impl ops::Sub<BlockMtp> for BlockMtp {
         type Output = BlockMtpInterval;
 
@@ -553,7 +553,7 @@ crate::internal_macros::impl_op_for_references! {
         }
     }
 
-    // height + interval = height
+    // mtp + interval = mtp
     impl ops::Add<BlockMtpInterval> for BlockMtp {
         type Output = BlockMtp;
 
@@ -564,7 +564,7 @@ crate::internal_macros::impl_op_for_references! {
         }
     }
 
-    // height - interval = height
+    // mtp - interval = mtp
     impl ops::Sub<BlockMtpInterval> for BlockMtp {
         type Output = BlockMtp;
 
