@@ -23,7 +23,7 @@ pub use self::error::{
     InvalidCompactTargetError, ParseTargetError, ParseWorkError, ZeroConversionError,
 };
 
-/// Implement traits and methods shared by [`Target`] and [`Work`].
+/// Implements traits and methods shared by [`Target`] and [`Work`].
 macro_rules! do_impl {
     ($ty:ident, $err_ty:ident) => {
         impl $ty {
