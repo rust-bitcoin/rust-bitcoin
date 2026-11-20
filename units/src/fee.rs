@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Calculate transaction fee ([`Amount`]) from a [`FeeRate`] and [`Weight`].
+//! Calculates transaction fee ([`Amount`]) from a [`FeeRate`] and [`Weight`].
 //!
 //! The total fee for a transaction can be calculated by multiplying the transaction weight by the
 //! fee rate used to send the transaction.
