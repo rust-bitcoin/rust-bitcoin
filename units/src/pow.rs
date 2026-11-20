@@ -521,12 +521,13 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for InvalidCompactTargetError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self(_) = self;
-            None
+    internals::impl_std_error! {
+        impl error::Error for InvalidCompactTargetError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+                let Self(_) = self;
+                None
+            }
         }
     }
 
@@ -554,12 +555,13 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for ZeroConversionError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self = self;
-            None
+    internals::impl_std_error! {
+        impl error::Error for ZeroConversionError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+                let Self = self;
+                None
+            }
         }
     }
 
@@ -584,11 +586,12 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
     #[cfg(feature = "encoding")]
-    impl std::error::Error for CompactTargetDecoderError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    internals::impl_std_error! {
+        impl error::Error for CompactTargetDecoderError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> { Some(&self.0) }
+        }
     }
 
     /// Error returned when parsing a [`Work`] from a string.
@@ -609,10 +612,11 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for ParseWorkError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    internals::impl_std_error! {
+        impl error::Error for ParseWorkError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> { Some(&self.0) }
+        }
     }
 
     /// Error returned when parsing a [`Target`] from a string.
@@ -633,10 +637,11 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for ParseTargetError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    internals::impl_std_error! {
+        impl error::Error for ParseTargetError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> { Some(&self.0) }
+        }
     }
 }
 
