@@ -5,6 +5,8 @@
 //! Implementation of BIP-0032 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
+mod encoded;
+
 #[cfg(feature = "alloc")]
 use alloc::vec;
 #[cfg(feature = "alloc")]
@@ -22,13 +24,17 @@ use hashes::{hash160, hash_newtype, sha256, sha512, Hash, HashEngine, Hmac, Hmac
 use internals::array::ArrayExt;
 use network::NetworkKind;
 
+#[doc(inline)]
+pub use self::encoded::{EncodedXpriv, EncodedXpub};
+
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-    CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
-    InvalidSeedLengthError, InvalidXkeyPartsError, MaximumDepthExceededError,
-    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseRelativeDerivationPathError,
-    ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError,
+    CannotDeriveHardenedChildError, DeriveXpubError, EncodedXprivDecodeError, EncodedXpubDecodeError,
+    IndexOutOfRangeError, InvalidSeedLengthError, InvalidXkeyPartsError, MaximumDepthExceededError,
+    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseEncodedXprivError,
+    ParseEncodedXpubError, ParseRelativeDerivationPathError, ParseXprivError, ParseXpubError,
+    UnknownXkeyVersionError, XkeyDecodeError, XprivDecodeError, XpubDecodeError,
 };
 
 /// Version bytes for extended public keys on Bitcoin Mainnet.
@@ -1041,19 +1047,13 @@ impl Xpriv {
     ///
     /// Same as [`Xpriv::decode`], except that the length is checked by the type system.
     pub fn from_byte_array(data: &[u8; 78]) -> Result<Self, XprivDecodeError> {
-        let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
-            Common::decode(data).map_err(XprivDecodeError::Xkey)?;
-
-        let network = match network {
-            VERSION_BYTES_MAINNET_PRIVATE => NetworkKind::Main,
-            VERSION_BYTES_TESTNETS_PRIVATE => NetworkKind::Test,
-            unknown => return Err(XprivDecodeError::UnknownVersion(unknown)),
-        };
-
-        let (&zero, private_key) = key.split_first();
-        if zero != 0 {
-            return Err(XprivDecodeError::InvalidPrivateKeyPrefix);
-        }
+        let DecodedXkey { version, depth, parent_fingerprint, child_number, chain_code, key_bytes } =
+            DecodedXkey::decode(data)
+                .map_err(|e| XprivDecodeError::Xkey(common_decode_error(&e)))?;
+        let network =
+            Self::network_from_version(version).ok_or(XprivDecodeError::UnknownVersion(version))?;
+        let private_key =
+            private_key_payload(key_bytes).ok_or(XprivDecodeError::InvalidPrivateKeyPrefix)?;
 
         Ok(Self {
             network,
@@ -1067,18 +1067,30 @@ impl Xpriv {
 
     /// Extended private key binary encoding according to BIP-0032
     pub fn encode(&self) -> [u8; 78] {
-        let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            NetworkKind::Main => VERSION_BYTES_MAINNET_PRIVATE,
-            NetworkKind::Test => VERSION_BYTES_TESTNETS_PRIVATE,
-        });
-        ret[4] = self.depth;
-        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-        ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
-        ret[13..45].copy_from_slice(&self.chain_code[..]);
-        ret[45] = 0;
+        let mut ret = encode_xkey_header(
+            self.version_bytes(),
+            self.depth,
+            self.parent_fingerprint,
+            self.child_number,
+            &self.chain_code,
+        );
         ret[46..78].copy_from_slice(self.private_key.as_secret_bytes());
         ret
+    }
+
+    fn version_bytes(&self) -> [u8; 4] {
+        match self.network {
+            NetworkKind::Main => VERSION_BYTES_MAINNET_PRIVATE,
+            NetworkKind::Test => VERSION_BYTES_TESTNETS_PRIVATE,
+        }
+    }
+
+    fn network_from_version(version: [u8; 4]) -> Option<NetworkKind> {
+        match version {
+            VERSION_BYTES_MAINNET_PRIVATE => Some(NetworkKind::Main),
+            VERSION_BYTES_TESTNETS_PRIVATE => Some(NetworkKind::Test),
+            _ => None,
+        }
     }
 
     /// Returns the HASH160 of the public key belonging to the xpriv
@@ -1263,14 +1275,10 @@ impl Xpub {
     ///
     /// Same as [`Xpub::decode`], except that the length is checked by the type system.
     pub fn from_byte_array(data: &[u8; 78]) -> Result<Self, XpubDecodeError> {
-        let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
-            Common::decode(data).map_err(XpubDecodeError::Xkey)?;
-
-        let network = match network {
-            VERSION_BYTES_MAINNET_PUBLIC => NetworkKind::Main,
-            VERSION_BYTES_TESTNETS_PUBLIC => NetworkKind::Test,
-            unknown => return Err(XpubDecodeError::UnknownVersion(unknown)),
-        };
+        let DecodedXkey { version, depth, parent_fingerprint, child_number, chain_code, key_bytes } =
+            DecodedXkey::decode(data).map_err(|e| XpubDecodeError::Xkey(common_decode_error(&e)))?;
+        let network =
+            Self::network_from_version(version).ok_or(XpubDecodeError::UnknownVersion(version))?;
 
         Ok(Self {
             network,
@@ -1278,23 +1286,36 @@ impl Xpub {
             parent_fingerprint,
             child_number,
             chain_code,
-            public_key: secp256k1::PublicKey::from_slice(&key)?,
+            public_key: secp256k1::PublicKey::from_slice(key_bytes)?,
         })
     }
 
     /// Extended public key binary encoding according to BIP-0032
     pub fn encode(&self) -> [u8; 78] {
-        let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            NetworkKind::Main => VERSION_BYTES_MAINNET_PUBLIC,
-            NetworkKind::Test => VERSION_BYTES_TESTNETS_PUBLIC,
-        });
-        ret[4] = self.depth;
-        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-        ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
-        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        let mut ret = encode_xkey_header(
+            self.version_bytes(),
+            self.depth,
+            self.parent_fingerprint,
+            self.child_number,
+            &self.chain_code,
+        );
         ret[45..78].copy_from_slice(&self.public_key.serialize()[..]);
         ret
+    }
+
+    fn version_bytes(&self) -> [u8; 4] {
+        match self.network {
+            NetworkKind::Main => VERSION_BYTES_MAINNET_PUBLIC,
+            NetworkKind::Test => VERSION_BYTES_TESTNETS_PUBLIC,
+        }
+    }
+
+    fn network_from_version(version: [u8; 4]) -> Option<NetworkKind> {
+        match version {
+            VERSION_BYTES_MAINNET_PUBLIC => Some(NetworkKind::Main),
+            VERSION_BYTES_TESTNETS_PUBLIC => Some(NetworkKind::Test),
+            _ => None,
+        }
     }
 
     /// Returns the HASH160 of the public key component of the xpub
@@ -1370,55 +1391,72 @@ fn validate_xkey_metadata(
     Ok(())
 }
 
-// Helps unify decoding
-struct Common {
-    network: [u8; 4],
+fn common_decode_error(e: &InvalidXkeyPartsError) -> XkeyDecodeError {
+    match e {
+        InvalidXkeyPartsError::NonZeroParentFingerprintForMasterKey(_) =>
+            XkeyDecodeError::NonZeroParentFingerprintForMasterKey,
+        InvalidXkeyPartsError::NonZeroChildNumberForMasterKey(_) =>
+            XkeyDecodeError::NonZeroChildNumberForMasterKey,
+    }
+}
+
+fn private_key_payload(key: &[u8; 33]) -> Option<&[u8; 32]> {
+    let (&prefix, payload) = key.split_first();
+    (prefix == 0).then_some(payload)
+}
+
+fn encode_xkey_header(
+    version: [u8; 4],
+    depth: u8,
+    parent_fingerprint: Fingerprint,
+    child_number: ChildNumber,
+    chain_code: &ChainCode,
+) -> [u8; 78] {
+    let mut ret = [0; 78];
+    ret[..4].copy_from_slice(&version);
+    ret[4] = depth;
+    ret[5..9].copy_from_slice(&parent_fingerprint[..]);
+    ret[9..13].copy_from_slice(&child_number.to_raw().to_be_bytes());
+    ret[13..45].copy_from_slice(&chain_code[..]);
+    ret
+}
+
+struct DecodedXkey<'a> {
+    version: [u8; 4],
     depth: u8,
     parent_fingerprint: Fingerprint,
     child_number: ChildNumber,
     chain_code: ChainCode,
-    // public key (compressed) or 0 byte followed by a private key
-    key: [u8; 33],
+    key_bytes: &'a [u8; 33],
 }
 
-impl Common {
-    /// Decodes common fields for [`Xpriv`] and [`Xpub`].
-    ///
-    /// # Errors
-    ///
-    /// * [`XkeyDecodeError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
-    ///   fingerprint is non-zero.
-    /// * [`XkeyDecodeError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
-    ///   non-zero.
-    fn decode(data: &[u8; 78]) -> Result<Self, XkeyDecodeError> {
-        let (&network, data) = data.split_array::<4, 74>();
+impl<'a> DecodedXkey<'a> {
+    fn decode(data: &'a [u8; 78]) -> Result<Self, InvalidXkeyPartsError> {
+        let (&version, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();
         let (&parent_fingerprint, data) = data.split_array::<4, 69>();
         let (&child_number, data) = data.split_array::<4, 65>();
-        let (&chain_code, &key) = data.split_array::<32, 33>();
+        let (&chain_code, key_bytes) = data.split_array::<32, 33>();
 
         let parent_fingerprint = parent_fingerprint.into();
         let child_number = u32::from_be_bytes(child_number).into();
-        validate_xkey_metadata(depth, parent_fingerprint, child_number).map_err(|e| match e {
-            InvalidXkeyPartsError::NonZeroParentFingerprintForMasterKey(_) =>
-                XkeyDecodeError::NonZeroParentFingerprintForMasterKey,
-            InvalidXkeyPartsError::NonZeroChildNumberForMasterKey(_) =>
-                XkeyDecodeError::NonZeroChildNumberForMasterKey,
-        })?;
+        validate_xkey_metadata(depth, parent_fingerprint, child_number)?;
 
         Ok(Self {
-            network,
+            version,
             depth,
             parent_fingerprint,
             child_number,
             chain_code: chain_code.into(),
-            key,
+            key_bytes,
         })
     }
 }
 
 /// Error types for BIP-0032 operations
 pub mod error {
+    mod encoded;
+
     use core::convert::Infallible;
     use core::fmt;
 
@@ -1426,6 +1464,12 @@ pub mod error {
     use internals::write_err;
 
     use super::{ChildNumber, Fingerprint};
+
+    #[rustfmt::skip]
+    pub use self::encoded::{
+        EncodedXprivDecodeError, EncodedXpubDecodeError, ParseEncodedXprivError,
+        ParseEncodedXpubError, UnknownXkeyVersionError,
+    };
 
     /// Invalid metadata in the components of a BIP-0032 extended key.
     #[derive(Debug, Clone, PartialEq, Eq)]

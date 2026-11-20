@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add `bip32::EncodedXpub` and `bip32::EncodedXpriv` for extended keys with arbitrary version bytes.
 - BREAKING: Remove `bip32::KeySource` in favor of `bip32::KeyOrigin`. Replace `(fingerprint, path)`
   construction with `KeyOrigin { fingerprint, path }` and `.0`/`.1` access with `.fingerprint`/`.path`.
   The serde tuple representation is unchanged.

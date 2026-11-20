@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add `bip32::EncodedXpub` and `bip32::EncodedXpriv` to preserve arbitrary extended-key version
+  bytes in binary, Base58Check, and serde round trips without assigning them script semantics.
 - BREAKING: Remove `bip32::KeySource` in favor of `bip32::KeyOrigin`. Replace `(fingerprint, path)`
   construction with `KeyOrigin { fingerprint, path }` and `.0`/`.1` access with `.fingerprint`/`.path`.
   The serde tuple representation is unchanged.
