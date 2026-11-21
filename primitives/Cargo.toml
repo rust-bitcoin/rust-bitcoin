@@ -59,6 +59,7 @@ exact_features = [
 
 [package.metadata.rbmt.lint]
 allowed_duplicates = [
+    "bitcoin-units",
     "hex-conservative",
 ]
 

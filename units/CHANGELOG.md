@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.4.1] - TBD
+
+* Semver trick release: forward all types to `bitcoin-units` 0.5.0 so that the 0.4.x and 0.5.x
+  lines share the same types instead of the compiler treating them as distinct
+  ([#6338](https://github.com/rust-bitcoin/rust-bitcoin/issues/6338)).
+* Restore, as extension traits/type aliases, the API that was deprecated in 0.4.0 and then
+  removed in 0.5.0: `FeeRate::fee_wu`/`fee_vb`, `Weight::from_vb_unwrap`/`from_witness_data_size`/
+  `from_non_witness_data_size`, `relative::{Height, Time}` and their `value`/`to_consensus_u32`
+  methods, `absolute::{Time, LockTime::from_time}` and `Height`/`MedianTimePast`'s
+  `from_consensus`/`to_consensus_u32`, `CompactTarget::to_hex`, `Sequence::ENABLE_RBF_NO_LOCKTIME`/
+  `to_hex`, and `SignedAmount::checked_abs`.
+* Restore `parse_int::hex_{u16,u32,u64,u128}_unchecked`, which 0.5.0 made private.
+* **Breaking:** the restored methods live on extension traits (`FeeRateExt`, `WeightExt`,
+  `SequenceExt`, `CompactTargetExt`, `SignedAmountExt`, `absolute::{LockTimeExt, HeightExt,
+  MedianTimePastExt}`, `relative::{NumberOfBlocksExt, NumberOf512SecondsExt}`), so the trait has
+  to be in scope to call them and they are no longer `const fn`. The traits are sealed.
+
 ## [0.4.0] - 2026-05-27
 
 * Add format traits for `Target` and `Work` [#5626](https://github.com/rust-bitcoin/rust-bitcoin/pull/5626)
