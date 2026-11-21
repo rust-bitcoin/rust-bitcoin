@@ -412,6 +412,19 @@ impl NumberOfBlocks {
     #[must_use]
     pub const fn to_height(self) -> u16 { self.0 }
 
+    #[inline]
+    #[must_use]
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_height` instead")]
+    pub const fn value(self) -> u16 { self.0 }
+
+    #[doc(hidden)]
+    #[deprecated(
+        since = "1.0.0-rc.0",
+        note = "use `LockTime::from` followed by `to_consensus_u32` instead"
+    )]
+    pub const fn to_consensus_u32(self) -> u32 { const_casts::u16_to_u32(self.0) }
+
     /// Constructs a new `NumberOfBlocks` from a prefixed hex string.
     ///
     /// # Errors
@@ -501,6 +514,19 @@ impl NumberOf512Seconds {
     #[inline]
     #[must_use]
     pub const fn to_512_second_intervals(self) -> u16 { self.0 }
+
+    #[inline]
+    #[must_use]
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_512_second_intervals` instead")]
+    pub const fn value(self) -> u16 { self.0 }
+
+    #[doc(hidden)]
+    #[deprecated(
+        since = "1.0.0-rc.0",
+        note = "use `LockTime::from` followed by `to_consensus_u32` instead"
+    )]
+    pub const fn to_consensus_u32(self) -> u32 { (1u32 << 22) | const_casts::u16_to_u32(self.0) }
 
     /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into a 512
     /// second interval using truncating division.
