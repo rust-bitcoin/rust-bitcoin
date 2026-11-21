@@ -16,8 +16,8 @@ fn do_test(data: &[u8]) {
         weight.to_wu();
         weight.to_kwu_ceil();
         weight.to_kwu_floor();
-        weight.to_vbytes_ceil();
-        weight.to_vbytes_floor();
+        weight.to_vb_ceil();
+        weight.to_vb_floor();
 
         // Operations that take u64 as the rhs
         for operation in [Weight::checked_mul, Weight::checked_div] {

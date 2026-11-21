@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.4.1] - TBD
+
+* Semver trick release: forward all types to `bitcoin-units` 0.5.1 so that the 0.4.x and 0.5.x
+  lines share the same types instead of the compiler treating them as distinct
+  ([#6338](https://github.com/rust-bitcoin/rust-bitcoin/issues/6338)).
+* The methods and `Sequence::ENABLE_RBF_NO_LOCKTIME` that were deprecated in 0.4.0 and removed in
+  0.5.0 remain available as hidden, deprecated inherent items provided by `bitcoin-units` 0.5.1,
+  with the same signatures and `const`-ness as in 0.4.0.
+* Restore the removed type names `absolute::Time`, `relative::{Height, Time}` and `BlockInterval`
+  as deprecated type aliases.
+* Restore `parse_int::hex_{u16,u32,u64,u128}_unchecked`, which 0.5.0 made private.
+* No breaking changes: code written against 0.4.0 compiles against 0.4.1 unchanged.
+
 ## [0.4.0] - 2026-05-27
 
 * Add format traits for `Target` and `Work` [#5626](https://github.com/rust-bitcoin/rust-bitcoin/pull/5626)
