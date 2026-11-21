@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+* Re-add items removed in 0.5.0 as hidden deprecated methods to support the 0.4.1 semver trick [#7253](https://github.com/rust-bitcoin/rust-bitcoin/pull/7253)
+
 ## [0.5.0] - 2026-06-09
 
 * Remove `_unchecked` hex parsing function [#6292](https://github.com/rust-bitcoin/rust-bitcoin/pull/6292)
