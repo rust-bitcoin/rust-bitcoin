@@ -208,6 +208,11 @@ impl LockTime {
         Ok(Self::Blocks(height))
     }
 
+    #[inline]
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `from_mtp` instead")]
+    pub fn from_time(n: u32) -> Result<Self, ConversionError> { Self::from_mtp(n) }
+
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a median-time-past (MTP)
     /// which is in range for a locktime.
     ///
@@ -528,6 +533,14 @@ impl Height {
         Ok(Self::from_u32(height).map_err(|_| ParseError::Conversion(height.into()))?)
     }
 
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
+    pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
+
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_u32` instead")]
+    pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
+
     /// Constructs a new block height directly from a `u32` value.
     ///
     /// # Errors
@@ -646,6 +659,14 @@ impl MedianTimePast {
         let height = parse_int::hex_u32_unprefixed(s).map_err(ParseError::UnprefixedHex)?;
         Ok(Self::from_u32(height).map_err(|_| ParseError::Conversion(height.into()))?)
     }
+
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
+    pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
+
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_u32` instead")]
+    pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
 
     /// Constructs a new MTP directly from a `u32` value.
     ///

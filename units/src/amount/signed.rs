@@ -428,6 +428,12 @@ impl SignedAmount {
     #[inline]
     pub fn is_negative(self) -> bool { self.to_sat().is_negative() }
 
+    #[must_use]
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "Never returns none, use `abs()` instead")]
+    #[allow(clippy::unnecessary_wraps)]
+    pub const fn checked_abs(self) -> Option<Self> { Some(self.abs()) }
+
     /// Checked addition.
     ///
     /// Returns [`None`] if the sum is above [`SignedAmount::MAX`] or below [`SignedAmount::MIN`].

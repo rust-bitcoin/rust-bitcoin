@@ -208,6 +208,16 @@ impl FeeRate {
         }
     }
 
+    #[must_use]
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_fee()` instead")]
+    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.mul_by_weight(weight).ok() }
+
+    #[must_use]
+    #[doc(hidden)]
+    #[deprecated(since = "1.0.0-rc.0", note = "use Weight::from_vb and then `to_fee()` instead")]
+    pub fn fee_vb(self, vb: u64) -> Option<Amount> { Weight::from_vb(vb).map(|w| self.to_fee(w)) }
+
     /// Checked weight multiplication.
     ///
     /// Computes the absolute fee amount for a given [`Weight`] at this fee rate. When the resulting
