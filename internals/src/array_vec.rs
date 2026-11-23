@@ -450,11 +450,12 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for CapacityExceededError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { capacity: _ } = self;
-            None
+    crate::impl_std_error! {
+        impl error::Error for CapacityExceededError {
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+                let Self { capacity: _ } = self;
+                None
+            }
         }
     }
 

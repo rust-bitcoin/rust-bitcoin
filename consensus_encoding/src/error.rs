@@ -317,11 +317,12 @@ impl fmt::Display for UnexpectedEofError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for UnexpectedEofError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { missing: _ } = self;
-        None
+internals::impl_std_error! {
+    impl error::Error for UnexpectedEofError {
+        fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+            let Self { missing: _ } = self;
+            None
+        }
     }
 }
 

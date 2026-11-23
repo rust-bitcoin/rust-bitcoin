@@ -511,10 +511,11 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for ParseIntError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.source) }
+    internals::impl_std_error! {
+        impl error::Error for ParseIntError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> { Some(&self.source) }
+        }
     }
 
     impl From<ParseIntError> for core::num::ParseIntError {
@@ -557,15 +558,16 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for PrefixedHexError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            use PrefixedHexErrorInner as E;
+    internals::impl_std_error! {
+        impl error::Error for PrefixedHexError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+                use PrefixedHexErrorInner as E;
 
-            match self.0 {
-                E::MissingPrefix(ref e) => Some(e),
-                E::ParseInt(ref e) => Some(e),
+                match self.0 {
+                    E::MissingPrefix(ref e) => Some(e),
+                    E::ParseInt(ref e) => Some(e),
+                }
             }
         }
     }
@@ -599,15 +601,16 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for UnprefixedHexError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            use UnprefixedHexErrorInner as E;
+    internals::impl_std_error! {
+        impl error::Error for UnprefixedHexError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+                use UnprefixedHexErrorInner as E;
 
-            match self.0 {
-                E::ContainsPrefix(ref e) => Some(e),
-                E::ParseInt(ref e) => Some(e),
+                match self.0 {
+                    E::ContainsPrefix(ref e) => Some(e),
+                    E::ParseInt(ref e) => Some(e),
+                }
             }
         }
     }
@@ -641,12 +644,13 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for MissingPrefixError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { hex: _, truncated: _ } = self;
-            None
+    internals::impl_std_error! {
+        impl error::Error for MissingPrefixError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+                let Self { hex: _, truncated: _ } = self;
+                None
+            }
         }
     }
 
@@ -679,12 +683,13 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for ContainsPrefixError {
-        #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { hex: _, truncated: _ } = self;
-            None
+    internals::impl_std_error! {
+        impl error::Error for ContainsPrefixError {
+            #[inline]
+            fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+                let Self { hex: _, truncated: _ } = self;
+                None
+            }
         }
     }
 }
