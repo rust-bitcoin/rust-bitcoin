@@ -1140,6 +1140,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
     type Error = NetworkMessageDecoderError;
 
     #[inline]
+    #[rustfmt::skip] // Keep one decoder per line.
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         match self {
             Self::Version(d) => d.push_bytes(bytes).map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Version(e))),
@@ -1191,6 +1192,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
     }
 
     #[inline]
+    #[rustfmt::skip] // Keep one decoder per line.
     fn end(self) -> Result<Self::Output, Self::Error> {
         match self {
             Self::Version(d) => Ok(NetworkMessage::Version(d.end().map_err(|e| NetworkMessageDecoderError(NetworkMessageDecoderErrorInner::Version(e)))?)),
@@ -1268,8 +1270,13 @@ impl encoding::Decoder for NetworkMessageDecoder {
             Self::AddrV2(d) => d.read_limit(),
             Self::SendTxRcnCl(d) => d.read_limit(),
             Self::Feature(d) => d.read_limit(),
-            Self::Verack | Self::SendHeaders | Self::MemPool | Self::GetAddr | Self::WtxidRelay
-            | Self::FilterClear | Self::SendAddrV2 => 0,
+            Self::Verack
+            | Self::SendHeaders
+            | Self::MemPool
+            | Self::GetAddr
+            | Self::WtxidRelay
+            | Self::FilterClear
+            | Self::SendAddrV2 => 0,
             Self::Unknown { buffer, .. } => MAX_MSG_SIZE - buffer.len(),
         }
     }
@@ -1842,6 +1849,8 @@ pub mod error {
     use core::fmt;
 
     use internals::write_err;
+    use primitives::block::BlockDecoderError;
+    use primitives::transaction::TransactionDecoderError;
 
     use crate::bip152::{
         BlockTransactionsDecoderError, BlockTransactionsRequestDecoderError,
@@ -1857,9 +1866,9 @@ pub mod error {
         CFCheckptDecoderError, CFHeadersDecoderError, CFilterDecoderError,
         GetCFCheckptDecoderError, GetCFHeadersDecoderError, GetCFiltersDecoderError,
     };
-    use crate::message_network::{AlertDecoderError, RejectDecoderError, VersionMessageDecoderError};
-    use primitives::block::BlockDecoderError;
-    use primitives::transaction::TransactionDecoderError;
+    use crate::message_network::{
+        AlertDecoderError, RejectDecoderError, VersionMessageDecoderError,
+    };
 
     /// Error decoding a [`CommandString`].
     ///
@@ -2129,6 +2138,7 @@ pub mod error {
     }
 
     impl fmt::Display for NetworkMessageDecoderError {
+        #[rustfmt::skip] // Keep one variant per line.
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self.0 {
                 NetworkMessageDecoderErrorInner::Version(ref e) => write_err!(f, "error decoding message payload"; e),
