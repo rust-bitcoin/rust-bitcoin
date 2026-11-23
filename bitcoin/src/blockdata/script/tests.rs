@@ -928,3 +928,16 @@ fn instruction_indices_nth_extended() {
     let pos_skip = script.instruction_indices().skip(2).next().unwrap().unwrap().0;
     assert_eq!(pos_skip, 3, "skip(2).next() returned wrong position");
 }
+
+#[test]
+fn script_sig_redeem_script_after_small_int_push() {
+    // `OP_1 <redeem script>` is push-only (OP_1 <= OP_PUSHNUM_16), so the last push is the
+    // redeem script.
+    let script_sig = ScriptBuf::from_bytes(vec![0x51, 0x03, 0xaa, 0xbb, 0xcc]);
+    let redeem_script = script_sig.redeem_script().expect("should have redeem script");
+    assert_eq!(redeem_script.as_bytes(), &[0xaa, 0xbb, 0xcc]);
+
+    // A non-push opcode anywhere in the script means there is no redeem script.
+    let script_sig = ScriptBuf::from_bytes(vec![0x61, 0x03, 0xaa, 0xbb, 0xcc]);
+    assert!(script_sig.redeem_script().is_none());
+}
