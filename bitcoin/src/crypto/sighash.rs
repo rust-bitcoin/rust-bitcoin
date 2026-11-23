@@ -156,6 +156,9 @@ impl TapSighash {
 }
 
 /// Efficiently calculates signature hash message for legacy, SegWit and Taproot inputs.
+///
+/// This type may contain interior mutability, such as an [`UnsafeCell`](core::cell::UnsafeCell),
+/// in a future version. Don't rely on it having none, for example by using it in a `const`.
 #[derive(Debug, Clone)]
 pub struct SighashCache<T: Borrow<Transaction>> {
     /// Access to transaction required for transaction introspection. Moreover, type
@@ -171,6 +174,9 @@ pub struct SighashCache<T: Borrow<Transaction>> {
 
     /// Cache for Taproot v1 inputs.
     taproot_cache: Option<TaprootCache>,
+
+    /// Makes `SighashCache` `!Freeze` so adding a real cache cell later is not a breaking change.
+    _phantom_cell: PhantomCell,
 }
 
 /// Common values cached between SegWit and Taproot inputs.
@@ -197,6 +203,16 @@ struct SegwitCache {
 struct TaprootCache {
     amounts: sha256::Hash,
     script_pubkeys: sha256::Hash,
+}
+
+/// Zero-sized marker that makes any type containing it `!Freeze` while keeping it `Send` and
+/// `Sync`. Uses `[AtomicBool; 0]` rather than `UnsafeCell<()>` because `UnsafeCell` is not
+/// `Sync`, and restoring that would need an `unsafe impl`.
+#[derive(Debug, Default)]
+struct PhantomCell([core::sync::atomic::AtomicBool; 0]);
+
+impl Clone for PhantomCell {
+    fn clone(&self) -> Self { Self([]) }
 }
 
 /// Contains outputs of previous transactions. In the case [`TapSighashType`] variant is
@@ -347,7 +363,13 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// sighashes to be valid, no fields in the transaction may change except for script_sig and
     /// witness.
     pub fn new(tx: R) -> Self {
-        Self { tx, common_cache: None, taproot_cache: None, segwit_cache: None }
+        Self {
+            tx,
+            common_cache: None,
+            taproot_cache: None,
+            segwit_cache: None,
+            _phantom_cell: PhantomCell::default(),
+        }
     }
 
     /// Returns the reference to the cached transaction.
@@ -1448,6 +1470,15 @@ mod tests {
         let mut encoded = Vec::new();
         legacy_encode_script_code_to(script_code, &mut encoded).expect("vecs don't error");
         assert_eq!(encoded, [0x03, 0x4c, 0x01, 0xab]);
+    }
+
+    #[test]
+    fn sighash_cache_auto_traits() {
+        use core::panic::{RefUnwindSafe, UnwindSafe};
+        fn assert_auto<T: Send + Sync + UnwindSafe + RefUnwindSafe>() {}
+        assert_auto::<SighashCache<&Transaction>>();
+        assert_auto::<SighashCache<Transaction>>();
+        assert_eq!(core::mem::size_of::<PhantomCell>(), 0);
     }
 
     #[test]
