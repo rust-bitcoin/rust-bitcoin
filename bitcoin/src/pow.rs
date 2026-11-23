@@ -437,9 +437,13 @@ impl CompactTarget {
         current: Header,
         params: impl AsRef<Params>,
     ) -> CompactTarget {
-        let timespan = current.time - last_epoch_boundary.time;
+        let timespan = i64::from(current.time) - i64::from(last_epoch_boundary.time);
+        // Core calculates timestamps as int64_t and clamps negatives to the minimum.
+        // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
+        let min_timespan = params.as_ref().pow_target_timespan >> 2;
+        let timespan = u64::try_from(timespan).unwrap_or(min_timespan);
         let bits = current.bits;
-        CompactTarget::from_next_work_required(bits, timespan.into(), params)
+        CompactTarget::from_next_work_required(bits, timespan, params)
     }
 
     /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
