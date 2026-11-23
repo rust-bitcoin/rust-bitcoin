@@ -1870,6 +1870,34 @@ mod tests {
     }
 
     #[test]
+    fn compact_target_from_header_difficulty_adjustment_with_negative_timespan() {
+        use hashes::Hash;
+
+        use crate::block::Version;
+        use crate::TxMerkleNode;
+
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(503403001);
+        let epoch_start = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::all_zeros(),
+            merkle_root: TxMerkleNode::all_zeros(),
+            time: 1600000000,
+            bits: starting_bits,
+            nonce: 0,
+        };
+        let current = Header {
+            time: 1599999999, // One second before the epoch start.
+            ..epoch_start
+        };
+
+        let got = CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+        let want =
+            Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
+        assert_eq!(got, want);
+    }
+
+    #[test]
     fn compact_target_from_downwards_difficulty_adjustment_using_headers() {
         use hashes::Hash;
 
