@@ -433,9 +433,13 @@ impl CompactTarget {
         current: Header,
         params: impl AsRef<Params>,
     ) -> CompactTarget {
-        let timespan = current.time - last_epoch_boundary.time;
+        let timespan = i64::from(current.time) - i64::from(last_epoch_boundary.time);
+        // Core calculates timestamps as int64_t and clamps negatives to the minimum.
+        // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
+        let min_timespan = params.as_ref().pow_target_timespan >> 2;
+        let timespan = u64::try_from(timespan).unwrap_or(min_timespan);
         let bits = current.bits;
-        CompactTarget::from_next_work_required(bits, timespan.into(), params)
+        CompactTarget::from_next_work_required(bits, timespan, params)
     }
 
     /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
@@ -1797,6 +1801,34 @@ mod tests {
             CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
         let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
         assert_eq!(adjustment, adjustment_bits);
+    }
+
+    #[test]
+    fn compact_target_from_header_difficulty_adjustment_with_negative_timespan() {
+        use hashes::Hash;
+
+        use crate::block::Version;
+        use crate::TxMerkleNode;
+
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(503403001);
+        let epoch_start = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::all_zeros(),
+            merkle_root: TxMerkleNode::all_zeros(),
+            time: 1600000000,
+            bits: starting_bits,
+            nonce: 0,
+        };
+        let current = Header {
+            time: 1599999999, // One second before the epoch start.
+            ..epoch_start
+        };
+
+        let got = CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+        let want =
+            Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
+        assert_eq!(got, want);
     }
 
     #[test]
