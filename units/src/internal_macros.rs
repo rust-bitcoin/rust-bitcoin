@@ -20,7 +20,7 @@
 /// You must specify `$other_ty` and you may not use `Self`. So e.g. you need
 /// to write `impl ops::Add<Amount> for Amount { ... }` when calling this macro.
 ///
-/// Your where clause must include extra parenthesis, like `where (T: Copy)`.
+/// Your where clause must include extra parentheses, like `where (T: Copy)`.
 macro_rules! impl_op_for_references {
     ($(
         impl$(<$gen:ident>)? $($op_trait:ident)::+<$other_ty:ty> for $ty:ty
@@ -80,7 +80,7 @@ macro_rules! impl_op_for_references {
 }
 pub(crate) use impl_op_for_references;
 
-/// Implement `ops::AddAssign` for `$ty` and `&$ty`.
+/// Implements `ops::AddAssign` for `$ty` and `&$ty`.
 macro_rules! impl_add_assign {
     ($ty:ident) => {
         impl core::ops::AddAssign<$ty> for $ty {
@@ -98,7 +98,7 @@ macro_rules! impl_add_assign {
 }
 pub(crate) use impl_add_assign;
 
-/// Implement `ops::SubAssign` for `$ty` and `&$ty`.
+/// Implements `ops::SubAssign` for `$ty` and `&$ty`.
 macro_rules! impl_sub_assign {
     ($ty:ident) => {
         impl core::ops::SubAssign<$ty> for $ty {
@@ -116,7 +116,7 @@ macro_rules! impl_sub_assign {
 }
 pub(crate) use impl_sub_assign;
 
-/// Implement `ops::MulAssign` for `$ty` multiplied by `$rhs` and `&$rhs`.
+/// Implements `ops::MulAssign` for `$ty` multiplied by `$rhs` and `&$rhs`.
 macro_rules! impl_mul_assign {
     ($ty:ty, $rhs:ident) => {
         impl core::ops::MulAssign<$rhs> for $ty {
@@ -132,7 +132,7 @@ macro_rules! impl_mul_assign {
 }
 pub(crate) use impl_mul_assign;
 
-/// Implement `ops::DivAssign` for `$ty` divided by `$rhs` and `&$rhs`.
+/// Implements `ops::DivAssign` for `$ty` divided by `$rhs` and `&$rhs`.
 macro_rules! impl_div_assign {
     ($ty:ty, $rhs:ident) => {
         impl core::ops::DivAssign<$rhs> for $ty {
@@ -148,7 +148,7 @@ macro_rules! impl_div_assign {
 }
 pub(crate) use impl_div_assign;
 
-/// Implement `ops::RemAssign` for `$ty` divided by `$rhs` and `&$rhs`.
+/// Implements `ops::RemAssign` for `$ty` divided by `$rhs` and `&$rhs`.
 macro_rules! impl_rem_assign {
     ($ty:ty, $rhs:ident) => {
         impl core::ops::RemAssign<$rhs> for $ty {

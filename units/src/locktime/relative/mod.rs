@@ -216,7 +216,7 @@ impl LockTime {
     ///
     /// # Errors
     ///
-    /// If `chain_tip_height` is less than `utxo_mined_at_height`  for block-based lock, or
+    /// If `chain_tip_height` is less than `utxo_mined_at_height` for block-based lock, or
     /// `chain_tip_mtp` is less than `utxo_prev_block_mtp` for time-based lock.
     #[inline]
     pub fn is_satisfied_by(

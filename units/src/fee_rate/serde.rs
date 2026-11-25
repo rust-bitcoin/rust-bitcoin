@@ -24,7 +24,7 @@
 //! ```
 
 pub mod as_sat_per_kwu_floor {
-    //! Serialize and deserialize [`FeeRate`] denominated in satoshis per 1000 weight units.
+    //! Serializes and deserializes [`FeeRate`] denominated in satoshis per 1000 weight units.
     //!
     //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu_floor")]`.
 
@@ -44,13 +44,13 @@ pub mod as_sat_per_kwu_floor {
         let sat_per_kwu = u64::deserialize(d)?;
         FeeRate::from_sat_per_kwu(sat_per_kwu).into_result().map_err(|_| {
             let unexpected = serde::de::Unexpected::Unsigned(sat_per_kwu);
-            let expected = &"non-negative integer up to 4611686018427387";
+            let expected = &"a non-negative integer up to 4611686018427387";
             D::Error::invalid_value(unexpected, expected)
         })
     }
 
     pub mod opt {
-        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per 1000 weight units.
+        //! Serializes and deserializes [`Option<FeeRate>`] denominated in satoshis per 1000 weight units.
         //!
         //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::opt")]`.
 
@@ -106,7 +106,7 @@ pub mod as_sat_per_kwu_floor {
 
     #[cfg(feature = "alloc")]
     pub mod vec {
-        //! Serialize and deserialize [`Vec<FeeRate>`] denominated in satoshis per 1000 weight units.
+        //! Serializes and deserializes [`Vec<FeeRate>`] denominated in satoshis per 1000 weight units.
         //!
         //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::vec")]`.
 
@@ -162,7 +162,7 @@ pub mod as_sat_per_kwu_floor {
 }
 
 pub mod as_sat_per_vb_floor {
-    //! Serialize and deserialize [`FeeRate`] denominated in satoshis per virtual byte.
+    //! Serializes and deserializes [`FeeRate`] denominated in satoshis per virtual byte.
     //!
     //! When serializing use floor division to convert per kwu to per virtual byte.
     //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_floor")]`.
@@ -188,7 +188,7 @@ pub mod as_sat_per_vb_floor {
     }
 
     pub mod opt {
-        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per virtual byte.
+        //! Serializes and deserializes [`Option<FeeRate>`] denominated in satoshis per virtual byte.
         //!
         //! When serializing use floor division to convert per kwu to per virtual byte.
         //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_floor::opt")]`.
@@ -245,7 +245,7 @@ pub mod as_sat_per_vb_floor {
 
     #[cfg(feature = "alloc")]
     pub mod vec {
-        //! Serialize and deserialize [`Vec<FeeRate>`] denominated in satoshis per virtual byte.
+        //! Serializes and deserializes [`Vec<FeeRate>`] denominated in satoshis per virtual byte.
         //!
         //! When serializing use floor division to convert per kwu to per virtual byte.
         //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_floor::vec")]`.
@@ -302,7 +302,7 @@ pub mod as_sat_per_vb_floor {
 }
 
 pub mod as_sat_per_vb_ceil {
-    //! Serialize and deserialize [`FeeRate`] denominated in satoshis per virtual byte.
+    //! Serializes and deserializes [`FeeRate`] denominated in satoshis per virtual byte.
     //!
     //! When serializing use ceil division to convert per kwu to per virtual byte.
     //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]`.
@@ -328,7 +328,7 @@ pub mod as_sat_per_vb_ceil {
     }
 
     pub mod opt {
-        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per virtual byte.
+        //! Serializes and deserializes [`Option<FeeRate>`] denominated in satoshis per virtual byte.
         //!
         //! When serializing use ceil division to convert per kwu to per virtual byte.
         //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_ceil::opt")]`.
@@ -385,7 +385,7 @@ pub mod as_sat_per_vb_ceil {
 
     #[cfg(feature = "alloc")]
     pub mod vec {
-        //! Serialize and deserialize [`Vec<FeeRate>`] denominated in satoshis per virtual byte.
+        //! Serializes and deserializes [`Vec<FeeRate>`] denominated in satoshis per virtual byte.
         //!
         //! When serializing use ceil division to convert per kwu to per virtual byte.
         //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_ceil::vec")]`.
