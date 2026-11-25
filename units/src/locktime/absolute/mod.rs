@@ -373,11 +373,13 @@ impl LockTime {
     /// Returns the inner `u32` value. This is the value used when creating this [`LockTime`]
     /// i.e., `n OP_CHECKLOCKTIMEVERIFY` or `nLockTime`.
     ///
-    /// # Warning
+    /// <div class="warning">
     ///
     /// Do not compare values return by this method. The whole point of the [`LockTime`] type is to
     /// assist in doing correct comparisons. Either use [`is_satisfied_by`],
     /// [`is_satisfied_by_time`], or use the pattern below:
+    ///
+    /// </div>
     ///
     /// [`is_satisfied_by`]: Self::is_satisfied_by
     /// [`is_satisfied_by_time`]: Self::is_satisfied_by_time

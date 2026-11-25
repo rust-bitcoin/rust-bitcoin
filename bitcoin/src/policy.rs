@@ -5,9 +5,12 @@
 //! This module exposes some constants and functions used in the reference
 //! implementation and which, as a consequence, define some network rules.
 //!
-//! # *Warning*
+//! <div class="warning">
+//!
 //! While the constants present in this module are very unlikely to change, they do not define
 //! Bitcoin. As such they must not be relied upon as if they were consensus rules.
+//!
+//! </div>
 //!
 //! These values were taken from bitcoind v0.21.1 (194b9b8792d9b0798fdb570b79fa51f1d1f5ebaf).
 

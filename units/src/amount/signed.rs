@@ -165,9 +165,13 @@ impl SignedAmount {
     ///
     /// If the amount is too big (positive or negative) or too precise.
     ///
-    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// <div class="warning">
+    ///
+    /// Due to precision loss, using floats for financial operations is generally not
     /// recommended. It can be avoided by using an integer number of satoshis or string-encoded
     /// btc in APIs that require it.
+    ///
+    /// </div>
     ///
     /// # Examples
     ///
@@ -244,9 +248,13 @@ impl SignedAmount {
 
     /// Expresses this [`SignedAmount`] as a floating-point value in the given [`Denomination`].
     ///
-    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// <div class="warning">
+    ///
+    /// Due to precision loss, using floats for financial operations is generally not
     /// recommended. It can be avoided by using an integer number of satoshis or string-encoded
     /// btc in APIs that require it.
+    ///
+    /// </div>
     ///
     /// # Examples
     ///
@@ -297,9 +305,13 @@ impl SignedAmount {
 
     /// Expresses this [`SignedAmount`] as a floating-point value in bitcoin.
     ///
-    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// <div class="warning">
+    ///
+    /// Due to precision loss, using floats for financial operations is generally not
     /// recommended. It can be avoided by using an integer number of satoshis or string-encoded
     /// btc in APIs that require it.
+    ///
+    /// </div>
     ///
     /// # Examples
     ///
@@ -315,9 +327,13 @@ impl SignedAmount {
 
     /// Constructs a [`SignedAmount`] from floating-point notation in the given [`Denomination`].
     ///
-    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// <div class="warning">
+    ///
+    /// Due to precision loss, using floats for financial operations is generally not
     /// recommended. It can be avoided by using an integer number of satoshis or string-encoded btc
     /// in APIs that require it.
+    ///
+    /// </div>
     ///
     /// # Errors
     ///

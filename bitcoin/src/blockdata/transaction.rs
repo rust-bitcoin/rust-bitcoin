@@ -294,13 +294,15 @@ pub trait TransactionExt: sealed::Sealed {
 
     /// Returns `true` if the transaction itself opted in to be BIP-0125-replaceable (RBF).
     ///
-    /// # Warning
+    /// <div class="warning">
     ///
     /// **Incorrectly relying on RBF may lead to monetary loss!**
     ///
     /// This **does not** cover the case where a transaction becomes replaceable due to ancestors
     /// being RBF. Please note that transactions **may be replaced** even if they **do not** include
     /// the RBF signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
+    ///
+    /// </div>
     fn is_explicitly_rbf(&self) -> bool;
 
     /// Returns `true` if this [`Transaction`]'s absolute timelock is satisfied at `height`/`time`.
@@ -1004,13 +1006,21 @@ impl Coinbase {
 
     /// Returns a reference to the underlying transaction.
     ///
-    /// Warning: The coinbase input contains dummy prevouts that should not be treated as real prevouts.
+    /// <div class="warning">
+    ///
+    /// The coinbase input contains dummy prevouts that should not be treated as real prevouts.
+    ///
+    /// </div>
     #[doc(alias = "as_inner")]
     pub fn as_transaction(&self) -> &Transaction { &self.0 }
 
     /// Returns the underlying transaction.
     ///
-    /// Warning: The coinbase input contains dummy prevouts that should not be treated as real prevouts.
+    /// <div class="warning">
+    ///
+    /// The coinbase input contains dummy prevouts that should not be treated as real prevouts.
+    ///
+    /// </div>
     #[doc(alias = "into_inner")]
     pub fn into_transaction(self) -> Transaction { self.0 }
 
