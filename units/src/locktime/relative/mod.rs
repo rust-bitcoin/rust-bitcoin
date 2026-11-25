@@ -102,10 +102,12 @@ impl LockTime {
     /// Returns the `u32` value used to encode this locktime in an `nSequence` field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     ///
-    /// # Warning
+    /// <div class="warning">
     ///
     /// Locktimes are not ordered by the natural ordering on `u32`. If you want to
     /// compare locktimes, use [`Self::is_implied_by`] or similar methods.
+    ///
+    /// </div>
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
         match self {

@@ -745,10 +745,12 @@ impl Address {
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] from a script hash.
     ///
-    /// # Warning
+    /// <div class="warning">
     ///
     /// The `hash` pre-image (redeem script) must not exceed 520 bytes in length
     /// otherwise outputs created from the returned address will be un-spendable.
+    ///
+    /// </div>
     pub fn p2sh_from_hash(hash: ScriptHash, params: impl Into<AddressParams>) -> Self {
         let network = params.into().network_kind;
         Self::from_inner(AddressInner::P2sh { hash, network })

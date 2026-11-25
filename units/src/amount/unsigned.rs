@@ -148,9 +148,13 @@ impl Amount {
 
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
     ///
-    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// <div class="warning">
+    ///
+    /// Due to precision loss, using floats for financial operations is generally not
     /// recommended. It can be avoided by using an integer number of satoshis or string-encoded
     /// btc in APIs that require it.
+    ///
+    /// </div>
     ///
     /// # Errors
     ///
@@ -236,9 +240,13 @@ impl Amount {
 
     /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
     ///
-    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// <div class="warning">
+    ///
+    /// Due to precision loss, using floats for financial operations is generally not
     /// recommended. It can be avoided by using an integer number of satoshis or string-encoded
     /// btc in APIs that require it.
+    ///
+    /// </div>
     ///
     /// # Examples
     ///
@@ -257,9 +265,13 @@ impl Amount {
 
     /// Expresses this [`Amount`] as a floating-point value in bitcoin.
     ///
-    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// <div class="warning">
+    ///
+    /// Due to precision loss, using floats for financial operations is generally not
     /// recommended. It can be avoided by using an integer number of satoshis or string-encoded
     /// btc in APIs that require it.
+    ///
+    /// </div>
     ///
     /// # Examples
     ///
@@ -275,9 +287,13 @@ impl Amount {
 
     /// Constructs an [`Amount`] from floating-point notation in the given [`Denomination`].
     ///
-    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// <div class="warning">
+    ///
+    /// Due to precision loss, using floats for financial operations is generally not
     /// recommended. It can be avoided by using an integer number of satoshis or string-encoded btc
     /// in APIs that require it.
+    ///
+    /// </div>
     ///
     /// # Errors
     ///

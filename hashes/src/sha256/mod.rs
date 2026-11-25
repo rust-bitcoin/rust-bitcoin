@@ -68,7 +68,11 @@ impl Hash {
 
     /// Computes hash from `bytes` in `const` context.
     ///
-    /// Warning: this function is inefficient. It should be only used in `const` context.
+    /// <div class="warning">
+    ///
+    /// This function is inefficient. It should be only used in `const` context.
+    ///
+    /// </div>
     pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
         Self(Midstate::SHA256_IV.update_midstate_unoptimized(bytes, true).bytes)
     }
@@ -250,8 +254,12 @@ impl Midstate {
 
     /// Updates a [`Midstate`] by hashing exactly 64 bytes (one SHA256 block).
     ///
-    /// Warning: this function is inefficient. It should be only used in `const` context. In
+    /// <div class="warning">
+    ///
+    /// This function is inefficient. It should be only used in `const` context. In
     /// other contexts, use [`Self::update_64`].
+    ///
+    /// </div>
     #[must_use]
     pub const fn update_64_unoptimized(self, bytes: &[u8; 64]) -> Self {
         self.update_midstate_unoptimized(bytes, false)
@@ -259,8 +267,12 @@ impl Midstate {
 
     /// Updates a [`Midstate`] by hashing exactly 64 bytes (one SHA256 block), split into halves.
     ///
-    /// Warning: this function is inefficient. It should be only used in `const` context. In
+    /// <div class="warning">
+    ///
+    /// This function is inefficient. It should be only used in `const` context. In
     /// other contexts, concatenate your arrays and then use [`Self::update_64`].
+    ///
+    /// </div>
     #[must_use]
     pub const fn update_2x32_unoptimized(self, left: &[u8; 32], right: &[u8; 32]) -> Self {
         // This method basically only exists because it's extremely hard to put two arrays
@@ -281,7 +293,11 @@ impl Midstate {
 
     /// Constructs a new midstate for tagged hashes.
     ///
-    /// Warning: this function is inefficient. It should be only used in `const` context.
+    /// <div class="warning">
+    ///
+    /// This function is inefficient. It should be only used in `const` context.
+    ///
+    /// </div>
     ///
     /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in [`sha256t`]. It's
     /// provided for use with [`sha256t`].

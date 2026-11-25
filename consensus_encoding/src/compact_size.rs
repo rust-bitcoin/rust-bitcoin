@@ -194,12 +194,14 @@ impl Decoder for CompactSizeDecoder {
 /// meaningful and there is no associated allocation whose size would be controlled by the decoded
 /// value.
 ///
-/// # Denial-of-service warning
+/// <div class="warning">
 ///
 /// Do not use this decoder for length prefixes. If the decoded value is used to size an allocation,
 /// for example as the length of a `Vec`, a malicious peer can send a compact size value of up to
 /// 2^64-1 and cause an out-of-memory condition. [`CompactSizeDecoder`] prevents this by enforcing a
 /// configurable upper bound before returning the value.
+///
+/// </div>
 ///
 /// For more information about decoders see the documentation of the [`Decoder`] trait.
 #[derive(Debug, Clone)]

@@ -355,6 +355,20 @@ Generally we prefer to have non-panicking APIs but it is impractical in some cas
 sure, feel free to ask. If we determine panicking is more practical it must be documented. Internal
 panics that could theoretically occur because of bugs in our code must not be documented.
 
+Follow the rustdoc recommendation for warnings and wrap them in a
+[warning block](https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html#adding-a-warning-block).
+
+```rust
+/// <div class="warning">
+///
+/// This function is inefficient.
+///
+/// </div>
+pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
+    ...
+}
+```
+
 Example code within the rustdocs should compile and lint with `just lint` without any errors or
 warnings.
 

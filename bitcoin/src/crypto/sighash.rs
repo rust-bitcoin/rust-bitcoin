@@ -693,12 +693,14 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
     /// signature in a transaction.
     ///
-    /// # Warning
+    /// <div class="warning">
     ///
     /// - The caller must prepare `script_code` as described in [`ScriptCode`].
     ///   This function removes all remaining `OP_CODESEPARATOR` instructions
     ///   when encoding `script_code`.
     /// - Does NOT handle the sighash single bug (see "Return type" section)
+    ///
+    /// </div>
     ///
     /// # Returns
     ///
