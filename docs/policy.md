@@ -144,10 +144,11 @@ pub use units::foo::SomeError;
 
 ### Usage of re-exports
 
-As part of the attempt to mirror the `units` and `primitives`, and `bitcoin` APIs, in this codebase,
-policy is to use types from the highest crate available i.e `use crate::Foo` not `units::Foo`.
+In rust-bitcoin, prefer importing a type from the lowest crate we already depend on that exports
+it, e.g. `use units::Foo` over `use crate::Foo`. Existing imports need not be converted.
 
-This is enforced by CI.
+In projects using rust-bitcoin, import through the re-exports of the crate you depend on, e.g.
+`use bitcoin::Foo`.
 
 ## Consistent Exports (P-CONSISTENT-EXPORTS)
 

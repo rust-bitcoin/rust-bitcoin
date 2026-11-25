@@ -294,25 +294,6 @@ jobs:
         with:
           args: "--only-codegen"
 
-  Policy:
-    name: Enforce repo policy - stable toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
-        with:
-          toolchain: stable
-      - name: "Run policy script"
-        run: ./contrib/check-for-policy-violations.sh
-
   Re-exports:
     name: Check re-exports - stable toolchain
     runs-on: ubuntu-24.04
