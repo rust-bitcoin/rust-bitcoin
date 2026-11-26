@@ -65,13 +65,15 @@ use core::convert::Infallible;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
 use hashes::{hash160, sha256};
 use io::{Read, Write};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::internal_macros::impl_asref_push_bytes;
+use crate::internal_macros::{impl_asref_push_bytes, impl_compat_hash};
 use crate::prelude::*;
 use crate::OutPoint;
 
@@ -92,6 +94,8 @@ hashes::hash_newtype! {
     pub struct WScriptHash(sha256::Hash);
 }
 impl_asref_push_bytes!(ScriptHash, WScriptHash);
+impl_compat_hash!(ScriptHash, stable::script::ScriptHash);
+impl_compat_hash!(WScriptHash, stable::script::WScriptHash);
 
 impl From<ScriptBuf> for ScriptHash {
     fn from(script: ScriptBuf) -> ScriptHash { script.script_hash() }

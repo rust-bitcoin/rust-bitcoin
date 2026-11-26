@@ -10,6 +10,9 @@
 
 use core::fmt;
 
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
+
 use crate::internal_macros::debug_from_display;
 
 #[cfg(feature = "serde")]
@@ -433,6 +436,16 @@ impl Opcode {
             _ => None,
         }
     }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::opcodes::Opcode {
+        stable::opcodes::Opcode::from_u8(self.to_u8())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::opcodes::Opcode) -> Self { Self::from(stable.to_u8()) }
 }
 
 impl From<u8> for Opcode {

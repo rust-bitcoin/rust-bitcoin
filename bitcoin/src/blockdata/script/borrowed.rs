@@ -5,6 +5,8 @@ use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
+#[cfg(feature = "compat")]
+use bitcoin_primitives_stable as stable;
 use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
@@ -638,6 +640,23 @@ impl Script {
         // layout).
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf(Vec::from(inner))
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    ///
+    /// Stable scripts are tagged with the role they play e.g., [`stable::ScriptPubKey`]. The
+    /// pre-1.0 type has no tag so the caller selects `T`, typically by way of type inference.
+    #[cfg(feature = "compat")]
+    pub fn to_stable<T>(&self) -> &stable::script::Script<T> {
+        stable::script::Script::from_bytes(self.as_bytes())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    ///
+    /// The pre-1.0 type has no tag so `T` is discarded.
+    #[cfg(feature = "compat")]
+    pub fn from_stable<T>(stable: &stable::script::Script<T>) -> &Self {
+        Self::from_bytes(stable.as_bytes())
     }
 }
 
