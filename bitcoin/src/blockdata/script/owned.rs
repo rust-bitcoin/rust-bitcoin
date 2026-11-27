@@ -64,20 +64,21 @@ internal_macros::define_extension_trait! {
             }
         }
 
-        /// Add a single instruction to the script.
+        /// Adds a single instruction to the script.
         ///
-        /// # Panics
-        ///
-        /// The method panics if the instruction is a data push with length greater or equal to
-        /// 0x100000000.
+        /// Data pushes are added as-is. Unlike [`ScriptBuf::push_slice`], a single-byte push is
+        /// not replaced by a numeric opcode such as `OP_1`.
         fn push_instruction(&mut self, instruction: Instruction<'_>) {
             match instruction {
                 Instruction::Op(opcode) => self.push_opcode(opcode),
-                Instruction::PushBytes(bytes) => self.push_slice(bytes),
+                Instruction::PushBytes(bytes) => self.push_slice_non_minimal(bytes),
             }
         }
 
-        /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
+        /// Adds a single instruction to the script without reserving capacity first.
+        ///
+        /// Produces the same bytes as [`Self::push_instruction`]. Useful when capacity for
+        /// several instructions has already been reserved.
         fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
             match instruction {
                 Instruction::Op(opcode) => self.push_opcode(opcode),
