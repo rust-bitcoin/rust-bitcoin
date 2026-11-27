@@ -28,6 +28,8 @@
 //!   achieve the same without this feature but it could happen the implementations diverge one
 //!   day.
 //! * `ordered` - (dependency), adds implementations of `ArbitraryOrdOrd` to some structs.
+//! * `compat` - adds a compatibility layer to convert to/from `units-1.0.0` types as well
+//!   as a `compat` module that re-exports the stable types.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 // Experimental features we need.
@@ -106,6 +108,8 @@ pub mod bip152;
 pub mod bip158;
 pub mod bip32;
 pub mod blockdata;
+#[cfg(feature = "compat")]
+pub mod compat;
 pub mod consensus;
 // Private until we either make this a crate or flatten it - still to be decided.
 pub(crate) mod crypto;
