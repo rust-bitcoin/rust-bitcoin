@@ -40,9 +40,8 @@ rustdoc-args = ["--cfg", "docsrs"]
 workspace = true
 
 [package.metadata.rbmt.api]
-enabled = true
 features = [["alloc"]]
-private = ["bitcoin_internals"]
+private = ["internals"]
 
 [package.metadata.rbmt.test]
 exact_features = [
@@ -54,6 +53,3 @@ exact_features = [
     ["alloc", "encoding", "serde"],
     ["std", "encoding", "serde"],
 ]
-
-[package.metadata.rbmt.prerelease]
-enabled = true

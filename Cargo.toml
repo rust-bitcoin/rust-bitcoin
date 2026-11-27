@@ -4,7 +4,7 @@ exclude = ["benches"]
 resolver = "2"
 
 [workspace.metadata]
-rbmt.version = "0.5.5"
+rbmt.version = "0.5.6"
 rbmt.lock.lockfiles = ["minimal", "recent"]
 rbmt.toolchains.nightly = "nightly-2026-11-07"
 rbmt.toolchains.stable = "1.100.0"

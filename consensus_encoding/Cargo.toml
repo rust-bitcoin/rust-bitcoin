@@ -43,9 +43,8 @@ required-features = ["alloc"]
 workspace = true
 
 [package.metadata.rbmt.api]
-enabled = true
 features = [["alloc"]]
-private = ["bitcoin_internals"]
+private = ["internals"]
 
 [package.metadata.rbmt.test]
 examples = ["encoder:alloc"]

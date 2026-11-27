@@ -103,11 +103,18 @@ jobs:
           persist-credentials: false
           fetch-depth: 0 # History required for API diff.
       - uses: ./.github/actions/setup-rbmt
+      - name: "Check private dependency leak"
+        run: cargo rbmt api
       - name: "Run API check"
         id: api_check
+        env:
+          BASELINE: ${{ github.event_name == 'push' && github.event.before || format('origin/{0}', github.base_ref) }}
         run: |
           set +e
-          cargo rbmt api --baseline "$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-$GITHUB_REF_NAME}")"
+          cargo rbmt api \
+            -p bitcoin-consensus-encoding -p bitcoin_hashes -p bitcoin-internals \
+            -p bitcoin-network-kind -p bitcoin-primitives -p bitcoin-units \
+            --baseline "$BASELINE"
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
       - name: "Save API diff state"
         if: github.event_name == 'pull_request'

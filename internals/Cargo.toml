@@ -39,5 +39,4 @@ rustdoc-args = ["--cfg", "docsrs"]
 workspace = true
 
 [package.metadata.rbmt.api]
-enabled = true
 features = [["alloc"]]
