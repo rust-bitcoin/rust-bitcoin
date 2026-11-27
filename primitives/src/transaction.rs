@@ -242,6 +242,26 @@ impl Transaction {
         Wtxid::from_byte_array(hash.to_byte_array())
     }
 
+    /// Returns an encoder for the transaction serialized without SegWit data.
+    ///
+    /// This is the preimage of the [`Txid`], i.e. the data hashed by
+    /// [`Transaction::compute_txid()`]. It excludes the marker, flag bytes, and witness fields.
+    /// Use it to compute the [`Txid`] with a different SHA-256 implementation.
+    ///
+    /// Unlike the [`Encode`](encoding::Encode) implementation, this never uses the SegWit
+    /// serialization, including for zero-input transactions. The output may not decode back into
+    /// the same transaction.
+    #[doc(alias = "txid_preimage")]
+    #[inline]
+    pub fn non_witness_encoder(&self) -> TransactionEncoder<'_> {
+        let version = self.version.encoder();
+        let inputs = PrefixedSliceEncoder::new(self.inputs.as_ref());
+        let outputs = PrefixedSliceEncoder::new(self.outputs.as_ref());
+        let lock_time = self.lock_time.encoder();
+
+        TransactionEncoder::new(Encoder6::new(version, None, inputs, outputs, None, lock_time))
+    }
+
     /// Returns whether or not to serialize transaction as specified in BIP-0144.
     // This is duplicated in `bitcoin`, if you change it please do so in both places.
     #[inline]
@@ -460,25 +480,25 @@ impl encoding::Encode for Transaction {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
+        if !self.uses_segwit_serialization() {
+            return self.non_witness_encoder();
+        }
+
         let version = self.version.encoder();
+        let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
         let inputs = PrefixedSliceEncoder::new(self.inputs.as_ref());
         let outputs = PrefixedSliceEncoder::new(self.outputs.as_ref());
+        let witnesses = WitnessesEncoder::from_inputs(self.inputs.as_slice());
         let lock_time = self.lock_time.encoder();
 
-        if self.uses_segwit_serialization() {
-            let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
-            let witnesses = WitnessesEncoder::from_inputs(self.inputs.as_slice());
-            TransactionEncoder::new(Encoder6::new(
-                version,
-                Some(segwit),
-                inputs,
-                outputs,
-                Some(witnesses),
-                lock_time,
-            ))
-        } else {
-            TransactionEncoder::new(Encoder6::new(version, None, inputs, outputs, None, lock_time))
-        }
+        TransactionEncoder::new(Encoder6::new(
+            version,
+            Some(segwit),
+            inputs,
+            outputs,
+            Some(witnesses),
+            lock_time,
+        ))
     }
 }
 
@@ -2786,6 +2806,34 @@ mod tests {
 
         assert_eq!(Wtxid::from(&tx), tx.compute_wtxid());
         assert_eq!(Wtxid::from(tx.clone()), tx.compute_wtxid());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn non_witness_encoder_is_txid_preimage() {
+        fn txid_from_non_witness_encoder(tx: &Transaction) -> Txid {
+            let mut engine = sha256d::Hash::engine();
+            hashes::drain_to_engine(&mut tx.non_witness_encoder(), &mut engine);
+            Txid::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
+        }
+
+        let input = TxIn {
+            previous_output: OutPoint { txid: Txid::from_byte_array([0x42; 32]), vout: 0 },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::from_slice(&[[0x01; 72]]),
+        };
+        let segwit = Transaction {
+            version: Version::TWO,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![input],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+        assert_ne!(segwit.compute_txid().to_byte_array(), segwit.compute_wtxid().to_byte_array());
+        assert_eq!(txid_from_non_witness_encoder(&segwit), segwit.compute_txid());
+
+        let zero_inputs = Transaction { inputs: vec![], ..segwit };
+        assert_eq!(txid_from_non_witness_encoder(&zero_inputs), zero_inputs.compute_txid());
     }
 
     #[test]
