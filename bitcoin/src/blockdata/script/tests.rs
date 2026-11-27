@@ -894,6 +894,21 @@ fn script_extend() {
 }
 
 #[test]
+fn script_extend_single_byte_push() {
+    let push = Instruction::PushBytes([0x01].as_ref());
+
+    let mut script = ScriptBuf::new();
+    script.push_instruction(push);
+    assert_eq!(script.as_bytes(), [0x01, 0x01]);
+
+    // Short iterators go through `push_instruction_no_opt`, longer ones through `push_instruction`.
+    for len in [1, 7] {
+        let script = core::iter::repeat(push).take(len).collect::<ScriptBuf>();
+        assert_eq!(script.as_bytes(), [0x01, 0x01].repeat(len));
+    }
+}
+
+#[test]
 fn read_scriptbool_zero_is_false() {
     let v: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00];
     assert!(!read_scriptbool(&v));

@@ -1011,7 +1011,7 @@ impl Address {
             || (*segwit_redeem_hash(pubkey_hash).as_byte_array() == *payload)
     }
 
-    /// Returns `true` if the supplied xonly public key can be used to derive the address.
+    /// Returns `true` if the supplied x-only public key can be used to derive the address.
     ///
     /// This will only work for Taproot addresses. The Public Key is
     /// assumed to have already been tweaked.

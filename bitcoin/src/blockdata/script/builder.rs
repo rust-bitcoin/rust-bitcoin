@@ -97,7 +97,7 @@ crate::internal_macros::define_extension_trait! {
             }
         }
 
-        /// Adds instructions to push an XOnly public key onto the stack.
+        /// Adds instructions to push an x-only public key onto the stack.
         fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Self {
             self.push_slice(x_only_key.serialize().0)
         }
