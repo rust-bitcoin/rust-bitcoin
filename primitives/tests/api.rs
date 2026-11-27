@@ -400,6 +400,7 @@ fn c_debug_nonempty() {
         transaction.compute_txid();
         transaction.compute_wtxid();
         transaction.compute_ntxid();
+        transaction.non_witness_encoder();
         transaction.version;
         Witness::arbitrary(&mut u).unwrap();
         Witness::arbitrary(&mut u).unwrap().iter();
