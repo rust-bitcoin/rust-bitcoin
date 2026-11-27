@@ -15,8 +15,8 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "base58/std", "bech32/std", "crypto/std", "hashes/std", "internals/std", "network/std", "primitives/std", "serde/std", "taproot_primitives/std"]
-alloc = ["base58/alloc", "bech32/alloc", "crypto/alloc", "hashes/alloc", "internals/alloc", "network/alloc", "primitives/alloc", "serde/alloc", "taproot_primitives/alloc"]
+std = ["alloc", "base58/std", "bech32/std", "crypto/std", "hashes/std", "internals/std", "network/std", "primitives/std", "serde?/std", "taproot_primitives/std"]
+alloc = ["base58/alloc", "bech32/alloc", "crypto/alloc", "hashes/alloc", "internals/alloc", "network/alloc", "primitives/alloc", "serde?/alloc", "taproot_primitives/alloc"]
 
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.5.0", default-features = false, features = [] }
