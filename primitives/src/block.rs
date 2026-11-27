@@ -2430,6 +2430,23 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn block_decoder_rejects_segwit_flag_without_witnesses() {
+        // Found by differential fuzzing against Bitcoin Core, which rejects it with "Superfluous
+        // witness record": https://github.com/rust-bitcoin/rust-bitcoin/issues/2681
+        let block = hex!("ffffffffffffffffa9b9a9a9a9a949494949494949494949494949494949494949494949494949494949494949a9a9a929a938383838383838a9a9a9a95751a9a9a9020202020201fd02130002020202020202020000010000510202020201fd02020202020202020202020202020202020202020200009100020000000000000000510202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202000002910200020000000000000051020202020202020202020202020202020202020202020202020202020202020202020202020200809100000000000016ffffffff00003d00ffffffff2dffffffffffffff00ffffffff000100000000ffffff");
+
+        let err = encoding::decode_from_slice::<Block>(&block).unwrap_err();
+        assert!(matches!(
+            err,
+            encoding::DecodeError::Parse(BlockDecoderError(error::BlockDecoderErrorInner::Decode(
+                encoding::Decoder2Error::Second(_)
+            )))
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_weight_wu_matches_expected() {
         let tx = Transaction {
             version: crate::transaction::Version::ONE,
