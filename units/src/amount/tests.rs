@@ -235,7 +235,7 @@ fn amount_try_from_signed_amount() {
 
     let sa_negative = ssat(-123);
     let result = Amount::try_from(sa_negative);
-    assert_eq!(result, Err(OutOfRangeError { is_signed: false, is_greater_than_max: false }));
+    assert_eq!(result, Err(TooLowAmountError { is_signed: false }));
 }
 
 #[test]
@@ -443,17 +443,17 @@ fn floating_point() {
     );
     assert_eq!(
         f(18_446_744_073_709_551_617.0, D::Satoshi),
-        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(false))))
+        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big())))
     );
 
     assert_eq!(
         f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
-        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(false))))
+        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big())))
     );
 
     assert_eq!(
         sf(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
-        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true))))
+        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big())))
     );
 
     let btc = move |f| SignedAmount::from_btc(f).unwrap();
@@ -531,7 +531,7 @@ fn parsing() {
     #[cfg(feature = "alloc")]
     assert_eq!(
         p(&more_than_max, den_btc),
-        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(false))))
+        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big())))
     );
     assert_eq!(
         p("0.000000042", den_btc),
@@ -898,7 +898,7 @@ fn from_str() {
     );
     scase(
         "21000001 BTC",
-        &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)))),
+        &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big()))),
     );
     scase(
         "-2100000000000001 SAT",
@@ -906,15 +906,15 @@ fn from_str() {
     );
     scase(
         "2100000000000001 SAT",
-        &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)))),
+        &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big()))),
     );
     case(
         "21000001 BTC",
-        &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(false)))),
+        &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big()))),
     );
     case(
         "18446744073709551616 sat",
-        &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(false)))),
+        &Err(parse_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big()))),
     );
     case(
         "_1000 sat",
@@ -1050,7 +1050,7 @@ fn to_from_string_in() {
 
     assert_eq!(
         sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::Bit),
-        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true))))
+        Err(amt_err(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big())))
     );
     // Test an overflow bug in `abs()`
     assert_eq!(

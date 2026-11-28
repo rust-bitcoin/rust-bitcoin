@@ -119,58 +119,34 @@ impl std::error::Error for ParseAmountError {
     }
 }
 
-/// Error returned when a parsed amount is too big or too small.
+/// Error returned when an amount is outside the range of its type.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct OutOfRangeError {
-    pub(super) is_signed: bool,
-    pub(super) is_greater_than_max: bool,
+pub enum OutOfRangeError {
+    /// The amount is greater than the maximum of its type.
+    TooHigh(TooHighAmountError),
+    /// The amount is less than the minimum of its type.
+    TooLow(TooLowAmountError),
 }
 
 impl OutOfRangeError {
-    /// Returns the minimum value of the type that was attempted to be parsed.
-    fn lower_bound(&self) -> SignedAmount {
-        if self.is_signed() {
-            SignedAmount::MIN
-        } else {
-            SignedAmount::ZERO
-        }
-    }
-
-    /// Returns `true` if the type that was attempted to be parsed is signed (`SignedAmount`).
-    ///
-    /// This can be used to hint to users to enter non-negative values specifically.
-    pub fn is_signed(&self) -> bool { self.is_signed }
-
     /// Returns `true` if the input value was larger than the maximum allowed value.
     #[inline]
-    pub fn is_above_max(&self) -> bool { self.is_greater_than_max }
+    pub fn is_above_max(&self) -> bool { matches!(self, Self::TooHigh(_)) }
 
     /// Returns `true` if the input value was smaller than the minimum allowed value.
     #[inline]
-    pub fn is_below_min(&self) -> bool { !self.is_greater_than_max }
-
-    #[cfg(test)]
-    #[inline]
-    pub(crate) fn too_big(is_signed: bool) -> Self { Self { is_signed, is_greater_than_max: true } }
-
-    #[cfg(test)]
-    #[inline]
-    pub(crate) fn too_small() -> Self {
-        Self {
-            // implied - negative() is used for the other
-            is_signed: true,
-            is_greater_than_max: false,
-        }
-    }
+    pub fn is_below_min(&self) -> bool { matches!(self, Self::TooLow(_)) }
 
     #[inline]
-    pub(crate) fn negative() -> Self {
-        Self {
-            // implied - too_small() is used for the other
-            is_signed: false,
-            is_greater_than_max: false,
-        }
-    }
+    pub(crate) const fn too_big() -> Self { Self::TooHigh(TooHighAmountError) }
+
+    /// Below the minimum of `SignedAmount`.
+    #[inline]
+    pub(crate) const fn too_small() -> Self { Self::TooLow(TooLowAmountError { is_signed: true }) }
+
+    /// Below the minimum of `Amount`.
+    #[inline]
+    pub(crate) const fn negative() -> Self { Self::TooLow(TooLowAmountError { is_signed: false }) }
 }
 
 impl From<Infallible> for OutOfRangeError {
@@ -178,13 +154,22 @@ impl From<Infallible> for OutOfRangeError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+impl From<TooHighAmountError> for OutOfRangeError {
+    #[inline]
+    fn from(e: TooHighAmountError) -> Self { Self::TooHigh(e) }
+}
+
+impl From<TooLowAmountError> for OutOfRangeError {
+    #[inline]
+    fn from(e: TooLowAmountError) -> Self { Self::TooLow(e) }
+}
+
 impl fmt::Display for OutOfRangeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.is_greater_than_max {
-            write!(f, "the amount is greater than {}", SignedAmount::MAX)
-        } else {
-            write!(f, "the amount is less than {}", self.lower_bound())
+        match *self {
+            Self::TooHigh(ref e) => write_err!(f, "amount too high"; e),
+            Self::TooLow(ref e) => write_err!(f, "amount too low"; e),
         }
     }
 }
@@ -193,7 +178,68 @@ impl fmt::Display for OutOfRangeError {
 impl std::error::Error for OutOfRangeError {
     #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        let Self { is_signed: _, is_greater_than_max: _ } = self;
+        match *self {
+            Self::TooHigh(ref e) => Some(e),
+            Self::TooLow(ref e) => Some(e),
+        }
+    }
+}
+
+/// Error returned when an amount is greater than the maximum of its type.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct TooHighAmountError;
+
+impl From<Infallible> for TooHighAmountError {
+    #[inline]
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for TooHighAmountError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "the amount is greater than {}", SignedAmount::MAX)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TooHighAmountError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self {} = self;
+        None
+    }
+}
+
+/// Error returned when an amount is less than the minimum of its type.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TooLowAmountError {
+    pub(super) is_signed: bool,
+}
+
+impl TooLowAmountError {
+    /// Returns `true` if the type that was attempted to be parsed is signed (`SignedAmount`).
+    pub fn is_signed(&self) -> bool { self.is_signed }
+}
+
+impl From<Infallible> for TooLowAmountError {
+    #[inline]
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for TooLowAmountError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let min = if self.is_signed { SignedAmount::MIN } else { SignedAmount::ZERO };
+        write!(f, "the amount is less than {}", min)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TooLowAmountError {
+    #[inline]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { is_signed: _ } = self;
         None
     }
 }
@@ -494,7 +540,7 @@ impl AmountDecoderError {
     ///
     /// [`Amount::from_sat`]: super::Amount::from_sat
     #[inline]
-    pub(super) fn out_of_range(e: OutOfRangeError) -> Self {
+    pub(super) fn out_of_range(e: TooHighAmountError) -> Self {
         Self(AmountDecoderErrorInner::OutOfRange(e))
     }
 }
@@ -505,7 +551,7 @@ pub(super) enum AmountDecoderErrorInner {
     /// Not enough bytes given to decoder.
     UnexpectedEof(encoding::UnexpectedEofError),
     /// Decoded amount is too big.
-    OutOfRange(OutOfRangeError),
+    OutOfRange(TooHighAmountError),
 }
 
 #[cfg(feature = "encoding")]
@@ -553,8 +599,10 @@ mod tests {
     #[cfg(feature = "encoding")]
     use encoding::{Decode as _, Decoder as _};
 
+    use super::OutOfRangeError;
     #[cfg(feature = "alloc")]
     use super::{ParseAmountError, ParseAmountErrorInner, ParseErrorInner};
+    use crate::amount::SignedAmount;
     #[cfg(feature = "alloc")]
     use crate::amount::{Amount, Denomination, ParseDenominationError, ParseError};
 
@@ -599,14 +647,6 @@ mod tests {
         // Only a minus sign
         let e = Amount::from_str("- BTC").unwrap_err();
         assert_amount_err!(e, MissingDigits, "error should be MissingDigitsError");
-
-        // OutOfRangeError
-        // amount too large
-        let e = Amount::from_str("21000001 BTC").unwrap_err();
-        assert_amount_err!(e, OutOfRange, "error should be OutOfRangeError");
-        // less than 0
-        let e = Amount::from_str("-10 BTC").unwrap_err();
-        assert_amount_err!(e, OutOfRange, "error should be OutOfRangeError");
 
         // TooPreciseError - sub-satoshi precision
         let e = Amount::from_str("0.000000001 BTC").unwrap_err();
@@ -700,6 +740,20 @@ mod tests {
             #[cfg(feature = "std")]
             assert!(e.source().is_some());
         }
+    }
+
+    #[test]
+    fn out_of_range_error_kind() {
+        let e = SignedAmount::from_sat(i64::MAX).unwrap_err();
+        assert!(e.is_above_max() && !e.is_below_min());
+
+        let e = SignedAmount::from_sat(i64::MIN).unwrap_err();
+        assert!(e.is_below_min() && !e.is_above_max());
+        let OutOfRangeError::TooLow(e) = e else { panic!("error should be TooLowAmountError") };
+        assert!(e.is_signed());
+
+        let e = SignedAmount::from_sat(-1).unwrap().to_unsigned().unwrap_err();
+        assert!(!e.is_signed());
     }
 
     #[test]

@@ -17,7 +17,7 @@ fn main() {}
 /// Returns `true` if the error chain contains any of the following known cases where
 /// the new decoder is stricter than the old bitcoin 0.32 decoder:
 ///
-/// - `OutOfRangeError`: The new `AmountDecoder` validates the decoded value against
+/// - `TooHighAmountError`: The new `AmountDecoder` validates the decoded value against
 ///   `Amount::MAX`; the old decoder accepted any `u64`. Affects all types that encode
 ///   an `Amount` anywhere in their structure (`TxOut`, `Transaction`, `Block`, …).
 ///
@@ -37,7 +37,7 @@ fn is_known_decoder_divergence(err: &(dyn std::error::Error + 'static)) -> bool 
 
     let mut current: Option<&(dyn std::error::Error + 'static)> = Some(err);
     while let Some(e) = current {
-        if e.downcast_ref::<bitcoin::amount::OutOfRangeError>().is_some() {
+        if e.downcast_ref::<bitcoin::amount::TooHighAmountError>().is_some() {
             return true;
         }
         if matches!(

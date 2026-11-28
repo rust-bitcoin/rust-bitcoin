@@ -156,6 +156,8 @@ struct Errors {
     #[cfg(feature = "encoding")]
     w: pow::CompactTargetDecoderError,
     x: result::NumOpError,
+    y: amount::error::TooHighAmountError,
+    z: amount::error::TooLowAmountError,
 }
 
 /// A struct that includes all public decoder types.
@@ -262,6 +264,8 @@ fn c_good_err_display() {
     assert_display::<amount::error::ParseDenominationError>();
     assert_display::<amount::error::ParseError>();
     assert_display::<amount::error::PossiblyConfusingDenominationError>();
+    assert_display::<amount::error::TooHighAmountError>();
+    assert_display::<amount::error::TooLowAmountError>();
     assert_display::<amount::error::TooPreciseError>();
     assert_display::<amount::error::UnknownDenominationError>();
     assert_display::<block::BlockCountOverflowError>();
@@ -385,7 +389,7 @@ fn p_consistent_exports_crate_types() {
 fn p_consistent_exports_amount() {
     use bitcoin_units::amount::{
         Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
-        ParseError, SignedAmount,
+        ParseError, SignedAmount, TooHighAmountError, TooLowAmountError,
     };
     #[cfg(feature = "encoding")]
     use bitcoin_units::amount::{AmountDecoder, AmountDecoderError, AmountEncoder};
@@ -397,7 +401,8 @@ fn p_consistent_exports_amount_error() {
     use bitcoin_units::amount::error::{
         BadPositionError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
         OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
+        PossiblyConfusingDenominationError, TooHighAmountError, TooLowAmountError, TooPreciseError,
+        UnknownDenominationError,
     };
 }
 
