@@ -235,7 +235,7 @@ fn amount_try_from_signed_amount() {
 
     let sa_negative = ssat(-123);
     let result = Amount::try_from(sa_negative);
-    assert_eq!(result, Err(OutOfRangeError::negative()));
+    assert_eq!(result, Err(TooLowAmountError { is_signed: false }));
 }
 
 #[test]

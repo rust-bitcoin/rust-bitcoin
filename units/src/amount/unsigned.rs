@@ -17,13 +17,14 @@ use super::error::AmountDecoderError;
 use super::error::{ParseAmountErrorInner, ParseErrorInner};
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
-    OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
+    OutOfRangeError, ParseAmountError, ParseError, SignedAmount, TooHighAmountError,
+    TooLowAmountError,
 };
 use crate::result::{MathErrorKind, MathOp, NumOpError as E, NumOpResult};
 use crate::{parse_int, FeeRate, Weight};
 
 mod encapsulate {
-    use super::OutOfRangeError;
+    use super::TooHighAmountError;
 
     /// An amount.
     ///
@@ -88,9 +89,9 @@ mod encapsulate {
         /// # Ok::<_, amount::OutOfRangeError>(())
         /// ```
         #[inline]
-        pub const fn from_sat(satoshi: u64) -> Result<Self, OutOfRangeError> {
+        pub const fn from_sat(satoshi: u64) -> Result<Self, TooHighAmountError> {
             if satoshi > Self::MAX.to_sat() {
-                Err(OutOfRangeError::too_big())
+                Err(TooHighAmountError)
             } else {
                 Ok(Self(satoshi))
             }
@@ -208,7 +209,10 @@ impl Amount {
                 .map_err(ParseAmountErrorInner::OutOfRange)
                 .map_err(ParseAmountError);
         }
-        Self::try_from(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
+        Self::try_from(amount)
+            .map_err(OutOfRangeError::TooLow)
+            .map_err(ParseAmountErrorInner::OutOfRange)
+            .map_err(ParseAmountError)
     }
 
     /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
@@ -306,7 +310,10 @@ impl Amount {
         let amount = parse_int::hex_u64_prefixed(s)
             .map_err(ParseAmountErrorInner::PrefixedHex)
             .map_err(ParseAmountError)?;
-        Self::from_sat(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
+        Self::from_sat(amount)
+            .map_err(OutOfRangeError::TooHigh)
+            .map_err(ParseAmountErrorInner::OutOfRange)
+            .map_err(ParseAmountError)
     }
 
     /// Constructs a new [`Amount`] from an unprefixed hex string.
@@ -320,7 +327,10 @@ impl Amount {
         let amount = parse_int::hex_u64_unprefixed(s)
             .map_err(ParseAmountErrorInner::UnprefixedHex)
             .map_err(ParseAmountError)?;
-        Self::from_sat(amount).map_err(ParseAmountErrorInner::OutOfRange).map_err(ParseAmountError)
+        Self::from_sat(amount)
+            .map_err(OutOfRangeError::TooHigh)
+            .map_err(ParseAmountErrorInner::OutOfRange)
+            .map_err(ParseAmountError)
     }
 
     /// Constructs a new object that implements [`fmt::Display`] in the given [`Denomination`].
@@ -633,7 +643,7 @@ impl FromStr for Amount {
 }
 
 impl TryFrom<SignedAmount> for Amount {
-    type Error = OutOfRangeError;
+    type Error = TooLowAmountError;
 
     #[inline]
     fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }

@@ -13,7 +13,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use super::error::{ParseAmountErrorInner, ParseErrorInner};
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination, Display,
-    DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
+    DisplayStyle, OutOfRangeError, ParseAmountError, ParseError, TooLowAmountError,
 };
 use crate::parse_int;
 
@@ -528,9 +528,9 @@ impl SignedAmount {
     /// If the amount is negative.
     #[inline]
     #[allow(clippy::missing_panics_doc)]
-    pub fn to_unsigned(self) -> Result<Amount, OutOfRangeError> {
+    pub fn to_unsigned(self) -> Result<Amount, TooLowAmountError> {
         if self.is_negative() {
-            Err(OutOfRangeError::negative())
+            Err(TooLowAmountError { is_signed: false })
         } else {
             // Cast ok, checked not negative above.
             Ok(Amount::from_sat(self.to_sat() as u64)

@@ -154,6 +154,16 @@ impl From<Infallible> for OutOfRangeError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+impl From<TooHighAmountError> for OutOfRangeError {
+    #[inline]
+    fn from(e: TooHighAmountError) -> Self { Self::TooHigh(e) }
+}
+
+impl From<TooLowAmountError> for OutOfRangeError {
+    #[inline]
+    fn from(e: TooLowAmountError) -> Self { Self::TooLow(e) }
+}
+
 impl fmt::Display for OutOfRangeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -204,7 +214,7 @@ impl std::error::Error for TooHighAmountError {
 /// Error returned when an amount is less than the minimum of its type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TooLowAmountError {
-    is_signed: bool,
+    pub(super) is_signed: bool,
 }
 
 impl TooLowAmountError {
@@ -530,7 +540,7 @@ impl AmountDecoderError {
     ///
     /// [`Amount::from_sat`]: super::Amount::from_sat
     #[inline]
-    pub(super) fn out_of_range(e: OutOfRangeError) -> Self {
+    pub(super) fn out_of_range(e: TooHighAmountError) -> Self {
         Self(AmountDecoderErrorInner::OutOfRange(e))
     }
 }
@@ -541,7 +551,7 @@ pub(super) enum AmountDecoderErrorInner {
     /// Not enough bytes given to decoder.
     UnexpectedEof(encoding::UnexpectedEofError),
     /// Decoded amount is too big.
-    OutOfRange(OutOfRangeError),
+    OutOfRange(TooHighAmountError),
 }
 
 #[cfg(feature = "encoding")]
@@ -592,9 +602,9 @@ mod tests {
     use super::OutOfRangeError;
     #[cfg(feature = "alloc")]
     use super::{ParseAmountError, ParseAmountErrorInner, ParseErrorInner};
-    use crate::amount::{Amount, SignedAmount};
+    use crate::amount::SignedAmount;
     #[cfg(feature = "alloc")]
-    use crate::amount::{Denomination, ParseDenominationError, ParseError};
+    use crate::amount::{Amount, Denomination, ParseDenominationError, ParseError};
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -734,7 +744,7 @@ mod tests {
 
     #[test]
     fn out_of_range_error_kind() {
-        let e = Amount::from_sat(u64::MAX).unwrap_err();
+        let e = SignedAmount::from_sat(i64::MAX).unwrap_err();
         assert!(e.is_above_max() && !e.is_below_min());
 
         let e = SignedAmount::from_sat(i64::MIN).unwrap_err();
@@ -743,7 +753,6 @@ mod tests {
         assert!(e.is_signed());
 
         let e = SignedAmount::from_sat(-1).unwrap().to_unsigned().unwrap_err();
-        let OutOfRangeError::TooLow(e) = e else { panic!("error should be TooLowAmountError") };
         assert!(!e.is_signed());
     }
 
